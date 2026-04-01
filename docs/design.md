@@ -7,9 +7,12 @@ An online tool for conducting/simulating a drafting format for Pokemon TCG Pocke
 ## Core Features
 
 ### Phase 1 — Draft Tool
-- Simulate a pack-opening style draft (players take turns selecting cards from opened packs)
+- **Arena-style format:** players draft a single deck by repeatedly picking 1 card from a set of offered options
+- No pre-existing collection required — any card in the game is draftable; basic universals (Pokeball, Prof's Research, etc.) are always freely available without drafting
 - Timed draft picks (countdown per player turn)
-- Online/multiplayer TBD — may start as local/single-session simulation
+- Online/multiplayer — players draft simultaneously in the same session
+- After drafting, each player builds one 20-card deck and plays a run (win/loss threshold TBD)
+- Conquest format (3 decks, must win with each) is a future consideration for tournament play
 
 ### Phase 2 — Gameplay Simulation
 - Simulate a full Pokemon TCG Pocket game between two decks
