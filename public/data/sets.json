@@ -1,0 +1,149 @@
+[
+  {
+    "id": "B3",
+    "name": "Pulsing Aura",
+    "packs": [],
+    "cardCount": 234
+  },
+  {
+    "id": "B2b",
+    "name": "Mega Shine",
+    "packs": [],
+    "cardCount": 117
+  },
+  {
+    "id": "B2a",
+    "name": "Paldean Wonders",
+    "packs": [],
+    "cardCount": 131
+  },
+  {
+    "id": "B2",
+    "name": "Fantastical Parade",
+    "packs": [],
+    "cardCount": 234
+  },
+  {
+    "id": "B1a",
+    "name": "Crimson Blaze",
+    "packs": [],
+    "cardCount": 103
+  },
+  {
+    "id": "B1",
+    "name": "Mega Rising",
+    "packs": [
+      "Mega Altaria",
+      "Mega Blaziken",
+      "Mega Gyarados"
+    ],
+    "cardCount": 331
+  },
+  {
+    "id": "P-B",
+    "name": "Promo-B",
+    "packs": [
+      "Missions",
+      "Premium Missions",
+      "Promo",
+      "Wonder Pick"
+    ],
+    "cardCount": 62
+  },
+  {
+    "id": "A4b",
+    "name": "Deluxe Pack: ex",
+    "packs": [],
+    "cardCount": 379
+  },
+  {
+    "id": "A4a",
+    "name": "Secluded Springs",
+    "packs": [],
+    "cardCount": 105
+  },
+  {
+    "id": "A4",
+    "name": "Wisdom of Sea and Sky",
+    "packs": [
+      "Ho-Oh",
+      "Lugia"
+    ],
+    "cardCount": 241
+  },
+  {
+    "id": "A3b",
+    "name": "Eevee Grove",
+    "packs": [],
+    "cardCount": 107
+  },
+  {
+    "id": "A3a",
+    "name": "Extradimensional Crisis",
+    "packs": [],
+    "cardCount": 103
+  },
+  {
+    "id": "A3",
+    "name": "Celestial Guardians",
+    "packs": [
+      "Lunala",
+      "Solgaleo"
+    ],
+    "cardCount": 239
+  },
+  {
+    "id": "A2b",
+    "name": "Shining Revelry",
+    "packs": [],
+    "cardCount": 111
+  },
+  {
+    "id": "A2a",
+    "name": "Triumphant Light",
+    "packs": [
+      "Arceus"
+    ],
+    "cardCount": 96
+  },
+  {
+    "id": "A2",
+    "name": "Space-Time Smackdown",
+    "packs": [
+      "Dialga",
+      "Palkia"
+    ],
+    "cardCount": 207
+  },
+  {
+    "id": "A1a",
+    "name": "Mythical Island",
+    "packs": [
+      "Mew"
+    ],
+    "cardCount": 86
+  },
+  {
+    "id": "A1",
+    "name": "Genetic Apex",
+    "packs": [
+      "Charizard",
+      "Mewtwo",
+      "Pikachu"
+    ],
+    "cardCount": 286
+  },
+  {
+    "id": "P-A",
+    "name": "Promo-A",
+    "packs": [
+      "Campaign",
+      "Missions",
+      "Premium Missions",
+      "Promo",
+      "Shop",
+      "Wonder Pick"
+    ],
+    "cardCount": 117
+  }
+]

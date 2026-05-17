@@ -67,19 +67,35 @@ pocket-draft/
 
 ## Card Data
 
-### Metadata source: chase-manning/pokemon-tcg-pocket-cards (vendored)
-- MIT-licensed GitHub repo that scrapes Limitless TCG and publishes structured JSON
-- We vendor `v4.json` (all cards) + `expansions.json` (set/pack metadata) into `data/cards/` in this repo
-- Refresh script pulls latest from upstream when new sets drop
-- Derived transformations applied at load time: normalized 5-tier rarity, functional dedup of cosmetic variants, pack composition tables
+### Source: scrape Limitless TCG directly
+- `pocket.limitlesstcg.com` is fully permissive in robots.txt
+- Build-time scraper (`scripts/scrape-limitless.mjs`, Node + cheerio) fetches `/cards`, `/cards/{SETID}`, and `/cards/{SETID}/{NUM}` and emits `data/cards.json` + `data/sets.json`
+- Polite: 250 ms between requests, custom UA, sequential fetch, full re-run ~10 min
+- Output is vendored into the repo and copied into `public/data/` for runtime serving
+- Re-run when new sets drop; output is idempotent
+
+### Card schema (per card)
+- Identity: `id` (e.g. `A1-001`), `setId`, `number`, `name`
+- Rarity model: 4 raw rarities (◊/◊◊/◊◊◊/◊◊◊◊) plus cosmetic stars (☆/☆☆/☆☆☆/♕) plus `Promo`; orthogonal `exKind` (regular / ex / mega-ex). Mega-EX is detected via `name.startsWith('Mega ') && name.endsWith(' ex')`
+- Mechanical fields: `cardType` (energy type or `Trainer`), `trainerKind` (Item/Supporter), `hp`, `stage`, `evolvesFrom`, `attacks[]` (cost/name/damage/effect), `ability` (name/effect), `weakness`, `retreat`, `pack`
+- Visual fields: `imageThumb`, `imageFull`, `artist`, `flavor`
+
+### Draft pool filtering (at load time)
+Applied by `src/data/loader.ts`:
+- Drop cosmetic variants (☆/☆☆/☆☆☆/♕)
+- Drop the entire `A4b` set (reprint-only "Deluxe Pack: ex" — every base-art card has a functional duplicate)
+- Drop the 5 free-universal trainers (Potion, X Speed, Red Card, Poké Ball, Professor's Research) — they're available freely at deckbuild
+- For Promo cards, infer draft rarity from `exKind` (EX/Mega-EX → ◊◊◊◊, regular → ◊)
+- Dedupe the `pa-064` / `pa-065` Rayquaza ex pair (same functional signature) — keep lowest id
+- No general functional dedup: multi-pack cards (e.g. A1 Eevee in three packs) are kept as separate entries for pack-composition tables
 
 ### Image source: Limitless TCG CDN (hot-linked)
-- Thumbnail: `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/{SET}/{SET}_{NUM:003}_EN_SM.webp`
-- Full-resolution (for zoom view): drop the `_SM` suffix and switch `.webp` → `.png`
-- robots.txt is fully permissive; smoke test confirmed images load reliably
-- Can switch to chase-manning's bundled image copies later if hot-linking ever becomes a problem
+- Thumbnail (`imageThumb`): `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/{SET}/{SET}_{NUM:003}_EN_SM.webp`
+- Full-res (`imageFull`): same path without `_SM` and `.png`
+- Smoke test (v0.0) confirmed images load reliably from the CDN
 
 ### Sources we rejected
+- **chase-manning/pokemon-tcg-pocket-cards** — was an early pivot; rejected 2026-05-18 because metadata is incomplete (no attack text, abilities, weakness, retreat, stage). We now own the scraper.
 - **TCGdex** — `api.tcgdex.net` was unreachable from our network during validation; Pocket coverage on TCGdex is also weaker than on Limitless
 - **pokemontcg.io** — does not cover TCG Pocket (physical TCG only)
 
