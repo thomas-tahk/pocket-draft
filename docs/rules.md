@@ -25,6 +25,7 @@ Inspired by the **SWUCUBE** cube draft format (see `swucube-rules.md`) — origi
 - Each round, the player is offered **5 cards** and selects **1**.
 - This repeats **20 times**.
 - Mirrors the 5-card pack structure and Wonder Pick mechanic from the actual game.
+- The draft is **solitary and asynchronous** — each player drafts independently with no timer and no dependency on any other player. Players may leave and return mid-draft at any point. Matchmaking happens after both players have completed their drafts.
 
 ### Pack 1 — soft anchor
 - Pack 1 is guaranteed to contain at least **1 EX or Mega EX Pokemon** among the 5 options.

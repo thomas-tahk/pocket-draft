@@ -9,8 +9,8 @@ An online tool for conducting/simulating a drafting format for Pokemon TCG Pocke
 ### Phase 1 — Draft Tool
 - **Arena-style format:** players draft a single deck by repeatedly picking 1 card from a set of offered options
 - No pre-existing collection required — any card in the game is draftable; basic universals (Pokeball, Prof's Research, etc.) are always freely available without drafting
-- Timed draft picks (countdown per player turn)
-- Online/multiplayer — players draft simultaneously in the same session
+- Solitary, asynchronous draft — each player picks at their own pace, no timer, no inter-player dependency
+- Matchmaking happens post-draft (after both players complete their picks)
 - After drafting, each player builds one 20-card deck and plays a run (win/loss threshold TBD)
 - Conquest format (3 decks, must win with each) is a future consideration for tournament play
 
@@ -28,12 +28,11 @@ An online tool for conducting/simulating a drafting format for Pokemon TCG Pocke
 ## Tech Stack
 
 ### Backend — Go
-- Chosen for goroutine-based concurrency model, which maps naturally to:
-  - Per-room draft sessions with independent timers
-  - Per-game simulation state with turn timers
-- WebSockets for real-time events (draft picks, timer ticks, game actions)
-- Framework TBD (Gin or Echo)
-- WebSocket library TBD (gorilla/websocket or nhooyr.io/websocket)
+- Phase 1 v0.1 (async solitary draft) does NOT need a backend — pure frontend with state in localStorage. Backend joins at v0.2 for matchmaking and persistence.
+- Go is chosen for Phase 2 (gameplay simulation): goroutine-based concurrency maps naturally to per-game state with turn timers and concurrent matches.
+- WebSockets only needed for Phase 2 (turn-by-turn gameplay events). Phase 1/v0.2 backend uses plain HTTP/REST.
+- Framework TBD (Gin or Echo) — decide when starting backend work
+- WebSocket library TBD (gorilla/websocket or nhooyr.io/websocket) — decide at Phase 2
 
 ### Frontend — React + TypeScript
 - Vite for build tooling
@@ -68,20 +67,25 @@ pocket-draft/
 
 ## Card Data
 
-### Source: TCGdex
-- Public community-maintained API, covers TCG Pocket sets
-- Docs: https://tcgdex.dev
-- Card endpoint: `GET https://api.tcgdex.net/v2/en/cards/{setId}-{number}`
-- Card images: `https://assets.tcgdex.net/en/tcgp/{setId}/{number}/high.webp`
-- Confirmed live and returning card images
+### Metadata source: chase-manning/pokemon-tcg-pocket-cards (vendored)
+- MIT-licensed GitHub repo that scrapes Limitless TCG and publishes structured JSON
+- We vendor `v4.json` (all cards) + `expansions.json` (set/pack metadata) into `data/cards/` in this repo
+- Refresh script pulls latest from upstream when new sets drop
+- Derived transformations applied at load time: normalized 5-tier rarity, functional dedup of cosmetic variants, pack composition tables
 
-### Notes
-- pokemontcg.io does NOT cover TCG Pocket (physical TCG only)
-- Limitless TCG (pocket.limitlesstcg.com) self-hosts card images on their own DigitalOcean CDN — not a public resource we can use
+### Image source: Limitless TCG CDN (hot-linked)
+- Thumbnail: `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/{SET}/{SET}_{NUM:003}_EN_SM.webp`
+- Full-resolution (for zoom view): drop the `_SM` suffix and switch `.webp` → `.png`
+- robots.txt is fully permissive; smoke test confirmed images load reliably
+- Can switch to chase-manning's bundled image copies later if hot-linking ever becomes a problem
+
+### Sources we rejected
+- **TCGdex** — `api.tcgdex.net` was unreachable from our network during validation; Pocket coverage on TCGdex is also weaker than on Limitless
+- **pokemontcg.io** — does not cover TCG Pocket (physical TCG only)
 
 ## Open Questions
-- Multiplayer support: deferred — start with single-session / local simulation
-- Draft format rules: TBD — see docs/rules.md once sourced
-- Go web framework: Gin vs Echo — decide at project init
-- Type sharing strategy: manual sync for now, revisit if needed
+- Backend introduction timing: Phase 1 v0.1 is pure frontend (no backend); backend joins for v0.2 (matchmaking)
+- Draft format rules: see docs/rules.md (finalized)
+- Go web framework: Gin vs Echo — decide when starting backend work
+- Type sharing strategy: manual sync for now, revisit if drift becomes a problem
 - Deployment target: TBD

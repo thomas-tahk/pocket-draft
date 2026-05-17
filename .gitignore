@@ -41,3 +41,6 @@ vendor/
 # OS
 .DS_Store
 Thumbs.db
+
+# Scratch — local working notes, HTML outputs, handoffs
+scratch/
