@@ -58,6 +58,7 @@ export type RawCard = {
   weakness: EnergyType | null;
   retreat: number | null;
   pack: string;
+  trainerText: string | null;
   imageThumb: string;
   imageFull: string;
   artist: string | null;

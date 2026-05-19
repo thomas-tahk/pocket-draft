@@ -253,6 +253,20 @@ async function fetchCardDetail(setId, num) {
   const artist = $('.card-text-artist a').first().text().trim() || null;
   const flavor = $('.card-text-flavor').first().text().replace(/\s+/g, ' ').trim() || null;
 
+  // Trainer effect text lives in a bare .card-text-section (no class additions,
+  // no marker children). Pokemon sections always wrap a recognized block, so
+  // this only fires for Trainers in practice.
+  const MARKER_SEL = '.card-text-title, .card-text-name, .card-text-type, .card-text-attack, .card-text-ability, .card-text-wrr, .card-text-mega-rule, .card-text-artist, .card-text-flavor';
+  const trainerTextParts = [];
+  $('.card-text-section').each((_, sec) => {
+    const $sec = $(sec);
+    if (($sec.attr('class') ?? '').trim() !== 'card-text-section') return;
+    if ($sec.find(MARKER_SEL).length) return;
+    const txt = $sec.text().replace(/\s+/g, ' ').trim();
+    if (txt) trainerTextParts.push(txt);
+  });
+  const trainerText = trainerTextParts.length ? trainerTextParts.join('\n\n') : null;
+
   // Print + rarity + pack
   const currentDetails = $('.card-prints-current .prints-current-details').first();
   // Skip the .text-lg (set name); the *other* span has the rarity+pack chunk.
@@ -288,6 +302,7 @@ async function fetchCardDetail(setId, num) {
     weakness,
     retreat,
     pack,
+    trainerText,
     imageThumb,
     imageFull,
     artist,

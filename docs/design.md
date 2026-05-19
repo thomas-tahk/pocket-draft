@@ -77,7 +77,7 @@ pocket-draft/
 ### Card schema (per card)
 - Identity: `id` (e.g. `A1-001`), `setId`, `number`, `name`
 - Rarity model: 4 raw rarities (◊/◊◊/◊◊◊/◊◊◊◊) plus cosmetic stars (☆/☆☆/☆☆☆/♕) plus `Promo`; orthogonal `exKind` (regular / ex / mega-ex). Mega-EX is detected via `name.startsWith('Mega ') && name.endsWith(' ex')`
-- Mechanical fields: `cardType` (energy type or `Trainer`), `trainerKind` (Item/Supporter), `hp`, `stage`, `evolvesFrom`, `attacks[]` (cost/name/damage/effect), `ability` (name/effect), `weakness`, `retreat`, `pack`
+- Mechanical fields: `cardType` (energy type or `Trainer`), `trainerKind` (Item/Supporter), `hp`, `stage`, `evolvesFrom`, `attacks[]` (cost/name/damage/effect), `ability` (name/effect), `trainerText` (Trainer effect, null for Pokémon), `weakness`, `retreat`, `pack`
 - Visual fields: `imageThumb`, `imageFull`, `artist`, `flavor`
 
 ### Draft pool filtering (at load time)
