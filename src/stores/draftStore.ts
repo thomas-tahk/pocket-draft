@@ -5,42 +5,55 @@ import { generateOffer } from '../draft/offer';
 import { indexByTier } from '../draft/tiers';
 
 export const TOTAL_PACKS = 20;
+export const SHOP_TICKETS = 3;
 
-export type Phase = 'unstarted' | 'drafting' | 'review';
+export type Phase = 'unstarted' | 'drafting' | 'shop' | 'review';
 
 type State = {
   pickIds: string[];
   offerIds: string[];
+  packOffers: string[][]; // history of full 5-card offers per completed pack
+  shopPurchasedIds: string[];
+  shopFinalized: boolean;
 };
 
 type Actions = {
   start: (pool: Card[]) => void;
   pick: (cardId: string, pool: Card[]) => void;
+  purchase: (cardId: string) => void;
+  unpurchase: (cardId: string) => void;
+  finalizeShop: () => void;
   reset: () => void;
 };
 
-// Persists only id strings; full Card objects are looked up from the runtime pool.
-// This keeps localStorage tiny and decouples saved state from the card-data schema.
+const initialState: State = {
+  pickIds: [],
+  offerIds: [],
+  packOffers: [],
+  shopPurchasedIds: [],
+  shopFinalized: false,
+};
+
 export const useDraftStore = create<State & Actions>()(
   persist(
     (set, get) => ({
-      pickIds: [],
-      offerIds: [],
+      ...initialState,
 
       start: (pool) => {
         const byTier = indexByTier(pool);
         const firstOffer = generateOffer(byTier, { isPack1: true, picks: [] });
-        set({ pickIds: [], offerIds: firstOffer.map((c) => c.id) });
+        set({ ...initialState, offerIds: firstOffer.map((c) => c.id) });
       },
 
       pick: (cardId, pool) => {
-        const { pickIds } = get();
+        const { pickIds, offerIds, packOffers } = get();
         const picked = pool.find((c) => c.id === cardId);
         if (!picked) return;
         const newPickIds = [...pickIds, cardId];
+        const newPackOffers = [...packOffers, offerIds];
 
         if (newPickIds.length >= TOTAL_PACKS) {
-          set({ pickIds: newPickIds, offerIds: [] });
+          set({ pickIds: newPickIds, offerIds: [], packOffers: newPackOffers });
           return;
         }
 
@@ -50,17 +63,39 @@ export const useDraftStore = create<State & Actions>()(
           .filter((c): c is Card => Boolean(c));
         const byTier = indexByTier(pool);
         const nextOffer = generateOffer(byTier, { isPack1: false, picks: picksSoFar });
-        set({ pickIds: newPickIds, offerIds: nextOffer.map((c) => c.id) });
+        set({
+          pickIds: newPickIds,
+          offerIds: nextOffer.map((c) => c.id),
+          packOffers: newPackOffers,
+        });
       },
 
-      reset: () => set({ pickIds: [], offerIds: [] }),
+      purchase: (cardId) => {
+        const { shopPurchasedIds } = get();
+        if (shopPurchasedIds.includes(cardId)) return;
+        if (shopPurchasedIds.length >= SHOP_TICKETS) return;
+        set({ shopPurchasedIds: [...shopPurchasedIds, cardId] });
+      },
+
+      unpurchase: (cardId) => {
+        const { shopPurchasedIds } = get();
+        set({ shopPurchasedIds: shopPurchasedIds.filter((id) => id !== cardId) });
+      },
+
+      finalizeShop: () => set({ shopFinalized: true }),
+
+      reset: () => set({ ...initialState }),
     }),
-    { name: 'pocket-draft-v0.1' },
+    {
+      name: 'pocket-draft-v0.2',
+      // If the schema drifts again later, bump the name above and add a migrate fn.
+    },
   ),
 );
 
-export function derivePhase(pickIds: string[], offerIds: string[]): Phase {
-  if (pickIds.length === 0 && offerIds.length === 0) return 'unstarted';
-  if (pickIds.length >= TOTAL_PACKS) return 'review';
-  return 'drafting';
+export function derivePhase(s: Pick<State, 'pickIds' | 'offerIds' | 'shopFinalized'>): Phase {
+  if (s.pickIds.length === 0 && s.offerIds.length === 0) return 'unstarted';
+  if (s.pickIds.length < TOTAL_PACKS) return 'drafting';
+  if (!s.shopFinalized) return 'shop';
+  return 'review';
 }

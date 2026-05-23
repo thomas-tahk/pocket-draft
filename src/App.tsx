@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { loadCardPool, type CardPool } from './data';
 import { DraftView } from './components/DraftView';
+import { ShopView } from './components/ShopView';
 import { ReviewView } from './components/ReviewView';
 import { derivePhase, TOTAL_PACKS, useDraftStore } from './stores/draftStore';
 import type { Card } from './types/card';
@@ -13,7 +14,19 @@ export function App() {
     loadCardPool().then(setPool).catch((e) => setError(String(e)));
   }, []);
 
-  const { pickIds, offerIds, start, pick, reset } = useDraftStore();
+  const {
+    pickIds,
+    offerIds,
+    packOffers,
+    shopPurchasedIds,
+    shopFinalized,
+    start,
+    pick,
+    purchase,
+    unpurchase,
+    finalizeShop,
+    reset,
+  } = useDraftStore();
 
   const byId = useMemo(() => {
     if (!pool) return new Map<string, Card>();
@@ -28,8 +41,12 @@ export function App() {
     () => offerIds.map((id) => byId.get(id)).filter((c): c is Card => Boolean(c)),
     [offerIds, byId],
   );
+  const purchased = useMemo(
+    () => shopPurchasedIds.map((id) => byId.get(id)).filter((c): c is Card => Boolean(c)),
+    [shopPurchasedIds, byId],
+  );
 
-  const phase = derivePhase(pickIds, offerIds);
+  const phase = derivePhase({ pickIds, offerIds, shopFinalized });
 
   if (error) return <main style={{ padding: 24 }}>Error: {error}</main>;
   if (!pool) return <main style={{ padding: 24 }}>Loading card data…</main>;
@@ -42,7 +59,7 @@ export function App() {
           {pool.draftableCards.length} draftable cards across {pool.sets.length} sets.
         </p>
         <p style={{ opacity: 0.6, fontSize: 13 }}>
-          {TOTAL_PACKS} rounds. Each round shows 5 cards — pick one.
+          {TOTAL_PACKS} rounds. Each round shows 5 cards — pick one. Then a quick shop, then your finished deck.
         </p>
         <button style={{ fontSize: 16, padding: '8px 20px' }} onClick={() => start(pool.draftableCards)}>
           Start draft
@@ -51,16 +68,31 @@ export function App() {
     );
   }
 
-  if (phase === 'review') {
-    return <ReviewView picks={picks} onReset={reset} />;
+  if (phase === 'drafting') {
+    return (
+      <DraftView
+        packIndex={pickIds.length}
+        offer={offer}
+        picks={picks}
+        onPick={(card) => pick(card.id, pool.draftableCards)}
+      />
+    );
   }
 
-  return (
-    <DraftView
-      packIndex={pickIds.length}
-      offer={offer}
-      picks={picks}
-      onPick={(card) => pick(card.id, pool.draftableCards)}
-    />
-  );
+  if (phase === 'shop') {
+    return (
+      <ShopView
+        pool={pool.draftableCards}
+        picks={picks}
+        packOffers={packOffers}
+        pickIds={pickIds}
+        purchasedIds={shopPurchasedIds}
+        onPurchase={purchase}
+        onUnpurchase={unpurchase}
+        onFinalize={finalizeShop}
+      />
+    );
+  }
+
+  return <ReviewView picks={picks} purchased={purchased} onReset={reset} />;
 }

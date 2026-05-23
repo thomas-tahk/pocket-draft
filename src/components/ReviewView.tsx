@@ -4,6 +4,7 @@ import { CardTile } from './CardTile';
 
 type Props = {
   picks: Card[];
+  purchased: Card[];
   onReset: () => void;
 };
 
@@ -17,16 +18,39 @@ function download(filename: string, content: string) {
   URL.revokeObjectURL(url);
 }
 
-export function ReviewView({ picks, onReset }: Props) {
-  const tally = tallyTypes(picks);
+export function ReviewView({ picks, purchased, onReset }: Props) {
+  const all = [...picks, ...purchased];
+  const tally = tallyTypes(all);
   const sortedTally = (Object.entries(tally) as [EnergyType, number][])
     .sort((a, b) => b[1] - a[1]);
 
   const exportPayload = {
-    version: 'v0.1',
+    version: 'v0.2',
     timestamp: new Date().toISOString(),
     pickIds: picks.map((c) => c.id),
+    purchasedIds: purchased.map((c) => c.id),
   };
+
+  const Section = ({ title, cards }: { title: string; cards: Card[] }) =>
+    cards.length === 0 ? null : (
+      <section style={{ marginTop: 20 }}>
+        <h2 style={{ fontSize: 14, opacity: 0.75, margin: '0 0 8px' }}>
+          {title} ({cards.length})
+        </h2>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(5, 1fr)',
+            gap: 8,
+            alignItems: 'start',
+          }}
+        >
+          {cards.map((c, i) => (
+            <CardTile key={`${c.id}-${i}`} card={c} size="lg" />
+          ))}
+        </div>
+      </section>
+    );
 
   return (
     <main style={{ padding: '16px 24px', maxWidth: 1100, margin: '0 auto' }}>
@@ -35,7 +59,7 @@ export function ReviewView({ picks, onReset }: Props) {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'baseline',
-          marginBottom: 16,
+          marginBottom: 8,
         }}
       >
         <h1 style={{ fontSize: 20, margin: 0 }}>Draft complete</h1>
@@ -51,22 +75,12 @@ export function ReviewView({ picks, onReset }: Props) {
         </div>
       </header>
 
-      <div style={{ fontSize: 13, opacity: 0.75, marginBottom: 16 }}>
-        20 cards · {sortedTally.map(([t, n]) => `${t} ×${n}`).join('  ')}
+      <div style={{ fontSize: 13, opacity: 0.75 }}>
+        {all.length} cards · {sortedTally.map(([t, n]) => `${t} ×${n}`).join('  ')}
       </div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(5, 1fr)',
-          gap: 8,
-          alignItems: 'start',
-        }}
-      >
-        {picks.map((c, i) => (
-          <CardTile key={`${c.id}-${i}`} card={c} size="lg" />
-        ))}
-      </div>
+      <Section title="Drafted" cards={picks} />
+      <Section title="Purchased" cards={purchased} />
     </main>
   );
 }
