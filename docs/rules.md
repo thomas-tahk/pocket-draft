@@ -81,14 +81,17 @@ After the shop, players build their final **20-card deck** from:
 - Their 20 drafted cards
 - Any cards acquired from the shop
 
+### Copy limits
+Pokemon TCG Pocket's standard deck-construction rule applies: **maximum 2 copies of any card**, matched by card name. There is no separate restriction on EX or Mega-EX cards — they follow the same 2-copy cap as everything else. Cosmetic art variants of the same card do not stack beyond 2 (they're filtered out of the draft pool anyway).
+
 ### Free universals
-The following cards are freely available in any quantity during deckbuilding and do not require a draft pick or ticket:
+The following cards are freely available in any quantity during deckbuilding and do not require a draft pick or ticket (subject to the 2-copy cap above):
 - **Pokeball**
 - **Professor's Research**
 
 These count toward the 20-card deck limit and replace drafted/shopped cards as the player sees fit.
 
-> Note: Whether additional free cards (X Speed, Potion, Red Card) are included is TBD through playtesting.
+> Note: Whether additional free cards (X Speed, Potion, Red Card) are included is TBD through playtesting. A seasonal-rotation model for the free-universal set is captured in `docs/backlog.md`.
 
 ### Cut
 If the player has more than 20 cards after shop purchases, they cut down to exactly 20 during this phase.
