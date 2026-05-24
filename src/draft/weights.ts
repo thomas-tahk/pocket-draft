@@ -3,8 +3,14 @@ import type { Card, EnergyType } from '../types/card';
 export type TypeTally = Partial<Record<EnergyType, number>>;
 
 // Each drafted on-type Pokémon nudges that type's weight by this much.
-// Higher = more direction, lower = more chaos. Rules.md: "a nudge, not a lock".
-export const TYPE_WEIGHT_COEF = 0.5;
+// weight = 1 + COEF × typeCount[type] for energy Pokémon; flat 1 for Trainers
+// and Colorless.
+//
+// 1.0 means a 4-times-picked type is 5× the weight of an unpicked type. Against
+// the actual pool this gives ~38% slot probability and ~91% per-pack probability
+// for the leading type — enough to feel "mono-energy commitment" rather than
+// "soft nudge." Tunable; 1.5 pushes per-pack rate to ~96%.
+export const TYPE_WEIGHT_COEF = 1.0;
 
 export function tallyTypes(picks: Card[]): TypeTally {
   const t: TypeTally = {};
