@@ -75,6 +75,7 @@ export function App() {
         offer={offer}
         picks={picks}
         onPick={(card) => pick(card.id, pool.draftableCards)}
+        onCancel={reset}
       />
     );
   }
@@ -90,6 +91,7 @@ export function App() {
         onPurchase={purchase}
         onUnpurchase={unpurchase}
         onFinalize={finalizeShop}
+        onCancel={reset}
       />
     );
   }

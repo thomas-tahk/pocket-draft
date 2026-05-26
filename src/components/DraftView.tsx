@@ -11,9 +11,10 @@ type Props = {
   offer: Card[];
   picks: Card[];
   onPick: (card: Card) => void;
+  onCancel: () => void;
 };
 
-export function DraftView({ packIndex, offer, picks, onPick }: Props) {
+export function DraftView({ packIndex, offer, picks, onPick, onCancel }: Props) {
   const [hovered, setHovered] = useState<Card | null>(null);
   const tally = tallyTypes(picks);
   const sortedTally = (Object.entries(tally) as [EnergyType, number][])
@@ -31,13 +32,25 @@ export function DraftView({ packIndex, offer, picks, onPick }: Props) {
           }}
         >
           <h1 style={{ fontSize: 20, margin: 0 }}>Pocket Draft</h1>
-          <div style={{ fontSize: 14, opacity: 0.75 }}>
-            Pack {packIndex + 1} / {TOTAL_PACKS}
-            {sortedTally.length > 0 && (
-              <span style={{ marginLeft: 16 }}>
-                {sortedTally.map(([t, n]) => `${t} ×${n}`).join('  ')}
-              </span>
-            )}
+          <div style={{ display: 'flex', gap: 16, alignItems: 'baseline' }}>
+            <div style={{ fontSize: 14, opacity: 0.75 }}>
+              Pack {packIndex + 1} / {TOTAL_PACKS}
+              {sortedTally.length > 0 && (
+                <span style={{ marginLeft: 16 }}>
+                  {sortedTally.map(([t, n]) => `${t} ×${n}`).join('  ')}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={() => {
+                if (window.confirm('Cancel this draft? You will lose all picks so far.')) {
+                  onCancel();
+                }
+              }}
+              style={{ fontSize: 12 }}
+            >
+              Cancel draft
+            </button>
           </div>
         </header>
 

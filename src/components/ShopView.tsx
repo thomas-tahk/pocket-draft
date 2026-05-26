@@ -15,6 +15,7 @@ type Props = {
   onPurchase: (cardId: string) => void;
   onUnpurchase: (cardId: string) => void;
   onFinalize: () => void;
+  onCancel: () => void;
 };
 
 export function ShopView({
@@ -26,6 +27,7 @@ export function ShopView({
   onPurchase,
   onUnpurchase,
   onFinalize,
+  onCancel,
 }: Props) {
   const [hovered, setHovered] = useState<Card | null>(null);
 
@@ -57,7 +59,7 @@ export function ShopView({
     <div
       style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))',
         gap: 8,
         alignItems: 'start',
       }}
@@ -108,6 +110,16 @@ export function ShopView({
             </div>
             <button onClick={onFinalize}>
               {purchasedIds.length === 0 ? 'Skip shop' : 'Finish shop'}
+            </button>
+            <button
+              onClick={() => {
+                if (window.confirm('Cancel this draft? You will lose all picks and purchases.')) {
+                  onCancel();
+                }
+              }}
+              style={{ fontSize: 12 }}
+            >
+              Cancel draft
             </button>
           </div>
         </header>
