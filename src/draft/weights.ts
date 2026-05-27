@@ -6,11 +6,12 @@ export type TypeTally = Partial<Record<EnergyType, number>>;
 // weight = 1 + COEF × typeCount[type] for energy Pokémon; flat 1 for Trainers
 // and Colorless.
 //
-// 1.0 means a 4-times-picked type is 5× the weight of an unpicked type. Against
-// the actual pool this gives ~38% slot probability and ~91% per-pack probability
-// for the leading type — enough to feel "mono-energy commitment" rather than
-// "soft nudge." Tunable; 1.5 pushes per-pack rate to ~96%.
-export const TYPE_WEIGHT_COEF = 1.0;
+// 0 means true random draft — no type bias. This was the deliberate choice
+// 2026-05-27 once the model moved to "pool-then-pick": picks accumulate into a
+// collection rather than locking into a deck, so the random pool plus free
+// SWUCUBE-style expansions at deckbuild give players enough material to assemble
+// a coherent deck without needing mid-draft type pressure.
+export const TYPE_WEIGHT_COEF = 0;
 
 export function tallyTypes(picks: Card[]): TypeTally {
   const t: TypeTally = {};

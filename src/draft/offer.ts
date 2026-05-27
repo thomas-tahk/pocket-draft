@@ -35,25 +35,28 @@ function pickFromTier(
 }
 
 export type OfferOptions = {
-  isPack1: boolean;
+  isPack1: boolean; // retained on the interface but no longer special-cased
   picks: Card[];
   rng?: Rng;
 };
 
-// Generates one 5-card offer. Pack 1 reserves the last slot for a Tier-1 (ex/mega-ex)
-// soft anchor. Within an offer, no duplicate ids (you don't see the same card twice in
-// a single row of 5); duplicates across packs are allowed.
+// Generates one 5-card offer. Within an offer, no duplicate ids (you don't see
+// the same card twice in a single row of 5); duplicates across packs are allowed.
+//
+// Removed 2026-05-27: pack-1 EX-anchor (slot 5 was guaranteed Tier 1). The
+// pool-then-pick model accumulates 20 random picks into a collection, so a
+// guaranteed-EX hedge in pack 1 lost its purpose — across 20 packs you'll see
+// ~12 EX/Mega-EX offered organically at the tier weights below.
 export function generateOffer(
   byTier: Record<Tier, Card[]>,
-  { isPack1, picks, rng = Math.random }: OfferOptions,
+  { picks, rng = Math.random }: OfferOptions,
 ): Card[] {
   const tally = tallyTypes(picks);
   const offer: Card[] = [];
   const used = new Set<string>();
 
   for (let slot = 0; slot < SLOTS_PER_PACK; slot++) {
-    const targetTier: Tier =
-      isPack1 && slot === SLOTS_PER_PACK - 1 ? 1 : rollTier(rng);
+    const targetTier: Tier = rollTier(rng);
 
     let card = pickFromTier(byTier[targetTier], tally, used, rng);
 

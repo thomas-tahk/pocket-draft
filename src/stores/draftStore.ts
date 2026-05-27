@@ -87,7 +87,7 @@ export const useDraftStore = create<State & Actions>()(
       reset: () => set({ ...initialState }),
     }),
     {
-      name: 'pocket-draft-v0.2',
+      name: 'pocket-draft-v0.3',
       // If the schema drifts again later, bump the name above and add a migrate fn.
     },
   ),

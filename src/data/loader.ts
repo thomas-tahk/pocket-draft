@@ -39,6 +39,25 @@ function isDraftCandidate(raw: RawCard): boolean {
   return true;
 }
 
+// Pool-then-pick model (2026-05-27): the draft pool contains only "final" Pokémon —
+// cards no other Pokémon evolves from. Under-evolutions (Charmander, Charmeleon,
+// Eevee, etc.) are excluded from drafting and instead granted FREE at deckbuild
+// for each drafted Pokémon whose evolution chain they belong to. This avoids
+// awkward draws where a player gets stuck with a base form they can't actually
+// evolve, while keeping evolution lines accessible via SWUCUBE-style expansions.
+function isFinalEvolution(card: Card, hasSuccessor: Set<string>): boolean {
+  if (card.cardType === 'Trainer') return true;
+  return !hasSuccessor.has(card.name);
+}
+
+function filterToFinalEvolutions(cards: Card[]): Card[] {
+  const hasSuccessor = new Set<string>();
+  for (const c of cards) {
+    if (c.evolvesFrom) hasSuccessor.add(c.evolvesFrom);
+  }
+  return cards.filter((c) => isFinalEvolution(c, hasSuccessor));
+}
+
 // Decision 4.A: dedupe pa-064 / pa-065 (both "Rayquaza ex", same signature) — keep lowest id.
 function dedupePromoRayquaza(cards: Card[]): Card[] {
   const seen = new Map<string, Card>();
@@ -61,6 +80,18 @@ function dedupePromoRayquaza(cards: Card[]): Card[] {
 }
 
 export function toDraftablePool(raw: RawCard[]): Card[] {
+  const enriched = raw
+    .filter(isDraftCandidate)
+    .map(enrich)
+    .filter((c): c is Card => c !== null);
+  const deduped = dedupePromoRayquaza(enriched);
+  const finalsOnly = filterToFinalEvolutions(deduped);
+  return finalsOnly.sort((a, b) => (a.id < b.id ? -1 : 1));
+}
+
+// The full enriched-but-unfiltered pool — used at deckbuild to grant free access
+// to under-evolutions of drafted Pokémon (which are excluded from the draft pool).
+export function toFullCardPool(raw: RawCard[]): Card[] {
   const enriched = raw
     .filter(isDraftCandidate)
     .map(enrich)
