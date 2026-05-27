@@ -6,33 +6,65 @@ import { indexByTier } from '../draft/tiers';
 
 export const TOTAL_PACKS = 20;
 export const DECK_SIZE = 20;
+export const SHOP_TICKETS = 3;
+export const HISTORY_CAP = 7;
 
-export type Phase = 'unstarted' | 'drafting' | 'deckbuild' | 'review';
+export type Phase = 'unstarted' | 'drafting' | 'shop' | 'deckbuild' | 'review';
+
+export type DraftHistoryEntry = {
+  id: string; // ULID-ish: epoch ms + random suffix
+  completedAt: string; // ISO string
+  pickIds: string[]; // 20 drafted picks (preserved for reference)
+  shopPurchasedIds: string[]; // 0..3 shop purchases
+  deck: Record<string, number>; // final 20-card deck (cardId → count)
+  notes: string;
+  wins: number;
+  losses: number;
+};
 
 type State = {
   pickIds: string[];
   offerIds: string[];
   packOffers: string[][]; // history of full 5-card offers per completed pack
+  shopPurchasedIds: string[];
+  shopFinalized: boolean;
   deck: Record<string, number>; // cardId → count (1 or 2)
   deckFinalized: boolean;
+  history: DraftHistoryEntry[];
 };
 
 type Actions = {
   start: (pool: Card[]) => void;
   pick: (cardId: string, pool: Card[]) => void;
+  purchase: (cardId: string) => void;
+  unpurchase: (cardId: string) => void;
+  finalizeShop: () => void;
   addToDeck: (cardId: string) => void;
   removeFromDeck: (cardId: string) => void;
   finalizeDeck: () => void;
+  updateHistoryEntry: (id: string, updates: Partial<Pick<DraftHistoryEntry, 'notes' | 'wins' | 'losses'>>) => void;
+  deleteHistoryEntry: (id: string) => void;
   reset: () => void;
 };
 
-const initialState: State = {
+const activeStateInitial: Omit<State, 'history'> = {
   pickIds: [],
   offerIds: [],
   packOffers: [],
+  shopPurchasedIds: [],
+  shopFinalized: false,
   deck: {},
   deckFinalized: false,
 };
+
+const initialState: State = {
+  ...activeStateInitial,
+  history: [],
+};
+
+function newEntryId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
 
 export const useDraftStore = create<State & Actions>()(
   persist(
@@ -42,7 +74,8 @@ export const useDraftStore = create<State & Actions>()(
       start: (pool) => {
         const byTier = indexByTier(pool);
         const firstOffer = generateOffer(byTier, { isPack1: true, picks: [] });
-        set({ ...initialState, offerIds: firstOffer.map((c) => c.id) });
+        const { history } = get();
+        set({ ...activeStateInitial, history, offerIds: firstOffer.map((c) => c.id) });
       },
 
       pick: (cardId, pool) => {
@@ -70,8 +103,20 @@ export const useDraftStore = create<State & Actions>()(
         });
       },
 
-      // Note: callers must enforce the 2x-by-name cap and deck-size limit before
-      // calling addToDeck — the store doesn't know about the card pool.
+      purchase: (cardId) => {
+        const { shopPurchasedIds } = get();
+        if (shopPurchasedIds.includes(cardId)) return;
+        if (shopPurchasedIds.length >= SHOP_TICKETS) return;
+        set({ shopPurchasedIds: [...shopPurchasedIds, cardId] });
+      },
+
+      unpurchase: (cardId) => {
+        const { shopPurchasedIds } = get();
+        set({ shopPurchasedIds: shopPurchasedIds.filter((id) => id !== cardId) });
+      },
+
+      finalizeShop: () => set({ shopFinalized: true }),
+
       addToDeck: (cardId) => {
         const { deck } = get();
         const current = deck[cardId] ?? 0;
@@ -90,17 +135,50 @@ export const useDraftStore = create<State & Actions>()(
         }
       },
 
-      finalizeDeck: () => set({ deckFinalized: true }),
+      finalizeDeck: () => {
+        const { pickIds, shopPurchasedIds, deck, history } = get();
+        const entry: DraftHistoryEntry = {
+          id: newEntryId(),
+          completedAt: new Date().toISOString(),
+          pickIds: [...pickIds],
+          shopPurchasedIds: [...shopPurchasedIds],
+          deck: { ...deck },
+          notes: '',
+          wins: 0,
+          losses: 0,
+        };
+        // FIFO cap: newest first, drop oldest beyond HISTORY_CAP.
+        const nextHistory = [entry, ...history].slice(0, HISTORY_CAP);
+        set({ deckFinalized: true, history: nextHistory });
+      },
 
-      reset: () => set({ ...initialState }),
+      updateHistoryEntry: (id, updates) => {
+        const { history } = get();
+        set({
+          history: history.map((e) => (e.id === id ? { ...e, ...updates } : e)),
+        });
+      },
+
+      deleteHistoryEntry: (id) => {
+        const { history } = get();
+        set({ history: history.filter((e) => e.id !== id) });
+      },
+
+      reset: () => {
+        const { history } = get();
+        set({ ...activeStateInitial, history });
+      },
     }),
-    { name: 'pocket-draft-v0.3' },
+    { name: 'pocket-draft-v0.4' },
   ),
 );
 
-export function derivePhase(s: Pick<State, 'pickIds' | 'offerIds' | 'deckFinalized'>): Phase {
+export function derivePhase(
+  s: Pick<State, 'pickIds' | 'offerIds' | 'shopFinalized' | 'deckFinalized'>,
+): Phase {
   if (s.pickIds.length === 0 && s.offerIds.length === 0) return 'unstarted';
   if (s.pickIds.length < TOTAL_PACKS) return 'drafting';
+  if (!s.shopFinalized) return 'shop';
   if (!s.deckFinalized) return 'deckbuild';
   return 'review';
 }

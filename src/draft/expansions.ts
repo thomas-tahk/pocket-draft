@@ -12,7 +12,7 @@ import type { Card } from '../types/card';
 // id, and the 2x cap is enforced by *name* at the deck level (so two A1/A2b
 // Charizard ex collapse to a single name with two slots).
 
-export type CollectionSource = 'drafted' | 'under-evo' | 'universal';
+export type CollectionSource = 'drafted' | 'shop' | 'under-evo' | 'universal';
 
 export type CollectionEntry = {
   card: Card;
@@ -24,6 +24,7 @@ export { COPY_CAP_BY_NAME };
 
 export function buildCollection(
   picks: Card[],
+  shopPurchases: Card[],
   fullPool: Card[],
   universals: Card[],
 ): CollectionEntry[] {
@@ -42,11 +43,18 @@ export function buildCollection(
     entries.set(p.name, { card: p, source: 'drafted' });
   }
 
-  // 2. Under-evolutions of each drafted Pokémon. Walk the evolvesFrom chain
-  //    backwards until we hit Basic.
-  const draftedPokemonNames = picks
+  // 1b. Shop purchases — additions to the collection (1 ticket each).
+  for (const s of shopPurchases) {
+    if (entries.has(s.name)) continue;
+    entries.set(s.name, { card: s, source: 'shop' });
+  }
+
+  // 2. Under-evolutions of each drafted Pokémon and each shop-purchased
+  //    Pokémon. Walk the evolvesFrom chain backwards.
+  const seedNames = [...picks, ...shopPurchases]
     .filter((p) => p.cardType !== 'Trainer')
     .map((p) => p.name);
+  const draftedPokemonNames = seedNames;
 
   const visited = new Set<string>(draftedPokemonNames);
   const queue: string[] = [...draftedPokemonNames];

@@ -15,6 +15,7 @@ import { CardPreview } from './CardPreview';
 
 type Props = {
   picks: Card[];
+  purchases: Card[];
   fullPool: Card[];
   universals: Card[];
   deck: Record<string, number>;
@@ -26,14 +27,16 @@ type Props = {
 
 const SOURCE_LABEL: Record<CollectionSource, string> = {
   drafted: 'Your draft',
+  shop: 'Shop purchases',
   'under-evo': 'Free expansions (under-evolutions)',
   universal: 'Free universals',
 };
 
-const SOURCE_ORDER: CollectionSource[] = ['drafted', 'under-evo', 'universal'];
+const SOURCE_ORDER: CollectionSource[] = ['drafted', 'shop', 'under-evo', 'universal'];
 
 export function DeckbuildView({
   picks,
+  purchases,
   fullPool,
   universals,
   deck,
@@ -45,8 +48,8 @@ export function DeckbuildView({
   const [hovered, setHovered] = useState<Card | null>(null);
 
   const collection = useMemo(
-    () => buildCollection(picks, fullPool, universals),
-    [picks, fullPool, universals],
+    () => buildCollection(picks, purchases, fullPool, universals),
+    [picks, purchases, fullPool, universals],
   );
 
   const idToCard = useMemo(() => {
@@ -59,6 +62,7 @@ export function DeckbuildView({
   const grouped = useMemo(() => {
     const g: Record<CollectionSource, CollectionEntry[]> = {
       drafted: [],
+      shop: [],
       'under-evo': [],
       universal: [],
     };

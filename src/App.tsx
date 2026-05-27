@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { loadCardPool, type CardPool } from './data';
 import { DraftView } from './components/DraftView';
+import { ShopView } from './components/ShopView';
 import { DeckbuildView } from './components/DeckbuildView';
 import { ReviewView } from './components/ReviewView';
-import { derivePhase, TOTAL_PACKS, useDraftStore } from './stores/draftStore';
+import { HistoryView } from './components/HistoryView';
+import { derivePhase, HISTORY_CAP, TOTAL_PACKS, useDraftStore } from './stores/draftStore';
 import type { Card } from './types/card';
 
 export function App() {
   const [pool, setPool] = useState<CardPool | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   useEffect(() => {
     loadCardPool().then(setPool).catch((e) => setError(String(e)));
@@ -17,13 +20,21 @@ export function App() {
   const {
     pickIds,
     offerIds,
+    shopPurchasedIds,
+    shopFinalized,
     deck,
     deckFinalized,
+    history,
     start,
     pick,
+    purchase,
+    unpurchase,
+    finalizeShop,
     addToDeck,
     removeFromDeck,
     finalizeDeck,
+    updateHistoryEntry,
+    deleteHistoryEntry,
     reset,
   } = useDraftStore();
 
@@ -32,7 +43,13 @@ export function App() {
     return new Map(pool.draftableCards.map((c) => [c.id, c]));
   }, [pool]);
 
-  // Picks may reference cards that come from the draftable pool only.
+  const fullById = useMemo(() => {
+    if (!pool) return new Map<string, Card>();
+    const m = new Map<string, Card>();
+    for (const c of pool.fullCards) m.set(c.id, c);
+    return m;
+  }, [pool]);
+
   const picks = useMemo(
     () => pickIds.map((id) => draftableById.get(id)).filter((c): c is Card => Boolean(c)),
     [pickIds, draftableById],
@@ -43,10 +60,27 @@ export function App() {
     [offerIds, draftableById],
   );
 
-  const phase = derivePhase({ pickIds, offerIds, deckFinalized });
+  const purchases = useMemo(
+    () => shopPurchasedIds.map((id) => fullById.get(id)).filter((c): c is Card => Boolean(c)),
+    [shopPurchasedIds, fullById],
+  );
+
+  const phase = derivePhase({ pickIds, offerIds, shopFinalized, deckFinalized });
 
   if (error) return <main style={{ padding: 24 }}>Error: {error}</main>;
   if (!pool) return <main style={{ padding: 24 }}>Loading card data…</main>;
+
+  if (historyOpen) {
+    return (
+      <HistoryView
+        history={history}
+        pool={pool}
+        onClose={() => setHistoryOpen(false)}
+        onUpdate={updateHistoryEntry}
+        onDelete={deleteHistoryEntry}
+      />
+    );
+  }
 
   if (phase === 'unstarted') {
     return (
@@ -56,12 +90,18 @@ export function App() {
           {pool.draftableCards.length} draftable cards (final-evolution Pokémon and Trainers).
         </p>
         <p style={{ opacity: 0.6, fontSize: 13 }}>
-          {TOTAL_PACKS} rounds. Pick one card from each pack to build your collection — then choose
-          your 20-card deck.
+          {TOTAL_PACKS} rounds → shop → choose your 20-card deck.
         </p>
         <button style={{ fontSize: 16, padding: '8px 20px' }} onClick={() => start(pool.draftableCards)}>
           Start draft
         </button>
+        {history.length > 0 && (
+          <div style={{ marginTop: 24 }}>
+            <button onClick={() => setHistoryOpen(true)} style={{ fontSize: 13 }}>
+              View past drafts ({history.length} / {HISTORY_CAP})
+            </button>
+          </div>
+        )}
       </main>
     );
   }
@@ -78,10 +118,25 @@ export function App() {
     );
   }
 
+  if (phase === 'shop') {
+    return (
+      <ShopView
+        picks={picks}
+        fullPool={pool.fullCards}
+        purchasedIds={shopPurchasedIds}
+        onPurchase={purchase}
+        onUnpurchase={unpurchase}
+        onFinalize={finalizeShop}
+        onCancel={reset}
+      />
+    );
+  }
+
   if (phase === 'deckbuild') {
     return (
       <DeckbuildView
         picks={picks}
+        purchases={purchases}
         fullPool={pool.fullCards}
         universals={pool.universals}
         deck={deck}
