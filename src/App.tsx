@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { loadCardPool, type CardPool } from './data';
 import { DraftView } from './components/DraftView';
-import { ShopView } from './components/ShopView';
+import { DeckbuildView } from './components/DeckbuildView';
 import { ReviewView } from './components/ReviewView';
 import { derivePhase, TOTAL_PACKS, useDraftStore } from './stores/draftStore';
 import type { Card } from './types/card';
@@ -17,36 +17,33 @@ export function App() {
   const {
     pickIds,
     offerIds,
-    packOffers,
-    shopPurchasedIds,
-    shopFinalized,
+    deck,
+    deckFinalized,
     start,
     pick,
-    purchase,
-    unpurchase,
-    finalizeShop,
+    addToDeck,
+    removeFromDeck,
+    finalizeDeck,
     reset,
   } = useDraftStore();
 
-  const byId = useMemo(() => {
+  const draftableById = useMemo(() => {
     if (!pool) return new Map<string, Card>();
     return new Map(pool.draftableCards.map((c) => [c.id, c]));
   }, [pool]);
 
+  // Picks may reference cards that come from the draftable pool only.
   const picks = useMemo(
-    () => pickIds.map((id) => byId.get(id)).filter((c): c is Card => Boolean(c)),
-    [pickIds, byId],
-  );
-  const offer = useMemo(
-    () => offerIds.map((id) => byId.get(id)).filter((c): c is Card => Boolean(c)),
-    [offerIds, byId],
-  );
-  const purchased = useMemo(
-    () => shopPurchasedIds.map((id) => byId.get(id)).filter((c): c is Card => Boolean(c)),
-    [shopPurchasedIds, byId],
+    () => pickIds.map((id) => draftableById.get(id)).filter((c): c is Card => Boolean(c)),
+    [pickIds, draftableById],
   );
 
-  const phase = derivePhase({ pickIds, offerIds, shopFinalized });
+  const offer = useMemo(
+    () => offerIds.map((id) => draftableById.get(id)).filter((c): c is Card => Boolean(c)),
+    [offerIds, draftableById],
+  );
+
+  const phase = derivePhase({ pickIds, offerIds, deckFinalized });
 
   if (error) return <main style={{ padding: 24 }}>Error: {error}</main>;
   if (!pool) return <main style={{ padding: 24 }}>Loading card data…</main>;
@@ -56,10 +53,11 @@ export function App() {
       <main style={{ padding: 24, maxWidth: 720, margin: '0 auto', textAlign: 'center' }}>
         <h1>Pocket Draft</h1>
         <p style={{ opacity: 0.75 }}>
-          {pool.draftableCards.length} draftable cards across {pool.sets.length} sets.
+          {pool.draftableCards.length} draftable cards (final-evolution Pokémon and Trainers).
         </p>
         <p style={{ opacity: 0.6, fontSize: 13 }}>
-          {TOTAL_PACKS} rounds. Each round shows 5 cards — pick one. Then a quick shop, then your finished deck.
+          {TOTAL_PACKS} rounds. Pick one card from each pack to build your collection — then choose
+          your 20-card deck.
         </p>
         <button style={{ fontSize: 16, padding: '8px 20px' }} onClick={() => start(pool.draftableCards)}>
           Start draft
@@ -80,21 +78,20 @@ export function App() {
     );
   }
 
-  if (phase === 'shop') {
+  if (phase === 'deckbuild') {
     return (
-      <ShopView
-        pool={pool.draftableCards}
+      <DeckbuildView
         picks={picks}
-        packOffers={packOffers}
-        pickIds={pickIds}
-        purchasedIds={shopPurchasedIds}
-        onPurchase={purchase}
-        onUnpurchase={unpurchase}
-        onFinalize={finalizeShop}
+        fullPool={pool.fullCards}
+        universals={pool.universals}
+        deck={deck}
+        onAdd={addToDeck}
+        onRemove={removeFromDeck}
+        onFinalize={finalizeDeck}
         onCancel={reset}
       />
     );
   }
 
-  return <ReviewView picks={picks} purchased={purchased} onReset={reset} />;
+  return <ReviewView pool={pool} deck={deck} onReset={reset} />;
 }

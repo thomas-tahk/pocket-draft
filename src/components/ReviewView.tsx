@@ -1,10 +1,12 @@
+import { useMemo } from 'react';
 import type { Card, EnergyType } from '../types/card';
+import type { CardPool } from '../data';
 import { tallyTypes } from '../draft/weights';
 import { CardTile } from './CardTile';
 
 type Props = {
-  picks: Card[];
-  purchased: Card[];
+  pool: CardPool;
+  deck: Record<string, number>;
   onReset: () => void;
 };
 
@@ -18,39 +20,48 @@ function download(filename: string, content: string) {
   URL.revokeObjectURL(url);
 }
 
-export function ReviewView({ picks, purchased, onReset }: Props) {
-  const all = [...picks, ...purchased];
-  const tally = tallyTypes(all);
+export function ReviewView({ pool, deck, onReset }: Props) {
+  const idToCard = useMemo(() => {
+    const m = new Map<string, Card>();
+    for (const c of pool.fullCards) m.set(c.id, c);
+    for (const c of pool.universals) m.set(c.id, c);
+    return m;
+  }, [pool]);
+
+  const deckCards: { card: Card; count: number }[] = useMemo(() => {
+    const out: { card: Card; count: number }[] = [];
+    for (const [cardId, count] of Object.entries(deck)) {
+      const c = idToCard.get(cardId);
+      if (c) out.push({ card: c, count });
+    }
+    return out.sort((a, b) => {
+      // Pokemon first, then Trainers, then by name.
+      const aT = a.card.cardType === 'Trainer' ? 1 : 0;
+      const bT = b.card.cardType === 'Trainer' ? 1 : 0;
+      if (aT !== bT) return aT - bT;
+      return a.card.name.localeCompare(b.card.name);
+    });
+  }, [deck, idToCard]);
+
+  const flatForTally = useMemo(() => {
+    const out: Card[] = [];
+    for (const { card, count } of deckCards) {
+      for (let i = 0; i < count; i++) out.push(card);
+    }
+    return out;
+  }, [deckCards]);
+
+  const tally = tallyTypes(flatForTally);
   const sortedTally = (Object.entries(tally) as [EnergyType, number][])
     .sort((a, b) => b[1] - a[1]);
 
-  const exportPayload = {
-    version: 'v0.2',
-    timestamp: new Date().toISOString(),
-    pickIds: picks.map((c) => c.id),
-    purchasedIds: purchased.map((c) => c.id),
-  };
+  const total = deckCards.reduce((s, { count }) => s + count, 0);
 
-  const Section = ({ title, cards }: { title: string; cards: Card[] }) =>
-    cards.length === 0 ? null : (
-      <section style={{ marginTop: 20 }}>
-        <h2 style={{ fontSize: 14, opacity: 0.75, margin: '0 0 8px' }}>
-          {title} ({cards.length})
-        </h2>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(5, 1fr)',
-            gap: 8,
-            alignItems: 'start',
-          }}
-        >
-          {cards.map((c, i) => (
-            <CardTile key={`${c.id}-${i}`} card={c} size="lg" />
-          ))}
-        </div>
-      </section>
-    );
+  const exportPayload = {
+    version: 'v0.3',
+    timestamp: new Date().toISOString(),
+    deck: deckCards.map(({ card, count }) => ({ id: card.id, name: card.name, count })),
+  };
 
   return (
     <main style={{ padding: '16px 24px', maxWidth: 1100, margin: '0 auto' }}>
@@ -62,7 +73,7 @@ export function ReviewView({ picks, purchased, onReset }: Props) {
           marginBottom: 8,
         }}
       >
-        <h1 style={{ fontSize: 20, margin: 0 }}>Draft complete</h1>
+        <h1 style={{ fontSize: 20, margin: 0 }}>Deck finalized</h1>
         <div style={{ display: 'flex', gap: 8 }}>
           <button
             onClick={() =>
@@ -75,12 +86,24 @@ export function ReviewView({ picks, purchased, onReset }: Props) {
         </div>
       </header>
 
-      <div style={{ fontSize: 13, opacity: 0.75 }}>
-        {all.length} cards · {sortedTally.map(([t, n]) => `${t} ×${n}`).join('  ')}
+      <div style={{ fontSize: 13, opacity: 0.75, marginBottom: 16 }}>
+        {total} cards · {sortedTally.map(([t, n]) => `${t} ×${n}`).join('  ')}
       </div>
 
-      <Section title="Drafted" cards={picks} />
-      <Section title="Purchased" cards={purchased} />
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(5, 1fr)',
+          gap: 8,
+          alignItems: 'start',
+        }}
+      >
+        {deckCards.flatMap(({ card, count }) =>
+          Array.from({ length: count }).map((_, i) => (
+            <CardTile key={`${card.id}-${i}`} card={card} size="lg" />
+          )),
+        )}
+      </div>
     </main>
   );
 }

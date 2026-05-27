@@ -4,8 +4,9 @@ import { enrich, isCosmeticVariant } from './rarity';
 const CARDS_URL = '/data/cards.json';
 const SETS_URL = '/data/sets.json';
 
-// Decision 1.A: free universals are deckbuild-only, exclude from draft pool.
-const FREE_UNIVERSAL_NAMES = new Set([
+// Free universals: excluded from the draft pool (Decision 1.A) but freely
+// available at deckbuild via getFreeUniversals(), subject to the 2x copy cap.
+export const FREE_UNIVERSAL_NAMES = new Set([
   'Potion',
   'X Speed',
   'Red Card',
@@ -97,4 +98,21 @@ export function toFullCardPool(raw: RawCard[]): Card[] {
     .map(enrich)
     .filter((c): c is Card => c !== null);
   return dedupePromoRayquaza(enriched).sort((a, b) => (a.id < b.id ? -1 : 1));
+}
+
+// Free universals are filtered out of the draft pool but always available at
+// deckbuild. One enriched entry per name (lowest-id variant wins on dedup).
+export function getFreeUniversals(raw: RawCard[]): Card[] {
+  const candidates = raw
+    .filter((c) => FREE_UNIVERSAL_NAMES.has(c.name))
+    .filter((c) => c.setId !== 'A4b')
+    .filter((c) => !isCosmeticVariant(c.rarity))
+    .map(enrich)
+    .filter((c): c is Card => c !== null);
+  const byName = new Map<string, Card>();
+  for (const c of candidates) {
+    const existing = byName.get(c.name);
+    if (!existing || c.id < existing.id) byName.set(c.name, c);
+  }
+  return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name));
 }

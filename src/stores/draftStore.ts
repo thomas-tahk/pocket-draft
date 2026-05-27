@@ -5,24 +5,24 @@ import { generateOffer } from '../draft/offer';
 import { indexByTier } from '../draft/tiers';
 
 export const TOTAL_PACKS = 20;
-export const SHOP_TICKETS = 3;
+export const DECK_SIZE = 20;
 
-export type Phase = 'unstarted' | 'drafting' | 'shop' | 'review';
+export type Phase = 'unstarted' | 'drafting' | 'deckbuild' | 'review';
 
 type State = {
   pickIds: string[];
   offerIds: string[];
   packOffers: string[][]; // history of full 5-card offers per completed pack
-  shopPurchasedIds: string[];
-  shopFinalized: boolean;
+  deck: Record<string, number>; // cardId → count (1 or 2)
+  deckFinalized: boolean;
 };
 
 type Actions = {
   start: (pool: Card[]) => void;
   pick: (cardId: string, pool: Card[]) => void;
-  purchase: (cardId: string) => void;
-  unpurchase: (cardId: string) => void;
-  finalizeShop: () => void;
+  addToDeck: (cardId: string) => void;
+  removeFromDeck: (cardId: string) => void;
+  finalizeDeck: () => void;
   reset: () => void;
 };
 
@@ -30,8 +30,8 @@ const initialState: State = {
   pickIds: [],
   offerIds: [],
   packOffers: [],
-  shopPurchasedIds: [],
-  shopFinalized: false,
+  deck: {},
+  deckFinalized: false,
 };
 
 export const useDraftStore = create<State & Actions>()(
@@ -70,32 +70,37 @@ export const useDraftStore = create<State & Actions>()(
         });
       },
 
-      purchase: (cardId) => {
-        const { shopPurchasedIds } = get();
-        if (shopPurchasedIds.includes(cardId)) return;
-        if (shopPurchasedIds.length >= SHOP_TICKETS) return;
-        set({ shopPurchasedIds: [...shopPurchasedIds, cardId] });
+      // Note: callers must enforce the 2x-by-name cap and deck-size limit before
+      // calling addToDeck — the store doesn't know about the card pool.
+      addToDeck: (cardId) => {
+        const { deck } = get();
+        const current = deck[cardId] ?? 0;
+        set({ deck: { ...deck, [cardId]: current + 1 } });
       },
 
-      unpurchase: (cardId) => {
-        const { shopPurchasedIds } = get();
-        set({ shopPurchasedIds: shopPurchasedIds.filter((id) => id !== cardId) });
+      removeFromDeck: (cardId) => {
+        const { deck } = get();
+        const current = deck[cardId] ?? 0;
+        if (current <= 1) {
+          const next = { ...deck };
+          delete next[cardId];
+          set({ deck: next });
+        } else {
+          set({ deck: { ...deck, [cardId]: current - 1 } });
+        }
       },
 
-      finalizeShop: () => set({ shopFinalized: true }),
+      finalizeDeck: () => set({ deckFinalized: true }),
 
       reset: () => set({ ...initialState }),
     }),
-    {
-      name: 'pocket-draft-v0.3',
-      // If the schema drifts again later, bump the name above and add a migrate fn.
-    },
+    { name: 'pocket-draft-v0.3' },
   ),
 );
 
-export function derivePhase(s: Pick<State, 'pickIds' | 'offerIds' | 'shopFinalized'>): Phase {
+export function derivePhase(s: Pick<State, 'pickIds' | 'offerIds' | 'deckFinalized'>): Phase {
   if (s.pickIds.length === 0 && s.offerIds.length === 0) return 'unstarted';
   if (s.pickIds.length < TOTAL_PACKS) return 'drafting';
-  if (!s.shopFinalized) return 'shop';
+  if (!s.deckFinalized) return 'deckbuild';
   return 'review';
 }
