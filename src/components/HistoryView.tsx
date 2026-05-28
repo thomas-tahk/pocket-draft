@@ -3,8 +3,8 @@ import type { Card, EnergyType } from '../types/card';
 import type { CardPool } from '../data';
 import type { DraftHistoryEntry } from '../stores/draftStore';
 import { tallyTypes } from '../draft/weights';
-import { CardTile } from './CardTile';
-import { CardPreview } from './CardPreview';
+import { CardTile, type HoverPayload } from './CardTile';
+import { CardPreview, type HoverState } from './CardPreview';
 
 type Props = {
   history: DraftHistoryEntry[];
@@ -19,7 +19,8 @@ type Props = {
 
 export function HistoryView({ history, pool, onClose, onUpdate, onDelete }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [hovered, setHovered] = useState<Card | null>(null);
+  const [hover, setHover] = useState<HoverState>(null);
+  const handleHover = (p: HoverPayload | null) => setHover(p);
 
   const idToCard = useMemo(() => {
     const m = new Map<string, Card>();
@@ -144,7 +145,7 @@ export function HistoryView({ history, pool, onClose, onUpdate, onDelete }: Prop
             >
               {deckCards.flatMap(({ card, count }) =>
                 Array.from({ length: count }).map((_, i) => (
-                  <CardTile key={`${card.id}-${i}`} card={card} size="sm" onHover={setHovered} />
+                  <CardTile key={`${card.id}-${i}`} card={card} size="sm" onHover={handleHover} />
                 )),
               )}
             </div>
@@ -174,7 +175,7 @@ export function HistoryView({ history, pool, onClose, onUpdate, onDelete }: Prop
         history.map(renderEntry)
       )}
 
-      <CardPreview card={hovered} />
+      <CardPreview hover={hover} />
     </main>
   );
 }

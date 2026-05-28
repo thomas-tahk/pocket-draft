@@ -1,9 +1,15 @@
+import type { MouseEvent } from 'react';
 import type { Card } from '../types/card';
+
+export type HoverPayload = {
+  card: Card;
+  position: { x: number; y: number };
+};
 
 type Props = {
   card: Card;
   onPick?: () => void;
-  onHover?: (card: Card | null) => void;
+  onHover?: (payload: HoverPayload | null) => void;
   size?: 'lg' | 'sm';
 };
 
@@ -11,9 +17,14 @@ export function CardTile({ card, onPick, onHover, size = 'lg' }: Props) {
   const width = size === 'lg' ? 180 : 84;
   const Tag = onPick ? 'button' : 'div';
 
+  const trackHover = (e: MouseEvent) => {
+    onHover?.({ card, position: { x: e.clientX, y: e.clientY } });
+  };
+
   const handlers = onHover
     ? {
-        onMouseEnter: () => onHover(card),
+        onMouseEnter: trackHover,
+        onMouseMove: trackHover,
         onMouseLeave: () => onHover(null),
       }
     : {};
@@ -26,10 +37,9 @@ export function CardTile({ card, onPick, onHover, size = 'lg' }: Props) {
       style={{
         all: 'unset',
         cursor: onPick ? 'pointer' : 'default',
-        display: 'inline-block',
+        display: 'block',
         width,
         textAlign: 'center',
-        margin: 2,
       }}
     >
       <img

@@ -148,5 +148,12 @@ export function App() {
     );
   }
 
-  return <ReviewView pool={pool} deck={deck} onReset={reset} />;
+  return (
+    <ReviewView
+      pool={pool}
+      deck={deck}
+      onNewDraft={() => start(pool.draftableCards)}
+      onHome={reset}
+    />
+  );
 }

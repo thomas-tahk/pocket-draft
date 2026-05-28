@@ -1,13 +1,15 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { Card, EnergyType } from '../types/card';
 import type { CardPool } from '../data';
 import { tallyTypes } from '../draft/weights';
-import { CardTile } from './CardTile';
+import { CardTile, type HoverPayload } from './CardTile';
+import { CardPreview, type HoverState } from './CardPreview';
 
 type Props = {
   pool: CardPool;
   deck: Record<string, number>;
-  onReset: () => void;
+  onNewDraft: () => void;
+  onHome: () => void;
 };
 
 function download(filename: string, content: string) {
@@ -20,7 +22,10 @@ function download(filename: string, content: string) {
   URL.revokeObjectURL(url);
 }
 
-export function ReviewView({ pool, deck, onReset }: Props) {
+export function ReviewView({ pool, deck, onNewDraft, onHome }: Props) {
+  const [hover, setHover] = useState<HoverState>(null);
+  const handleHover = (p: HoverPayload | null) => setHover(p);
+
   const idToCard = useMemo(() => {
     const m = new Map<string, Card>();
     for (const c of pool.fullCards) m.set(c.id, c);
@@ -35,7 +40,6 @@ export function ReviewView({ pool, deck, onReset }: Props) {
       if (c) out.push({ card: c, count });
     }
     return out.sort((a, b) => {
-      // Pokemon first, then Trainers, then by name.
       const aT = a.card.cardType === 'Trainer' ? 1 : 0;
       const bT = b.card.cardType === 'Trainer' ? 1 : 0;
       if (aT !== bT) return aT - bT;
@@ -54,23 +58,30 @@ export function ReviewView({ pool, deck, onReset }: Props) {
   const tally = tallyTypes(flatForTally);
   const sortedTally = (Object.entries(tally) as [EnergyType, number][])
     .sort((a, b) => b[1] - a[1]);
-
   const total = deckCards.reduce((s, { count }) => s + count, 0);
 
   const exportPayload = {
-    version: 'v0.3',
+    version: 'v0.4',
     timestamp: new Date().toISOString(),
     deck: deckCards.map(({ card, count }) => ({ id: card.id, name: card.name, count })),
   };
 
   return (
-    <main style={{ padding: '16px 24px', maxWidth: 1100, margin: '0 auto' }}>
+    <main style={{ padding: '0 24px 24px', maxWidth: 1100, margin: '0 auto' }}>
       <header
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'baseline',
+          padding: '16px 0',
           marginBottom: 8,
+          position: 'sticky',
+          top: 0,
+          background: 'var(--surface)',
+          zIndex: 5,
+          borderBottom: '1px solid #8882',
+          gap: 12,
+          flexWrap: 'wrap',
         }}
       >
         <h1 style={{ fontSize: 20, margin: 0 }}>Deck finalized</h1>
@@ -82,7 +93,10 @@ export function ReviewView({ pool, deck, onReset }: Props) {
           >
             Export JSON
           </button>
-          <button onClick={onReset}>New draft</button>
+          <button onClick={onNewDraft}>Start new draft</button>
+          <button onClick={onHome} style={{ fontSize: 12 }}>
+            Home
+          </button>
         </div>
       </header>
 
@@ -93,17 +107,20 @@ export function ReviewView({ pool, deck, onReset }: Props) {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(5, 1fr)',
-          gap: 8,
+          gridTemplateColumns: 'repeat(auto-fill, 180px)',
+          justifyContent: 'start',
+          gap: 12,
           alignItems: 'start',
         }}
       >
         {deckCards.flatMap(({ card, count }) =>
           Array.from({ length: count }).map((_, i) => (
-            <CardTile key={`${card.id}-${i}`} card={card} size="lg" />
+            <CardTile key={`${card.id}-${i}`} card={card} size="lg" onHover={handleHover} />
           )),
         )}
       </div>
+
+      <CardPreview hover={hover} />
     </main>
   );
 }

@@ -1,16 +1,13 @@
 import type { Card } from '../types/card';
+import { distinctFunctionalVariants } from '../data/signature';
 
 // SWUCUBE-style free expansions at deckbuild:
-//  - For each drafted Pokémon: every under-evolution in its chain becomes
-//    freely deckbuild-eligible (the drafted Charizard ex grants Charmander
-//    and Charmeleon, which are not draftable themselves).
-//  - 2nd copies are implicit via the 2x copy cap applied uniformly.
-//  - Free universals (Pokeball, Prof's Research, X Speed, Potion, Red Card)
-//    are always present.
-//
-// Same-name variants are not unified here — each card stays as its own variant
-// id, and the 2x cap is enforced by *name* at the deck level (so two A1/A2b
-// Charizard ex collapse to a single name with two slots).
+//   - For each drafted/purchased Pokémon: every under-evolution in the
+//     evolves-from chain becomes deckbuild-eligible. All distinct functional
+//     variants surface (so multiple mechanical Eevee printings can all be
+//     chosen between, capped together at the 2x by-name limit).
+//   - The five free universals are always present.
+//   - 2nd copies are implicit via the uniform 2x copy cap.
 
 export type CollectionSource = 'drafted' | 'shop' | 'under-evo' | 'universal';
 
@@ -35,65 +32,61 @@ export function buildCollection(
     byName.set(c.name, list);
   }
 
-  const entries = new Map<string, CollectionEntry>(); // keyed by name
+  const entries: CollectionEntry[] = [];
+  const seenIds = new Set<string>();
+
+  const tryAdd = (card: Card, source: CollectionSource) => {
+    if (seenIds.has(card.id)) return;
+    seenIds.add(card.id);
+    entries.push({ card, source });
+  };
 
   // 1. Drafted picks — keep the actual variant the player drafted.
-  for (const p of picks) {
-    if (entries.has(p.name)) continue;
-    entries.set(p.name, { card: p, source: 'drafted' });
-  }
+  for (const p of picks) tryAdd(p, 'drafted');
 
-  // 1b. Shop purchases — additions to the collection (1 ticket each).
-  for (const s of shopPurchases) {
-    if (entries.has(s.name)) continue;
-    entries.set(s.name, { card: s, source: 'shop' });
-  }
+  // 1b. Shop purchases.
+  for (const s of shopPurchases) tryAdd(s, 'shop');
 
-  // 2. Under-evolutions of each drafted Pokémon and each shop-purchased
-  //    Pokémon. Walk the evolvesFrom chain backwards.
+  // 2. Under-evolutions of each drafted/purchased Pokémon. Walk the
+  //    evolvesFrom chain backwards; at each predecessor name, surface ALL
+  //    distinct functional variants.
   const seedNames = [...picks, ...shopPurchases]
     .filter((p) => p.cardType !== 'Trainer')
     .map((p) => p.name);
-  const draftedPokemonNames = seedNames;
 
-  const visited = new Set<string>(draftedPokemonNames);
-  const queue: string[] = [...draftedPokemonNames];
+  const visited = new Set<string>(seedNames);
+  const queue: string[] = [...seedNames];
 
   while (queue.length > 0) {
     const current = queue.shift()!;
     const variantsOfCurrent = byName.get(current) ?? [];
-    // Find every distinct predecessor name (evolvesFrom field across variants).
     const predecessorNames = new Set<string>();
     for (const v of variantsOfCurrent) {
       if (v.evolvesFrom) predecessorNames.add(v.evolvesFrom);
     }
-
     for (const predName of predecessorNames) {
       if (visited.has(predName)) continue;
       visited.add(predName);
       queue.push(predName);
-
-      // Skip if already drafted (we'd lose the original drafted variant).
-      if (entries.has(predName)) continue;
       const predVariants = byName.get(predName) ?? [];
       if (predVariants.length === 0) continue;
-      // Lowest-id variant wins as the default. UI may let the user swap variants later.
-      const chosen = [...predVariants].sort((a, b) => a.id.localeCompare(b.id))[0];
-      entries.set(predName, { card: chosen, source: 'under-evo' });
+      const distinct = distinctFunctionalVariants(predVariants);
+      for (const v of distinct) tryAdd(v, 'under-evo');
     }
   }
 
   // 3. Free universals — always available.
-  for (const u of universals) {
-    if (entries.has(u.name)) continue;
-    entries.set(u.name, { card: u, source: 'universal' });
-  }
+  for (const u of universals) tryAdd(u, 'universal');
 
-  return [...entries.values()];
+  return entries;
 }
 
 // Helper: count how many cards in the deck share a given name.
-export function deckCountByName(deck: Record<string, number>, pool: Map<string, Card>, name: string): number {
+export function deckCountByName(
+  deck: Record<string, number>,
+  pool: Map<string, Card>,
+  name: string,
+): number {
   let n = 0;
   for (const [cardId, count] of Object.entries(deck)) {
     const card = pool.get(cardId);

@@ -10,8 +10,8 @@ import {
   type CollectionSource,
 } from '../draft/expansions';
 import { tallyTypes } from '../draft/weights';
-import { CardTile } from './CardTile';
-import { CardPreview } from './CardPreview';
+import { CardTile, type HoverPayload } from './CardTile';
+import { CardPreview, type HoverState } from './CardPreview';
 
 type Props = {
   picks: Card[];
@@ -45,7 +45,8 @@ export function DeckbuildView({
   onFinalize,
   onCancel,
 }: Props) {
-  const [hovered, setHovered] = useState<Card | null>(null);
+  const [hover, setHover] = useState<HoverState>(null);
+  const handleHover = (p: HoverPayload | null) => setHover(p);
 
   const collection = useMemo(
     () => buildCollection(picks, purchases, fullPool, universals),
@@ -115,9 +116,11 @@ export function DeckbuildView({
           borderRadius: 8,
           background: inDeck > 0 ? '#4c81' : 'transparent',
           outline: inDeck > 0 ? '2px solid #4c8' : 'none',
+          width: 180,
+          boxSizing: 'border-box',
         }}
       >
-        <CardTile card={entry.card} size="lg" onHover={setHovered} />
+        <CardTile card={entry.card} size="lg" onHover={handleHover} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
           <button
             onClick={() => onRemove(entry.card.id)}
@@ -152,7 +155,8 @@ export function DeckbuildView({
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, 180px)',
+            justifyContent: 'start',
             gap: 8,
             alignItems: 'start',
           }}
@@ -165,15 +169,21 @@ export function DeckbuildView({
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <main style={{ flex: 1, padding: '16px 24px', maxWidth: 1300 }}>
+      <main style={{ flex: 1, padding: '0 24px 24px', maxWidth: 1300 }}>
         <header
           style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'baseline',
+            padding: '16px 0',
             marginBottom: 8,
             gap: 12,
             flexWrap: 'wrap',
+            position: 'sticky',
+            top: 0,
+            background: 'var(--surface)',
+            zIndex: 5,
+            borderBottom: '1px solid #8882',
           }}
         >
           <h1 style={{ fontSize: 20, margin: 0 }}>Deckbuilding</h1>
@@ -207,7 +217,8 @@ export function DeckbuildView({
         </header>
         <p style={{ fontSize: 13, opacity: 0.6, marginTop: 0 }}>
           Build a deck of exactly {DECK_SIZE} cards. Max 2 of any card by name. Drafted Pokémon
-          unlock their under-evolutions for free; the 5 free universals are always available.
+          unlock their under-evolutions (all functional variants) for free; the 5 free universals
+          are always available.
         </p>
 
         {SOURCE_ORDER.map(renderSection)}
@@ -231,7 +242,14 @@ export function DeckbuildView({
         {deckCards.length === 0 ? (
           <p style={{ fontSize: 12, opacity: 0.5 }}>No cards yet.</p>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 84px)',
+              justifyContent: 'center',
+              gap: 4,
+            }}
+          >
             {deckCards.map(({ card, count }) =>
               Array.from({ length: count }).map((_, i) => (
                 <CardTile
@@ -239,7 +257,7 @@ export function DeckbuildView({
                   card={card}
                   size="sm"
                   onPick={() => onRemove(card.id)}
-                  onHover={setHovered}
+                  onHover={handleHover}
                 />
               )),
             )}
@@ -247,7 +265,7 @@ export function DeckbuildView({
         )}
       </aside>
 
-      <CardPreview card={hovered} />
+      <CardPreview hover={hover} />
     </div>
   );
 }

@@ -2,8 +2,8 @@ import { useMemo, useState } from 'react';
 import type { Card } from '../types/card';
 import { SHOP_TICKETS } from '../stores/draftStore';
 import { buildShopInventory } from '../shop/inventory';
-import { CardTile } from './CardTile';
-import { CardPreview } from './CardPreview';
+import { CardTile, type HoverPayload } from './CardTile';
+import { CardPreview, type HoverState } from './CardPreview';
 
 type Props = {
   picks: Card[];
@@ -24,16 +24,12 @@ export function ShopView({
   onFinalize,
   onCancel,
 }: Props) {
-  const [hovered, setHovered] = useState<Card | null>(null);
+  const [hover, setHover] = useState<HoverState>(null);
+  const handleHover = (p: HoverPayload | null) => setHover(p);
 
   const inventory = useMemo(() => buildShopInventory(picks, fullPool), [picks, fullPool]);
-
   const byId = useMemo(() => new Map(fullPool.map((c) => [c.id, c])), [fullPool]);
-
-  const purchased = purchasedIds
-    .map((id) => byId.get(id))
-    .filter((c): c is Card => Boolean(c));
-
+  const purchased = purchasedIds.map((id) => byId.get(id)).filter((c): c is Card => Boolean(c));
   const ticketsLeft = SHOP_TICKETS - purchasedIds.length;
 
   const handleClick = (card: Card) => {
@@ -52,8 +48,9 @@ export function ShopView({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))',
-          gap: 8,
+          gridTemplateColumns: 'repeat(auto-fill, 180px)',
+          justifyContent: 'start',
+          gap: 12,
           alignItems: 'start',
         }}
       >
@@ -68,14 +65,16 @@ export function ShopView({
                 outline: isPurchased ? '2px solid #4c8' : 'none',
                 outlineOffset: 2,
                 borderRadius: 10,
-                padding: 4,
+                padding: 2,
+                width: 180,
+                boxSizing: 'border-box',
               }}
             >
               <CardTile
                 card={c}
                 size="lg"
                 onPick={disabled ? undefined : () => handleClick(c)}
-                onHover={setHovered}
+                onHover={handleHover}
               />
               <div style={{ textAlign: 'center', fontSize: 11, opacity: 0.65, marginTop: 2 }}>
                 {isPurchased ? '✓ in collection' : '1 ticket'}
@@ -89,15 +88,21 @@ export function ShopView({
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <main style={{ flex: 1, padding: '16px 24px', maxWidth: 1300 }}>
+      <main style={{ flex: 1, padding: '0 24px 24px', maxWidth: 1300 }}>
         <header
           style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'baseline',
+            padding: '16px 0',
             marginBottom: 8,
             gap: 12,
             flexWrap: 'wrap',
+            position: 'sticky',
+            top: 0,
+            background: 'var(--surface)',
+            zIndex: 5,
+            borderBottom: '1px solid #8882',
           }}
         >
           <h1 style={{ fontSize: 20, margin: 0 }}>Shop</h1>
@@ -158,14 +163,15 @@ export function ShopView({
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
+            gridTemplateColumns: 'repeat(3, 84px)',
+            justifyContent: 'center',
             gap: 4,
             alignItems: 'start',
             marginBottom: 16,
           }}
         >
           {picks.map((c, i) => (
-            <CardTile key={`d-${c.id}-${i}`} card={c} size="sm" onHover={setHovered} />
+            <CardTile key={`d-${c.id}-${i}`} card={c} size="sm" onHover={handleHover} />
           ))}
         </div>
 
@@ -177,20 +183,21 @@ export function ShopView({
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
+                gridTemplateColumns: 'repeat(3, 84px)',
+                justifyContent: 'center',
                 gap: 4,
                 alignItems: 'start',
               }}
             >
               {purchased.map((c) => (
-                <CardTile key={`p-${c.id}`} card={c} size="sm" onHover={setHovered} />
+                <CardTile key={`p-${c.id}`} card={c} size="sm" onHover={handleHover} />
               ))}
             </div>
           </>
         )}
       </aside>
 
-      <CardPreview card={hovered} />
+      <CardPreview hover={hover} />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import type { Card, RawCard, SetInfo } from '../types/card';
 import { enrich, isCosmeticVariant } from './rarity';
+import { functionalDedupe } from './signature';
 
 const CARDS_URL = '/data/cards.json';
 const SETS_URL = '/data/sets.json';
@@ -87,7 +88,12 @@ export function toDraftablePool(raw: RawCard[]): Card[] {
     .filter((c): c is Card => c !== null);
   const deduped = dedupePromoRayquaza(enriched);
   const finalsOnly = filterToFinalEvolutions(deduped);
-  return finalsOnly.sort((a, b) => (a.id < b.id ? -1 : 1));
+  // Collapse same-name, same-functional-signature reprints across sets — keeps
+  // the pool free of "Charizard from set A, Charizard from set B" duplicates
+  // that play identically. Mechanically-distinct reprints (e.g. an Eevee with
+  // a different attack) stay as separate entries.
+  const funcDeduped = functionalDedupe(finalsOnly);
+  return funcDeduped.sort((a, b) => (a.id < b.id ? -1 : 1));
 }
 
 // The full enriched-but-unfiltered pool — used at deckbuild to grant free access
