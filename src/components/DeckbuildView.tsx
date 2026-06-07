@@ -94,15 +94,32 @@ export function DeckbuildView({
     (a, b) => b[1] - a[1],
   );
 
-  const canAdd = (entryCard: Card) => {
+  const shopCountById = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const p of purchases) m.set(p.id, (m.get(p.id) ?? 0) + 1);
+    return m;
+  }, [purchases]);
+
+  // Shop entries cap their deck contribution at the per-card ticket count
+  // (so 1 Erika ticket = max 1 Erika in deck, not 2). Other sources just
+  // observe the global 2x-by-name cap.
+  const capFor = (entry: CollectionEntry): number => {
+    if (entry.source === 'shop') {
+      return Math.min(COPY_CAP_BY_NAME, shopCountById.get(entry.card.id) ?? 0);
+    }
+    return COPY_CAP_BY_NAME;
+  };
+
+  const canAddEntry = (entry: CollectionEntry) => {
     if (size >= DECK_SIZE) return false;
-    return deckCountByName(deck, idToCard, entryCard.name) < COPY_CAP_BY_NAME;
+    return deckCountByName(deck, idToCard, entry.card.name) < capFor(entry);
   };
 
   const renderEntry = (entry: CollectionEntry) => {
     const inDeck = deck[entry.card.id] ?? 0;
     const nameTotal = deckCountByName(deck, idToCard, entry.card.name);
-    const addDisabled = !canAdd(entry.card);
+    const cap = capFor(entry);
+    const addDisabled = !canAddEntry(entry);
 
     return (
       <div
@@ -130,7 +147,7 @@ export function DeckbuildView({
             −
           </button>
           <span style={{ opacity: 0.8 }}>
-            {nameTotal} / {COPY_CAP_BY_NAME}
+            {nameTotal} / {cap}
           </span>
           <button
             onClick={() => onAdd(entry.card.id)}

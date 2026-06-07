@@ -56,7 +56,7 @@ Inspired by the **SWUCUBE** cube draft format (see `swucube-rules.md`) — origi
 
 After the draft, players spend a flat allotment of **4 tickets** (starting value — adjust through playtesting) on the shop.
 
-Each card costs 1 ticket. Tickets cannot be saved or carried over.
+Each ticket buys **one deck copy** of a chosen card. Spend two tickets on the same card to lock in 2 deck slots, or spread them across up to 4 different cards. Per-card cap is the global 2-copy-by-name limit (max 2 tickets on any one card). Tickets can't be saved or carried over.
 
 ### Staple shelf
 - A fixed list of ~10–12 essential Trainer cards always available (e.g. Cyrus, Sabrina, Repel, Copycat).

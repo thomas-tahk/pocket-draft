@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import type { Card } from '../types/card';
 import { generateOffer } from '../draft/offer';
 import { indexByTier } from '../draft/tiers';
+import { COPY_CAP_BY_NAME } from '../draft/expansions';
 
 export const TOTAL_PACKS = 16;
 export const DECK_SIZE = 20;
@@ -105,14 +106,22 @@ export const useDraftStore = create<State & Actions>()(
 
       purchase: (cardId) => {
         const { shopPurchasedIds } = get();
-        if (shopPurchasedIds.includes(cardId)) return;
         if (shopPurchasedIds.length >= SHOP_TICKETS) return;
+        const sameCount = shopPurchasedIds.filter((id) => id === cardId).length;
+        if (sameCount >= COPY_CAP_BY_NAME) return;
         set({ shopPurchasedIds: [...shopPurchasedIds, cardId] });
       },
 
       unpurchase: (cardId) => {
         const { shopPurchasedIds } = get();
-        set({ shopPurchasedIds: shopPurchasedIds.filter((id) => id !== cardId) });
+        const idx = shopPurchasedIds.lastIndexOf(cardId);
+        if (idx === -1) return;
+        set({
+          shopPurchasedIds: [
+            ...shopPurchasedIds.slice(0, idx),
+            ...shopPurchasedIds.slice(idx + 1),
+          ],
+        });
       },
 
       finalizeShop: () => set({ shopFinalized: true }),

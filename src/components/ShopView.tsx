@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { Card } from '../types/card';
 import { SHOP_TICKETS } from '../stores/draftStore';
+import { COPY_CAP_BY_NAME } from '../draft/expansions';
 import { buildShopInventory } from '../shop/inventory';
 import { CardTile, type HoverPayload } from './CardTile';
 import { CardPreview, type HoverState } from './CardPreview';
@@ -32,13 +33,11 @@ export function ShopView({
   const purchased = purchasedIds.map((id) => byId.get(id)).filter((c): c is Card => Boolean(c));
   const ticketsLeft = SHOP_TICKETS - purchasedIds.length;
 
-  const handleClick = (card: Card) => {
-    if (purchasedIds.includes(card.id)) {
-      onUnpurchase(card.id);
-    } else if (ticketsLeft > 0) {
-      onPurchase(card.id);
-    }
-  };
+  const countById = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const id of purchasedIds) m.set(id, (m.get(id) ?? 0) + 1);
+    return m;
+  }, [purchasedIds]);
 
   const renderShelf = (cards: Card[]) => {
     if (cards.length === 0) {
@@ -55,14 +54,16 @@ export function ShopView({
         }}
       >
         {cards.map((c) => {
-          const isPurchased = purchasedIds.includes(c.id);
-          const disabled = !isPurchased && ticketsLeft === 0;
+          const count = countById.get(c.id) ?? 0;
+          const atPerCardCap = count >= COPY_CAP_BY_NAME;
+          const noTickets = ticketsLeft === 0;
+          const addDisabled = atPerCardCap || noTickets;
           return (
             <div
               key={c.id}
               style={{
-                opacity: disabled ? 0.4 : 1,
-                outline: isPurchased ? '2px solid #4c8' : 'none',
+                opacity: addDisabled && count === 0 ? 0.4 : 1,
+                outline: count > 0 ? '2px solid #4c8' : 'none',
                 outlineOffset: 2,
                 borderRadius: 10,
                 padding: 2,
@@ -70,14 +71,43 @@ export function ShopView({
                 boxSizing: 'border-box',
               }}
             >
-              <CardTile
-                card={c}
-                size="lg"
-                onPick={disabled ? undefined : () => handleClick(c)}
-                onHover={handleHover}
-              />
-              <div style={{ textAlign: 'center', fontSize: 11, opacity: 0.65, marginTop: 2 }}>
-                {isPurchased ? '✓ in collection' : '1 ticket'}
+              <CardTile card={c} size="lg" onHover={handleHover} />
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  fontSize: 12,
+                  marginTop: 4,
+                }}
+              >
+                <button
+                  onClick={() => onUnpurchase(c.id)}
+                  disabled={count === 0}
+                  style={{ minWidth: 28 }}
+                  aria-label="Remove one"
+                >
+                  −
+                </button>
+                <span style={{ opacity: 0.8, minWidth: 36, textAlign: 'center' }}>
+                  {count > 0 ? `×${count}` : '1 ticket'}
+                </span>
+                <button
+                  onClick={() => onPurchase(c.id)}
+                  disabled={addDisabled}
+                  style={{ minWidth: 28 }}
+                  aria-label="Add one"
+                  title={
+                    atPerCardCap
+                      ? `Max ${COPY_CAP_BY_NAME} of any card`
+                      : noTickets
+                        ? 'No tickets left'
+                        : ''
+                  }
+                >
+                  +
+                </button>
               </div>
             </div>
           );
@@ -101,7 +131,7 @@ export function ShopView({
             position: 'sticky',
             top: 0,
             background: 'var(--surface)',
-            zIndex: 5,
+            zIndex: 20,
             borderBottom: '1px solid #8882',
           }}
         >
@@ -126,8 +156,9 @@ export function ShopView({
           </div>
         </header>
         <p style={{ fontSize: 13, opacity: 0.6, marginTop: 0 }}>
-          1 ticket adds a card to your collection at the 2× copy cap. Tickets don't carry over.
-          Drafted-by-name cards aren't shown — you already have access to them.
+          Each ticket buys one deck copy of a card. Spend up to {COPY_CAP_BY_NAME} tickets on the
+          same card. Tickets don't carry over. Drafted-by-name cards aren't shown — you already
+          have access to them.
         </p>
 
         <section style={{ marginTop: 16 }}>
@@ -155,6 +186,8 @@ export function ShopView({
           position: 'sticky',
           top: 0,
           boxSizing: 'border-box',
+          background: 'var(--surface)',
+          zIndex: 10,
         }}
       >
         <div style={{ fontSize: 12, opacity: 0.6, marginBottom: 6 }}>
@@ -189,8 +222,8 @@ export function ShopView({
                 alignItems: 'start',
               }}
             >
-              {purchased.map((c) => (
-                <CardTile key={`p-${c.id}`} card={c} size="sm" onHover={handleHover} />
+              {purchased.map((c, i) => (
+                <CardTile key={`p-${c.id}-${i}`} card={c} size="sm" onHover={handleHover} />
               ))}
             </div>
           </>
