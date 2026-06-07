@@ -182,7 +182,7 @@ export function DeckbuildView({
             position: 'sticky',
             top: 0,
             background: 'var(--surface)',
-            zIndex: 5,
+            zIndex: 20,
             borderBottom: '1px solid #8882',
           }}
         >
@@ -217,8 +217,8 @@ export function DeckbuildView({
         </header>
         <p style={{ fontSize: 13, opacity: 0.6, marginTop: 0 }}>
           Build a deck of exactly {DECK_SIZE} cards. Max 2 of any card by name. Drafted Pokémon
-          unlock their under-evolutions (all functional variants) for free; the 5 free universals
-          are always available.
+          unlock their under-evolutions (all functional variants) for free; the 2 free universals
+          (Poké Ball, Professor's Research) are always available.
         </p>
 
         {SOURCE_ORDER.map(renderSection)}
@@ -234,6 +234,8 @@ export function DeckbuildView({
           position: 'sticky',
           top: 0,
           boxSizing: 'border-box',
+          background: 'var(--surface)',
+          zIndex: 10,
         }}
       >
         <div style={{ fontSize: 12, opacity: 0.6, marginBottom: 8 }}>
