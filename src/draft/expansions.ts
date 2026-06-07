@@ -6,7 +6,7 @@ import { distinctFunctionalVariants } from '../data/signature';
 //     evolves-from chain becomes deckbuild-eligible. All distinct functional
 //     variants surface (so multiple mechanical Eevee printings can all be
 //     chosen between, capped together at the 2x by-name limit).
-//   - The five free universals are always present.
+//   - The free universals (Poké Ball, Professor's Research) are always present.
 //   - 2nd copies are implicit via the uniform 2x copy cap.
 
 export type CollectionSource = 'drafted' | 'shop' | 'under-evo' | 'universal';

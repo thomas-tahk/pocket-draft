@@ -7,10 +7,10 @@ const SETS_URL = '/data/sets.json';
 
 // Free universals: excluded from the draft pool (Decision 1.A) but freely
 // available at deckbuild via getFreeUniversals(), subject to the 2x copy cap.
+// Trimmed 2026-06-04 from {Potion, X Speed, Red Card, Poké Ball, Prof's Research}
+// to just deck-scaffolding (draw/search); situational tempo Trainers (Potion,
+// X Speed, Red Card) re-enter the draft pool so they're meaningful picks.
 export const FREE_UNIVERSAL_NAMES = new Set([
-  'Potion',
-  'X Speed',
-  'Red Card',
   'Poké Ball',
   "Professor's Research",
 ]);

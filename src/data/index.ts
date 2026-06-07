@@ -12,7 +12,7 @@ export type CardPool = {
   allCards: RawCard[];
   draftableCards: Card[]; // pool from which packs are drawn (final-evos only)
   fullCards: Card[]; // includes under-evolutions; used at deckbuild
-  universals: Card[]; // the 5 free universal Trainers
+  universals: Card[]; // free universal Trainers (Poké Ball, Professor's Research)
   sets: SetInfo[];
   packs: Record<PackId, PackComposition>;
 };

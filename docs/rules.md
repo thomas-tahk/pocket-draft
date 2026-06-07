@@ -11,7 +11,7 @@ Inspired by the **SWUCUBE** cube draft format (see `swucube-rules.md`) — origi
 ## Session Structure
 
 ```
-1. Draft Phase       (20 rounds of pick 1-of-5)
+1. Draft Phase       (16 rounds of pick 1-of-5)
 2. Shop Phase        (spend flat tickets on staples + undrafted picks)
 3. Deckbuilding      (finalize 20-card deck, slot in free universals, cut)
 4. Run               (play games until win/loss threshold)
@@ -23,7 +23,7 @@ Inspired by the **SWUCUBE** cube draft format (see `swucube-rules.md`) — origi
 
 ### Pick structure
 - Each round, the player is offered **5 cards** and selects **1**.
-- This repeats **20 times**.
+- This repeats **16 times** (4×4 — homage to cube-draft sensibility).
 - Mirrors the 5-card pack structure and Wonder Pick mechanic from the actual game.
 - The draft is **solitary and asynchronous** — each player drafts independently with no timer and no dependency on any other player. Players may leave and return mid-draft at any point. Matchmaking happens after both players have completed their drafts.
 
@@ -32,7 +32,7 @@ Inspired by the **SWUCUBE** cube draft format (see `swucube-rules.md`) — origi
 - The player may pick it (establishing a build-around and energy direction) or pass on it (knowingly opting into a less directed draft).
 - This is a soft anchor — nothing is forced.
 
-### Type weighting (packs 2–20)
+### Type weighting (packs 2–16)
 - After each pick, the player's drafted energy type(s) are tracked.
 - Subsequent packs are **modestly weighted** toward the player's detected primary type(s). This is a nudge, not a lock — off-type cards still appear.
 - **Colorless Pokemon are always eligible** regardless of detected direction and are weighted as compatible with any type profile. This ensures archetypes like Dragonite (dual energy) and colorless-featured attackers remain naturally draftable.
@@ -54,7 +54,7 @@ Inspired by the **SWUCUBE** cube draft format (see `swucube-rules.md`) — origi
 
 ## 2. Shop Phase
 
-After the draft, players spend a flat allotment of **3 tickets** (starting value — adjust through playtesting) on the shop.
+After the draft, players spend a flat allotment of **4 tickets** (starting value — adjust through playtesting) on the shop.
 
 Each card costs 1 ticket. Tickets cannot be saved or carried over.
 
@@ -64,11 +64,11 @@ Each card costs 1 ticket. Tickets cannot be saved or carried over.
 - Same contents for every player every session.
 
 ### Undrafted shelf
-- 1 card selected from each of the 20 packs (the 4 unchosen cards per pack), scored and filtered by:
+- 1 card selected from each of the 16 packs (the 4 unchosen cards per pack), scored and filtered by:
   - Synergy with the player's drafted cards
   - Rarity weighting
-- Results in up to **20 candidates** from the undrafted pool.
-- Total shop pool: ~30–32 cards.
+- Results in up to **16 candidates** from the undrafted pool.
+- Total shop pool: ~26–28 cards.
 
 ### Shop purpose
 The shop is for **patching holes and minor upgrades only** — not redesigning the deck. The ticket cap enforces this. Target outcomes: ensuring access to at least 1–2 Supporters, filling a missing item slot, or adding a Pokemon that completes a line.
@@ -78,7 +78,7 @@ The shop is for **patching holes and minor upgrades only** — not redesigning t
 ## 3. Deckbuilding
 
 After the shop, players build their final **20-card deck** from:
-- Their 20 drafted cards
+- Their 16 drafted cards
 - Any cards acquired from the shop
 
 ### Copy limits
@@ -118,5 +118,5 @@ Players play games with their drafted deck until a win/loss threshold is reached
 
 - **Conquest format:** Players build 3 distinct decks and must win at least 1 game with each (see `swucube-rules.md`). Deferred — potential tournament mode after Arena is implemented.
 - **Additional free universals:** X Speed, Potion, Red Card — whether these are free TBD.
-- **Ticket count:** Starting at 3, to be tuned through playtesting.
+- **Ticket count:** Starting at 4, to be tuned through playtesting.
 - **Win/loss threshold:** Starting at 7W/3L, to be tuned through playtesting.

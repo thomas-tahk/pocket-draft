@@ -4,9 +4,9 @@ import type { Card } from '../types/card';
 import { generateOffer } from '../draft/offer';
 import { indexByTier } from '../draft/tiers';
 
-export const TOTAL_PACKS = 20;
+export const TOTAL_PACKS = 16;
 export const DECK_SIZE = 20;
-export const SHOP_TICKETS = 3;
+export const SHOP_TICKETS = 4;
 export const HISTORY_CAP = 7;
 
 export type Phase = 'unstarted' | 'drafting' | 'shop' | 'deckbuild' | 'review';
@@ -14,8 +14,8 @@ export type Phase = 'unstarted' | 'drafting' | 'shop' | 'deckbuild' | 'review';
 export type DraftHistoryEntry = {
   id: string; // ULID-ish: epoch ms + random suffix
   completedAt: string; // ISO string
-  pickIds: string[]; // 20 drafted picks (preserved for reference)
-  shopPurchasedIds: string[]; // 0..3 shop purchases
+  pickIds: string[]; // 16 drafted picks (preserved for reference)
+  shopPurchasedIds: string[]; // 0..4 shop purchases
   deck: Record<string, number>; // final 20-card deck (cardId → count)
   notes: string;
   wins: number;

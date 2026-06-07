@@ -44,9 +44,9 @@ export type OfferOptions = {
 // the same card twice in a single row of 5); duplicates across packs are allowed.
 //
 // Removed 2026-05-27: pack-1 EX-anchor (slot 5 was guaranteed Tier 1). The
-// pool-then-pick model accumulates 20 random picks into a collection, so a
-// guaranteed-EX hedge in pack 1 lost its purpose — across 20 packs you'll see
-// ~12 EX/Mega-EX offered organically at the tier weights below.
+// pool-then-pick model accumulates picks into a collection, so a guaranteed-EX
+// hedge in pack 1 lost its purpose — across many packs you'll see plenty of
+// EX/Mega-EX offered organically at the tier weights below.
 export function generateOffer(
   byTier: Record<Tier, Card[]>,
   { picks, rng = Math.random }: OfferOptions,
