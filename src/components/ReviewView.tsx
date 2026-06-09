@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import type { Card, EnergyType } from '../types/card';
 import type { CardPool } from '../data';
 import { tallyTypes } from '../draft/weights';
+import { encodeDeck } from '../share/deckCode';
 import { CardTile, type HoverPayload } from './CardTile';
 import { CardPreview, type HoverState } from './CardPreview';
 
@@ -24,7 +25,18 @@ function download(filename: string, content: string) {
 
 export function ReviewView({ pool, deck, onNewDraft, onHome }: Props) {
   const [hover, setHover] = useState<HoverState>(null);
+  const [copied, setCopied] = useState<string | null>(null);
   const handleHover = (p: HoverPayload | null) => setHover(p);
+
+  const deckCode = useMemo(() => encodeDeck(deck), [deck]);
+  const shareLink = `${location.origin}${location.pathname}?deck=${encodeURIComponent(deckCode)}`;
+
+  const copy = (text: string, label: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(label);
+      setTimeout(() => setCopied((c) => (c === label ? null : c)), 1500);
+    });
+  };
 
   const idToCard = useMemo(() => {
     const m = new Map<string, Card>();
@@ -86,6 +98,12 @@ export function ReviewView({ pool, deck, onNewDraft, onHome }: Props) {
       >
         <h1 style={{ fontSize: 20, margin: 0 }}>Deck finalized</h1>
         <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => copy(deckCode, 'code')}>
+            {copied === 'code' ? 'Copied!' : 'Copy code'}
+          </button>
+          <button onClick={() => copy(shareLink, 'link')}>
+            {copied === 'link' ? 'Copied!' : 'Copy link'}
+          </button>
           <button
             onClick={() =>
               download(`pocket-draft-${Date.now()}.json`, JSON.stringify(exportPayload, null, 2))

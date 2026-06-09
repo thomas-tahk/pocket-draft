@@ -4,14 +4,29 @@ import { DraftView } from './components/DraftView';
 import { ShopView } from './components/ShopView';
 import { DeckbuildView } from './components/DeckbuildView';
 import { ReviewView } from './components/ReviewView';
+import { SharedDeckView } from './components/SharedDeckView';
 import { HistoryView } from './components/HistoryView';
 import { derivePhase, HISTORY_CAP, TOTAL_PACKS, useDraftStore } from './stores/draftStore';
+import { decodeDeck, type Decklist } from './share/deckCode';
 import type { Card } from './types/card';
+
+// A shared deck is opened read-only via ?deck=<code>. Parsed once at load;
+// invalid or absent codes fall through to the normal draft app. See ADR 0003.
+function readSharedDeck(): Decklist | null {
+  const code = new URLSearchParams(window.location.search).get('deck');
+  if (!code) return null;
+  try {
+    return decodeDeck(code);
+  } catch {
+    return null;
+  }
+}
 
 export function App() {
   const [pool, setPool] = useState<CardPool | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [sharedDeck, setSharedDeck] = useState<Decklist | null>(readSharedDeck);
 
   useEffect(() => {
     loadCardPool().then(setPool).catch((e) => setError(String(e)));
@@ -69,6 +84,19 @@ export function App() {
 
   if (error) return <main style={{ padding: 24 }}>Error: {error}</main>;
   if (!pool) return <main style={{ padding: 24 }}>Loading card data…</main>;
+
+  if (sharedDeck) {
+    return (
+      <SharedDeckView
+        pool={pool}
+        deck={sharedDeck}
+        onExit={() => {
+          window.history.replaceState({}, '', window.location.pathname);
+          setSharedDeck(null);
+        }}
+      />
+    );
+  }
 
   if (historyOpen) {
     return (
