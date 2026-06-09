@@ -1,5 +1,11 @@
 [
   {
+    "id": "B3a",
+    "name": "Paradox Drive",
+    "packs": [],
+    "cardCount": 109
+  },
+  {
     "id": "B3",
     "name": "Pulsing Aura",
     "packs": [],
@@ -48,7 +54,7 @@
       "Promo",
       "Wonder Pick"
     ],
-    "cardCount": 62
+    "cardCount": 70
   },
   {
     "id": "A4b",

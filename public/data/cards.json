@@ -1,5 +1,3263 @@
 [
   {
+    "id": "B3a-001",
+    "setId": "B3a",
+    "number": 1,
+    "name": "Surskit",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Grass",
+    "trainerKind": null,
+    "hp": 60,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "C",
+        "name": "Ram",
+        "damage": "10",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Fire",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_001_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_001_EN.png",
+    "artist": "Yoriyuki Ikegami",
+    "flavor": "It secretes a thick, sweet-scented syrup from the tip of its head. It lives on weed-choked ponds."
+  },
+  {
+    "id": "B3a-002",
+    "setId": "B3a",
+    "number": 2,
+    "name": "Masquerain",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Grass",
+    "trainerKind": null,
+    "hp": 90,
+    "stage": "Stage 1",
+    "evolvesFrom": "Surskit",
+    "attacks": [
+      {
+        "cost": "CC",
+        "name": "Air Slash",
+        "damage": "70",
+        "effect": "Discard a random Energy from this Pokémon."
+      }
+    ],
+    "ability": null,
+    "weakness": "Fire",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_002_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_002_EN.png",
+    "artist": "kantaro",
+    "flavor": "The antennae have distinctive patterns that look like eyes. When it rains, they grow heavy, making flight impossible."
+  },
+  {
+    "id": "B3a-003",
+    "setId": "B3a",
+    "number": 3,
+    "name": "Brute Bonnet",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Grass",
+    "trainerKind": null,
+    "hp": 100,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "GC",
+        "name": "Spirited Smack",
+        "damage": "90",
+        "effect": "Flip a coin. If tails, this attack does nothing."
+      }
+    ],
+    "ability": null,
+    "weakness": "Fire",
+    "retreat": 2,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_003_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_003_EN.png",
+    "artist": "Anesaki Dynamic",
+    "flavor": "It bears a slight resemblance to a Pokémon described in a dubious magazine as a cross between a dinosaur and a mushroom."
+  },
+  {
+    "id": "B3a-004",
+    "setId": "B3a",
+    "number": 4,
+    "name": "Slither Wing",
+    "rarity": "◊◊",
+    "exKind": "regular",
+    "cardType": "Grass",
+    "trainerKind": null,
+    "hp": 120,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "GGC",
+        "name": "Wildly Writhe",
+        "damage": "120",
+        "effect": "This Pokémon also does 60 damage to itself."
+      }
+    ],
+    "ability": null,
+    "weakness": "Fire",
+    "retreat": 2,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_004_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_004_EN.png",
+    "artist": "Anesaki Dynamic",
+    "flavor": "This Pokémon somewhat resembles an ancient form of Volcarona that was introduced in a dubious magazine."
+  },
+  {
+    "id": "B3a-005",
+    "setId": "B3a",
+    "number": 5,
+    "name": "Iron Moth",
+    "rarity": "◊◊",
+    "exKind": "regular",
+    "cardType": "Fire",
+    "trainerKind": null,
+    "hp": 90,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "RC",
+        "name": "Thermal Gust",
+        "damage": "10+",
+        "effect": "Flip 3 coins. If 1 of them is heads, this attack does 20 more damage. If 2 of them are heads, this attack does 50 more damage. If all of them are heads, this attack does 120 more damage."
+      }
+    ],
+    "ability": null,
+    "weakness": "Water",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_005_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_005_EN.png",
+    "artist": "Kouki Saitou",
+    "flavor": "No records exist of this species being caught. Data is lacking, but the Pokémon’s traits match up with an object described in an old book."
+  },
+  {
+    "id": "B3a-006",
+    "setId": "B3a",
+    "number": 6,
+    "name": "Psyduck",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Water",
+    "trainerKind": null,
+    "hp": 70,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "C",
+        "name": "Ram",
+        "damage": "10",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Lightning",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_006_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_006_EN.png",
+    "artist": "Kouki Saitou",
+    "flavor": "If its chronic headache peaks, it may exhibit odd powers. It seems unable to recall such an episode."
+  },
+  {
+    "id": "B3a-007",
+    "setId": "B3a",
+    "number": 7,
+    "name": "Golduck",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Water",
+    "trainerKind": null,
+    "hp": 90,
+    "stage": "Stage 1",
+    "evolvesFrom": "Psyduck",
+    "attacks": [
+      {
+        "cost": "C",
+        "name": "Psychic",
+        "damage": "20+",
+        "effect": "This attack does 20 more damage for each Energy attached to your opponent's Active Pokémon."
+      }
+    ],
+    "ability": null,
+    "weakness": "Lightning",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_007_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_007_EN.png",
+    "artist": "Taira Akitsu",
+    "flavor": "It swims gracefully along on the quiet, slow- moving rivers and lakes of which it is so fond."
+  },
+  {
+    "id": "B3a-008",
+    "setId": "B3a",
+    "number": 8,
+    "name": "Vaporeon",
+    "rarity": "◊◊",
+    "exKind": "regular",
+    "cardType": "Water",
+    "trainerKind": null,
+    "hp": 120,
+    "stage": "Stage 1",
+    "evolvesFrom": "Eevee",
+    "attacks": [
+      {
+        "cost": "WW",
+        "name": "Impound",
+        "damage": "60",
+        "effect": "During your opponent's next turn, the Defending Pokémon can't retreat."
+      }
+    ],
+    "ability": null,
+    "weakness": "Lightning",
+    "retreat": 2,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_008_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_008_EN.png",
+    "artist": "kirisAki",
+    "flavor": "Its cell composition is similar to water molecules. As a result, it can’t be seen when it melts away into water."
+  },
+  {
+    "id": "B3a-009",
+    "setId": "B3a",
+    "number": 9,
+    "name": "Buizel",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Water",
+    "trainerKind": null,
+    "hp": 70,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "WW",
+        "name": "Surf",
+        "damage": "40",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Lightning",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_009_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_009_EN.png",
+    "artist": "Sekio",
+    "flavor": "It inflates its flotation sac, keeping its face above water in order to watch for prey movement."
+  },
+  {
+    "id": "B3a-010",
+    "setId": "B3a",
+    "number": 10,
+    "name": "Floatzel",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Water",
+    "trainerKind": null,
+    "hp": 100,
+    "stage": "Stage 1",
+    "evolvesFrom": "Buizel",
+    "attacks": [
+      {
+        "cost": "WWW",
+        "name": "Waterfall",
+        "damage": "90",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Lightning",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_010_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_010_EN.png",
+    "artist": "kodama",
+    "flavor": "It is a common sight around fishing ports. It is known to rescue people and help fishers carry what they caught."
+  },
+  {
+    "id": "B3a-011",
+    "setId": "B3a",
+    "number": 11,
+    "name": "Snom",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Water",
+    "trainerKind": null,
+    "hp": 50,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "W",
+        "name": "Gnaw",
+        "damage": "20",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Metal",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_011_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_011_EN.png",
+    "artist": "Mina Nakai",
+    "flavor": "Within its internal organs, Snom amplifies the frigid air it gets from eating snow and then uses this amplified air to create icicle-like spikes."
+  },
+  {
+    "id": "B3a-012",
+    "setId": "B3a",
+    "number": 12,
+    "name": "Frosmoth",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Water",
+    "trainerKind": null,
+    "hp": 100,
+    "stage": "Stage 1",
+    "evolvesFrom": "Snom",
+    "attacks": [
+      {
+        "cost": "WC",
+        "name": "Aurora Beam",
+        "damage": "60",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Metal",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_012_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_012_EN.png",
+    "artist": "Kagemaru Himeno",
+    "flavor": "It causes blizzards as it flies around with its huge, chill-emanating wings. Clean meltwater is its favorite thing to drink."
+  },
+  {
+    "id": "B3a-013",
+    "setId": "B3a",
+    "number": 13,
+    "name": "Iron Bundle ex",
+    "rarity": "◊◊◊◊",
+    "exKind": "ex",
+    "cardType": "Water",
+    "trainerKind": null,
+    "hp": 130,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "WWC",
+        "name": "Cold Start",
+        "damage": "60+",
+        "effect": "If this is the first time this Pokémon has used an attack after coming into play, this attack does 20 more damage, and your opponent's Active Pokémon is now Paralyzed."
+      }
+    ],
+    "ability": null,
+    "weakness": "Lightning",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_013_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_013_EN.png",
+    "artist": "Ultimateinudog",
+    "flavor": null
+  },
+  {
+    "id": "B3a-014",
+    "setId": "B3a",
+    "number": 14,
+    "name": "Pawmi",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Lightning",
+    "trainerKind": null,
+    "hp": 50,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "L",
+        "name": "Bite",
+        "damage": "30",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Fighting",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_014_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_014_EN.png",
+    "artist": "Tika Matsuno",
+    "flavor": "The pads of its paws are electricity-discharging organs. Pawmi fires electricity from its forepaws while standing unsteadily on its hind legs."
+  },
+  {
+    "id": "B3a-015",
+    "setId": "B3a",
+    "number": 15,
+    "name": "Pawmo",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Lightning",
+    "trainerKind": null,
+    "hp": 80,
+    "stage": "Stage 1",
+    "evolvesFrom": "Pawmi",
+    "attacks": [
+      {
+        "cost": "L",
+        "name": "Spark",
+        "damage": "20",
+        "effect": "This attack also does 10 damage to 1 of your opponent's Benched Pokémon."
+      }
+    ],
+    "ability": null,
+    "weakness": "Fighting",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_015_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_015_EN.png",
+    "artist": "Saya Tsuruta",
+    "flavor": "Pawmo uses a unique fighting technique in which it uses its forepaws to strike foes and zap them with electricity from its paw pads simultaneously."
+  },
+  {
+    "id": "B3a-016",
+    "setId": "B3a",
+    "number": 16,
+    "name": "Pawmot",
+    "rarity": "◊◊",
+    "exKind": "regular",
+    "cardType": "Lightning",
+    "trainerKind": null,
+    "hp": 130,
+    "stage": "Stage 2",
+    "evolvesFrom": "Pawmo",
+    "attacks": [
+      {
+        "cost": "L",
+        "name": "Volt Wave",
+        "damage": "60",
+        "effect": "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed."
+      }
+    ],
+    "ability": null,
+    "weakness": "Fighting",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_016_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_016_EN.png",
+    "artist": "GIDORA",
+    "flavor": "Pawmot’s fluffy fur acts as a battery. It can store the same amount of electricity as an electric car."
+  },
+  {
+    "id": "B3a-017",
+    "setId": "B3a",
+    "number": 17,
+    "name": "Iron Hands",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Lightning",
+    "trainerKind": null,
+    "hp": 120,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "LLC",
+        "name": "Successive Slapping",
+        "damage": "70x",
+        "effect": "Flip 2 coins. This attack does 70 damage for each heads."
+      }
+    ],
+    "ability": null,
+    "weakness": "Fighting",
+    "retreat": 3,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_017_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_017_EN.png",
+    "artist": "Nisota Niso",
+    "flavor": "This Pokémon shares many similarities with Iron Hands, an object mentioned in a certain expedition journal."
+  },
+  {
+    "id": "B3a-018",
+    "setId": "B3a",
+    "number": 18,
+    "name": "Iron Thorns",
+    "rarity": "◊◊",
+    "exKind": "regular",
+    "cardType": "Lightning",
+    "trainerKind": null,
+    "hp": 110,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "LL",
+        "name": "Binary Thunder",
+        "damage": "40+",
+        "effect": "If your opponent's Active Pokémon is a Pokémon ex, this attack does 40 more damage."
+      }
+    ],
+    "ability": null,
+    "weakness": "Fighting",
+    "retreat": 3,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_018_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_018_EN.png",
+    "artist": "matazo",
+    "flavor": "Some of its notable features match those of an object named within a certain expedition journal as Iron Thorns."
+  },
+  {
+    "id": "B3a-019",
+    "setId": "B3a",
+    "number": 19,
+    "name": "Miraidon ex",
+    "rarity": "◊◊◊◊",
+    "exKind": "ex",
+    "cardType": "Lightning",
+    "trainerKind": null,
+    "hp": 140,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "CCC",
+        "name": "Hadron Ray",
+        "damage": "20+",
+        "effect": "This attack does 20 more damage for each [L] Energy attached to this Pokémon."
+      }
+    ],
+    "ability": {
+      "name": "Legendary Drive",
+      "effect": "Once during your turn, when you put this Pokémon from your hand onto your Bench, you may switch it with your Active Pokémon. If you do, move all of your Energy in play to this Pokémon."
+    },
+    "weakness": "Fighting",
+    "retreat": 2,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_019_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_019_EN.png",
+    "artist": "5ban Graphics",
+    "flavor": null
+  },
+  {
+    "id": "B3a-020",
+    "setId": "B3a",
+    "number": 20,
+    "name": "Espeon",
+    "rarity": "◊◊",
+    "exKind": "regular",
+    "cardType": "Psychic",
+    "trainerKind": null,
+    "hp": 90,
+    "stage": "Stage 1",
+    "evolvesFrom": "Eevee",
+    "attacks": [
+      {
+        "cost": "P",
+        "name": "Hypnoblast",
+        "damage": "40",
+        "effect": "Your opponent's Active Pokémon is now Asleep."
+      }
+    ],
+    "ability": null,
+    "weakness": "Darkness",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_020_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_020_EN.png",
+    "artist": "Mizue",
+    "flavor": "It uses the fine hair that covers its body to sense air currents and predict its enemy’s actions."
+  },
+  {
+    "id": "B3a-021",
+    "setId": "B3a",
+    "number": 21,
+    "name": "Flittle",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Psychic",
+    "trainerKind": null,
+    "hp": 40,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "P",
+        "name": "Psy Bolt",
+        "damage": "10",
+        "effect": "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed."
+      }
+    ],
+    "ability": null,
+    "weakness": "Darkness",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_021_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_021_EN.png",
+    "artist": "Tika Matsuno",
+    "flavor": "It spends its time running around wastelands. If anyone steals its beloved berries, it will chase them down and exact its revenge."
+  },
+  {
+    "id": "B3a-022",
+    "setId": "B3a",
+    "number": 22,
+    "name": "Espathra",
+    "rarity": "◊◊",
+    "exKind": "regular",
+    "cardType": "Psychic",
+    "trainerKind": null,
+    "hp": 100,
+    "stage": "Stage 1",
+    "evolvesFrom": "Flittle",
+    "attacks": [
+      {
+        "cost": "PP",
+        "name": "Lumina Crash",
+        "damage": "50",
+        "effect": "During your next turn, the Defending Pokémon takes +50 damage from attacks."
+      }
+    ],
+    "ability": null,
+    "weakness": "Darkness",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_022_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_022_EN.png",
+    "artist": "Hitoshi Ariga",
+    "flavor": "It emits psychic power from the gaps between its multicolored frills and sprints at speeds greater than 120 mph."
+  },
+  {
+    "id": "B3a-023",
+    "setId": "B3a",
+    "number": 23,
+    "name": "Greavard",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Psychic",
+    "trainerKind": null,
+    "hp": 70,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "P",
+        "name": "Sharp Fang",
+        "damage": "20",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Darkness",
+    "retreat": 2,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_023_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_023_EN.png",
+    "artist": "Shin Nagasawa",
+    "flavor": "This friendly Pokémon doesn’t like being alone. Pay it even the slightest bit of attention, and it will follow you forever."
+  },
+  {
+    "id": "B3a-024",
+    "setId": "B3a",
+    "number": 24,
+    "name": "Houndstone",
+    "rarity": "◊◊",
+    "exKind": "regular",
+    "cardType": "Psychic",
+    "trainerKind": null,
+    "hp": 130,
+    "stage": "Stage 1",
+    "evolvesFrom": "Greavard",
+    "attacks": [
+      {
+        "cost": "PCC",
+        "name": "Spooky Shot",
+        "damage": "70",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Darkness",
+    "retreat": 3,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_024_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_024_EN.png",
+    "artist": "Saya Tsuruta",
+    "flavor": "A lovingly mourned Pokémon was reborn as Houndstone. It doesn’t like anyone touching the protuberance atop its head."
+  },
+  {
+    "id": "B3a-025",
+    "setId": "B3a",
+    "number": 25,
+    "name": "Scream Tail",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Psychic",
+    "trainerKind": null,
+    "hp": 70,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "PP",
+        "name": "Shooing Shout",
+        "damage": "",
+        "effect": "Flip 2 coins. If both of them are heads, discard your opponent's Active Pokémon."
+      }
+    ],
+    "ability": null,
+    "weakness": "Darkness",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_025_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_025_EN.png",
+    "artist": "Ryota Murayama",
+    "flavor": "It resembles a mysterious Pokémon described in a paranormal magazine as a Jigglypuff from one billion years ago."
+  },
+  {
+    "id": "B3a-026",
+    "setId": "B3a",
+    "number": 26,
+    "name": "Flutter Mane ex",
+    "rarity": "◊◊◊◊",
+    "exKind": "ex",
+    "cardType": "Psychic",
+    "trainerKind": null,
+    "hp": 130,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "PP",
+        "name": "Spellbinding Start",
+        "damage": "70",
+        "effect": "If this is the first time this Pokémon has used an attack after coming into play, during your opponent's next turn, they can't use any Trainer cards from their hand."
+      }
+    ],
+    "ability": null,
+    "weakness": "Metal",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_026_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_026_EN.png",
+    "artist": "PLANETA Igarashi",
+    "flavor": null
+  },
+  {
+    "id": "B3a-027",
+    "setId": "B3a",
+    "number": 27,
+    "name": "Iron Valiant",
+    "rarity": "◊◊◊",
+    "exKind": "regular",
+    "cardType": "Psychic",
+    "trainerKind": null,
+    "hp": 100,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "PP",
+        "name": "Slicing Blade",
+        "damage": "50",
+        "effect": ""
+      }
+    ],
+    "ability": {
+      "name": "Future System",
+      "effect": "Attacks used by your Future Pokémon cost 1 less [C] Energy."
+    },
+    "weakness": "Metal",
+    "retreat": 2,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_027_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_027_EN.png",
+    "artist": "AKIRA EGAWA",
+    "flavor": "It’s possible that this is the object listed as Iron Valiant in a certain expedition journal."
+  },
+  {
+    "id": "B3a-028",
+    "setId": "B3a",
+    "number": 28,
+    "name": "Iron Leaves",
+    "rarity": "◊◊◊",
+    "exKind": "regular",
+    "cardType": "Psychic",
+    "trainerKind": null,
+    "hp": 90,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "PCC",
+        "name": "Avenging Edge",
+        "damage": "50+",
+        "effect": "If any of your Pokémon were Knocked Out by damage from an attack during your opponent's last turn, this attack does 50 more damage."
+      }
+    ],
+    "ability": null,
+    "weakness": "Darkness",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_028_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_028_EN.png",
+    "artist": "Kazumasa Yasukuni",
+    "flavor": "According to the few eyewitness accounts that exist, it used its shining blades to julienne large trees and boulders."
+  },
+  {
+    "id": "B3a-029",
+    "setId": "B3a",
+    "number": 29,
+    "name": "Iron Boulder",
+    "rarity": "◊◊◊",
+    "exKind": "regular",
+    "cardType": "Psychic",
+    "trainerKind": null,
+    "hp": 120,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "PPCC",
+        "name": "Modular Axe",
+        "damage": "80+",
+        "effect": "If this Pokémon has a Pokémon Tool attached, this attack does 40 more damage."
+      }
+    ],
+    "ability": null,
+    "weakness": "Darkness",
+    "retreat": 3,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_029_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_029_EN.png",
+    "artist": "Tonji Matsuno",
+    "flavor": "It was named after a mysterious object recorded in an old book. Its body seems to be metallic."
+  },
+  {
+    "id": "B3a-030",
+    "setId": "B3a",
+    "number": 30,
+    "name": "Iron Crown",
+    "rarity": "◊◊◊",
+    "exKind": "regular",
+    "cardType": "Psychic",
+    "trainerKind": null,
+    "hp": 100,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "CC",
+        "name": "Enumerating Blade",
+        "damage": "10+",
+        "effect": "This attack does 20 more damage for each of your opponent's Benched Pokémon."
+      }
+    ],
+    "ability": null,
+    "weakness": "Darkness",
+    "retreat": 2,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_030_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_030_EN.png",
+    "artist": "Natsumi Miyanose",
+    "flavor": "There was supposedly an incident in which it launched shining blades to cut everything around it to pieces. Little else is known about it."
+  },
+  {
+    "id": "B3a-031",
+    "setId": "B3a",
+    "number": 31,
+    "name": "Nacli",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Fighting",
+    "trainerKind": null,
+    "hp": 70,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "F",
+        "name": "Headbutt",
+        "damage": "20",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Grass",
+    "retreat": 2,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_031_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_031_EN.png",
+    "artist": "Ounishi",
+    "flavor": "The ground scrapes its body as it travels, causing it to leave salt behind. Salt is constantly being created and replenished inside Nacli’s body."
+  },
+  {
+    "id": "B3a-032",
+    "setId": "B3a",
+    "number": 32,
+    "name": "Naclstack",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Fighting",
+    "trainerKind": null,
+    "hp": 110,
+    "stage": "Stage 1",
+    "evolvesFrom": "Nacli",
+    "attacks": [
+      {
+        "cost": "FF",
+        "name": "Rock Throw",
+        "damage": "50",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Grass",
+    "retreat": 3,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_032_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_032_EN.png",
+    "artist": "KEIICHIRO ITO",
+    "flavor": "It compresses rock salt inside its body and shoots out hardened salt pellets with enough force to perforate an iron sheet."
+  },
+  {
+    "id": "B3a-033",
+    "setId": "B3a",
+    "number": 33,
+    "name": "Garganacl",
+    "rarity": "◊◊◊",
+    "exKind": "regular",
+    "cardType": "Fighting",
+    "trainerKind": null,
+    "hp": 150,
+    "stage": "Stage 2",
+    "evolvesFrom": "Naclstack",
+    "attacks": [
+      {
+        "cost": "FFF",
+        "name": "Land Crush",
+        "damage": "90",
+        "effect": ""
+      }
+    ],
+    "ability": {
+      "name": "Blessed Salt",
+      "effect": "During Pokémon Checkup, heal 10 damage from each of your Pokémon."
+    },
+    "weakness": "Grass",
+    "retreat": 3,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_033_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_033_EN.png",
+    "artist": "Souichirou Gunjima",
+    "flavor": "Many Pokémon gather around Garganacl, hoping to lick at its mineral-rich salt."
+  },
+  {
+    "id": "B3a-034",
+    "setId": "B3a",
+    "number": 34,
+    "name": "Great Tusk",
+    "rarity": "◊◊",
+    "exKind": "regular",
+    "cardType": "Fighting",
+    "trainerKind": null,
+    "hp": 120,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "FF",
+        "name": "Shaking Stomp",
+        "damage": "80",
+        "effect": "This attack also does 20 damage to each of your Benched Pokémon."
+      }
+    ],
+    "ability": null,
+    "weakness": "Psychic",
+    "retreat": 3,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_034_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_034_EN.png",
+    "artist": "Tomoki Sone",
+    "flavor": "This creature resembles a mysterious Pokémon that, according to a paranormal magazine, has lived since ancient times."
+  },
+  {
+    "id": "B3a-035",
+    "setId": "B3a",
+    "number": 35,
+    "name": "Sandy Shocks",
+    "rarity": "◊◊",
+    "exKind": "regular",
+    "cardType": "Fighting",
+    "trainerKind": null,
+    "hp": 100,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "FFC",
+        "name": "Pull In and Pound",
+        "damage": "",
+        "effect": "Switch in 1 of your opponent's Benched Pokémon to the Active Spot. If you do, this attack does 50 damage to the new Active Pokémon."
+      }
+    ],
+    "ability": null,
+    "weakness": "Grass",
+    "retreat": 2,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_035_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_035_EN.png",
+    "artist": "Shigenori Negishi",
+    "flavor": "It slightly resembles a Magneton that lived for 10,000 years and was featured in an article in a paranormal magazine."
+  },
+  {
+    "id": "B3a-036",
+    "setId": "B3a",
+    "number": 36,
+    "name": "Koraidon ex",
+    "rarity": "◊◊◊◊",
+    "exKind": "ex",
+    "cardType": "Fighting",
+    "trainerKind": null,
+    "hp": 150,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "FFF",
+        "name": "World Wrecker",
+        "damage": "110",
+        "effect": "Discard the top card of your deck."
+      }
+    ],
+    "ability": {
+      "name": "Legendary Drive",
+      "effect": "Once during your turn, when you put this Pokémon from your hand onto your Bench, you may switch it with your Active Pokémon. If you do, move all of your Energy in play to this Pokémon."
+    },
+    "weakness": "Psychic",
+    "retreat": 2,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_036_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_036_EN.png",
+    "artist": "aky CG Works",
+    "flavor": null
+  },
+  {
+    "id": "B3a-037",
+    "setId": "B3a",
+    "number": 37,
+    "name": "Umbreon",
+    "rarity": "◊◊",
+    "exKind": "regular",
+    "cardType": "Darkness",
+    "trainerKind": null,
+    "hp": 100,
+    "stage": "Stage 1",
+    "evolvesFrom": "Eevee",
+    "attacks": [
+      {
+        "cost": "DC",
+        "name": "Confuse Ray",
+        "damage": "50",
+        "effect": "Your opponent's Active Pokémon is now Confused."
+      }
+    ],
+    "ability": null,
+    "weakness": "Grass",
+    "retreat": 2,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_037_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_037_EN.png",
+    "artist": "rika",
+    "flavor": "When darkness falls, the rings on the body begin to glow, striking fear in the hearts of anyone nearby."
+  },
+  {
+    "id": "B3a-038",
+    "setId": "B3a",
+    "number": 38,
+    "name": "Sneasel",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Darkness",
+    "trainerKind": null,
+    "hp": 60,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "D",
+        "name": "Quick Attack",
+        "damage": "10+",
+        "effect": "Flip a coin. If heads, this attack does 20 more damage."
+      }
+    ],
+    "ability": null,
+    "weakness": "Grass",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_038_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_038_EN.png",
+    "artist": "Kagemaru Himeno",
+    "flavor": "This is a smart and sneaky Pokémon. A pair may work together to steal eggs by having one lure the parents away."
+  },
+  {
+    "id": "B3a-039",
+    "setId": "B3a",
+    "number": 39,
+    "name": "Weavile",
+    "rarity": "◊◊",
+    "exKind": "regular",
+    "cardType": "Darkness",
+    "trainerKind": null,
+    "hp": 90,
+    "stage": "Stage 1",
+    "evolvesFrom": "Sneasel",
+    "attacks": [
+      {
+        "cost": "D",
+        "name": "Raid",
+        "damage": "40+",
+        "effect": "If this Pokémon evolved from Sneasel during this turn, this attack does 20 more damage."
+      }
+    ],
+    "ability": null,
+    "weakness": "Grass",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_039_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_039_EN.png",
+    "artist": "Misa Tsutsui",
+    "flavor": "They travel in groups of four or five, leaving signs for one another on trees and rocks. They bring down their prey with coordinated attacks."
+  },
+  {
+    "id": "B3a-040",
+    "setId": "B3a",
+    "number": 40,
+    "name": "Sableye",
+    "rarity": "◊◊",
+    "exKind": "regular",
+    "cardType": "Darkness",
+    "trainerKind": null,
+    "hp": 60,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "C",
+        "name": "Jeweled Gift",
+        "damage": "",
+        "effect": "Take a random Energy from among [G], [R], [W], [L], [P], [F], [D], and [M] Energy from your Energy Zone and attach it to 1 of your Benched Pokémon."
+      }
+    ],
+    "ability": null,
+    "weakness": "Grass",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_040_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_040_EN.png",
+    "artist": "KEIICHIRO ITO",
+    "flavor": "Materials from gems it has eaten float to the surface of its body and can form an infinite number of patterns among individuals."
+  },
+  {
+    "id": "B3a-041",
+    "setId": "B3a",
+    "number": 41,
+    "name": "Pawniard",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Darkness",
+    "trainerKind": null,
+    "hp": 50,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "D",
+        "name": "Slash",
+        "damage": "30",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Grass",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_041_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_041_EN.png",
+    "artist": "Sumiyoshi Kizuki",
+    "flavor": "A pack of these Pokémon forms to serve a Bisharp boss. Each Pawniard trains diligently, dreaming of one day taking the lead."
+  },
+  {
+    "id": "B3a-042",
+    "setId": "B3a",
+    "number": 42,
+    "name": "Bisharp",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Darkness",
+    "trainerKind": null,
+    "hp": 80,
+    "stage": "Stage 1",
+    "evolvesFrom": "Pawniard",
+    "attacks": [
+      {
+        "cost": "D",
+        "name": "Dark Cutter",
+        "damage": "50",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Grass",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_042_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_042_EN.png",
+    "artist": "Kouki Saitou",
+    "flavor": "It’s accompanied by a large retinue of Pawniard. Bisharp keeps a keen eye on its minions, ensuring none of them even think of double-crossing it."
+  },
+  {
+    "id": "B3a-043",
+    "setId": "B3a",
+    "number": 43,
+    "name": "Kingambit",
+    "rarity": "◊◊◊",
+    "exKind": "regular",
+    "cardType": "Darkness",
+    "trainerKind": null,
+    "hp": 140,
+    "stage": "Stage 2",
+    "evolvesFrom": "Bisharp",
+    "attacks": [
+      {
+        "cost": "DD",
+        "name": "Overlord’s Blade",
+        "damage": "60+",
+        "effect": "This attack does 40 more damage for each time your Pokémon have been Knocked Out during this game."
+      }
+    ],
+    "ability": null,
+    "weakness": "Grass",
+    "retreat": 3,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_043_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_043_EN.png",
+    "artist": "Anesaki Dynamic",
+    "flavor": "Only a Bisharp that stands above all others in its vast army can evolve into Kingambit."
+  },
+  {
+    "id": "B3a-044",
+    "setId": "B3a",
+    "number": 44,
+    "name": "Glimmet",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Darkness",
+    "trainerKind": null,
+    "hp": 60,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "D",
+        "name": "Hang Down",
+        "damage": "20",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Fighting",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_044_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_044_EN.png",
+    "artist": "sowsow",
+    "flavor": "Glimmet’s toxic mineral crystals look just like flower petals. This Pokémon scatters poisonous powder like pollen to protect itself."
+  },
+  {
+    "id": "B3a-045",
+    "setId": "B3a",
+    "number": 45,
+    "name": "Glimmora",
+    "rarity": "◊◊◊",
+    "exKind": "regular",
+    "cardType": "Darkness",
+    "trainerKind": null,
+    "hp": 90,
+    "stage": "Stage 1",
+    "evolvesFrom": "Glimmet",
+    "attacks": [
+      {
+        "cost": "D",
+        "name": "Venomous Hit",
+        "damage": "30",
+        "effect": "Your opponent's Active Pokémon is now Poisoned."
+      }
+    ],
+    "ability": {
+      "name": "Shattering Crystal",
+      "effect": "When this Pokémon is Knocked Out, flip a coin. If heads, your opponent can't get any points for it."
+    },
+    "weakness": "Fighting",
+    "retreat": 2,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_045_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_045_EN.png",
+    "artist": "Shin Nagasawa",
+    "flavor": "Glimmora’s petals are made of crystallized poison energy. It has recently become evident that these petals resemble Tera Jewels."
+  },
+  {
+    "id": "B3a-046",
+    "setId": "B3a",
+    "number": 46,
+    "name": "Iron Jugulis",
+    "rarity": "◊◊",
+    "exKind": "regular",
+    "cardType": "Darkness",
+    "trainerKind": null,
+    "hp": 100,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "DDC",
+        "name": "Blasting Wind",
+        "damage": "70",
+        "effect": ""
+      }
+    ],
+    "ability": {
+      "name": "Automated Combat",
+      "effect": "If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon, do 20 damage to the Attacking Pokémon."
+    },
+    "weakness": "Grass",
+    "retreat": 2,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_046_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_046_EN.png",
+    "artist": "Souichirou Gunjima",
+    "flavor": "It’s possible that Iron Jugulis, an object described in an old book, may actually be this Pokémon."
+  },
+  {
+    "id": "B3a-047",
+    "setId": "B3a",
+    "number": 47,
+    "name": "Roaring Moon",
+    "rarity": "◊◊◊",
+    "exKind": "regular",
+    "cardType": "Darkness",
+    "trainerKind": null,
+    "hp": 100,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "DDC",
+        "name": "Wind of Darkness",
+        "damage": "70",
+        "effect": ""
+      }
+    ],
+    "ability": {
+      "name": "Ancient Roar",
+      "effect": "Once during your turn, when you put this Pokémon from your hand onto your Bench, you may switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)"
+    },
+    "weakness": "Grass",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_047_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_047_EN.png",
+    "artist": "Takeshi Nakamura",
+    "flavor": "According to an article in a dubious magazine, this Pokémon has some connection to a phenomenon that occurs in a certain region."
+  },
+  {
+    "id": "B3a-048",
+    "setId": "B3a",
+    "number": 48,
+    "name": "Corviknight",
+    "rarity": "◊◊",
+    "exKind": "regular",
+    "cardType": "Metal",
+    "trainerKind": null,
+    "hp": 140,
+    "stage": "Stage 2",
+    "evolvesFrom": "Corvisquire",
+    "attacks": [
+      {
+        "cost": "MM",
+        "name": "Metal Claw",
+        "damage": "90",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Fire",
+    "retreat": 2,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_048_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_048_EN.png",
+    "artist": "Scav",
+    "flavor": "Although its wings have partly turned to steel and become heavy as a result, this Pokémon flies through the skies with ease."
+  },
+  {
+    "id": "B3a-049",
+    "setId": "B3a",
+    "number": 49,
+    "name": "Cufant",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Metal",
+    "trainerKind": null,
+    "hp": 100,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "MCC",
+        "name": "Strength",
+        "damage": "60",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Fire",
+    "retreat": 3,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_049_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_049_EN.png",
+    "artist": "Akira Komayama",
+    "flavor": "Cufant can lift loads weighing five tons. In the mornings, it heads into caves with its herd, in search of the ore on which these Pokémon feed."
+  },
+  {
+    "id": "B3a-050",
+    "setId": "B3a",
+    "number": 50,
+    "name": "Copperajah",
+    "rarity": "◊◊",
+    "exKind": "regular",
+    "cardType": "Metal",
+    "trainerKind": null,
+    "hp": 170,
+    "stage": "Stage 1",
+    "evolvesFrom": "Cufant",
+    "attacks": [
+      {
+        "cost": "MMCC",
+        "name": "Iron Swing",
+        "damage": "100x",
+        "effect": "Flip 2 coins. This attack does 100 damage for each heads."
+      }
+    ],
+    "ability": null,
+    "weakness": "Fire",
+    "retreat": 4,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_050_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_050_EN.png",
+    "artist": "Hitoshi Ariga",
+    "flavor": "Copperajah are prideful, cantankerous Pokémon. Specimens with vibrant green skin command the respect of others of their kind."
+  },
+  {
+    "id": "B3a-051",
+    "setId": "B3a",
+    "number": 51,
+    "name": "Iron Treads",
+    "rarity": "◊◊",
+    "exKind": "regular",
+    "cardType": "Metal",
+    "trainerKind": null,
+    "hp": 100,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "MMC",
+        "name": "Roll and Release",
+        "damage": "50+",
+        "effect": "Flip a coin until you get tails. This attack does 30 more damage for each heads."
+      }
+    ],
+    "ability": null,
+    "weakness": "Fire",
+    "retreat": 2,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_051_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_051_EN.png",
+    "artist": "nagimiso",
+    "flavor": "Sightings of this Pokémon have occurred in recent years. It resembles a mysterious object described in an old expedition journal."
+  },
+  {
+    "id": "B3a-052",
+    "setId": "B3a",
+    "number": 52,
+    "name": "Altaria",
+    "rarity": "◊◊",
+    "exKind": "regular",
+    "cardType": "Dragon",
+    "trainerKind": null,
+    "hp": 100,
+    "stage": "Stage 1",
+    "evolvesFrom": "Swablu",
+    "attacks": [
+      {
+        "cost": "C",
+        "name": "Fly",
+        "damage": "50",
+        "effect": "Flip a coin. If tails, this attack does nothing. If heads, during your opponent's next turn, prevent all damage from—and effects of—attacks done to this Pokémon."
+      }
+    ],
+    "ability": null,
+    "weakness": null,
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_052_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_052_EN.png",
+    "artist": "kurumitsu",
+    "flavor": "On sunny days, it flies freely through the sky and blends into the clouds. It sings in a beautiful soprano."
+  },
+  {
+    "id": "B3a-053",
+    "setId": "B3a",
+    "number": 53,
+    "name": "Walking Wake",
+    "rarity": "◊◊◊",
+    "exKind": "regular",
+    "cardType": "Dragon",
+    "trainerKind": null,
+    "hp": 110,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "RW",
+        "name": "Sweeping Billow",
+        "damage": "60",
+        "effect": "Discard an Energy from this Pokémon, and this attack also does 20 damage to each of your opponent's Benched Pokémon."
+      }
+    ],
+    "ability": null,
+    "weakness": null,
+    "retreat": 2,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_053_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_053_EN.png",
+    "artist": "kawayoo",
+    "flavor": "It resembles an illustration published in a paranormal magazine, said to be a depiction of a super-ancient Suicune."
+  },
+  {
+    "id": "B3a-054",
+    "setId": "B3a",
+    "number": 54,
+    "name": "Gouging Fire",
+    "rarity": "◊◊◊",
+    "exKind": "regular",
+    "cardType": "Dragon",
+    "trainerKind": null,
+    "hp": 110,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "RLC",
+        "name": "Scorching Interruption",
+        "damage": "100",
+        "effect": "Discard 2 Energy from this Pokémon. During your opponent's next turn, this Pokémon takes −30 damage from attacks."
+      }
+    ],
+    "ability": null,
+    "weakness": null,
+    "retreat": 2,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_054_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_054_EN.png",
+    "artist": "Uninori",
+    "flavor": "It resembles an eerie Pokémon once shown in a paranormal magazine. That Pokémon was said to be an Entei regenerated from a fossil."
+  },
+  {
+    "id": "B3a-055",
+    "setId": "B3a",
+    "number": 55,
+    "name": "Raging Bolt",
+    "rarity": "◊◊◊",
+    "exKind": "regular",
+    "cardType": "Dragon",
+    "trainerKind": null,
+    "hp": 130,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "WWLLC",
+        "name": "Baneful Boom",
+        "damage": "",
+        "effect": "Discard all Energy from this Pokémon. Knock Out your opponent's Active Pokémon."
+      }
+    ],
+    "ability": null,
+    "weakness": null,
+    "retreat": 3,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_055_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_055_EN.png",
+    "artist": "matazo",
+    "flavor": "It bears resemblance to a Pokémon that became a hot topic for a short while after a paranormal magazine touted it as Raikou’s ancestor."
+  },
+  {
+    "id": "B3a-056",
+    "setId": "B3a",
+    "number": 56,
+    "name": "Eevee",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Colorless",
+    "trainerKind": null,
+    "hp": 50,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "C",
+        "name": "Tail Whip",
+        "damage": "",
+        "effect": "Flip a coin. If heads, the Defending Pokémon can't attack during your opponent's next turn."
+      }
+    ],
+    "ability": null,
+    "weakness": "Fighting",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_056_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_056_EN.png",
+    "artist": "saino misaki",
+    "flavor": "Its genetic code is irregular. It may mutate if it is exposed to radiation from element stones."
+  },
+  {
+    "id": "B3a-057",
+    "setId": "B3a",
+    "number": 57,
+    "name": "Girafarig",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Colorless",
+    "trainerKind": null,
+    "hp": 70,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "CC",
+        "name": "Headbang",
+        "damage": "30",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Fighting",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_057_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_057_EN.png",
+    "artist": "Mina Nakai",
+    "flavor": "Girafarig’s tail has a small head. It instinctively bites at any foe that approaches the Pokémon from behind."
+  },
+  {
+    "id": "B3a-058",
+    "setId": "B3a",
+    "number": 58,
+    "name": "Farigiraf",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Colorless",
+    "trainerKind": null,
+    "hp": 120,
+    "stage": "Stage 1",
+    "evolvesFrom": "Girafarig",
+    "attacks": [
+      {
+        "cost": "CC",
+        "name": "Double Hit",
+        "damage": "60x",
+        "effect": "Flip 2 coins. This attack does 60 damage for each heads."
+      }
+    ],
+    "ability": null,
+    "weakness": "Fighting",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_058_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_058_EN.png",
+    "artist": "Ounishi",
+    "flavor": "The hardened head from the tail protects the head of the main body as Farigiraf whips its long neck around to headbutt enemies."
+  },
+  {
+    "id": "B3a-059",
+    "setId": "B3a",
+    "number": 59,
+    "name": "Dunsparce",
+    "rarity": "◊◊",
+    "exKind": "regular",
+    "cardType": "Colorless",
+    "trainerKind": null,
+    "hp": 60,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "CC",
+        "name": "Rollout",
+        "damage": "30",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Fighting",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_059_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_059_EN.png",
+    "artist": "ryoma uratsuka",
+    "flavor": "If spotted, it escapes by burrowing with its tail. It can float just slightly using its wings."
+  },
+  {
+    "id": "B3a-060",
+    "setId": "B3a",
+    "number": 60,
+    "name": "Dudunsparce",
+    "rarity": "◊◊◊",
+    "exKind": "regular",
+    "cardType": "Colorless",
+    "trainerKind": null,
+    "hp": 100,
+    "stage": "Stage 1",
+    "evolvesFrom": "Dunsparce",
+    "attacks": [
+      {
+        "cost": "CC",
+        "name": "Sudden Drilling",
+        "damage": "60",
+        "effect": "If this Pokémon evolved from Dunsparce during this turn, discard 2 random Energy from your opponent's Active Pokémon."
+      }
+    ],
+    "ability": null,
+    "weakness": "Fighting",
+    "retreat": 3,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_060_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_060_EN.png",
+    "artist": "Ounishi",
+    "flavor": "It drives enemies out of its nest by sucking in enough air to fill its long, narrow lungs, then releasing the air in an intense blast."
+  },
+  {
+    "id": "B3a-061",
+    "setId": "B3a",
+    "number": 61,
+    "name": "Swablu",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Colorless",
+    "trainerKind": null,
+    "hp": 50,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "C",
+        "name": "Fury Attack",
+        "damage": "10x",
+        "effect": "Flip 3 coins. This attack does 10 damage for each heads."
+      }
+    ],
+    "ability": null,
+    "weakness": "Lightning",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_061_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_061_EN.png",
+    "artist": "Lee HyunJung",
+    "flavor": "It can’t relax if it or its surroundings are not clean. It wipes off dirt with its wings."
+  },
+  {
+    "id": "B3a-062",
+    "setId": "B3a",
+    "number": 62,
+    "name": "Rufflet",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Colorless",
+    "trainerKind": null,
+    "hp": 70,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "CC",
+        "name": "Peck",
+        "damage": "30",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Lightning",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_062_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_062_EN.png",
+    "artist": "Tomokazu Komiya",
+    "flavor": "With its sharp claws, this Pokémon pierces its prey, and then it pecks at them. Although it also consumes berries, it’s a carnivore at heart."
+  },
+  {
+    "id": "B3a-063",
+    "setId": "B3a",
+    "number": 63,
+    "name": "Braviary",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Colorless",
+    "trainerKind": null,
+    "hp": 120,
+    "stage": "Stage 1",
+    "evolvesFrom": "Rufflet",
+    "attacks": [
+      {
+        "cost": "CCC",
+        "name": "Brave Bird",
+        "damage": "100",
+        "effect": "This Pokémon also does 20 damage to itself."
+      }
+    ],
+    "ability": null,
+    "weakness": "Lightning",
+    "retreat": 2,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_063_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_063_EN.png",
+    "artist": "match",
+    "flavor": "For the sake of its friends, this brave warrior of the sky will not stop battling, even if injured."
+  },
+  {
+    "id": "B3a-064",
+    "setId": "B3a",
+    "number": 64,
+    "name": "Hawlucha",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Colorless",
+    "trainerKind": null,
+    "hp": 80,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "C",
+        "name": "Acrobatics",
+        "damage": "10+",
+        "effect": "Flip 2 coins. This attack does 20 more damage for each heads."
+      }
+    ],
+    "ability": null,
+    "weakness": "Lightning",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_064_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_064_EN.png",
+    "artist": "Miki Tanaka",
+    "flavor": "Hawlucha live quietly without flocking together. They fight constantly with their natural enemies: noisy groups of Primeape."
+  },
+  {
+    "id": "B3a-065",
+    "setId": "B3a",
+    "number": 65,
+    "name": "Rookidee",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Colorless",
+    "trainerKind": null,
+    "hp": 60,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "C",
+        "name": "Claw",
+        "damage": "40",
+        "effect": "Flip a coin. If tails, this attack does nothing."
+      }
+    ],
+    "ability": null,
+    "weakness": "Lightning",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_065_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_065_EN.png",
+    "artist": "Hitoshi Ariga",
+    "flavor": "The females are fussier than the males. If another creature dirties a female Rookidee’s wings, it’ll peck the offender relentlessly in a burning rage."
+  },
+  {
+    "id": "B3a-066",
+    "setId": "B3a",
+    "number": 66,
+    "name": "Corvisquire",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Colorless",
+    "trainerKind": null,
+    "hp": 70,
+    "stage": "Stage 1",
+    "evolvesFrom": "Rookidee",
+    "attacks": [
+      {
+        "cost": "C",
+        "name": "Flap",
+        "damage": "40",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Lightning",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_066_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_066_EN.png",
+    "artist": "kirisAki",
+    "flavor": "This intelligent Pokémon will quickly learn how to use any tool it can hold in its beak or its talons."
+  },
+  {
+    "id": "B3a-067",
+    "setId": "B3a",
+    "number": 67,
+    "name": "Flamigo",
+    "rarity": "◊",
+    "exKind": "regular",
+    "cardType": "Colorless",
+    "trainerKind": null,
+    "hp": 90,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "CCC",
+        "name": "Nosedive",
+        "damage": "80",
+        "effect": "This Pokémon also does 20 damage to itself."
+      }
+    ],
+    "ability": null,
+    "weakness": "Lightning",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_067_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_067_EN.png",
+    "artist": "Ounishi",
+    "flavor": "Thanks to a behavior of theirs known as “synchronizing,” an entire flock of these Pokémon can attack simultaneously in perfect harmony."
+  },
+  {
+    "id": "B3a-068",
+    "setId": "B3a",
+    "number": 68,
+    "name": "Terapagos ex",
+    "rarity": "◊◊◊◊",
+    "exKind": "ex",
+    "cardType": "Colorless",
+    "trainerKind": null,
+    "hp": 150,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "CCC",
+        "name": "Prism Impact",
+        "damage": "80+",
+        "effect": "This attack does 20 more damage for each type of Energy attached to this Pokémon."
+      }
+    ],
+    "ability": null,
+    "weakness": "Fighting",
+    "retreat": 2,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_068_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_068_EN.png",
+    "artist": "5ban Graphics",
+    "flavor": null
+  },
+  {
+    "id": "B3a-069",
+    "setId": "B3a",
+    "number": 69,
+    "name": "Ancient Booster Energy Capsule",
+    "rarity": "◊◊",
+    "exKind": "regular",
+    "cardType": "Trainer",
+    "trainerKind": null,
+    "hp": null,
+    "stage": null,
+    "evolvesFrom": null,
+    "attacks": [],
+    "ability": null,
+    "weakness": null,
+    "retreat": null,
+    "pack": "",
+    "trainerText": "The Ancient Pokémon this card is attached to gets +40 HP.",
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_069_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_069_EN.png",
+    "artist": "5ban Graphics",
+    "flavor": null
+  },
+  {
+    "id": "B3a-070",
+    "setId": "B3a",
+    "number": 70,
+    "name": "Future Booster Energy Capsule",
+    "rarity": "◊◊",
+    "exKind": "regular",
+    "cardType": "Trainer",
+    "trainerKind": null,
+    "hp": null,
+    "stage": null,
+    "evolvesFrom": null,
+    "attacks": [],
+    "ability": null,
+    "weakness": null,
+    "retreat": null,
+    "pack": "",
+    "trainerText": "Attacks used by the Future Pokémon this card is attached to do +20 damage to your opponent's Active Pokémon.",
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_070_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_070_EN.png",
+    "artist": "5ban Graphics",
+    "flavor": null
+  },
+  {
+    "id": "B3a-071",
+    "setId": "B3a",
+    "number": 71,
+    "name": "Juliana",
+    "rarity": "◊◊",
+    "exKind": "regular",
+    "cardType": "Trainer",
+    "trainerKind": "Supporter",
+    "hp": null,
+    "stage": null,
+    "evolvesFrom": null,
+    "attacks": [],
+    "ability": null,
+    "weakness": null,
+    "retreat": null,
+    "pack": "",
+    "trainerText": "Put a random Stage 2 Pokémon from your deck into your hand.",
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_071_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_071_EN.png",
+    "artist": "Cona Nitanda",
+    "flavor": null
+  },
+  {
+    "id": "B3a-072",
+    "setId": "B3a",
+    "number": 72,
+    "name": "Professor Sada",
+    "rarity": "◊◊",
+    "exKind": "regular",
+    "cardType": "Trainer",
+    "trainerKind": "Supporter",
+    "hp": null,
+    "stage": null,
+    "evolvesFrom": null,
+    "attacks": [],
+    "ability": null,
+    "weakness": null,
+    "retreat": null,
+    "pack": "",
+    "trainerText": "Attach 3 different types of Energy from your discard pile to your Ancient Pokémon in any way you like.",
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_072_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_072_EN.png",
+    "artist": "hncl",
+    "flavor": null
+  },
+  {
+    "id": "B3a-073",
+    "setId": "B3a",
+    "number": 73,
+    "name": "Professor Turo",
+    "rarity": "◊◊",
+    "exKind": "regular",
+    "cardType": "Trainer",
+    "trainerKind": "Supporter",
+    "hp": null,
+    "stage": null,
+    "evolvesFrom": null,
+    "attacks": [],
+    "ability": null,
+    "weakness": null,
+    "retreat": null,
+    "pack": "",
+    "trainerText": "Shuffle 1 of your Future Pokémon in play into your deck.",
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_073_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_073_EN.png",
+    "artist": "akagi",
+    "flavor": null
+  },
+  {
+    "id": "B3a-074",
+    "setId": "B3a",
+    "number": 74,
+    "name": "Area Zero",
+    "rarity": "◊◊",
+    "exKind": "regular",
+    "cardType": "Trainer",
+    "trainerKind": null,
+    "hp": null,
+    "stage": null,
+    "evolvesFrom": null,
+    "attacks": [],
+    "ability": null,
+    "weakness": null,
+    "retreat": null,
+    "pack": "",
+    "trainerText": "Once during each player's turn, that player may shuffle a Basic Pokémon from their hand into their deck. If they do, they draw a card.",
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_074_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_074_EN.png",
+    "artist": "MARINA Chikazawa",
+    "flavor": null
+  },
+  {
+    "id": "B3a-075",
+    "setId": "B3a",
+    "number": 75,
+    "name": "Snom",
+    "rarity": "☆",
+    "exKind": "regular",
+    "cardType": "Water",
+    "trainerKind": null,
+    "hp": 50,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "W",
+        "name": "Gnaw",
+        "damage": "20",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Metal",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_075_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_075_EN.png",
+    "artist": "Shinya Komatsu",
+    "flavor": "Within its internal organs, Snom amplifies the frigid air it gets from eating snow and then uses this amplified air to create icicle-like spikes."
+  },
+  {
+    "id": "B3a-076",
+    "setId": "B3a",
+    "number": 76,
+    "name": "Flittle",
+    "rarity": "☆",
+    "exKind": "regular",
+    "cardType": "Psychic",
+    "trainerKind": null,
+    "hp": 40,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "P",
+        "name": "Psy Bolt",
+        "damage": "10",
+        "effect": "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed."
+      }
+    ],
+    "ability": null,
+    "weakness": "Darkness",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_076_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_076_EN.png",
+    "artist": "Kanami Ogata",
+    "flavor": "It spends its time running around wastelands. If anyone steals its beloved berries, it will chase them down and exact its revenge."
+  },
+  {
+    "id": "B3a-077",
+    "setId": "B3a",
+    "number": 77,
+    "name": "Iron Boulder",
+    "rarity": "☆",
+    "exKind": "regular",
+    "cardType": "Psychic",
+    "trainerKind": null,
+    "hp": 120,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "PPCC",
+        "name": "Modular Axe",
+        "damage": "80+",
+        "effect": "If this Pokémon has a Pokémon Tool attached, this attack does 40 more damage."
+      }
+    ],
+    "ability": null,
+    "weakness": "Darkness",
+    "retreat": 3,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_077_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_077_EN.png",
+    "artist": "toriyufu",
+    "flavor": "It was named after a mysterious object recorded in an old book. Its body seems to be metallic."
+  },
+  {
+    "id": "B3a-078",
+    "setId": "B3a",
+    "number": 78,
+    "name": "Glimmora",
+    "rarity": "☆",
+    "exKind": "regular",
+    "cardType": "Darkness",
+    "trainerKind": null,
+    "hp": 90,
+    "stage": "Stage 1",
+    "evolvesFrom": "Glimmet",
+    "attacks": [
+      {
+        "cost": "D",
+        "name": "Venomous Hit",
+        "damage": "30",
+        "effect": "Your opponent's Active Pokémon is now Poisoned."
+      }
+    ],
+    "ability": {
+      "name": "Shattering Crystal",
+      "effect": "When this Pokémon is Knocked Out, flip a coin. If heads, your opponent can't get any points for it."
+    },
+    "weakness": "Fighting",
+    "retreat": 2,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_078_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_078_EN.png",
+    "artist": "takashi shiraishi",
+    "flavor": "Glimmora’s petals are made of crystallized poison energy. It has recently become evident that these petals resemble Tera Jewels."
+  },
+  {
+    "id": "B3a-079",
+    "setId": "B3a",
+    "number": 79,
+    "name": "Raging Bolt",
+    "rarity": "☆",
+    "exKind": "regular",
+    "cardType": "Dragon",
+    "trainerKind": null,
+    "hp": 130,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "WWLLC",
+        "name": "Baneful Boom",
+        "damage": "",
+        "effect": "Discard all Energy from this Pokémon. Knock Out your opponent's Active Pokémon."
+      }
+    ],
+    "ability": null,
+    "weakness": null,
+    "retreat": 3,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_079_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_079_EN.png",
+    "artist": "Kazumasa Yasukuni",
+    "flavor": "It bears resemblance to a Pokémon that became a hot topic for a short while after a paranormal magazine touted it as Raikou’s ancestor."
+  },
+  {
+    "id": "B3a-080",
+    "setId": "B3a",
+    "number": 80,
+    "name": "Hawlucha",
+    "rarity": "☆",
+    "exKind": "regular",
+    "cardType": "Colorless",
+    "trainerKind": null,
+    "hp": 80,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "C",
+        "name": "Acrobatics",
+        "damage": "10+",
+        "effect": "Flip 2 coins. This attack does 20 more damage for each heads."
+      }
+    ],
+    "ability": null,
+    "weakness": "Lightning",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_080_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_080_EN.png",
+    "artist": "Shigenori Negishi",
+    "flavor": "Hawlucha live quietly without flocking together. They fight constantly with their natural enemies: noisy groups of Primeape."
+  },
+  {
+    "id": "B3a-081",
+    "setId": "B3a",
+    "number": 81,
+    "name": "Iron Bundle ex",
+    "rarity": "☆☆",
+    "exKind": "ex",
+    "cardType": "Water",
+    "trainerKind": null,
+    "hp": 130,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "WWC",
+        "name": "Cold Start",
+        "damage": "60+",
+        "effect": "If this is the first time this Pokémon has used an attack after coming into play, this attack does 20 more damage, and your opponent's Active Pokémon is now Paralyzed."
+      }
+    ],
+    "ability": null,
+    "weakness": "Lightning",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_081_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_081_EN.png",
+    "artist": "Ultimateinudog",
+    "flavor": null
+  },
+  {
+    "id": "B3a-082",
+    "setId": "B3a",
+    "number": 82,
+    "name": "Miraidon ex",
+    "rarity": "☆☆",
+    "exKind": "ex",
+    "cardType": "Lightning",
+    "trainerKind": null,
+    "hp": 140,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "CCC",
+        "name": "Hadron Ray",
+        "damage": "20+",
+        "effect": "This attack does 20 more damage for each [L] Energy attached to this Pokémon."
+      }
+    ],
+    "ability": {
+      "name": "Legendary Drive",
+      "effect": "Once during your turn, when you put this Pokémon from your hand onto your Bench, you may switch it with your Active Pokémon. If you do, move all of your Energy in play to this Pokémon."
+    },
+    "weakness": "Fighting",
+    "retreat": 2,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_082_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_082_EN.png",
+    "artist": "5ban Graphics",
+    "flavor": null
+  },
+  {
+    "id": "B3a-083",
+    "setId": "B3a",
+    "number": 83,
+    "name": "Flutter Mane ex",
+    "rarity": "☆☆",
+    "exKind": "ex",
+    "cardType": "Psychic",
+    "trainerKind": null,
+    "hp": 130,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "PP",
+        "name": "Spellbinding Start",
+        "damage": "70",
+        "effect": "If this is the first time this Pokémon has used an attack after coming into play, during your opponent's next turn, they can't use any Trainer cards from their hand."
+      }
+    ],
+    "ability": null,
+    "weakness": "Metal",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_083_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_083_EN.png",
+    "artist": "PLANETA Igarashi",
+    "flavor": null
+  },
+  {
+    "id": "B3a-084",
+    "setId": "B3a",
+    "number": 84,
+    "name": "Koraidon ex",
+    "rarity": "☆☆",
+    "exKind": "ex",
+    "cardType": "Fighting",
+    "trainerKind": null,
+    "hp": 150,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "FFF",
+        "name": "World Wrecker",
+        "damage": "110",
+        "effect": "Discard the top card of your deck."
+      }
+    ],
+    "ability": {
+      "name": "Legendary Drive",
+      "effect": "Once during your turn, when you put this Pokémon from your hand onto your Bench, you may switch it with your Active Pokémon. If you do, move all of your Energy in play to this Pokémon."
+    },
+    "weakness": "Psychic",
+    "retreat": 2,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_084_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_084_EN.png",
+    "artist": "aky CG Works",
+    "flavor": null
+  },
+  {
+    "id": "B3a-085",
+    "setId": "B3a",
+    "number": 85,
+    "name": "Terapagos ex",
+    "rarity": "☆☆",
+    "exKind": "ex",
+    "cardType": "Colorless",
+    "trainerKind": null,
+    "hp": 150,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "CCC",
+        "name": "Prism Impact",
+        "damage": "80+",
+        "effect": "This attack does 20 more damage for each type of Energy attached to this Pokémon."
+      }
+    ],
+    "ability": null,
+    "weakness": "Fighting",
+    "retreat": 2,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_085_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_085_EN.png",
+    "artist": "5ban Graphics",
+    "flavor": null
+  },
+  {
+    "id": "B3a-086",
+    "setId": "B3a",
+    "number": 86,
+    "name": "Juliana",
+    "rarity": "☆☆",
+    "exKind": "regular",
+    "cardType": "Trainer",
+    "trainerKind": "Supporter",
+    "hp": null,
+    "stage": null,
+    "evolvesFrom": null,
+    "attacks": [],
+    "ability": null,
+    "weakness": null,
+    "retreat": null,
+    "pack": "",
+    "trainerText": "Put a random Stage 2 Pokémon from your deck into your hand.",
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_086_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_086_EN.png",
+    "artist": "Cona Nitanda",
+    "flavor": null
+  },
+  {
+    "id": "B3a-087",
+    "setId": "B3a",
+    "number": 87,
+    "name": "Professor Sada",
+    "rarity": "☆☆",
+    "exKind": "regular",
+    "cardType": "Trainer",
+    "trainerKind": "Supporter",
+    "hp": null,
+    "stage": null,
+    "evolvesFrom": null,
+    "attacks": [],
+    "ability": null,
+    "weakness": null,
+    "retreat": null,
+    "pack": "",
+    "trainerText": "Attach 3 different types of Energy from your discard pile to your Ancient Pokémon in any way you like.",
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_087_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_087_EN.png",
+    "artist": "hncl",
+    "flavor": null
+  },
+  {
+    "id": "B3a-088",
+    "setId": "B3a",
+    "number": 88,
+    "name": "Professor Turo",
+    "rarity": "☆☆",
+    "exKind": "regular",
+    "cardType": "Trainer",
+    "trainerKind": "Supporter",
+    "hp": null,
+    "stage": null,
+    "evolvesFrom": null,
+    "attacks": [],
+    "ability": null,
+    "weakness": null,
+    "retreat": null,
+    "pack": "",
+    "trainerText": "Shuffle 1 of your Future Pokémon in play into your deck.",
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_088_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_088_EN.png",
+    "artist": "akagi",
+    "flavor": null
+  },
+  {
+    "id": "B3a-089",
+    "setId": "B3a",
+    "number": 89,
+    "name": "Iron Bundle ex",
+    "rarity": "☆☆",
+    "exKind": "ex",
+    "cardType": "Water",
+    "trainerKind": null,
+    "hp": 130,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "WWC",
+        "name": "Cold Start",
+        "damage": "60+",
+        "effect": "If this is the first time this Pokémon has used an attack after coming into play, this attack does 20 more damage, and your opponent's Active Pokémon is now Paralyzed."
+      }
+    ],
+    "ability": null,
+    "weakness": "Lightning",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_089_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_089_EN.png",
+    "artist": "Akira Komayama",
+    "flavor": null
+  },
+  {
+    "id": "B3a-090",
+    "setId": "B3a",
+    "number": 90,
+    "name": "Miraidon ex",
+    "rarity": "☆☆",
+    "exKind": "ex",
+    "cardType": "Lightning",
+    "trainerKind": null,
+    "hp": 140,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "CCC",
+        "name": "Hadron Ray",
+        "damage": "20+",
+        "effect": "This attack does 20 more damage for each [L] Energy attached to this Pokémon."
+      }
+    ],
+    "ability": {
+      "name": "Legendary Drive",
+      "effect": "Once during your turn, when you put this Pokémon from your hand onto your Bench, you may switch it with your Active Pokémon. If you do, move all of your Energy in play to this Pokémon."
+    },
+    "weakness": "Fighting",
+    "retreat": 2,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_090_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_090_EN.png",
+    "artist": "Nurikabe",
+    "flavor": null
+  },
+  {
+    "id": "B3a-091",
+    "setId": "B3a",
+    "number": 91,
+    "name": "Flutter Mane ex",
+    "rarity": "☆☆",
+    "exKind": "ex",
+    "cardType": "Psychic",
+    "trainerKind": null,
+    "hp": 130,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "PP",
+        "name": "Spellbinding Start",
+        "damage": "70",
+        "effect": "If this is the first time this Pokémon has used an attack after coming into play, during your opponent's next turn, they can't use any Trainer cards from their hand."
+      }
+    ],
+    "ability": null,
+    "weakness": "Metal",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_091_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_091_EN.png",
+    "artist": "matazo",
+    "flavor": null
+  },
+  {
+    "id": "B3a-092",
+    "setId": "B3a",
+    "number": 92,
+    "name": "Koraidon ex",
+    "rarity": "☆☆",
+    "exKind": "ex",
+    "cardType": "Fighting",
+    "trainerKind": null,
+    "hp": 150,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "FFF",
+        "name": "World Wrecker",
+        "damage": "110",
+        "effect": "Discard the top card of your deck."
+      }
+    ],
+    "ability": {
+      "name": "Legendary Drive",
+      "effect": "Once during your turn, when you put this Pokémon from your hand onto your Bench, you may switch it with your Active Pokémon. If you do, move all of your Energy in play to this Pokémon."
+    },
+    "weakness": "Psychic",
+    "retreat": 2,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_092_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_092_EN.png",
+    "artist": "Nurikabe",
+    "flavor": null
+  },
+  {
+    "id": "B3a-093",
+    "setId": "B3a",
+    "number": 93,
+    "name": "Terapagos ex",
+    "rarity": "☆☆☆",
+    "exKind": "ex",
+    "cardType": "Colorless",
+    "trainerKind": null,
+    "hp": 150,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "CCC",
+        "name": "Prism Impact",
+        "damage": "80+",
+        "effect": "This attack does 20 more damage for each type of Energy attached to this Pokémon."
+      }
+    ],
+    "ability": null,
+    "weakness": "Fighting",
+    "retreat": 2,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_093_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_093_EN.png",
+    "artist": "KASSEN",
+    "flavor": null
+  },
+  {
+    "id": "B3a-094",
+    "setId": "B3a",
+    "number": 94,
+    "name": "Rellor",
+    "rarity": "☆",
+    "exKind": "regular",
+    "cardType": "Grass",
+    "trainerKind": null,
+    "hp": 50,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "C",
+        "name": "Ball Roll",
+        "damage": "20x",
+        "effect": "Flip a coin until you get tails. This attack does 20 damage for each heads."
+      }
+    ],
+    "ability": null,
+    "weakness": "Fire",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_094_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_094_EN.png",
+    "artist": "Souichirou Gunjima",
+    "flavor": "It rolls its mud ball around while the energy it needs for evolution matures. Eventually the time comes for it to evolve."
+  },
+  {
+    "id": "B3a-095",
+    "setId": "B3a",
+    "number": 95,
+    "name": "Charcadet",
+    "rarity": "☆",
+    "exKind": "regular",
+    "cardType": "Fire",
+    "trainerKind": null,
+    "hp": 60,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "C",
+        "name": "Punch",
+        "damage": "10",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Water",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_095_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_095_EN.png",
+    "artist": "MAHOU",
+    "flavor": "Its firepower increases when it fights, reaching over 1,800 degrees Fahrenheit. It likes berries that are rich in fat."
+  },
+  {
+    "id": "B3a-096",
+    "setId": "B3a",
+    "number": 96,
+    "name": "Tadbulb",
+    "rarity": "☆",
+    "exKind": "regular",
+    "cardType": "Lightning",
+    "trainerKind": null,
+    "hp": 50,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "C",
+        "name": "Charge",
+        "damage": "",
+        "effect": "Take a [L] Energy from your Energy Zone and attach it to this Pokémon."
+      }
+    ],
+    "ability": null,
+    "weakness": "Fighting",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_096_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_096_EN.png",
+    "artist": "Taiga Kasai",
+    "flavor": "It floats using the electricity stored in its body. When thunderclouds are around, Tadbulb will float higher off the ground."
+  },
+  {
+    "id": "B3a-097",
+    "setId": "B3a",
+    "number": 97,
+    "name": "Rabsca",
+    "rarity": "☆",
+    "exKind": "regular",
+    "cardType": "Psychic",
+    "trainerKind": null,
+    "hp": 70,
+    "stage": "Stage 1",
+    "evolvesFrom": "Rellor",
+    "attacks": [
+      {
+        "cost": "PP",
+        "name": "Psybeam",
+        "damage": "80",
+        "effect": "Your opponent's Active Pokémon is now Confused."
+      }
+    ],
+    "ability": null,
+    "weakness": "Darkness",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_097_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_097_EN.png",
+    "artist": "Souichirou Gunjima",
+    "flavor": "An infant sleeps inside the ball. Rabsca rolls the ball soothingly with its legs to ensure the infant sleeps comfortably."
+  },
+  {
+    "id": "B3a-098",
+    "setId": "B3a",
+    "number": 98,
+    "name": "Diglett",
+    "rarity": "☆",
+    "exKind": "regular",
+    "cardType": "Fighting",
+    "trainerKind": null,
+    "hp": 60,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "F",
+        "name": "Slight Intrusion",
+        "damage": "30",
+        "effect": "This Pokémon also does 10 damage to itself."
+      }
+    ],
+    "ability": null,
+    "weakness": "Grass",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_098_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_098_EN.png",
+    "artist": "Taiga Kasai",
+    "flavor": "Its skin is very thin. If it is exposed to light, its blood heats up, causing it to grow weak."
+  },
+  {
+    "id": "B3a-099",
+    "setId": "B3a",
+    "number": 99,
+    "name": "Dugtrio",
+    "rarity": "☆",
+    "exKind": "regular",
+    "cardType": "Fighting",
+    "trainerKind": null,
+    "hp": 80,
+    "stage": "Stage 1",
+    "evolvesFrom": "Diglett",
+    "attacks": [
+      {
+        "cost": "FC",
+        "name": "Mud Bomb",
+        "damage": "60",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Grass",
+    "retreat": 0,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_099_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_099_EN.png",
+    "artist": "Taiga Kasai",
+    "flavor": "In battle, it digs through the ground and strikes the unsuspecting foe from an unexpected direction."
+  },
+  {
+    "id": "B3a-100",
+    "setId": "B3a",
+    "number": 100,
+    "name": "Klawf",
+    "rarity": "☆",
+    "exKind": "regular",
+    "cardType": "Fighting",
+    "trainerKind": null,
+    "hp": 100,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "FF",
+        "name": "Adrenaline Hammer",
+        "damage": "70",
+        "effect": "This Pokémon is now Confused."
+      }
+    ],
+    "ability": null,
+    "weakness": "Grass",
+    "retreat": 3,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_100_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_100_EN.png",
+    "artist": "MAHOU",
+    "flavor": "This Pokémon lives on sheer cliffs. It sidesteps opponents’ attacks, then lunges for their weak spots with its claws."
+  },
+  {
+    "id": "B3a-101",
+    "setId": "B3a",
+    "number": 101,
+    "name": "Orthworm",
+    "rarity": "☆",
+    "exKind": "regular",
+    "cardType": "Metal",
+    "trainerKind": null,
+    "hp": 100,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "M",
+        "name": "Iron Supply",
+        "damage": "10",
+        "effect": "Take a [M] Energy from your Energy Zone and attach it to 1 of your Benched Pokémon."
+      }
+    ],
+    "ability": null,
+    "weakness": "Fire",
+    "retreat": 3,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_101_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_101_EN.png",
+    "artist": "Souichirou Gunjima",
+    "flavor": "This Pokémon lives in arid deserts. It maintains its metal body by consuming iron from the soil."
+  },
+  {
+    "id": "B3a-102",
+    "setId": "B3a",
+    "number": 102,
+    "name": "Swablu",
+    "rarity": "☆",
+    "exKind": "regular",
+    "cardType": "Colorless",
+    "trainerKind": null,
+    "hp": 50,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "C",
+        "name": "Sing",
+        "damage": "",
+        "effect": "Your opponent's Active Pokémon is now Asleep."
+      }
+    ],
+    "ability": null,
+    "weakness": "Lightning",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_102_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_102_EN.png",
+    "artist": "whomor Inc.",
+    "flavor": "It can’t relax if it or its surroundings are not clean. It wipes off dirt with its wings."
+  },
+  {
+    "id": "B3a-103",
+    "setId": "B3a",
+    "number": 103,
+    "name": "Altaria",
+    "rarity": "☆",
+    "exKind": "regular",
+    "cardType": "Colorless",
+    "trainerKind": null,
+    "hp": 100,
+    "stage": "Stage 1",
+    "evolvesFrom": "Swablu",
+    "attacks": [
+      {
+        "cost": "CC",
+        "name": "Do the Wave",
+        "damage": "20+",
+        "effect": "This attack does 20 more damage for each of your Benched Pokémon."
+      }
+    ],
+    "ability": null,
+    "weakness": "Lightning",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_103_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_103_EN.png",
+    "artist": "whomor Inc.",
+    "flavor": "On sunny days, it flies freely through the sky and blends into the clouds. It sings in a beautiful soprano."
+  },
+  {
+    "id": "B3a-104",
+    "setId": "B3a",
+    "number": 104,
+    "name": "Meowscarada ex",
+    "rarity": "☆☆",
+    "exKind": "ex",
+    "cardType": "Grass",
+    "trainerKind": null,
+    "hp": 160,
+    "stage": "Stage 2",
+    "evolvesFrom": "Floragato",
+    "attacks": [
+      {
+        "cost": "G",
+        "name": "Flower Trick",
+        "damage": "",
+        "effect": "Choose a spot from among your opponent's Active Spot and Bench. At the end of your opponent's next turn, do 70 damage to the Pokémon in the spot you chose."
+      },
+      {
+        "cost": "GG",
+        "name": "Solar Beam",
+        "damage": "80",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Fire",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_104_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_104_EN.png",
+    "artist": "5ban Graphics",
+    "flavor": null
+  },
+  {
+    "id": "B3a-105",
+    "setId": "B3a",
+    "number": 105,
+    "name": "Armarouge ex",
+    "rarity": "☆☆",
+    "exKind": "ex",
+    "cardType": "Fire",
+    "trainerKind": null,
+    "hp": 140,
+    "stage": "Stage 1",
+    "evolvesFrom": "Charcadet",
+    "attacks": [
+      {
+        "cost": "RCC",
+        "name": "Armor Cannon",
+        "damage": "120",
+        "effect": "Discard a [R] Energy from this Pokémon."
+      }
+    ],
+    "ability": {
+      "name": "Armor",
+      "effect": "This Pokémon takes −30 damage from attacks."
+    },
+    "weakness": "Water",
+    "retreat": 2,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_105_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_105_EN.png",
+    "artist": "takuyoa",
+    "flavor": null
+  },
+  {
+    "id": "B3a-106",
+    "setId": "B3a",
+    "number": 106,
+    "name": "Bellibolt ex",
+    "rarity": "☆☆",
+    "exKind": "ex",
+    "cardType": "Lightning",
+    "trainerKind": null,
+    "hp": 160,
+    "stage": "Stage 1",
+    "evolvesFrom": "Tadbulb",
+    "attacks": [
+      {
+        "cost": "LL",
+        "name": "High-Voltage Cannon",
+        "damage": "70+",
+        "effect": "If you have 4 or more [L] Energy in play, this attack does 70 more damage."
+      }
+    ],
+    "ability": null,
+    "weakness": "Fighting",
+    "retreat": 3,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_106_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_106_EN.png",
+    "artist": "PLANETA Yamashita",
+    "flavor": null
+  },
+  {
+    "id": "B3a-107",
+    "setId": "B3a",
+    "number": 107,
+    "name": "Mega Altaria ex",
+    "rarity": "☆☆",
+    "exKind": "mega-ex",
+    "cardType": "Psychic",
+    "trainerKind": null,
+    "hp": 190,
+    "stage": "Stage 1",
+    "evolvesFrom": "Swablu",
+    "attacks": [
+      {
+        "cost": "PP",
+        "name": "Mega Harmony",
+        "damage": "40+",
+        "effect": "This attack does 30 more damage for each of your Benched Pokémon."
+      }
+    ],
+    "ability": null,
+    "weakness": "Metal",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_107_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_107_EN.png",
+    "artist": "PLANETA Igarashi",
+    "flavor": null
+  },
+  {
+    "id": "B3a-108",
+    "setId": "B3a",
+    "number": 108,
+    "name": "Iron Valiant",
+    "rarity": "♕",
+    "exKind": "regular",
+    "cardType": "Psychic",
+    "trainerKind": null,
+    "hp": 100,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "PP",
+        "name": "Slicing Blade",
+        "damage": "50",
+        "effect": ""
+      }
+    ],
+    "ability": {
+      "name": "Future System",
+      "effect": "Attacks used by your Future Pokémon cost 1 less [C] Energy."
+    },
+    "weakness": "Metal",
+    "retreat": 2,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_108_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_108_EN.png",
+    "artist": "PLANETA Igarashi",
+    "flavor": "It’s possible that this is the object listed as Iron Valiant in a certain expedition journal."
+  },
+  {
+    "id": "B3a-109",
+    "setId": "B3a",
+    "number": 109,
+    "name": "Roaring Moon",
+    "rarity": "♕",
+    "exKind": "regular",
+    "cardType": "Darkness",
+    "trainerKind": null,
+    "hp": 100,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "DDC",
+        "name": "Wind of Darkness",
+        "damage": "70",
+        "effect": ""
+      }
+    ],
+    "ability": {
+      "name": "Ancient Roar",
+      "effect": "Once during your turn, when you put this Pokémon from your hand onto your Bench, you may switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)"
+    },
+    "weakness": "Grass",
+    "retreat": 1,
+    "pack": "",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_109_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/B3a/B3a_109_EN.png",
+    "artist": "PLANETA Mamiya",
+    "flavor": "According to an article in a dubious magazine, this Pokémon has some connection to a phenomenon that occurs in a certain region."
+  },
+  {
     "id": "B3-001",
     "setId": "B3",
     "number": 1,
@@ -36313,6 +39571,252 @@
     "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_062_EN.png",
     "artist": "kawayoo",
     "flavor": "When trying to protect someone, it extends its elbows as if they were swords and fights savagely."
+  },
+  {
+    "id": "P-B-063",
+    "setId": "P-B",
+    "number": 63,
+    "name": "Meowscarada ex",
+    "rarity": "Promo",
+    "exKind": "ex",
+    "cardType": "Grass",
+    "trainerKind": null,
+    "hp": 160,
+    "stage": "Stage 2",
+    "evolvesFrom": "Floragato",
+    "attacks": [
+      {
+        "cost": "G",
+        "name": "Flower Trick",
+        "damage": "",
+        "effect": "Choose a spot from among your opponent's Active Spot and Bench. At the end of your opponent's next turn, do 70 damage to the Pokémon in the spot you chose."
+      },
+      {
+        "cost": "GG",
+        "name": "Solar Beam",
+        "damage": "80",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Fire",
+    "retreat": 1,
+    "pack": "Premium Missions",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_063_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_063_EN.png",
+    "artist": "5ban Graphics",
+    "flavor": null
+  },
+  {
+    "id": "P-B-064",
+    "setId": "P-B",
+    "number": 64,
+    "name": "Charcadet",
+    "rarity": "Promo",
+    "exKind": "regular",
+    "cardType": "Fire",
+    "trainerKind": null,
+    "hp": 60,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "C",
+        "name": "Protect",
+        "damage": "",
+        "effect": "Flip a coin. If heads, during your opponent's next turn, prevent all damage from—and effects of—attacks done to this Pokémon."
+      }
+    ],
+    "ability": null,
+    "weakness": "Water",
+    "retreat": 1,
+    "pack": "Promo",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_064_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_064_EN.png",
+    "artist": "takuyoa",
+    "flavor": "Its firepower increases when it fights, reaching over 1,800 degrees Fahrenheit. It likes berries that are rich in fat."
+  },
+  {
+    "id": "P-B-065",
+    "setId": "P-B",
+    "number": 65,
+    "name": "Vaporeon",
+    "rarity": "Promo",
+    "exKind": "regular",
+    "cardType": "Water",
+    "trainerKind": null,
+    "hp": 120,
+    "stage": "Stage 1",
+    "evolvesFrom": "Eevee",
+    "attacks": [
+      {
+        "cost": "WW",
+        "name": "Impound",
+        "damage": "60",
+        "effect": "During your opponent's next turn, the Defending Pokémon can't retreat."
+      }
+    ],
+    "ability": null,
+    "weakness": "Lightning",
+    "retreat": 2,
+    "pack": "Promo",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_065_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_065_EN.png",
+    "artist": "kodama",
+    "flavor": "Its cell composition is similar to water molecules. As a result, it can’t be seen when it melts away into water."
+  },
+  {
+    "id": "P-B-066",
+    "setId": "P-B",
+    "number": 66,
+    "name": "Ceruledge ex",
+    "rarity": "Promo",
+    "exKind": "ex",
+    "cardType": "Psychic",
+    "trainerKind": null,
+    "hp": 150,
+    "stage": "Stage 1",
+    "evolvesFrom": "Charcadet",
+    "attacks": [
+      {
+        "cost": "PC",
+        "name": "Shimmering Slash",
+        "damage": "80",
+        "effect": "Discard a random Energy from among the Energy attached to all Pokémon (both yours and your opponent's)."
+      }
+    ],
+    "ability": null,
+    "weakness": "Darkness",
+    "retreat": 2,
+    "pack": "Promo",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_066_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_066_EN.png",
+    "artist": "PLANETA Yamashita",
+    "flavor": null
+  },
+  {
+    "id": "P-B-067",
+    "setId": "P-B",
+    "number": 67,
+    "name": "Pawniard",
+    "rarity": "Promo",
+    "exKind": "regular",
+    "cardType": "Darkness",
+    "trainerKind": null,
+    "hp": 60,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "D",
+        "name": "Call for Family",
+        "damage": "",
+        "effect": "Put 1 random Basic Pokémon from your deck onto your Bench."
+      }
+    ],
+    "ability": null,
+    "weakness": "Grass",
+    "retreat": 1,
+    "pack": "Promo",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_067_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_067_EN.png",
+    "artist": "Tomokazu Komiya",
+    "flavor": "Any chips in its blades would prove fatal for it. After each battle, it diligently maintains its blades using its favorite sharpening stone."
+  },
+  {
+    "id": "P-B-068",
+    "setId": "P-B",
+    "number": 68,
+    "name": "Dudunsparce",
+    "rarity": "Promo",
+    "exKind": "regular",
+    "cardType": "Colorless",
+    "trainerKind": null,
+    "hp": 100,
+    "stage": "Stage 1",
+    "evolvesFrom": "Dunsparce",
+    "attacks": [
+      {
+        "cost": "CC",
+        "name": "Sudden Drilling",
+        "damage": "60",
+        "effect": "If this Pokémon evolved from Dunsparce during this turn, discard 2 random Energy from your opponent's Active Pokémon."
+      }
+    ],
+    "ability": null,
+    "weakness": "Fighting",
+    "retreat": 3,
+    "pack": "Promo",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_068_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_068_EN.png",
+    "artist": "Mina Nakai",
+    "flavor": "It drives enemies out of its nest by sucking in enough air to fill its long, narrow lungs, then releasing the air in an intense blast."
+  },
+  {
+    "id": "P-B-069",
+    "setId": "P-B",
+    "number": 69,
+    "name": "Floragato",
+    "rarity": "Promo",
+    "exKind": "regular",
+    "cardType": "Grass",
+    "trainerKind": null,
+    "hp": 90,
+    "stage": "Stage 1",
+    "evolvesFrom": "Sprigatito",
+    "attacks": [
+      {
+        "cost": "G",
+        "name": "Leaf Step",
+        "damage": "30",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Fire",
+    "retreat": 1,
+    "pack": "Wonder Pick",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_069_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_069_EN.png",
+    "artist": "nagimiso",
+    "flavor": "The hardness of Floragato’s fur depends on the Pokémon’s mood. When Floragato is prepared to battle, its fur becomes pointed and needle sharp."
+  },
+  {
+    "id": "P-B-070",
+    "setId": "P-B",
+    "number": 70,
+    "name": "Sableye",
+    "rarity": "Promo",
+    "exKind": "regular",
+    "cardType": "Darkness",
+    "trainerKind": null,
+    "hp": 60,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "C",
+        "name": "Jeweled Gift",
+        "damage": "",
+        "effect": "Take a random Energy from among [G], [R], [W], [L], [P], [F], [D], and [M] Energy from your Energy Zone and attach it to 1 of your Benched Pokémon."
+      }
+    ],
+    "ability": null,
+    "weakness": "Grass",
+    "retreat": 1,
+    "pack": "Wonder Pick",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_070_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_070_EN.png",
+    "artist": "Nagomi Nijo",
+    "flavor": "Materials from gems it has eaten float to the surface of its body and can form an infinite number of patterns among individuals."
   },
   {
     "id": "A4b-001",
