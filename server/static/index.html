@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pocket Sim — hotseat</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body { font: 14px/1.45 system-ui, sans-serif; max-width: 1000px; margin: 16px auto; padding: 0 14px; }
+  h1 { font-size: 20px; margin: 0; }
+  .sub { color: #888; font-size: 12px; margin: 2px 0 14px; }
+  .bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+  button { font: inherit; padding: 5px 11px; border: 1px solid #8886; border-radius: 5px; background: #8881; color: inherit; cursor: pointer; }
+  button:hover { background: #8883; }
+  button:disabled { opacity: .4; cursor: default; }
+  input { font: inherit; width: 70px; padding: 5px 7px; border: 1px solid #8886; border-radius: 5px; background: transparent; color: inherit; }
+  .banner { padding: 8px 12px; border-radius: 6px; background: #8882; font-weight: 600; margin-bottom: 12px; }
+  .banner.win { background: #2c2; color: #fff; }
+  .err { background: #c22; color: #fff; padding: 6px 10px; border-radius: 5px; margin-bottom: 12px; font-size: 13px; }
+  .players { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .panel { border: 1px solid #8884; border-radius: 8px; padding: 12px; }
+  .panel.turn { border-color: #2c2; box-shadow: 0 0 0 1px #2c2 inset; }
+  .panel h2 { font-size: 15px; margin: 0 0 6px; display: flex; justify-content: space-between; }
+  .pts { color: #2c2; font-weight: 700; }
+  .meta { color: #888; font-size: 12px; margin-bottom: 8px; }
+  .zone { font-weight: 600; color: inherit; }
+  .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #888; margin: 8px 0 3px; }
+  .mon { border: 1px solid #8884; border-radius: 6px; padding: 6px 8px; margin-bottom: 5px; }
+  .mon.active { border-color: #88f8; background: #88f1; }
+  .mon .top { display: flex; justify-content: space-between; gap: 6px; }
+  .mon .nm { font-weight: 600; }
+  .ex { color: #e84; font-size: 10px; border: 1px solid #e848; border-radius: 3px; padding: 0 3px; vertical-align: middle; }
+  .hp { font-variant-numeric: tabular-nums; }
+  .hpbar { height: 4px; border-radius: 2px; background: #8883; margin-top: 4px; overflow: hidden; }
+  .hpbar > i { display: block; height: 100%; background: #2c2; }
+  .nrg { font-size: 11px; color: #888; }
+  .status { font-size: 11px; color: #c66; }
+  .hand { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chip { font-size: 12px; padding: 4px 8px; border: 1px solid #8886; border-radius: 5px; cursor: pointer; background: #8881; }
+  .chip.act { border-color: gold; background: #ffd70022; }
+  .chip.bench { border-color: #58f; background: #5588ff22; }
+  .actions { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .actions.setup { border-top: 1px dashed #8884; padding-top: 8px; }
+  #log { margin-top: 16px; }
+  #log pre { max-height: 220px; overflow: auto; background: #8881; padding: 8px 10px; border-radius: 6px; font: 11px/1.5 ui-monospace, monospace; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+
+<h1>Pocket Sim — hotseat</h1>
+<p class="sub">One browser, both sides. Play a full game on the real Go engine. Demo decks: P1 Fire (Embor / Embor ex) vs P2 Lightning (Volt).</p>
+
+<div class="bar">
+  <button id="new">New game</button>
+  <label>seed <input id="seed" type="number" value="1"></label>
+  <span id="status" class="sub" style="margin:0"></span>
+</div>
+
+<div id="banner" class="banner"></div>
+<div id="err" class="err" style="display:none"></div>
+<div class="players" id="players"></div>
+
+<div id="log"><div class="lbl">Game log</div><pre id="narr">(new game to begin)</pre></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const SIDE = (i) => 'P' + (i + 1);
+let setupSel = null; // {activeIdx, bench:Set} during a setup prompt
+
+async function api(path, body) {
+  const r = await fetch(path, body ? { method: 'POST', body: JSON.stringify(body) } : { method: 'POST' });
+  return r.json();
+}
+
+async function newGame() {
+  setupSel = null;
+  const seed = $('seed').value || 1;
+  render(await api('/api/new?seed=' + seed));
+}
+
+async function move(ev) {
+  const res = await api('/api/move', ev);
+  if (!res.ok) showErr(res.error); else hideErr();
+  render(res.state);
+  return res.ok;
+}
+
+function showErr(m) { $('err').textContent = '✗ ' + m; $('err').style.display = ''; }
+function hideErr() { $('err').style.display = 'none'; }
+
+// --- the actor: whoever the engine is waiting on ---
+function actorOf(s) { return s.pending ? s.pending.player : s.active; }
+
+function render(s) {
+  // banner
+  const b = $('banner');
+  if (s.winner >= 0) { b.className = 'banner win'; b.textContent = `🏆 ${SIDE(s.winner)} wins.`; }
+  else if (s.phase === 'setup') { b.className = 'banner'; b.textContent = `Setup — ${SIDE(actorOf(s))}: choose an Active + bench, then Confirm.`; }
+  else { b.className = 'banner'; b.textContent = `Turn ${s.turn} — ${SIDE(s.active)} to move` + (s.pending ? ` · ${SIDE(s.pending.player)} must choose a new Active` : ''); }
+
+  $('players').innerHTML = '';
+  s.players.forEach((p, i) => $('players').appendChild(panel(s, p, i)));
+  $('narr').textContent = (s.narration || []).join('\n') || '(no events yet)';
+  $('narr').scrollTop = $('narr').scrollHeight;
+}
+
+function panel(s, p, i) {
+  const el = document.createElement('div');
+  const isActor = actorOf(s) === i && s.winner < 0;
+  el.className = 'panel' + (s.active === i && s.phase === 'main' ? ' turn' : '');
+  el.innerHTML = `<h2><span>${SIDE(i)}</span><span class="pts">${p.points} / 3 pts</span></h2>
+    <div class="meta">deck ${p.deckCount} · discard ${p.discardCount} · energy zone <span class="zone">${p.energyZone || '—'}</span>${p.energyUsed ? ' (used)' : ''}</div>`;
+
+  el.innerHTML += `<div class="lbl">Active</div>`;
+  el.appendChild(monEl(p.active, true));
+  el.innerHTML += `<div class="lbl">Bench (${p.bench.length}/3)</div>`;
+  if (!p.bench.length) el.innerHTML += `<div class="sub">empty</div>`;
+  p.bench.forEach(m => el.appendChild(monEl(m, false)));
+
+  el.innerHTML += `<div class="lbl">Hand (${p.hand.length})</div>`;
+  el.appendChild(handEl(s, p, i, isActor));
+
+  if (isActor) el.appendChild(actionsEl(s, p, i));
+  return el;
+}
+
+function monEl(m, isActive) {
+  const d = document.createElement('div');
+  if (!m) { d.className = 'mon'; d.innerHTML = `<span class="sub">—</span>`; return d; }
+  d.className = 'mon' + (isActive ? ' active' : '');
+  const nrg = Object.entries(m.energy).map(([k, n]) => `${k}×${n}`).join(' ') || 'no energy';
+  const st = [m.poisoned && 'poisoned', m.burned && 'burned'].filter(Boolean).join(', ');
+  d.innerHTML = `<div class="top"><span class="nm">${m.card.name}${m.card.isEx ? ' <span class="ex">ex</span>' : ''}</span>
+      <span class="hp">${m.remainingHp}/${m.card.hp} HP</span></div>
+    <div class="hpbar"><i style="width:${Math.max(0, 100 * m.remainingHp / m.card.hp)}%"></i></div>
+    <div class="nrg">${nrg}</div>${st ? `<div class="status">${st}</div>` : ''}`;
+  return d;
+}
+
+function handEl(s, p, i, isActor) {
+  const wrap = document.createElement('div');
+  wrap.className = 'hand';
+  const inSetup = isActor && s.phase === 'setup';
+  if (inSetup && !setupSel) setupSel = { activeIdx: null, bench: new Set() };
+  p.hand.forEach((c, idx) => {
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    let tag = '';
+    if (inSetup) {
+      if (setupSel.activeIdx === idx) { chip.classList.add('act'); tag = ' ★active'; }
+      else if (setupSel.bench.has(idx)) { chip.classList.add('bench'); tag = ' ·bench'; }
+      chip.onclick = () => toggleSetup(s, idx);
+    }
+    chip.innerHTML = `${c.name}${c.isEx ? ' <span class="ex">ex</span>' : ''}${tag}`;
+    wrap.appendChild(chip);
+  });
+  return wrap;
+}
+
+function toggleSetup(s, idx) {
+  const sel = setupSel;
+  if (sel.activeIdx === idx) { sel.activeIdx = null; }
+  else if (sel.bench.has(idx)) { sel.bench.delete(idx); }
+  else if (sel.activeIdx === null) { sel.activeIdx = idx; }
+  else if (sel.bench.size < 3) { sel.bench.add(idx); }
+  render(s); // re-render reflects selection (state is unchanged)
+}
+
+function actionsEl(s, p, i) {
+  const wrap = document.createElement('div');
+  wrap.className = 'actions';
+
+  // 3. prompt: choose a new Active after a knockout
+  if (s.pending && s.pending.kind === 'new_active') {
+    wrap.innerHTML = `<span class="sub">Promote from bench:</span>`;
+    p.bench.forEach((m, bi) => wrap.appendChild(btn(`${m.card.name}`, () => move({ type: 'ChooseNewActive', player: i, benchIndex: bi }))));
+    return wrap;
+  }
+
+  // 1. setup: confirm the current selection
+  if (s.phase === 'setup') {
+    wrap.className = 'actions setup';
+    const ok = setupSel && setupSel.activeIdx !== null;
+    const confirm = btn('Confirm setup', () => {
+      const ids = idx => p.hand[idx].id;
+      const ev = { type: 'SetupPlace', player: i, activeCardId: ids(setupSel.activeIdx), benchCardIds: [...setupSel.bench].map(ids) };
+      setupSel = null;
+      move(ev);
+    });
+    confirm.disabled = !ok;
+    wrap.appendChild(confirm);
+    wrap.appendChild(hint(ok ? `Active set, ${setupSel.bench.size} benched` : 'Click a hand card to set your Active'));
+    return wrap;
+  }
+
+  // 2. main phase: free-form intents
+  if (s.phase === 'main') {
+    if (p.energyZone && !p.energyUsed) {
+      wrap.appendChild(btn(`⚡ ${p.energyZone} → Active`, () => move({ type: 'AttachEnergy', player: i, target: 0 })));
+      p.bench.forEach((m, bi) => wrap.appendChild(btn(`⚡ → ${m.card.name} (b${bi + 1})`, () => move({ type: 'AttachEnergy', player: i, target: bi + 1 }))));
+    }
+    (p.active ? p.active.card.attacks : []).forEach((a, ai) =>
+      wrap.appendChild(btn(`⚔ ${a.name} (${a.damage})`, () => move({ type: 'UseAttack', player: i, index: ai }))));
+    p.hand.forEach(c => { if (c.stage === 'Basic') wrap.appendChild(btn(`Play ${c.name} → bench`, () => move({ type: 'PlayBasic', player: i, cardId: c.id }))); });
+    p.bench.forEach((m, bi) => wrap.appendChild(btn(`Retreat → ${m.card.name}`, () => move({ type: 'Retreat', player: i, benchIndex: bi }))));
+    wrap.appendChild(btn('End turn', () => move({ type: 'EndTurn', player: i })));
+  }
+  return wrap;
+}
+
+function btn(label, fn) { const b = document.createElement('button'); b.innerHTML = label; b.onclick = fn; return b; }
+function hint(t) { const s = document.createElement('span'); s.className = 'sub'; s.textContent = t; return s; }
+
+$('new').onclick = newGame;
+newGame();
+</script>
+
+</body>
+</html>
