@@ -41,3 +41,13 @@ func deckOf(c Card, n int) []Card {
 	}
 	return d
 }
+
+// DemoDecks returns two ready-to-play 20-card demo decks for the first playable
+// slice: a Fire deck (Embor + Embor ex) versus a Lightning deck (Volt). Each is
+// single-type so the Energy Zone always feeds the printed attack cost — games
+// progress reliably without real card data wired in yet (ADR-0002).
+func DemoDecks() (fire, lightning []Card) {
+	fire = append(deckOf(demoEmbor(), 14), deckOf(demoEmborEX(), 6)...)
+	lightning = deckOf(demoVolt(), 20)
+	return fire, lightning
+}

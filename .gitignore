@@ -15,6 +15,7 @@ dist-ssr
 
 # Go / backend
 bin/
+/server/server
 *.exe
 *.exe~
 *.dll
