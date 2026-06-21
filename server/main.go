@@ -32,6 +32,7 @@ func main() {
 	http.HandleFunc("/api/new", handleNew)
 	http.HandleFunc("/api/state", handleState)
 	http.HandleFunc("/api/move", handleMove)
+	http.HandleFunc("/api/bot", handleBot)
 	http.Handle("/", http.FileServer(http.Dir("static")))
 
 	const addr = ":8080"

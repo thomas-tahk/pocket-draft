@@ -53,6 +53,8 @@
 <div class="bar">
   <button id="new">New game</button>
   <label>seed <input id="seed" type="number" value="1"></label>
+  <button id="botOne" title="Bot makes one greedy move for whoever is to act">Bot: 1 move</button>
+  <button id="auto" title="Bot plays both sides until someone wins">▶ Auto-play</button>
   <span id="status" class="sub" style="margin:0"></span>
 </div>
 
@@ -73,9 +75,37 @@ async function api(path, body) {
 }
 
 async function newGame() {
+  stopAuto();
   setupSel = null;
   const seed = $('seed').value || 1;
   render(await api('/api/new?seed=' + seed));
+}
+
+// --- greedy test-bot: one move for the current actor, optionally on a loop ---
+let autoOn = false;
+
+async function botStep() {
+  const r = await api('/api/bot');
+  hideErr();
+  render(r.state);
+  return r.acted && r.state.winner < 0; // true => more to do
+}
+
+function toggleAuto() {
+  if (autoOn) { stopAuto(); return; }
+  autoOn = true;
+  $('auto').textContent = '⏸ Stop';
+  const tick = async () => {
+    if (!autoOn) return;
+    const more = await botStep();
+    if (more && autoOn) setTimeout(tick, 650); else stopAuto();
+  };
+  tick();
+}
+
+function stopAuto() {
+  autoOn = false;
+  $('auto').textContent = '▶ Auto-play';
 }
 
 async function move(ev) {
@@ -212,6 +242,8 @@ function btn(label, fn) { const b = document.createElement('button'); b.innerHTM
 function hint(t) { const s = document.createElement('span'); s.className = 'sub'; s.textContent = t; return s; }
 
 $('new').onclick = newGame;
+$('botOne').onclick = botStep;
+$('auto').onclick = toggleAuto;
 newGame();
 </script>
 
