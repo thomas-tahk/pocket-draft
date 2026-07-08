@@ -1,0 +1,52 @@
+name: Refresh card data
+
+# Pokemon TCG Pocket sets drop roughly monthly. Re-scrape Limitless near
+# month-end (the 28th is the latest day that exists in every month) and commit
+# the refreshed public/data/*.json. Also runnable on demand.
+on:
+  schedule:
+    - cron: "0 5 28 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Scrape (guarded against regression)
+        run: |
+          OLD=$(node -e 'console.log(require("./public/data/cards.json").length)')
+          echo "cards before: $OLD"
+          npm run scrape
+          NEW=$(node -e 'console.log(require("./public/data/cards.json").length)')
+          echo "cards after:  $NEW"
+          # A new expansion only adds cards; a drop means the site layout likely
+          # changed and the scrape is garbage. Refuse to commit it.
+          if [ "$NEW" -lt "$OLD" ]; then
+            echo "::error::scrape produced fewer cards ($NEW < $OLD) — likely a Limitless layout change; refusing to commit."
+            exit 1
+          fi
+
+      - name: Commit refreshed data if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/cards.json public/data/sets.json
+          if git diff --cached --quiet; then
+            echo "No card data changes."
+          else
+            git commit -m "chore: monthly card data refresh"
+            git push
+          fi
