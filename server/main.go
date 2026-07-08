@@ -16,17 +16,27 @@ import (
 )
 
 // One game, guarded by a mutex so overlapping HTTP requests can't corrupt it.
+// The two curated decks are built once at startup and reused for every new game.
 var (
-	mu   sync.Mutex
-	game *engine.Game
+	mu        sync.Mutex
+	game      *engine.Game
+	fireDeck  []engine.Card
+	waterDeck []engine.Card
 )
 
 func newGame(seed uint64) {
-	fire, lightning := engine.DemoDecks()
-	game = engine.NewGame(seed, fire, lightning)
+	game = engine.NewGame(seed, fireDeck, waterDeck)
 }
 
 func main() {
+	if err := loadCards(cardsPath); err != nil {
+		log.Fatal(err)
+	}
+	var err error
+	if fireDeck, waterDeck, err = curatedDecks(); err != nil {
+		log.Fatal(err)
+	}
+
 	newGame(1)
 
 	http.HandleFunc("/api/new", handleNew)
