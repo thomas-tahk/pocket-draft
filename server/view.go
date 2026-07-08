@@ -16,6 +16,7 @@ type attackView struct {
 type cardView struct {
 	ID          string       `json:"id"`
 	Name        string       `json:"name"`
+	Image       string       `json:"image,omitempty"`
 	Stage       string       `json:"stage"`
 	HP          int          `json:"hp"`
 	Type        string       `json:"type"`
@@ -113,6 +114,7 @@ func toCardView(c engine.Card) cardView {
 	return cardView{
 		ID:          c.ID,
 		Name:        c.Name,
+		Image:       cardImages[c.ID],
 		Stage:       stageName(c.Stage),
 		HP:          c.HP,
 		Type:        c.Type.String(),
