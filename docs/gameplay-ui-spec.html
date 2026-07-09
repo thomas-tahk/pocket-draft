@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gameplay UI Spec — React board for the simulator</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    max-width: 820px; margin: 0 auto; padding: 2.5rem 1.25rem 5rem;
+    color: #1c1c1e; background: #fff;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { color: #e6e6e8; background: #16171a; }
+    code, pre { background: #24262b !important; }
+    pre { border-color: #33363d !important; }
+    a { color: #7aa2ff; }
+    th { background: #24262b !important; }
+    .meta, blockquote { border-color: #33363d !important; }
+  }
+  h1 { font-size: 1.9rem; line-height: 1.2; margin: 0 0 .25rem; }
+  h2 { font-size: 1.35rem; margin: 2.2rem 0 .6rem; padding-top: .4rem; border-top: 1px solid #e5e5ea; }
+  h3 { font-size: 1.1rem; margin: 1.4rem 0 .4rem; }
+  .meta { color: #6b6b70; font-size: .92rem; border-bottom: 1px solid #e5e5ea; padding-bottom: 1rem; margin-bottom: 1.5rem; }
+  code { font: .88em ui-monospace, SFMono-Regular, Menlo, monospace; background: #f2f2f5; padding: .12em .4em; border-radius: 4px; }
+  pre { background: #f6f6f8; border: 1px solid #e5e5ea; border-radius: 8px; padding: .9rem 1rem; overflow-x: auto; }
+  pre code { background: none; padding: 0; }
+  ul, ol { padding-left: 1.4rem; }
+  li { margin: .25rem 0; }
+  strong { font-weight: 650; }
+  blockquote { margin: 0; padding-left: 1rem; border-left: 3px solid #d0d0d6; color: #55555b; }
+  a { color: #2b5cff; }
+  .tag { display: inline-block; font-size: .78rem; font-weight: 600; padding: .1rem .55rem; border-radius: 999px; background: #ffce54; color: #4a3600; margin-left: .4rem; vertical-align: middle; }
+</style>
+</head>
+<body>
+
+<h1>Gameplay UI Spec — React board for the simulator <span class="tag">PROPOSED</span></h1>
+<p class="meta">
+  <strong>Date:</strong> 2026-07-09 ·
+  <strong>Relates to:</strong> design.md Phase 2, ADR-0001 (Go rules-engine), ADR-0004 (show state, not theater), ADR-0006 (client-side prediction)
+</p>
+
+<h2>Goal</h2>
+<p>Play a full simulated game — real curated decks, real card art — in the <strong>React app</strong> (the draft-tool stack that deploys to Vercel), driven by the existing Go simulator server. Replace the throwaway <code>server/static</code> vanilla page as the place gameplay is visualized.</p>
+<p>Success = from a browser I can start a game, take every legal action for both sides through to a winner, and read the board clearly at every step, with responsive selection/target feedback and visible HP/energy changes.</p>
+
+<h2>What already exists (not rebuilt)</h2>
+<p>The Go server (<code>server/</code>) is the source of truth and already exposes everything the UI needs:</p>
+<ul>
+  <li><code>POST /api/new[?seed=N]</code> — start a fresh game, returns full state.</li>
+  <li><code>GET /api/state</code> — current state.</li>
+  <li><code>POST /api/move</code> — apply one move <code>{type, player, ...}</code>; returns <code>{ok, error?, state}</code>. Illegal moves change nothing and come back <code>ok:false</code> with a reason.</li>
+  <li><code>POST /api/bot</code> — advance the active side one greedy move (existing bot policy).</li>
+</ul>
+<p>The returned <code>gameView</code> (see <code>server/view.go</code>) already carries: both players' hands (with card <code>image</code>), active + bench (each with <code>damage</code>, <code>remainingHp</code>, <code>energy</code>, <code>totalEnergy</code>, status flags), <code>points</code>, <code>deckCount</code>, <code>discardCount</code>, <code>energyZone</code>, whose turn (<code>active</code>), <code>turn</code>, <code>phase</code>, <code>pending</code> prompt, <code>winner</code>, and a <code>narration</code> log. <strong>No backend work is required for this slice.</strong></p>
+<p>Move types the UI dispatches (from <code>toEvent</code> in <code>server/main.go</code>): <code>SetupPlace</code>, <code>PlayBasic</code>, <code>AttachEnergy</code>, <code>Evolve</code>, <code>Retreat</code>, <code>UseAttack</code>, <code>EndTurn</code>, <code>ChooseNewActive</code>.</p>
+
+<h2>Architecture</h2>
+<p>React is a <strong>pure renderer + dispatcher</strong>. It renders <code>gameView</code> and POSTs moves; the Go engine validates and applies all rules. No rules are reimplemented in TS in this slice. (ADR-0006 foresees TS rules eventually for client-side prediction; explicitly deferred here — the honest minimal is server-authoritative with full redraw per move.)</p>
+<pre><code>click → POST /api/move → Go engine validates &amp; applies → new gameView → redraw</code></pre>
+
+<h3>Where it lives</h3>
+<p>A separate <strong>mode</strong>, not folded into the draft state machine. <code>App.tsx</code> checks the URL: if <code>?play</code> is present, render <code>&lt;GameView&gt;</code> instead of the draft flow. The draft app (draft → shop → deckbuild → review) is untouched; the game is its own screen. Zero risk to existing features.</p>
+
+<h3>Dev wiring</h3>
+<ul>
+  <li>Vite dev server (<code>:5173</code>) proxies <code>/api</code> → <code>localhost:8080</code> (Go server) via <code>vite.config.ts</code>. No CORS handling, code matches a same-origin prod deploy.</li>
+  <li>Production deploy of the realtime path is out of scope for this slice (separate Go server on Fly/Railway per prior decisions); this slice targets local dev against <code>localhost:8080</code>.</li>
+</ul>
+
+<h3>State</h3>
+<p>A dedicated store (<code>src/game/</code> — Zustand, matching <code>draftStore</code> conventions) holds the current <code>gameView</code>, in-flight status, last error, and a client-side selection (which card/target the player has picked, pre-dispatch). Every successful move replaces the state wholesale with the server's returned <code>state</code>.</p>
+
+<h2>Components</h2>
+<p>Mirror the server's view model; reuse existing card-rendering where practical.</p>
+<pre><code>GameView                     ?play entry; owns the game store; redraws per move
+ ├─ PlayerSide (opponent)    active slot, bench row, hand-count, points/deck/discard
+ ├─ BoardCenter              turn #, phase, active-player indicator, winner banner
+ ├─ PlayerSide (you)         active slot, bench row, points/deck/discard
+ ├─ Hand                     your cards, clickable to select/play
+ ├─ ActionBar                context actions: Attach energy · Attack (per index) ·
+ │                           Retreat · End turn · Bot move · New game
+ └─ Log                      the server's narration, newest last</code></pre>
+<ul>
+  <li><strong>CardArt</strong> reuses the draft app's existing card image rendering so the board is visually consistent with the rest of the product.</li>
+  <li><strong>Pending prompts</strong> (<code>gameView.pending</code>, e.g. <code>setup</code>, <code>new_active</code>) drive what's actionable: during setup the UI collects a <code>SetupPlace</code>; on a knockout it collects <code>ChooseNewActive</code>.</li>
+  <li>Attacks render one button per attack index with name/cost/damage; disabled (with reason on hover) when unaffordable, matching the server's own validation so the client refuses obviously-illegal actions instantly (ADR-0004 "refuse, don't block").</li>
+</ul>
+
+<h2>Micro-feedback (the polish, in v1)</h2>
+<p>Within ADR-0004 — show state, add no theater, never make the player wait:</p>
+<ul>
+  <li><strong>Selection &amp; targets:</strong> selected card and legal targets get a highlight ring; hover states on every clickable element.</li>
+  <li><strong>HP / energy changes:</strong> when a value changes between the previous and new <code>gameView</code>, the number updates with a brief highlight (no animation the player waits through). This requires diffing prev vs. next state in the store — small but real; if it threatens the first playable build it drops to a fast-follow, but the target is to include it.</li>
+  <li><strong>Illegal action:</strong> the returned <code>ok:false</code> reason shows inline instantly; nothing on the board changes.</li>
+</ul>
+<p>Explicitly <strong>not</strong> built: attack cinematics, card-play flourishes, spinning coins, any blocking animation. (ADR-0004.)</p>
+
+<h2>Build order (each step is a commit/push checkpoint)</h2>
+<p>Delivered "everything at once" — the user tests the finished board, not intermediate versions — but built and committed in this internal order so history stays legible and a wall mid-way is surfaced, not bulldozed:</p>
+<ol>
+  <li><strong>Read-only render.</strong> Vite proxy + sim client + game store; <code>&lt;GameView&gt;</code> fetches and draws state (no actions). → board reflects a real game's state.</li>
+  <li><strong>Actions.</strong> Wire every move type through the ActionBar / clicks; play a full game start-to-finish for both sides in React. → a game reaches a winner via the UI.</li>
+  <li><strong>Selection &amp; targeting.</strong> Highlight rings, hover, legal-target affordances, inline illegal-move reasons. → the board feels responsive.</li>
+  <li><strong>Change feedback.</strong> Prev/next diff for HP &amp; energy with brief highlight. → the polish pass.</li>
+</ol>
+
+<h2>Out of scope</h2>
+<ul>
+  <li>Reimplementing any rules in TS / client-side prediction (ADR-0006, later).</li>
+  <li>Card effects beyond base damage (ADR-0002 incremental coverage — separate track).</li>
+  <li>Networked multiplayer / rooms; production deploy of the sim server.</li>
+  <li>Replay (design.md Phase 3).</li>
+  <li>Animation systems of any kind (ADR-0004).</li>
+</ul>
+
+<h2>Open questions</h2>
+<p>None blocking. Deck selection is fixed to the two curated decks for now (Fire vs. Water); a deck picker is a later nicety, not part of this slice.</p>
+
+</body>
+</html>
