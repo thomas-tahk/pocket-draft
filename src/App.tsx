@@ -6,6 +6,7 @@ import { DeckbuildView } from './components/DeckbuildView';
 import { ReviewView } from './components/ReviewView';
 import { SharedDeckView } from './components/SharedDeckView';
 import { HistoryView } from './components/HistoryView';
+import { GameView } from './game/GameView';
 import { derivePhase, HISTORY_CAP, TOTAL_PACKS, useDraftStore } from './stores/draftStore';
 import { decodeDeck, type Decklist } from './share/deckCode';
 import type { Card } from './types/card';
@@ -81,6 +82,9 @@ export function App() {
   );
 
   const phase = derivePhase({ pickIds, offerIds, shopFinalized, deckFinalized });
+
+  const isPlay = new URLSearchParams(window.location.search).has('play');
+  if (isPlay) return <GameView />;
 
   if (error) return <main style={{ padding: 24 }}>Error: {error}</main>;
   if (!pool) return <main style={{ padding: 24 }}>Loading card data…</main>;
