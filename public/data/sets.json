@@ -1,5 +1,11 @@
 [
   {
+    "id": "B3b",
+    "name": "Everyday Wonders",
+    "packs": [],
+    "cardCount": 106
+  },
+  {
     "id": "B3a",
     "name": "Paradox Drive",
     "packs": [],
@@ -54,7 +60,7 @@
       "Promo",
       "Wonder Pick"
     ],
-    "cardCount": 70
+    "cardCount": 78
   },
   {
     "id": "A4b",
