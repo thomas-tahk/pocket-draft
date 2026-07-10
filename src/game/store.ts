@@ -34,31 +34,51 @@ export const useGameStore = create<State & Actions>((set, get) => ({
 
   init: async () => {
     set({ status: 'loading', error: null });
-    const view = await getState();
-    set({ view, prev: null, status: 'ready' });
+    try {
+      const view = await getState();
+      set({ view, prev: null, status: 'ready' });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      set({ status: 'idle', error: msg });
+    }
   },
 
   restart: async (seed) => {
     set({ status: 'loading', error: null, selection: null });
-    const view = await newGame(seed);
-    set({ view, prev: null, status: 'ready' });
+    try {
+      const view = await newGame(seed);
+      set({ view, prev: null, status: 'ready' });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      set({ status: 'idle', error: msg });
+    }
   },
 
   dispatch: async (move) => {
     const before = get().view;
-    const res = await sendMove(move);
-    if (!res.ok) {
-      // Illegal move: server state is unchanged; surface the reason, keep selection.
-      set({ error: res.error ?? 'illegal move', view: res.state });
-      return;
+    try {
+      const res = await sendMove(move);
+      if (!res.ok) {
+        // Illegal move: server state is unchanged; surface the reason, keep selection.
+        set({ error: res.error ?? 'illegal move', view: res.state });
+        return;
+      }
+      set({ prev: before, view: res.state, error: null, selection: null });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      set({ error: msg });
     }
-    set({ prev: before, view: res.state, error: null, selection: null });
   },
 
   runBot: async () => {
     const before = get().view;
-    const res = await botMove();
-    set({ prev: before, view: res.state, error: null });
+    try {
+      const res = await botMove();
+      set({ prev: before, view: res.state, error: null });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      set({ error: msg });
+    }
   },
 
   select: (sel) => set({ selection: sel }),

@@ -13,7 +13,20 @@ export function GameView() {
     void init();
   }, [init]);
 
-  if (status !== 'ready' || !view) return <main style={{ padding: 24 }}>Loading game…</main>;
+  if (status !== 'ready' || !view) {
+    return (
+      <main style={{ padding: 24 }}>
+        {error ? (
+          <div>
+            <div style={{ color: '#ff6b6b' }}>Couldn't reach the game server: {error}</div>
+            <button style={{ marginTop: 8 }} onClick={() => void init()}>Retry</button>
+          </div>
+        ) : (
+          'Loading game…'
+        )}
+      </main>
+    );
+  }
 
   const [you, opp] = view.players;
   const changes = changedSlots(prev, view);

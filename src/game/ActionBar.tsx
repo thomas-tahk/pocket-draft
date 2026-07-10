@@ -46,6 +46,7 @@ export function ActionBar({ view }: { view: GameView }) {
           setSetupBench([]);
           setSetupActive(null);
         }}>Place</button>
+        <button style={btn} onClick={() => runBot()}>Bot place</button>
       </div>
     );
   }
