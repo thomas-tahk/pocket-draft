@@ -4,9 +4,10 @@ import { PlayerSide } from './PlayerSide';
 import { Hand } from './Hand';
 import { ActionBar } from './ActionBar';
 import { Log } from './Log';
+import { changedSlots } from './diff';
 
 export function GameView() {
-  const { view, status, error, init } = useGameStore();
+  const { view, prev, status, error, init } = useGameStore();
 
   useEffect(() => {
     void init();
@@ -15,16 +16,17 @@ export function GameView() {
   if (status !== 'ready' || !view) return <main style={{ padding: 24 }}>Loading game…</main>;
 
   const [you, opp] = view.players;
+  const changes = changedSlots(prev, view);
   const turnLabel = view.phase === 'over'
     ? `Game over — winner: P${view.winner + 1}`
     : `Turn ${view.turn} · phase ${view.phase} · active P${view.active + 1}` + (view.pending ? ` · waiting on P${view.pending.player + 1} (${view.pending.kind})` : '');
 
   return (
     <main style={{ padding: 16, maxWidth: 900, margin: '0 auto', display: 'grid', gap: 12 }}>
-      <PlayerSide player={opp} role="opponent" />
+      <PlayerSide player={opp} role="opponent" playerIndex={1} changes={changes} />
       <div style={{ textAlign: 'center', fontSize: 13, fontWeight: 600 }}>{turnLabel}</div>
       {error && <div style={{ color: '#ff6b6b', fontSize: 13, textAlign: 'center' }}>{error}</div>}
-      <PlayerSide player={you} role="you" />
+      <PlayerSide player={you} role="you" playerIndex={0} changes={changes} />
       <Hand player={you} />
       <ActionBar view={view} />
       <Log lines={view.narration} />
