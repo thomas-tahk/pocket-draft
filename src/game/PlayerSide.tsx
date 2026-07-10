@@ -1,5 +1,6 @@
 import type { PlayerView, InPlayView } from './types';
 import { GameCard } from './GameCard';
+import { useGameStore } from './store';
 
 function EnergyLine({ mon }: { mon: InPlayView }) {
   const parts = Object.entries(mon.energy).map(([t, n]) => `${t}×${n}`);
@@ -18,6 +19,7 @@ function ActiveSlot({ mon }: { mon: InPlayView | null }) {
 }
 
 export function PlayerSide({ player, role }: { player: PlayerView; role: 'you' | 'opponent' }) {
+  const { selection, select } = useGameStore();
   return (
     <section style={{ padding: 12, border: '1px solid #33363d', borderRadius: 10 }}>
       <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>
@@ -29,7 +31,12 @@ export function PlayerSide({ player, role }: { player: PlayerView; role: 'you' |
         <div style={{ display: 'flex', gap: 8 }}>
           {player.bench.map((mon, i) => (
             <div key={i}>
-              <GameCard card={mon.card} size="sm" />
+              <GameCard
+                card={mon.card}
+                size="sm"
+                selected={role === 'you' && selection?.kind === 'bench' && selection.index === i}
+                onClick={role === 'you' ? () => select({ kind: 'bench', index: i }) : undefined}
+              />
               <div style={{ fontSize: 11 }}>{mon.remainingHp}/{mon.card.hp} · {mon.totalEnergy}⚡</div>
             </div>
           ))}

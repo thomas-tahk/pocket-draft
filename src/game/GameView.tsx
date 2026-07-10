@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { useGameStore } from './store';
 import { PlayerSide } from './PlayerSide';
-import { GameCard } from './GameCard';
+import { Hand } from './Hand';
+import { ActionBar } from './ActionBar';
 import { Log } from './Log';
 
 export function GameView() {
@@ -24,12 +25,8 @@ export function GameView() {
       <div style={{ textAlign: 'center', fontSize: 13, fontWeight: 600 }}>{turnLabel}</div>
       {error && <div style={{ color: '#ff6b6b', fontSize: 13, textAlign: 'center' }}>{error}</div>}
       <PlayerSide player={you} role="you" />
-      <div>
-        <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 4 }}>Your hand</div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {you.hand.map((c) => <GameCard key={c.id} card={c} size="sm" />)}
-        </div>
-      </div>
+      <Hand player={you} />
+      <ActionBar view={view} />
       <Log lines={view.narration} />
     </main>
   );
