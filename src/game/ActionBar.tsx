@@ -2,6 +2,15 @@ import { useState } from 'react';
 import type { GameView } from './types';
 import { useGameStore } from './store';
 
+// Client-side mirror of the server's canPay, for affordance styling only —
+// the server remains the sole authority on whether an attack is legal.
+function canAfford(energy: Record<string, number>, total: number, cost: string[]): boolean {
+  if (total < cost.length) return false;
+  const need: Record<string, number> = {};
+  for (const sym of cost) if (sym !== 'Colorless') need[sym] = (need[sym] ?? 0) + 1;
+  return Object.entries(need).every(([t, n]) => (energy[t] ?? 0) >= n);
+}
+
 export function ActionBar({ view }: { view: GameView }) {
   const { dispatch, runBot, restart, selection, clearSelection } = useGameStore();
   const [setupBench, setSetupBench] = useState<string[]>([]);
@@ -56,15 +65,25 @@ export function ActionBar({ view }: { view: GameView }) {
   }
 
   // Main phase.
-  const attacks = me.active?.card.attacks ?? [];
+  const active = me.active;
+  const attacks = active?.card.attacks ?? [];
   return (
     <div>
       <button style={btn} onClick={() => dispatch({ type: 'AttachEnergy', player: actor, target: 0 })}>Attach energy</button>
-      {attacks.map((a, i) => (
-        <button key={i} style={btn} onClick={() => dispatch({ type: 'UseAttack', player: actor, index: i })}>
-          Attack: {a.name} ({a.damage})
-        </button>
-      ))}
+      {attacks.map((a, i) => {
+        const ok = !!active && canAfford(active.energy, active.totalEnergy, a.cost);
+        return (
+          <button
+            key={i}
+            style={btn}
+            disabled={!ok}
+            title={ok ? '' : 'needs ' + a.cost.join(' ')}
+            onClick={() => dispatch({ type: 'UseAttack', player: actor, index: i })}
+          >
+            Attack: {a.name} ({a.damage})
+          </button>
+        );
+      })}
       <button style={btn} onClick={() => {
         if (selection?.kind === 'hand') dispatch({ type: 'PlayBasic', player: actor, cardId: selection.cardId });
       }}>Play basic (selected)</button>

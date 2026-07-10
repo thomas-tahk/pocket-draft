@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { CardView } from './types';
 
 type Props = {
@@ -11,15 +12,19 @@ type Props = {
 };
 
 export function GameCard({ card, size = 'lg', selected, highlight, disabled, onClick, title }: Props) {
+  const [hovered, setHovered] = useState(false);
   const width = size === 'lg' ? 140 : 84;
   const Tag = onClick ? 'button' : 'div';
   const ring = selected ? '#2b5cff' : highlight ? '#ffce54' : 'transparent';
+  const hoverable = !!onClick && !disabled;
 
   return (
     <Tag
       onClick={onClick}
       disabled={disabled}
       title={title ?? `${card.name} · ${card.id}`}
+      onMouseEnter={hoverable ? () => setHovered(true) : undefined}
+      onMouseLeave={hoverable ? () => setHovered(false) : undefined}
       style={{
         all: 'unset',
         cursor: onClick && !disabled ? 'pointer' : 'default',
@@ -29,6 +34,8 @@ export function GameCard({ card, size = 'lg', selected, highlight, disabled, onC
         outline: `3px solid ${ring}`,
         outlineOffset: 2,
         borderRadius: 8,
+        boxShadow: hoverable && hovered ? '0 4px 12px rgba(0, 0, 0, 0.35)' : '0 0 0 rgba(0, 0, 0, 0)',
+        transition: 'box-shadow 120ms ease-out',
       }}
     >
       {card.image ? (
