@@ -5,6 +5,7 @@ import { useGameStore } from './store';
 export function ActionBar({ view }: { view: GameView }) {
   const { dispatch, runBot, restart, selection, clearSelection } = useGameStore();
   const [setupBench, setSetupBench] = useState<string[]>([]);
+  const [setupActive, setSetupActive] = useState<string | null>(null);
 
   const actor = view.pending ? view.pending.player : view.active;
   const me = view.players[actor];
@@ -16,14 +17,14 @@ export function ActionBar({ view }: { view: GameView }) {
 
   // Setup: choose Active + up to 3 bench Basics from hand.
   if (view.pending?.kind === 'setup') {
-    const activeId = selection?.kind === 'setupActive' ? selection.cardId : '';
+    const activeId = setupActive ?? '';
     return (
       <div>
         <div style={{ fontSize: 12, marginBottom: 6 }}>
           Setup P{actor + 1}: pick an Active Basic (click a hand card, then “Set Active”), toggle up to 3 bench, then Place.
         </div>
         <button style={btn} onClick={() => {
-          if (selection?.kind === 'hand') useGameStore.getState().select({ kind: 'setupActive', cardId: selection.cardId });
+          if (selection?.kind === 'hand') setSetupActive(selection.cardId);
         }}>Set Active</button>
         <button style={btn} onClick={() => {
           if (selection?.kind === 'hand') {
@@ -34,6 +35,7 @@ export function ActionBar({ view }: { view: GameView }) {
         <button style={btn} disabled={!activeId} onClick={async () => {
           await dispatch({ type: 'SetupPlace', player: actor, activeCardId: activeId, benchCardIds: setupBench });
           setSetupBench([]);
+          setSetupActive(null);
         }}>Place</button>
       </div>
     );
@@ -43,7 +45,12 @@ export function ActionBar({ view }: { view: GameView }) {
     return (
       <div style={{ fontSize: 12 }}>
         P{actor + 1} was knocked out — click a benched Pokémon to promote it.
-        <div><button style={btn} onClick={() => runBot()}>Bot choose</button></div>
+        <div>
+          <button style={btn} onClick={() => {
+            if (selection?.kind === 'bench') dispatch({ type: 'ChooseNewActive', player: actor, benchIndex: selection.index });
+          }}>Promote selected bench</button>
+          <button style={btn} onClick={() => runBot()}>Bot choose</button>
+        </div>
       </div>
     );
   }
