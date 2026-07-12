@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pocket Draft — Vision &amp; Intent</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    max-width: 46rem; margin: 0 auto; padding: 2.5rem 1.25rem 5rem;
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #1a1a1a; background: #fdfdfc;
+  }
+  h1 { font-size: 1.9rem; margin: 0 0 .25rem; }
+  h2 { font-size: 1.25rem; margin: 2.2rem 0 .6rem; border-bottom: 1px solid #e3e3e0; padding-bottom: .3rem; }
+  .sub { color: #666; font-style: italic; margin: 0 0 1.5rem; font-size: .95rem; }
+  ul { padding-left: 1.3rem; }
+  li { margin: .3rem 0; }
+  strong { font-weight: 650; }
+  blockquote {
+    margin: 1rem 0; padding: .6rem 1rem; border-left: 3px solid #c9a227;
+    background: rgba(201,162,39,.08); border-radius: 4px;
+  }
+  code { background: rgba(0,0,0,.06); padding: .1rem .35rem; border-radius: 3px; font-size: .88em; }
+  .out { color: #b00020; font-weight: 600; }
+  .in { color: #1a7a3a; font-weight: 600; }
+  @media (prefers-color-scheme: dark) {
+    body { color: #e6e6e6; background: #161616; }
+    h2 { border-color: #333; }
+    .sub { color: #999; }
+    blockquote { background: rgba(201,162,39,.12); }
+    code { background: rgba(255,255,255,.1); }
+    .out { color: #ff6b6b; }
+    .in { color: #5fd08a; }
+  }
+</style>
+</head>
+<body>
+<h1>Pocket Draft — Vision &amp; Intent</h1>
+<p class="sub">Captured 2026-07-12. The "why" and the destination. Architecture and build-order live in the ADRs; this is what they serve.</p>
+
+<h2>What this is</h2>
+<p>Building the actual <strong>TCG Pocket battle game, played for real — a better version of it.</strong> Not a tech demo, not a throwaway engine slice. When this is done, you draft a deck and play a full, faithful game with it.</p>
+
+<h2>Two aims, one loop</h2>
+<ol>
+  <li><strong>Draft mode the real game doesn't have</strong> — draft a deck from a shared pool, then play <em>that</em> deck.</li>
+  <li><strong>Faithful core battle gameplay</strong> — including Pokémon <strong>attack effects and abilities</strong>, not just base-damage attacks.</li>
+</ol>
+<p>These are not separate features. They are one loop: <strong>draft → play your drafted deck.</strong> The whole thing becomes real the moment those two meet.</p>
+
+<h2>Why (the motivations — these drive priorities)</h2>
+<ul>
+  <li><strong>Equal access.</strong> The real game locks cards behind paying for hundreds/thousands of packs. A shared draft pool means everyone starts equal, zero grind.</li>
+  <li><strong>Zero-lag play.</strong> The real game round-trips to its server on every little tap — constant lag, frustrating UX. Play here must feel instant.</li>
+  <li><strong>Always-on ranked.</strong> The real game gives ~2 weeks of ranked per ~4-week cycle. Here, ranked/ladder is always available.</li>
+</ul>
+
+<h2>In scope / Out of scope</h2>
+<p><span class="in">In:</span> full battle rules — attacks, <strong>attack effects</strong>, <strong>abilities</strong>, Trainer/Supporter/Item cards, status conditions, coin flips, weakness / retreat / EX rules, evolution lines; draft mode; eventually PvP + an always-on ladder.</p>
+<p><span class="out">Out:</span> collectibility (packs, economy, rarities — shiny / rainbow / full-art), animations / visual flair, trade, and <strong>official deck-construction enforcement</strong> (no 2-copy / 20-card gatekeeping — see Ethos).</p>
+<blockquote><strong>Ethos — this is a personal sandbox.</strong> The digital equivalent of paper proxies: play any deck you want, the tool never gates you on official rules. Draft mode is an <em>optional</em> fun constraint you opt into, not a cage.</blockquote>
+<blockquote>Effects and abilities being "incremental" (ADR-0002) is about <strong>build order</strong>, not scope. They are core to playing the game and are not optional.</blockquote>
+
+<h2>Where we are vs. where we're going</h2>
+<p><strong>Built and real:</strong></p>
+<ul>
+  <li>Go rules engine skeleton — turn loop, energy zone, base-damage attacks, KO / points, setup, retreat, evolve, poison / burn. Tested, green.</li>
+  <li>Seven ADRs locking architecture.</li>
+  <li>Real-card data bridge (<code>server/carddata.go</code>) loading scraped card data.</li>
+  <li>The mature draft tool (deployed on Vercel).</li>
+  <li>React gameplay board mounted at <code>?play</code> (PR #1).</li>
+</ul>
+<p><strong>Not built yet (the real work ahead):</strong></p>
+<ul>
+  <li><strong>Effects / ability engine</strong> — the bulk. Every card's text actually doing something. Incremental, bounded by the draftable card pool.</li>
+  <li><strong>Playing your <em>chosen</em> deck.</strong> Today the sim uses a hardcoded preset (Entei ex×6, Torkoal×7, Heatran×7) and ignores your draft — no legality issue, just the wrong deck.</li>
+  <li><strong>Learnable play UX.</strong> Today's board is a debug harness, not a designed game.</li>
+  <li><strong>Low-latency deploy architecture</strong> (below).</li>
+</ul>
+
+<h2>Key architecture decision pending</h2>
+<p>The sim is server-authoritative: every move is a round-trip to the Go server. On localhost that's instant, but <strong>deployed off localhost it reproduces the exact per-tap lag this project exists to escape.</strong></p>
+<p><strong>Leading candidate:</strong> compile the Go engine to <strong>WebAssembly</strong> and run it in the browser — play is fully local and instant; the server runs the <em>same</em> Go code only as the authority for real-time PvP. One rules codebase, no input lag for solo / vs-bot, network only where genuinely required. Supersedes ADR-0006's "reimplement the rules in TypeScript" plan (same responsiveness, half the code, no engine drift). To be confirmed before multiplayer.</p>
+
+<h2>Agreed first slice</h2>
+<p><strong>Wire the chosen/drafted deck into the sim</strong> so you play a real deck instead of the hardcoded preset. <strong>No legality checks</strong> — the engine plays whatever deck it's handed. The smallest step that makes the draft→play loop real. Local either way, so the WASM decision doesn't block it.</p>
+</body>
+</html>
