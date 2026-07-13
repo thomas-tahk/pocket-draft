@@ -213,6 +213,41 @@ func buildDeck(list []deckEntry) ([]engine.Card, error) {
 	return deck, nil
 }
 
+// deckFromIDs expands a list of card IDs into engine cards, enforcing the deck
+// format: exactly 20 cards, at most 2 copies of any card by name, and at least
+// one Basic Pokémon. Card access is unrestricted — only the format is checked, so
+// you can field any cards you like as long as they form a legal 20.
+func deckFromIDs(ids []string) ([]engine.Card, error) {
+	if len(ids) != 20 {
+		return nil, fmt.Errorf("deck must be exactly 20 cards, got %d", len(ids))
+	}
+	deck := make([]engine.Card, 0, 20)
+	countByName := map[string]int{}
+	basics := 0
+	for _, id := range ids {
+		rc, ok := rawByID[id]
+		if !ok {
+			return nil, fmt.Errorf("unknown card id %q", id)
+		}
+		card, err := toEngineCard(rc)
+		if err != nil {
+			return nil, err
+		}
+		countByName[card.Name]++
+		if countByName[card.Name] > 2 {
+			return nil, fmt.Errorf("at most 2 copies of %q allowed", card.Name)
+		}
+		if card.Stage == engine.Basic {
+			basics++
+		}
+		deck = append(deck, card)
+	}
+	if basics == 0 {
+		return nil, fmt.Errorf("deck needs at least 1 Basic Pokémon")
+	}
+	return deck, nil
+}
+
 // curatedDecks builds the Fire and Water preset decks from loaded card data.
 func curatedDecks() (fire, water []engine.Card, err error) {
 	if fire, err = buildDeck(fireDeckList); err != nil {
