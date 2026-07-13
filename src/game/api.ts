@@ -8,9 +8,18 @@ async function asJson<T>(res: Response): Promise<T> {
   return (await res.json()) as T;
 }
 
-export function newGame(seed?: number): Promise<GameView> {
-  const q = seed === undefined ? '' : `?seed=${seed}`;
-  return fetch(`/api/new${q}`, { method: 'POST' }).then((r) => asJson<GameView>(r));
+export function newGame(opts: { deck?: string[]; seed?: number } = {}): Promise<GameView> {
+  const { deck, seed } = opts;
+  const body = deck
+    ? JSON.stringify({ you: deck, seed })
+    : seed !== undefined
+      ? JSON.stringify({ seed })
+      : undefined;
+  return fetch('/api/new', {
+    method: 'POST',
+    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    body,
+  }).then((r) => asJson<GameView>(r));
 }
 
 export function getState(): Promise<GameView> {

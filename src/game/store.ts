@@ -14,10 +14,12 @@ type State = {
   status: 'idle' | 'loading' | 'ready';
   error: string | null;
   selection: Selection;
+  deck: string[] | null; // the deck this game was started from, for restart
 };
 
 type Actions = {
   init: () => Promise<void>;
+  startGame: (deck: string[], seed?: number) => Promise<void>;
   restart: (seed?: number) => Promise<void>;
   dispatch: (move: Move) => Promise<void>;
   runBot: () => Promise<void>;
@@ -31,6 +33,7 @@ export const useGameStore = create<State & Actions>((set, get) => ({
   status: 'idle',
   error: null,
   selection: null,
+  deck: null,
 
   init: async () => {
     set({ status: 'loading', error: null });
@@ -43,10 +46,21 @@ export const useGameStore = create<State & Actions>((set, get) => ({
     }
   },
 
+  startGame: async (deck, seed) => {
+    set({ status: 'loading', error: null, selection: null, deck });
+    try {
+      const view = await newGame({ deck, seed });
+      set({ view, prev: null, status: 'ready' });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      set({ status: 'idle', error: msg });
+    }
+  },
+
   restart: async (seed) => {
     set({ status: 'loading', error: null, selection: null });
     try {
-      const view = await newGame(seed);
+      const view = await newGame({ deck: get().deck ?? undefined, seed });
       set({ view, prev: null, status: 'ready' });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
