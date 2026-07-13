@@ -62,18 +62,46 @@ func handleState(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, toGameView(game))
 }
 
-// POST /api/new[?seed=N] — start a fresh game. A fixed seed makes a game
-// reproducible (same seed -> same shuffles), which is handy for testing.
+// newReq is the optional JSON body for POST /api/new. `you` is your deck as a
+// list of card IDs; when present you play it (player 0) against the curated bot
+// deck (player 1). An empty body falls back to the curated demo matchup.
+type newReq struct {
+	You  []string `json:"you"`
+	Seed *uint64  `json:"seed"`
+}
+
+// POST /api/new — start a fresh game. With a {you:[cardId...], seed} body you play
+// your deck vs the bot preset; with no body it's the curated demo matchup. A fixed
+// seed makes a game reproducible (same seed -> same shuffles). ?seed=N still works.
 func handleNew(w http.ResponseWriter, r *http.Request) {
+	var req newReq
+	if r.Body != nil {
+		_ = json.NewDecoder(r.Body).Decode(&req) // empty/invalid body -> no deck
+	}
+
 	seed := uint64(1)
-	if s := r.URL.Query().Get("seed"); s != "" {
+	if req.Seed != nil {
+		seed = *req.Seed
+	} else if s := r.URL.Query().Get("seed"); s != "" {
 		if n, err := strconv.ParseUint(s, 10, 64); err == nil {
 			seed = n
 		}
 	}
+
+	p0, p1 := fireDeck, waterDeck
+	if len(req.You) > 0 {
+		d, err := deckFromIDs(req.You)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			writeJSON(w, map[string]string{"error": err.Error()})
+			return
+		}
+		p0, p1 = d, fireDeck
+	}
+
 	mu.Lock()
 	defer mu.Unlock()
-	newGame(seed)
+	game = engine.NewGame(seed, p0, p1)
 	writeJSON(w, toGameView(game))
 }
 
