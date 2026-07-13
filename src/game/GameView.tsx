@@ -6,12 +6,13 @@ import { ActionBar } from './ActionBar';
 import { Log } from './Log';
 import { changedSlots } from './diff';
 
-export function GameView() {
-  const { view, prev, status, error, init } = useGameStore();
+export function GameView({ deck, onExit }: { deck?: string[]; onExit?: () => void }) {
+  const { view, prev, status, error, init, startGame } = useGameStore();
 
   useEffect(() => {
-    void init();
-  }, [init]);
+    if (deck) void startGame(deck);
+    else void init();
+  }, [deck, init, startGame]);
 
   if (status !== 'ready' || !view) {
     return (
@@ -19,10 +20,17 @@ export function GameView() {
         {error ? (
           <div>
             <div style={{ color: '#ff6b6b' }}>Couldn't reach the game server: {error}</div>
-            <button style={{ marginTop: 8 }} onClick={() => void init()}>Retry</button>
+            <button style={{ marginTop: 8 }} onClick={() => (deck ? void startGame(deck) : void init())}>
+              Retry
+            </button>
           </div>
         ) : (
           'Loading game…'
+        )}
+        {onExit && (
+          <div>
+            <button style={{ marginTop: 12, fontSize: 12 }} onClick={onExit}>← Back to deck</button>
+          </div>
         )}
       </main>
     );
@@ -36,6 +44,9 @@ export function GameView() {
 
   return (
     <main style={{ padding: 16, maxWidth: 900, margin: '0 auto', display: 'grid', gap: 12 }}>
+      {onExit && (
+        <button onClick={onExit} style={{ justifySelf: 'start', fontSize: 12 }}>← Back to deck</button>
+      )}
       <PlayerSide player={opp} role="opponent" playerIndex={1} changes={changes} />
       <div style={{ textAlign: 'center', fontSize: 13, fontWeight: 600 }}>{turnLabel}</div>
       {error && <div style={{ color: '#ff6b6b', fontSize: 13, textAlign: 'center' }}>{error}</div>}
