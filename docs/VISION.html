@@ -57,9 +57,9 @@
 </ul>
 
 <h2>In scope / Out of scope</h2>
-<p><span class="in">In:</span> full battle rules — attacks, <strong>attack effects</strong>, <strong>abilities</strong>, Trainer/Supporter/Item cards, status conditions, coin flips, weakness / retreat / EX rules, evolution lines; draft mode; eventually PvP + an always-on ladder.</p>
-<p><span class="out">Out:</span> collectibility (packs, economy, rarities — shiny / rainbow / full-art), animations / visual flair, trade, and <strong>official deck-construction enforcement</strong> (no 2-copy / 20-card gatekeeping — see Ethos).</p>
-<blockquote><strong>Ethos — this is a personal sandbox.</strong> The digital equivalent of paper proxies: play any deck you want, the tool never gates you on official rules. Draft mode is an <em>optional</em> fun constraint you opt into, not a cage.</blockquote>
+<p><span class="in">In:</span> full battle rules — attacks, <strong>attack effects</strong>, <strong>abilities</strong>, Trainer/Supporter/Item cards, status conditions, coin flips, weakness / retreat / EX rules, evolution lines; <strong>legal deck construction (exactly 20 cards, ≤2 copies by name)</strong>; draft mode; eventually PvP + an always-on ladder.</p>
+<p><span class="out">Out:</span> collectibility (packs, economy, rarities — shiny / rainbow / full-art), animations / visual flair, trade.</p>
+<blockquote><strong>Ethos — equal access, not a card-ownership gate.</strong> The digital equivalent of paper proxies: every card is freely available to draft and build with — no packs, no grind, no pay-to-access. What <em>is</em> enforced is the deck <strong>format</strong> (exactly 20 cards, ≤2 copies by name) — a rule of fair play both sides share, not an access gate.</blockquote>
 <blockquote>Effects and abilities being "incremental" (ADR-0002) is about <strong>build order</strong>, not scope. They are core to playing the game and are not optional.</blockquote>
 
 <h2>Where we are vs. where we're going</h2>
@@ -74,7 +74,7 @@
 <p><strong>Not built yet (the real work ahead):</strong></p>
 <ul>
   <li><strong>Effects / ability engine</strong> — the bulk. Every card's text actually doing something. Incremental, bounded by the draftable card pool.</li>
-  <li><strong>Playing your <em>chosen</em> deck.</strong> Today the sim uses a hardcoded preset (Entei ex×6, Torkoal×7, Heatran×7) and ignores your draft — no legality issue, just the wrong deck.</li>
+  <li><strong>Playing your <em>chosen</em> deck.</strong> Today the sim uses a hardcoded preset (Entei ex×6, Torkoal×7, Heatran×7) and ignores your draft — the point isn't the preset's copy counts, it's that it's not <em>your</em> deck.</li>
   <li><strong>Learnable play UX.</strong> Today's board is a debug harness, not a designed game.</li>
   <li><strong>Low-latency deploy architecture</strong> (below).</li>
 </ul>
@@ -83,7 +83,7 @@
 <p>The sim is server-authoritative: every move is a round-trip to the Go server. On localhost that's instant, but <strong>deployed off localhost it reproduces the exact per-tap lag this project exists to escape.</strong></p>
 <p><strong>Leading candidate:</strong> compile the Go engine to <strong>WebAssembly</strong> and run it in the browser — play is fully local and instant; the server runs the <em>same</em> Go code only as the authority for real-time PvP. One rules codebase, no input lag for solo / vs-bot, network only where genuinely required. Supersedes ADR-0006's "reimplement the rules in TypeScript" plan (same responsiveness, half the code, no engine drift). To be confirmed before multiplayer.</p>
 
-<h2>Agreed first slice</h2>
-<p><strong>Wire the chosen/drafted deck into the sim</strong> so you play a real deck instead of the hardcoded preset. <strong>No legality checks</strong> — the engine plays whatever deck it's handed. The smallest step that makes the draft→play loop real. Local either way, so the WASM decision doesn't block it.</p>
+<h2>Full plan</h2>
+<p>The full draft-mode milestone (un-silo → deck bridge → effect engine → run wrapper) is specified in <code>docs/superpowers/specs/2026-07-12-draft-mode-full-flow-design.md</code>. In short: wire the chosen/drafted deck into the sim so you play a real deck instead of the preset; deck <strong>format</strong> is enforced (20 cards, ≤2 copies), card choice is unrestricted; card effects/abilities are built as a shared primitive toolbox. Local either way, so the WASM decision doesn't block it.</p>
 </body>
 </html>

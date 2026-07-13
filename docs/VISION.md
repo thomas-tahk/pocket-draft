@@ -32,15 +32,17 @@ deck.** The whole thing becomes real the moment those two meet.
 
 **In:** full battle rules — attacks, **attack effects**, **abilities**,
 Trainer/Supporter/Item cards, status conditions, coin flips, weakness / retreat /
-EX rules, evolution lines; draft mode; eventually PvP + an always-on ladder.
+EX rules, evolution lines; **legal deck construction (exactly 20 cards, ≤2 copies
+by name)**; draft mode; eventually PvP + an always-on ladder.
 
 **Out:** collectibility (packs, economy, rarities — shiny / rainbow / full-art),
-animations / visual flair, trade, and **official deck-construction enforcement**
-(no 2-copy / 20-card gatekeeping — see Ethos).
+animations / visual flair, trade.
 
-> **Ethos — this is a personal sandbox.** The digital equivalent of paper proxies:
-> play any deck you want, the tool never gates you on official rules. Draft mode
-> is an *optional* fun constraint you opt into, not a cage.
+> **Ethos — equal access, not a card-ownership gate.** The digital equivalent of
+> paper proxies: every card is freely available to draft and build with — no packs,
+> no grind, no pay-to-access. What *is* enforced is the deck **format** (exactly 20
+> cards, ≤2 copies by name) — that's a rule of fair play both sides share, not an
+> access gate.
 
 > Effects and abilities being "incremental" (ADR-0002) is about **build order**,
 > not scope. They are core to playing the game and are not optional.
@@ -59,8 +61,8 @@ animations / visual flair, trade, and **official deck-construction enforcement**
 - **Effects / ability engine** — the bulk. Every card's text actually doing
   something. Incremental, bounded by the draftable card pool.
 - **Playing your *chosen* deck.** Today the sim uses a hardcoded preset
-  (Entei ex×6, Torkoal×7, Heatran×7) and ignores your draft — no legality issue,
-  just the wrong deck.
+  (Entei ex×6, Torkoal×7, Heatran×7) and ignores your draft — the point isn't the
+  preset's copy counts, it's that it's not *your* deck.
 - **Learnable play UX.** Today's board is a debug harness, not a designed game.
 - **Low-latency deploy architecture** (see below).
 
@@ -77,9 +79,12 @@ solo / vs-bot, network only where genuinely required. This supersedes ADR-0006's
 "reimplement the rules in TypeScript too" plan (same responsiveness, half the
 code, no engine drift). To be confirmed before multiplayer.
 
-## Agreed first slice
+## Full plan
 
-**Wire the chosen/drafted deck into the sim** so you play a real deck instead of
-the hardcoded preset. **No legality checks** — the engine plays whatever deck it's
-handed. The smallest step that makes the draft→play loop real. Local either way,
+The full draft-mode milestone (un-silo → deck bridge → effect engine → run wrapper)
+is specified in
+`docs/superpowers/specs/2026-07-12-draft-mode-full-flow-design.md`. In short: wire
+the chosen/drafted deck into the sim so you play a real deck instead of the preset;
+deck **format** is enforced (20 cards, ≤2 copies), card choice is unrestricted;
+card effects/abilities are built as a shared primitive toolbox. Local either way,
 so the WASM decision doesn't block it.
