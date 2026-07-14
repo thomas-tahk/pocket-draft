@@ -15,6 +15,7 @@ type State = {
   error: string | null;
   selection: Selection;
   deck: string[] | null; // the deck this game was started from, for restart
+  botStuck: boolean; // last bot attempt made no progress — stop auto-driving it
 };
 
 type Actions = {
@@ -34,12 +35,13 @@ export const useGameStore = create<State & Actions>((set, get) => ({
   error: null,
   selection: null,
   deck: null,
+  botStuck: false,
 
   init: async () => {
     set({ status: 'loading', error: null });
     try {
       const view = await getState();
-      set({ view, prev: null, status: 'ready' });
+      set({ view, prev: null, status: 'ready', botStuck: false });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       set({ status: 'idle', error: msg });
@@ -50,7 +52,7 @@ export const useGameStore = create<State & Actions>((set, get) => ({
     set({ status: 'loading', error: null, selection: null, deck });
     try {
       const view = await newGame({ deck, seed });
-      set({ view, prev: null, status: 'ready' });
+      set({ view, prev: null, status: 'ready', botStuck: false });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       set({ status: 'idle', error: msg });
@@ -61,7 +63,7 @@ export const useGameStore = create<State & Actions>((set, get) => ({
     set({ status: 'loading', error: null, selection: null });
     try {
       const view = await newGame({ deck: get().deck ?? undefined, seed });
-      set({ view, prev: null, status: 'ready' });
+      set({ view, prev: null, status: 'ready', botStuck: false });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       set({ status: 'idle', error: msg });
@@ -77,7 +79,8 @@ export const useGameStore = create<State & Actions>((set, get) => ({
         set({ error: res.error ?? 'illegal move', view: res.state });
         return;
       }
-      set({ prev: before, view: res.state, error: null, selection: null });
+      // A human/dispatched move can re-open the bot's turn, so clear any stuck flag.
+      set({ prev: before, view: res.state, error: null, selection: null, botStuck: false });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       set({ error: msg });
@@ -88,7 +91,8 @@ export const useGameStore = create<State & Actions>((set, get) => ({
     const before = get().view;
     try {
       const res = await botMove();
-      set({ prev: before, view: res.state, error: null });
+      // If the bot couldn't act, flag it so the auto-driver stops instead of spinning.
+      set({ prev: before, view: res.state, error: null, botStuck: !res.acted });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       set({ error: msg });

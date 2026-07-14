@@ -59,7 +59,8 @@ export type Move =
   | { type: 'Retreat'; player: number; benchIndex: number }
   | { type: 'UseAttack'; player: number; index: number }
   | { type: 'EndTurn'; player: number }
-  | { type: 'ChooseNewActive'; player: number; benchIndex: number };
+  | { type: 'ChooseNewActive'; player: number; benchIndex: number }
+  | { type: 'Concede'; player: number };
 
 export type MoveResp = { ok: boolean; error?: string; state: GameView };
 export type BotResp = { acted: boolean; state: GameView };

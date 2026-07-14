@@ -167,6 +167,8 @@ func toEvent(r moveReq) (engine.Event, error) {
 		return engine.EndTurn{Player: r.Player}, nil
 	case "ChooseNewActive":
 		return engine.ChooseNewActive{Player: r.Player, BenchIndex: r.BenchIndex}, nil
+	case "Concede":
+		return engine.Concede{Player: r.Player}, nil
 	}
 	return nil, fmt.Errorf("unknown move type %q", r.Type)
 }

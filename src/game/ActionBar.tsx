@@ -15,6 +15,7 @@ export function ActionBar({ view }: { view: GameView }) {
   const { dispatch, runBot, restart, selection, clearSelection } = useGameStore();
   const [setupBench, setSetupBench] = useState<string[]>([]);
   const [setupActive, setSetupActive] = useState<string | null>(null);
+  const [confirmConcede, setConfirmConcede] = useState(false);
 
   const actor = view.pending ? view.pending.player : view.active;
   const me = view.players[actor];
@@ -68,9 +69,31 @@ export function ActionBar({ view }: { view: GameView }) {
   // Main phase.
   const active = me.active;
   const attacks = active?.card.attacks ?? [];
+  // Attach energy to whichever Pokémon is selected: a benched one if a bench
+  // card is selected, otherwise the Active. (Engine target: 0 = Active, n = bench n-1.)
+  const attachTarget = selection?.kind === 'bench' ? selection.index + 1 : 0;
+  const attachLabel = selection?.kind === 'bench'
+    ? `Attach energy → bench ${selection.index + 1}`
+    : 'Attach energy → active';
   return (
     <div>
-      <button style={btn} onClick={() => dispatch({ type: 'AttachEnergy', player: actor, target: 0 })}>Attach energy</button>
+      {confirmConcede && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50,
+        }}>
+          <div style={{ background: '#1c1f26', border: '1px solid #33363d', borderRadius: 10, padding: 20, maxWidth: 320 }}>
+            <div style={{ fontSize: 14, marginBottom: 14 }}>Concede this game? Your opponent wins immediately.</div>
+            <button style={{ ...btn, background: '#c0392b', color: '#fff' }} onClick={() => {
+              dispatch({ type: 'Concede', player: actor });
+              clearSelection();
+              setConfirmConcede(false);
+            }}>Concede</button>
+            <button style={btn} onClick={() => setConfirmConcede(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
+      <button style={btn} onClick={() => dispatch({ type: 'AttachEnergy', player: actor, target: attachTarget })}>{attachLabel}</button>
       {attacks.map((a, i) => {
         const ok = !!active && canAfford(active.energy, active.totalEnergy, a.cost);
         return (
@@ -97,6 +120,7 @@ export function ActionBar({ view }: { view: GameView }) {
       <button style={btn} onClick={() => { dispatch({ type: 'EndTurn', player: actor }); clearSelection(); }}>End turn</button>
       <button style={btn} onClick={() => runBot()}>Bot move</button>
       <button style={btn} onClick={() => restart()}>New game</button>
+      <button style={{ ...btn, marginLeft: 12, color: '#c0392b' }} onClick={() => setConfirmConcede(true)}>Concede</button>
     </div>
   );
 }

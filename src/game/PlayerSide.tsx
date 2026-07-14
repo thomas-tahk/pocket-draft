@@ -41,6 +41,18 @@ export function PlayerSide({ player, role, playerIndex, changes }: { player: Pla
         {role === 'you' ? 'YOU' : 'OPPONENT'} · pts {player.points}/3 · deck {player.deckCount} · discard {player.discardCount}
         {role === 'opponent' ? ` · hand ${player.hand.length}` : ''}
       </div>
+      {role === 'you' && (
+        <div style={{ fontSize: 12, marginBottom: 6 }}>
+          Energy this turn:{' '}
+          {player.energyZone && player.energyZone !== 'None' ? (
+            <strong style={player.energyUsed ? { opacity: 0.5 } : { color: '#ffce54' }}>
+              {player.energyZone}{player.energyUsed ? ' (already attached)' : ' — attach it'}
+            </strong>
+          ) : (
+            <span style={{ opacity: 0.6 }}>none</span>
+          )}
+        </div>
+      )}
       <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
         <ActiveSlot
           mon={player.active}

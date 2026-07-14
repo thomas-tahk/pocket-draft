@@ -141,6 +141,11 @@ type ChooseNewActive struct {
 	BenchIndex int
 }
 
+// Concede forfeits the game on the conceding player's turn; the opponent wins.
+type Concede struct {
+	Player int
+}
+
 func (SetupPlace) event()      {}
 func (PlayBasic) event()       {}
 func (AttachEnergy) event()    {}
@@ -149,3 +154,4 @@ func (Retreat) event()         {}
 func (UseAttack) event()       {}
 func (EndTurn) event()         {}
 func (ChooseNewActive) event() {}
+func (Concede) event()         {}

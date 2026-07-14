@@ -7,12 +7,23 @@ import { Log } from './Log';
 import { changedSlots } from './diff';
 
 export function GameView({ deck, onExit }: { deck?: string[]; onExit?: () => void }) {
-  const { view, prev, status, error, init, startGame } = useGameStore();
+  const { view, prev, status, error, init, startGame, runBot, botStuck } = useGameStore();
 
   useEffect(() => {
     if (deck) void startGame(deck);
     else void init();
   }, [deck, init, startGame]);
+
+  // Auto-play the bot (player 2) whenever it's the bot's turn or it owes a prompt.
+  // Each bot move updates the view, re-running this effect until control returns to
+  // you. botStuck stops it if the bot ever can't make a legal move.
+  useEffect(() => {
+    if (!view || view.phase === 'over' || botStuck) return;
+    const actor = view.pending ? view.pending.player : view.active;
+    if (actor !== 1) return;
+    const t = setTimeout(() => void runBot(), 550);
+    return () => clearTimeout(t);
+  }, [view, botStuck, runBot]);
 
   if (status !== 'ready' || !view) {
     return (
