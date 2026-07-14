@@ -4,7 +4,18 @@ import type { GameView, Move, MoveResp, BotResp } from './types';
 // the Vite proxy in dev (see vite.config.ts).
 
 async function asJson<T>(res: Response): Promise<T> {
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  if (!res.ok) {
+    // The server returns { error: "reason" } on a rejected request; surface it
+    // so failures aren't opaque "400 Bad Request" messages.
+    let detail = '';
+    try {
+      const body = (await res.json()) as { error?: string };
+      if (typeof body?.error === 'string') detail = `: ${body.error}`;
+    } catch {
+      // non-JSON body — fall back to the status line
+    }
+    throw new Error(`${res.status} ${res.statusText}${detail}`);
+  }
   return (await res.json()) as T;
 }
 

@@ -65,10 +65,42 @@ func TestToEngineCard(t *testing.T) {
 	}
 }
 
-func TestToEngineCardRejectsDragon(t *testing.T) {
-	// The engine has no Dragon energy; a Dragon card must error, not mistype.
-	if _, err := toEngineCard(rawCard{ID: "x", Name: "Dragonite", CardType: "Dragon", Stage: "Basic"}); err == nil {
-		t.Error("expected error for unsupported Dragon type")
+func TestToEngineCardModelsDragon(t *testing.T) {
+	// Dragon is a modeled type: a Dragon Pokémon converts (its attacks are paid
+	// by other energies; Dragon never enters the Energy Zone — see energyTypesOf).
+	card, err := toEngineCard(rawCard{ID: "x", Name: "Dragonite", CardType: "Dragon", Stage: "Basic", HP: 140,
+		Attacks: []rawAttack{{Cost: "WWLL", Name: "Draco Meteor", Damage: "120"}}})
+	if err != nil {
+		t.Fatalf("Dragon card should convert now: %v", err)
+	}
+	if card.Type != engine.Dragon {
+		t.Errorf("type = %v, want Dragon", card.Type)
+	}
+}
+
+func TestDeckFromIDsSkipsTrainers(t *testing.T) {
+	// A finalized deck can include the free universal Trainers (Poké Ball,
+	// Professor's Research). The engine can't model Trainers yet (effects are
+	// deferred), so the bridge plays the Pokémon subset instead of rejecting the
+	// whole deck. 18 Pokémon + 2 Trainers -> an 18-card playable deck.
+	rawByID = map[string]rawCard{}
+	ids := make([]string, 0, 20)
+	for i := 0; i < 9; i++ {
+		b := fmt.Sprintf("B%d", i)
+		rawByID[b] = rawCard{ID: b, Name: "Basic" + b, CardType: "Fire", Stage: "Basic", HP: 60,
+			Attacks: []rawAttack{{Cost: "R", Name: "Hit", Damage: "20"}}}
+		ids = append(ids, b, b)
+	}
+	rawByID["PB"] = rawCard{ID: "PB", Name: "Poké Ball", CardType: "Trainer"}
+	rawByID["PR"] = rawCard{ID: "PR", Name: "Professor's Research", CardType: "Trainer"}
+	ids = append(ids, "PB", "PR")
+
+	deck, err := deckFromIDs(ids)
+	if err != nil {
+		t.Fatalf("deck with Trainers should play its Pokémon, got error: %v", err)
+	}
+	if len(deck) != 18 {
+		t.Fatalf("got %d cards, want 18 (Trainers skipped)", len(deck))
 	}
 }
 
