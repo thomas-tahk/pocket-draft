@@ -1,5 +1,17 @@
 [
   {
+    "id": "B4a",
+    "name": "Team Rocket's Ambition",
+    "packs": [],
+    "cardCount": 110
+  },
+  {
+    "id": "B4",
+    "name": "Ruler of the Skies",
+    "packs": [],
+    "cardCount": 233
+  },
+  {
     "id": "B3b",
     "name": "Everyday Wonders",
     "packs": [],
@@ -60,7 +72,7 @@
       "Promo",
       "Wonder Pick"
     ],
-    "cardCount": 78
+    "cardCount": 86
   },
   {
     "id": "A4b",
