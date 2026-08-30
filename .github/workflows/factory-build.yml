@@ -1,0 +1,72 @@
+name: Factory L2 — Builder
+
+# Fires when the user approves an issue, not on a schedule. Approving on a phone
+# at 10:00 means a draft PR is waiting by lunch: workday gaps become the clock,
+# and throughput scales with approvals rather than wall-clock time.
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+
+concurrency:
+  # Keyed on the issue, so re-labelling cannot double-fire a build.
+  group: factory-build-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.event.label.name == 'factory:approved'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Mark the issue in flight
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue edit "${{ github.event.issue.number }}" \
+            --add-label factory:building --remove-label factory:approved
+
+      # The runner cannot see ~/.claude/. The factory's rails, lessons, standing
+      # intent, and this loop's prompt live in the hub and are fetched at run time,
+      # so there is exactly one copy of them and no per-repo drift.
+      - name: Fetch the factory brain
+        run: |
+          git clone --depth 1 --quiet \
+            https://github.com/thomas-tahk/foundry.git .factory-brain
+          test -f .factory-brain/.factory/prompts/l2-builder.md
+
+      - name: Build
+        uses: anthropics/claude-code-action@v1
+        env:
+          FACTORY_ISSUE_NUMBER: ${{ github.event.issue.number }}
+          FACTORY_ISSUE_BODY: ${{ github.event.issue.body }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Follow the instructions in .factory-brain/.factory/prompts/l2-builder.md
+            exactly. The approved issue is #${{ github.event.issue.number }}.
+          claude_args: |
+            --max-turns 120
+            --model ${{ contains(join(github.event.issue.labels.*.name, ','), 'factory:deep') && 'claude-opus-5' || 'claude-sonnet-5' }}
+            --allowedTools Read,Write,Edit,Glob,Grep,Bash
+
+      # Runs even when the build fails, so an issue never strands in `building`.
+      - name: Release the issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue edit "${{ github.event.issue.number }}" --remove-label factory:building
+          if [ "${{ job.status }}" != "success" ]; then
+            gh issue comment "${{ github.event.issue.number }}" --body \
+              "L2 build failed — see the [run log](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}). No PR was opened."
+          fi
