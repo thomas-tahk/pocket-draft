@@ -139,3 +139,27 @@ Item cards, and any player-choice (targeting/discard) verbs. All reuse the same
   the zone. This is a **deck-bridge / construction** concern (Phase 1 territory),
   and becomes pressing once the **ability-effect slice** lands. Fix is small: the
   deck carries its chosen energy-type set as input. Not expanded into this slice.
+
+- **Rule-overriding effects need a second mechanism, and it is undesigned.** Both
+  this spec and the parent one assert that "card text overrides base rules"
+  (ADR-0007), but nothing states how an override is *expressed*. `EffectOp` as
+  built here cannot express one: `applyAttack` runs the verb list against a
+  running `Damage`, then executes weakness, application, and KO **unchanged**.
+  That is an *additive* model — it covers "+20 damage", "opponent is Burned",
+  "draw a card", which is most effect text. It does not cover:
+  - "this attack ignores Weakness" — weakness runs after the verbs, unconditionally
+  - "prevent all damage to this Pokémon during your opponent's next turn" — no
+    modifier survives past the attack that created it
+  - "your opponent can't retreat next turn" / "this Pokémon has no Retreat Cost" —
+    the decision point is not in `applyAttack` at all
+
+  Two things are missing: **hooks at the other rule checkpoints** (retreat cost,
+  weakness, damage application, status ticks) and **persistent modifiers** with an
+  owner and an expiry, since an override usually outlives the attack. ADR-0007
+  already names the right plug points — effects "read/modify state, may add intent
+  parameters, and may raise prompts" — so this extends that model rather than
+  replacing it.
+
+  **Do not defer this past the verb set growing.** Retrofitting checkpoint hooks
+  into 6 verbs is cheap; into 40 it is a rewrite. The trigger to design it is the
+  first card whose text removes or replaces a rule rather than adding to one.
