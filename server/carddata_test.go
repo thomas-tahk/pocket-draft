@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -64,9 +65,92 @@ func TestToEngineCard(t *testing.T) {
 	}
 }
 
-func TestToEngineCardRejectsDragon(t *testing.T) {
-	// The engine has no Dragon energy; a Dragon card must error, not mistype.
-	if _, err := toEngineCard(rawCard{ID: "x", Name: "Dragonite", CardType: "Dragon", Stage: "Basic"}); err == nil {
-		t.Error("expected error for unsupported Dragon type")
+func TestToEngineCardModelsDragon(t *testing.T) {
+	// Dragon is a modeled type: a Dragon Pokémon converts (its attacks are paid
+	// by other energies; Dragon never enters the Energy Zone — see energyTypesOf).
+	card, err := toEngineCard(rawCard{ID: "x", Name: "Dragonite", CardType: "Dragon", Stage: "Basic", HP: 140,
+		Attacks: []rawAttack{{Cost: "WWLL", Name: "Draco Meteor", Damage: "120"}}})
+	if err != nil {
+		t.Fatalf("Dragon card should convert now: %v", err)
+	}
+	if card.Type != engine.Dragon {
+		t.Errorf("type = %v, want Dragon", card.Type)
+	}
+}
+
+func TestDeckFromIDsSkipsTrainers(t *testing.T) {
+	// A finalized deck can include the free universal Trainers (Poké Ball,
+	// Professor's Research). The engine can't model Trainers yet (effects are
+	// deferred), so the bridge plays the Pokémon subset instead of rejecting the
+	// whole deck. 18 Pokémon + 2 Trainers -> an 18-card playable deck.
+	rawByID = map[string]rawCard{}
+	ids := make([]string, 0, 20)
+	for i := 0; i < 9; i++ {
+		b := fmt.Sprintf("B%d", i)
+		rawByID[b] = rawCard{ID: b, Name: "Basic" + b, CardType: "Fire", Stage: "Basic", HP: 60,
+			Attacks: []rawAttack{{Cost: "R", Name: "Hit", Damage: "20"}}}
+		ids = append(ids, b, b)
+	}
+	rawByID["PB"] = rawCard{ID: "PB", Name: "Poké Ball", CardType: "Trainer"}
+	rawByID["PR"] = rawCard{ID: "PR", Name: "Professor's Research", CardType: "Trainer"}
+	ids = append(ids, "PB", "PR")
+
+	deck, err := deckFromIDs(ids)
+	if err != nil {
+		t.Fatalf("deck with Trainers should play its Pokémon, got error: %v", err)
+	}
+	if len(deck) != 18 {
+		t.Fatalf("got %d cards, want 18 (Trainers skipped)", len(deck))
+	}
+}
+
+func TestDeckFromIDs(t *testing.T) {
+	// Arrange: 10 distinct Basic Fire cards and 10 distinct Stage-2 Fire cards, so
+	// two copies of each name makes a format-legal 20-card list either way.
+	rawByID = map[string]rawCard{}
+	basics := make([]string, 0, 20)
+	stage2 := make([]string, 0, 20)
+	for i := 0; i < 10; i++ {
+		b := fmt.Sprintf("B%d", i)
+		s := fmt.Sprintf("S%d", i)
+		rawByID[b] = rawCard{ID: b, Name: "Basic" + b, CardType: "Fire", Stage: "Basic", HP: 60,
+			Attacks: []rawAttack{{Cost: "R", Name: "Hit", Damage: "20"}}}
+		rawByID[s] = rawCard{ID: s, Name: "Final" + s, CardType: "Fire", Stage: "Stage 2", HP: 150,
+			Attacks: []rawAttack{{Cost: "RR", Name: "Big", Damage: "90"}}}
+		basics = append(basics, b, b)
+		stage2 = append(stage2, s, s)
+	}
+
+	rep := func(id string, n int) []string {
+		out := make([]string, n)
+		for i := range out {
+			out[i] = id
+		}
+		return out
+	}
+
+	// Happy path: exactly 20, ≤2 by name, has Basics.
+	deck, err := deckFromIDs(basics)
+	if err != nil {
+		t.Fatalf("legal deck: unexpected error: %v", err)
+	}
+	if len(deck) != 20 {
+		t.Fatalf("legal deck: got %d cards, want 20", len(deck))
+	}
+
+	// Each of these must be rejected.
+	bad := []struct {
+		name string
+		ids  []string
+	}{
+		{"not exactly 20", rep("B0", 19)},
+		{"more than 2 by name", append(rep("B0", 3), basics[3:]...)}, // 3×B0 + 17 = 20
+		{"no Basic Pokémon", stage2},
+		{"unknown card id", rep("NOPE", 20)},
+	}
+	for _, c := range bad {
+		if _, err := deckFromIDs(c.ids); err == nil {
+			t.Errorf("%s: expected error, got nil", c.name)
+		}
 	}
 }

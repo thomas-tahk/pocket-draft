@@ -123,6 +123,8 @@ func (g *Game) validateAndApply(ev Event) error {
 		return g.requireTurn(e.Player, func() error { return g.applyAttack(e) })
 	case EndTurn:
 		return g.requireTurn(e.Player, func() error { g.concludeTurn(); return nil })
+	case Concede:
+		return g.requireTurn(e.Player, func() error { return g.applyConcede(e) })
 	case SetupPlace, ChooseNewActive:
 		return errors.New("no prompt is pending")
 	default:
@@ -452,6 +454,13 @@ func (g *Game) startTurn(p int) {
 		pl.EnergyZone = NoEnergy
 	}
 	g.narrate("--- Turn %d: %s ---", g.S.Turn, side(p))
+}
+
+// applyConcede ends the game in the opponent's favor when a player forfeits.
+func (g *Game) applyConcede(e Concede) error {
+	g.narrate("%s conceded.", side(e.Player))
+	g.gameOver(1 - e.Player)
+	return nil
 }
 
 func (g *Game) gameOver(winner int) {

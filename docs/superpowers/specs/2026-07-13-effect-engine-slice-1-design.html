@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Effect Engine — Slice 1 (Design)</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    max-width: 50rem; margin: 0 auto; padding: 2.5rem 1.25rem 5rem;
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #1a1a1a; background: #fdfdfc;
+  }
+  h1 { font-size: 1.9rem; margin: 0 0 .25rem; }
+  h2 { font-size: 1.25rem; margin: 2.2rem 0 .6rem; border-bottom: 1px solid #e3e3e0; padding-bottom: .3rem; }
+  h3 { font-size: 1.05rem; margin: 1.4rem 0 .4rem; }
+  .sub { color: #666; font-style: italic; margin: 0 0 1.5rem; font-size: .95rem; }
+  ul, ol { padding-left: 1.3rem; }
+  li { margin: .3rem 0; }
+  strong { font-weight: 650; }
+  em { color: inherit; }
+  blockquote {
+    margin: 1rem 0; padding: .6rem 1rem; border-left: 3px solid #c9a227;
+    background: rgba(201,162,39,.08); border-radius: 4px;
+  }
+  code { background: rgba(0,0,0,.06); padding: .1rem .35rem; border-radius: 3px; font-size: .88em; }
+  pre {
+    background: rgba(0,0,0,.05); padding: 1rem; border-radius: 6px; overflow-x: auto;
+    font-size: .82rem; line-height: 1.4;
+  }
+  pre code { background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: .92rem; display: block; overflow-x: auto; }
+  th, td { border: 1px solid #e3e3e0; padding: .4rem .6rem; text-align: left; vertical-align: top; }
+  th { background: rgba(0,0,0,.04); font-weight: 650; }
+  .note { color: #666; font-size: .92em; }
+  @media (prefers-color-scheme: dark) {
+    body { color: #e6e6e6; background: #161616; }
+    h2 { border-color: #333; }
+    .sub, .note { color: #999; }
+    blockquote { background: rgba(201,162,39,.12); }
+    code, pre { background: rgba(255,255,255,.08); }
+    th, td { border-color: #333; }
+    th { background: rgba(255,255,255,.05); }
+  }
+</style>
+</head>
+<body>
+<h1>Effect Engine — Slice 1 (Design)</h1>
+<p class="sub">2026-07-13. First vertical slice of Phase 2 (effect engine) from the draft-mode milestone (<code>docs/superpowers/specs/2026-07-12-draft-mode-full-flow-design.md</code>). Approach A (shared primitive toolbox) is locked by that spec; this slice proves the architecture end-to-end on a handful of real cards before scaling.</p>
+
+<h2>Goal</h2>
+<p>Make attacks <strong>do what their text says</strong> — coin flips, scaled damage, status, draw — instead of only adding a printed number. Prove the toolbox architecture on <strong>6 verbs across 5 real draftable cards</strong>, wired through the engine and visible on the board in a real game. Then later slices widen the verb set and map more of the pool.</p>
+<blockquote>Success = one demo game where a coin-flip attack, a burn, and a draw all fire and show on the board, plus deterministic per-verb unit tests are green.</blockquote>
+
+<h2>Locked by the parent spec (not re-litigated here)</h2>
+<ul>
+  <li><strong>Approach A:</strong> an attack's effect is an ordered list of primitive verb invocations — data, not bespoke per-card code — with an imperative escape hatch.</li>
+  <li>Engine stays event-sourced / deterministic / seeded (ADR-0005); card text overrides base rules (ADR-0007 enforcement never removed).</li>
+</ul>
+
+<h2>Representation — <code>EffectOp</code> interface (the foundational decision)</h2>
+<p>A verb is a small Go struct implementing one method:</p>
+<pre><code>// An EffectOp is one primitive verb. Apply mutates the resolution context
+// (running damage, statuses, draws) for the attack currently resolving.
+type EffectOp interface {
+    Apply(ctx *EffectContext)
+}</code></pre>
+<p>An attack's effect is <strong>data</strong> — a slice of these structs:</p>
+<pre><code>// Sneasel — "Quick Attack (10+): flip a coin, if heads +20"
+Attacks: []Attack{{Name: "Quick Attack", Damage: 10, Effect: []EffectOp{
+    FlipForBonus{Bonus: 20},
+}}}</code></pre>
+<p><strong>Why this over alternatives:</strong> it <em>is</em> "data not code" (structs are values), is type-safe, lets each verb be unit-tested in isolation, and makes the escape hatch just another struct implementing <code>Apply</code>. It scales to the full ~655 effect strings without a hand-written parser or a giant <code>switch</code> interpreter (those pay off only if effects were serialized to JSON/DB — they are authored in Go). Closures were rejected: opaque, untestable, no escape-hatch story.</p>
+
+<h2>The 6 verbs / 5 cards in this slice</h2>
+<p>All <strong>Basics</strong>, so no evolution is needed to demo them. Each proves one category:</p>
+<table>
+<thead><tr><th>Card</th><th>Attack (text)</th><th>Verb</th></tr></thead>
+<tbody>
+<tr><td>Sneasel</td><td>Quick Attack (10+): flip, heads → +20</td><td><code>FlipForBonus{Bonus:20}</code></td></tr>
+<tr><td>Petilil</td><td>Double Spin (20×): flip 2, 20 per heads</td><td><code>DamagePerHeads{Coins:2, Per:20}</code></td></tr>
+<tr><td>Ponyta</td><td>Singe: opponent's Active is Burned</td><td><code>ApplyStatus{Status:Burn}</code></td></tr>
+<tr><td>Indeedee ex</td><td>Psychic (30+): +30 per Energy on opp. Active</td><td><code>DamagePerEnergy{Per:30, Where:OppActive}</code></td></tr>
+<tr><td>Munchlax</td><td>Hungrily Draw (10): draw a card</td><td><code>DrawCards{N:1}</code></td></tr>
+</tbody>
+</table>
+<p><strong>Poison rides along for free:</strong> <code>ApplyStatus{Status:Poison}</code> is the same verb with a different param, and the model/board already handle poison — so the slice ships 6 verbs at the cost of 5.</p>
+
+<h2>Resolution mechanics</h2>
+<p>One field is added to <code>Attack</code>: <code>Effect []EffectOp</code>. <strong><code>nil</code> means today's vanilla base-damage path, unchanged</strong> — every existing card and test keeps working.</p>
+<p><code>applyAttack</code> (<code>engine/engine.go:285</code>) changes from "add the number" to run the effect list against a small context:</p>
+<pre><code>ctx := &EffectContext{g: g, attacker: e.Player, Damage: atk.Damage}
+for _, op := range atk.Effect {
+    op.Apply(ctx)
+}
+// existing weakness handling, then apply ctx.Damage to the defender,
+// then the existing KO / conclude-turn logic — unchanged.</code></pre>
+<p><code>EffectContext</code> is the only seam verbs touch:</p>
+<ul>
+  <li>holds the running <code>Damage</code>,</li>
+  <li>exposes <code>Flip() bool</code>, pulling from the engine's <strong>existing seeded RNG</strong> so replay stays deterministic (coin flips are re-derived on fold, never stored — consistent with how draws already work),</li>
+  <li>gives verbs access to attacker/defender <code>InPlay</code> + player state for status and draw.</li>
+</ul>
+<p><strong>No new event types and no new prompt kinds</strong> — every verb in this slice is automatic (targets self or the opponent's Active). Player-choice verbs (pick a bench target, discard from hand) reuse the existing prompt system (ADR-0007) in a later slice.</p>
+
+<h2>Board (minimal)</h2>
+<p>The board already renders what this slice produces: the model carries <code>Poisoned</code>/<code>Burned</code>, <code>server/view.go</code> emits them, and <code>src/game/PlayerSide.tsx</code> shows ☠/🔥 badges plus a narration log; hand counts render already.</p>
+<p>Only change: <strong>narration</strong> names coin-flip outcomes (e.g. "Sneasel flipped heads: +20 damage") so the player can see why damage varied. No board redesign in this slice — that redesign is the cross-cutting Phase 1–3 work, out of scope here.</p>
+
+<h2>Testing &amp; verification</h2>
+<ul>
+  <li><strong>Per-verb seeded unit tests</strong> in the engine — the real verification. Fixed seed → deterministic outcome (Sneasel heads = 30 / tails = 10; Petilil 2 heads = 40, 1 = 20; Indeedee vs an N-energy Active = 30+30N; Ponyta leaves the defender Burned; Munchlax hand grows by 1). Set state directly, assert the number/flag.</li>
+  <li><strong>Vanilla regression:</strong> an attack with <code>Effect: nil</code> behaves exactly as today.</li>
+  <li><strong>End-to-end:</strong> a demo game using these cards where a coin-flip attack, a burn, and a draw all fire and are visible on the board. The demo deck <strong>sets its Energy Zone types explicitly</strong> to the types those cards need (see below), so attacks are never energy-starved during the demo.</li>
+  <li><strong>UI:</strong> manual browser check (project convention; no JS test runner).</li>
+</ul>
+
+<h2>Out of scope (this slice)</h2>
+<p>Evolution-triggered effects, abilities (the 143 ability strings), Trainer/Supporter/Item cards, and any player-choice (targeting/discard) verbs. All reuse the same <code>EffectOp</code> interface, so nothing here blocks them.</p>
+
+<h2>Backlog captured (not built here)</h2>
+<ul>
+  <li><strong>Energy-type set should be an explicit, player-chosen deck attribute.</strong> Today the engine auto-derives Energy Zone types from the deck's Pokémon types (<code>energyTypesOf</code> in <code>engine/types.go</code>). The real rule: the player freely chooses the zone's energy type set at deck construction, decoupled from Pokémon types. Auto-derivation is not just imprecise but <strong>strategically wrong</strong> — a player deliberately excludes a type whose Pokémon is run only for its ability/effect (Greninja's Water Shuriken, Indeedee's heal), never to attack, to avoid diluting the zone. This is a <strong>deck-bridge / construction</strong> concern (Phase 1 territory), and becomes pressing once the <strong>ability-effect slice</strong> lands. Fix is small: the deck carries its chosen energy-type set as input. Not expanded into this slice.</li>
+</ul>
+</body>
+</html>

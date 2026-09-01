@@ -98,6 +98,8 @@ func energyByName(name string) (engine.Energy, bool) {
 		return engine.Metal, true
 	case "Colorless":
 		return engine.Colorless, true
+	case "Dragon":
+		return engine.Dragon, true
 	}
 	return engine.NoEnergy, false
 }
@@ -209,6 +211,45 @@ func buildDeck(list []deckEntry) ([]engine.Card, error) {
 		for i := 0; i < e.count; i++ {
 			deck = append(deck, card)
 		}
+	}
+	return deck, nil
+}
+
+// deckFromIDs expands a list of card IDs into engine cards. The input must be a
+// format-legal 20 (at most 2 copies of any card by name, at least one Basic
+// Pokémon) — the deckbuild UI already enforces this. Cards the engine cannot
+// model yet (Trainers, whose effects are deferred per ADR-0002) are skipped, so
+// the deck plays as its Pokémon subset rather than being rejected outright. Card
+// access is unrestricted — only the format is checked.
+func deckFromIDs(ids []string) ([]engine.Card, error) {
+	if len(ids) != 20 {
+		return nil, fmt.Errorf("deck must be exactly 20 cards, got %d", len(ids))
+	}
+	deck := make([]engine.Card, 0, 20)
+	countByName := map[string]int{}
+	basics := 0
+	for _, id := range ids {
+		rc, ok := rawByID[id]
+		if !ok {
+			return nil, fmt.Errorf("unknown card id %q", id)
+		}
+		card, err := toEngineCard(rc)
+		if err != nil {
+			// A card the engine can't model yet (e.g. a Trainer). Skip it so the
+			// rest of the deck is still playable; its behavior lands with effects.
+			continue
+		}
+		countByName[card.Name]++
+		if countByName[card.Name] > 2 {
+			return nil, fmt.Errorf("at most 2 copies of %q allowed", card.Name)
+		}
+		if card.Stage == engine.Basic {
+			basics++
+		}
+		deck = append(deck, card)
+	}
+	if basics == 0 {
+		return nil, fmt.Errorf("deck needs at least 1 Basic Pokémon")
 	}
 	return deck, nil
 }

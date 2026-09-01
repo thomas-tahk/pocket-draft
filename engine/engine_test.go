@@ -111,6 +111,30 @@ func twoDecks() ([]Card, []Card) {
 	return deckOf(demoEmbor(), 20), deckOf(demoVolt(), 20)
 }
 
+// Conceding on your turn ends the game and awards the win to the opponent.
+func TestConcedeEndsGame(t *testing.T) {
+	d0, d1 := twoDecks()
+	g := NewGame(42, d0, d1)
+	doSetup(t, g)
+
+	p := g.S.Active
+	if err := g.Submit(Concede{Player: p}); err != nil {
+		t.Fatalf("concede on your turn should be legal: %v", err)
+	}
+	if g.S.Phase != PhaseOver {
+		t.Fatalf("phase = %v, want over", g.S.Phase)
+	}
+	if g.S.Winner != 1-p {
+		t.Fatalf("winner = %d, want %d (the opponent)", g.S.Winner, 1-p)
+	}
+	// Conceding when it isn't your turn is refused.
+	g2 := NewGame(42, d0, d1)
+	doSetup(t, g2)
+	if err := g2.Submit(Concede{Player: 1 - g2.S.Active}); err == nil {
+		t.Error("concede off-turn should be refused")
+	}
+}
+
 // Criterion 1: a full game runs start→finish and ends with a 3-point winner.
 func TestFullGameReachesWinner(t *testing.T) {
 	d0, d1 := twoDecks()

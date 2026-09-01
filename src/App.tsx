@@ -6,6 +6,8 @@ import { DeckbuildView } from './components/DeckbuildView';
 import { ReviewView } from './components/ReviewView';
 import { SharedDeckView } from './components/SharedDeckView';
 import { HistoryView } from './components/HistoryView';
+import { GameView } from './game/GameView';
+import { expandDeck } from './game/deck';
 import { derivePhase, HISTORY_CAP, TOTAL_PACKS, useDraftStore } from './stores/draftStore';
 import { decodeDeck, type Decklist } from './share/deckCode';
 import type { Card } from './types/card';
@@ -26,6 +28,7 @@ export function App() {
   const [pool, setPool] = useState<CardPool | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [playing, setPlaying] = useState(false);
   const [sharedDeck, setSharedDeck] = useState<Decklist | null>(readSharedDeck);
 
   useEffect(() => {
@@ -81,6 +84,13 @@ export function App() {
   );
 
   const phase = derivePhase({ pickIds, offerIds, shopFinalized, deckFinalized });
+
+  // Legacy quick-test entry: ?play plays the server's current curated game.
+  const isPlayParam = new URLSearchParams(window.location.search).has('play');
+  if (isPlayParam) return <GameView />;
+
+  // In-app deck play, launched from the review screen with the finalized deck.
+  if (playing) return <GameView deck={expandDeck(deck)} onExit={() => setPlaying(false)} />;
 
   if (error) return <main style={{ padding: 24 }}>Error: {error}</main>;
   if (!pool) return <main style={{ padding: 24 }}>Loading card data…</main>;
@@ -180,6 +190,7 @@ export function App() {
     <ReviewView
       pool={pool}
       deck={deck}
+      onPlay={() => setPlaying(true)}
       onNewDraft={() => start(pool.draftableCards)}
       onHome={reset}
     />

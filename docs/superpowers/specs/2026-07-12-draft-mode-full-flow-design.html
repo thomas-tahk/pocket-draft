@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Draft Mode — Full Flow (Design)</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    max-width: 50rem; margin: 0 auto; padding: 2.5rem 1.25rem 5rem;
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #1a1a1a; background: #fdfdfc;
+  }
+  h1 { font-size: 1.9rem; margin: 0 0 .25rem; }
+  h2 { font-size: 1.25rem; margin: 2.2rem 0 .6rem; border-bottom: 1px solid #e3e3e0; padding-bottom: .3rem; }
+  h3 { font-size: 1.05rem; margin: 1.4rem 0 .4rem; }
+  .sub { color: #666; font-style: italic; margin: 0 0 1.5rem; font-size: .95rem; }
+  ul, ol { padding-left: 1.3rem; }
+  li { margin: .3rem 0; }
+  strong { font-weight: 650; }
+  em { color: inherit; }
+  blockquote {
+    margin: 1rem 0; padding: .6rem 1rem; border-left: 3px solid #c9a227;
+    background: rgba(201,162,39,.08); border-radius: 4px;
+  }
+  code { background: rgba(0,0,0,.06); padding: .1rem .35rem; border-radius: 3px; font-size: .88em; }
+  pre {
+    background: rgba(0,0,0,.05); padding: 1rem; border-radius: 6px; overflow-x: auto;
+    font-size: .82rem; line-height: 1.4;
+  }
+  pre code { background: none; padding: 0; }
+  .note { color: #666; font-size: .92em; }
+  @media (prefers-color-scheme: dark) {
+    body { color: #e6e6e6; background: #161616; }
+    h2 { border-color: #333; }
+    .sub, .note { color: #999; }
+    blockquote { background: rgba(201,162,39,.12); }
+    code, pre { background: rgba(255,255,255,.08); }
+  }
+</style>
+</head>
+<body>
+<h1>Draft Mode — Full Flow (Design)</h1>
+<p class="sub">2026-07-12. Milestone design. The "why" and destination live in <code>docs/VISION.md</code>; this is the concrete architecture and phasing to ship the <strong>full draft-mode loop</strong>.</p>
+
+<h2>Purpose &amp; framing</h2>
+<p>One app, one card pool, one game engine, one board. Draft / constructed / replay are <strong>callers of a shared match core</strong>, not separate silos. This milestone ships <strong>draft mode's complete loop, start to finish</strong>:</p>
+<blockquote>draft picks → finalize deck → play <em>that deck</em> in a <strong>run</strong> of games → run ends with a persisted win/loss record → (later) step through any game as a replay.</blockquote>
+<p>Card <strong>effects/abilities</strong> and a <strong>legible, good-looking board</strong> are core parts of this loop, not add-ons. Constructed mode and replay come after and reuse the same core.</p>
+<p><strong>The silo, concretely:</strong> today <code>App.tsx</code> does <code>if (isPlay) return &lt;GameView/&gt;</code> — the game is a dead-end URL short-circuit that boots with the Go server's <strong>hardcoded preset decks</strong>, disconnected from your draft. The fix is to make "play" always <em>take a deck as input</em> and wrap games in a run. That one change un-silos the whole app.</p>
+
+<h2>Locked decisions</h2>
+<ul>
+  <li><strong>Construction enforced:</strong> a deck must be exactly <strong>20 cards</strong> with <strong>≤2 copies of any card by name</strong> to enter a game. Equal card <em>access</em> is preserved — you can proxy any card freely; construction format is a rule of fair play, not an access gate. <span class="note">(Reverses the earlier "no gating at all" note, which conflated card access with deck format.)</span></li>
+  <li><strong>Effects via a shared primitive toolbox (Approach A):</strong> ~30-50 reusable effect "verbs" that each card composes, plus an imperative escape hatch for genuine one-offs. Not per-card bespoke handlers.</li>
+  <li><strong>In-game rules always enforced by the engine, and card text overrides base rules</strong> (abilities that accelerate energy, conditional bonus damage, status modifiers, on-board stat changes, etc.). Never removed.</li>
+  <li><strong>Draft-run opponent:</strong> a bot playing a legal 20-card deck drafted from the same shared pool. Multiplayer is out of scope this milestone.</li>
+  <li><strong>Run end condition:</strong> first to <strong>3 losses</strong> or <strong>9 wins</strong> ends the run.</li>
+  <li><strong>Out of scope this milestone:</strong> constructed mode, multiplayer/networking, animations/visual flair, collectibility/economy/rarities, trade.</li>
+</ul>
+
+<h2>Architecture — shared core + mode callers</h2>
+<pre><code>                 ┌─────────────────── shared core ───────────────────┐
+ card pool ──►    │  engine (Go, event-sourced)  ──►  effect toolbox   │
+ (data/, done)    │        ▲                                           │
+                  │        │  builds game from given decks             │
+                  │   deck bridge  ◄──────────────────────────────┐    │
+                  │        │                                       │    │
+                  │   match host (Go server: /api/new|state|move) │    │
+                  │        │                                       │    │
+                  │   board (React, renders view + dispatches)     │    │
+                  └────────┼───────────────────────────────────────────┘
+                           │
+   mode callers:   draft-run wrapper  │ (later) constructed queue │ (later) replay</code></pre>
+<ul>
+  <li><strong>Card pool</strong> — <code>src/data/</code>, scraped <code>public/data/cards.json</code>. Done.</li>
+  <li><strong>Engine</strong> — Go, event-sourced/deterministic/seeded (ADR-0005), three-mode interaction + prompt seam (ADR-0007). Turn loop, energy, KO/points, setup, retreat, evolve, poison/burn exist. <strong>No effects yet.</strong></li>
+  <li><strong>Effect toolbox</strong> — new. Primitive verbs + per-card effect specs (below).</li>
+  <li><strong>Deck bridge</strong> — new. Turns a chosen deck (card-id list) into an engine game, replacing the hardcoded preset. Validates construction (20/≤2) first.</li>
+  <li><strong>Match host</strong> — the existing Go server holding one in-memory game. Sequential games in a run reuse it as-is (no rooms until multiplayer).</li>
+  <li><strong>Board</strong> — React at <code>?play</code> today; redesigned into the real game surface.</li>
+  <li><strong>Draft-run wrapper</strong> — new. Sequences games with your finalized deck, tracks W/L, ends the run, persists the record.</li>
+</ul>
+
+<h2>Components &amp; interfaces</h2>
+
+<h3>1. Deck bridge</h3>
+<ul>
+  <li><code>POST /api/new</code> accepts decks as input — <code>{ you: [cardId...], opponent: [cardId...], seed? }</code> — and builds the engine game from them. The hardcoded <code>curatedDecks()</code> preset leaves the default path (kept only as a fallback/bot deck source if useful).</li>
+  <li><strong>Construction validation</strong> runs before a game starts: exactly 20 cards, ≤2 per name. Malformed decks are rejected with a clear reason; game state unchanged. Draft decks are already well-formed, so this mainly guards constructed mode and hand-edited decks.</li>
+  <li><strong>Opponent deck:</strong> a legal 20-card deck drafted from the draftable pool (reuse the offer/draft logic, or a simpler random-legal-20 to start). Default = random legal 20; revisit at Phase 1.</li>
+  <li>The board's <code>newGame()</code> sends <strong>your finalized <code>draftStore.deck</code></strong> (expanded <code>cardId→count</code> into a card-id list) instead of the preset endpoint.</li>
+</ul>
+
+<h3>2. Effect engine (the meaty part)</h3>
+<ul>
+  <li><strong>Vocabulary (~30-50 verbs)</strong>, by category:
+    <ul>
+      <li><em>Damage modifiers:</em> bonus-if-condition, per-count (per energy / per tool / per benched), coin-scaled (N per heads), self-damage, spread to bench.</li>
+      <li><em>Healing</em> and <em>damage removal.</em></li>
+      <li><em>Status:</em> apply / extend / modify poison, burn, sleep, paralysis, confusion.</li>
+      <li><em>Energy:</em> attach, discard, accelerate, move between Pokémon.</li>
+      <li><em>Card flow:</em> draw, discard, search, reveal.</li>
+      <li><em>Targeting:</em> self / opponent-active / a chosen bench / all.</li>
+      <li><em>On-board modifiers:</em> weakness, retreat cost, damage taken/dealt during a turn.</li>
+    </ul>
+  </li>
+  <li><strong>EffectSpec</strong> — a card's attack/ability effect is an ordered list of primitive invocations with params, conditions, and targets. Data, not code, for the common case.</li>
+  <li><strong>Mapping</strong> — authored per <strong>distinct effect string</strong> (512 attack + 143 ability ≈ 655; parameterization collapses this further). Keyed so shared texts are done once. Coverage prioritized to the <strong>draftable pool</strong> first, then widened.</li>
+  <li><strong>Escape hatch</strong> — genuinely unique effects get a bespoke handler implementing the same primitive interface, so the board/engine treat them uniformly.</li>
+  <li><strong>Choices</strong> (coin flips, target selection, discard-from-hand) route through the engine's existing <strong>prompt system</strong> (ADR-0007), keeping the engine deterministic.</li>
+  <li><strong>Fidelity</strong> — breadth-first at basic fidelity across the pool, then refine each card toward real-game accuracy by adjusting its spec or fixing the shared verb. Fixing one verb cascades to every card using it. Post-release bugs expected and fixed one by one.</li>
+</ul>
+
+<h3>3. Run wrapper + records</h3>
+<ul>
+  <li><strong>Run state:</strong> <code>{ deck, wins, losses, games: GameResult[] }</code>; ends at 3 losses or 9 wins.</li>
+  <li><strong>Persistence:</strong> extend the existing <code>DraftHistoryEntry</code> (it already carries <code>wins</code>/<code>losses</code>) to hold the run outcome and a per-game <strong>move log</strong> (for replay). Reuses the existing zustand <code>persist</code> (localStorage).</li>
+  <li><strong>Run screen:</strong> shows deck, run progress toward the thresholds, launches each game via the board, records the result on return.</li>
+</ul>
+
+<h3>4. Board redesign</h3>
+<ul>
+  <li>All zones legible: <strong>active, bench (0-3), hand, energy zone + next energy, discard, points (0-3), deck count</strong>, plus <strong>status badges</strong> and damage/modifier indicators. Full card detail on demand (tap/hover).</li>
+  <li>Its own aesthetic — clear and good-looking, <strong>not</strong> a Pocket clone. Built with the frontend-design skill.</li>
+  <li>Co-evolves with effects, which introduce new things to show (statuses, coin-flip outcomes, stat modifiers).</li>
+</ul>
+
+<h3>5. Shell un-silo</h3>
+<ul>
+  <li>Replace the <code>?play</code> short-circuit with an in-app view state (<code>draft | shop | deckbuild | review | run | game | replay</code>) so finishing a deck → starting a run → playing games → returning is continuous, no dead-ends.</li>
+</ul>
+
+<h2>Data &amp; persistence</h2>
+<ul>
+  <li><strong>Finalized deck</strong> — <code>draftStore.deck</code> (<code>cardId→count</code>) is the handoff artifact between draft and play. Already exists.</li>
+  <li><strong>Run record</strong> — extended <code>DraftHistoryEntry</code> with run outcome + per-game move logs. localStorage via existing persist.</li>
+  <li><strong>Event log per game</strong> — the engine is event-sourced, so a game's move log is captured and replay is "re-apply the log," not new game logic.</li>
+</ul>
+
+<h2>Phasing</h2>
+<p class="note">Each phase gets its own implementation plan (writing-plans) and verification.</p>
+<ul>
+  <li><strong>Phase 0 — Un-silo the shell.</strong> View state replaces the <code>?play</code> dead-end. Small, structural, unblocks the rest.</li>
+  <li><strong>Phase 1 — Deck bridge.</strong> Play your finalized drafted deck vs a bot; construction enforced. → <em>You play your actual deck.</em></li>
+  <li><strong>Phase 2 — Effect engine.</strong> Primitives + map the pool's effects at basic fidelity. → <em>Cards do what their text says.</em></li>
+  <li><strong>Phase 3 — Run wrapper + records.</strong> → <em>Full loop: draft → finalize → run → persisted record.</em></li>
+  <li><strong>Board</strong> designed properly across Phases 1-3, so you never see a debug harness.</li>
+  <li><strong>Later:</strong> replay (cheap — event log exists) → constructed mode (reuses the bridge + run wrapper).</li>
+</ul>
+
+<h2>Testing &amp; verification</h2>
+<ul>
+  <li><strong>Engine/primitives:</strong> deterministic seeded unit tests per verb.</li>
+  <li><strong>Deck bridge:</strong> builds a game from given decks; rejects malformed (19 cards, 3 copies) with state unchanged.</li>
+  <li><strong>Effect specs:</strong> table-driven tests sampling representative cards per verb.</li>
+  <li><strong>End-to-end:</strong> draft → finalize → run → game to a result → record persisted → (later) replay steps through the log.</li>
+  <li><strong>UI:</strong> manual browser check (project convention; no JS test runner).</li>
+</ul>
+
+<h2>Open / deferred (non-blocking)</h2>
+<ul>
+  <li>Bot opponent deck source — default random-legal-20 from the draftable pool; confirm at Phase 1.</li>
+  <li>Roguelike run flourishes (rewards/meta beyond W/L) — out for now.</li>
+  <li>PR #1 (<code>feat/gameplay-ui</code>) — merge first vs build-on-top. Surfaced separately; this branch builds on its HEAD either way.</li>
+</ul>
+</body>
+</html>

@@ -9,6 +9,7 @@ import { CardPreview, type HoverState } from './CardPreview';
 type Props = {
   pool: CardPool;
   deck: Record<string, number>;
+  onPlay: () => void;
   onNewDraft: () => void;
   onHome: () => void;
 };
@@ -23,7 +24,7 @@ function download(filename: string, content: string) {
   URL.revokeObjectURL(url);
 }
 
-export function ReviewView({ pool, deck, onNewDraft, onHome }: Props) {
+export function ReviewView({ pool, deck, onPlay, onNewDraft, onHome }: Props) {
   const [hover, setHover] = useState<HoverState>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const handleHover = (p: HoverPayload | null) => setHover(p);
@@ -98,6 +99,7 @@ export function ReviewView({ pool, deck, onNewDraft, onHome }: Props) {
       >
         <h1 style={{ fontSize: 20, margin: 0 }}>Deck finalized</h1>
         <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={onPlay} style={{ fontWeight: 600 }}>▶ Play deck</button>
           <button onClick={() => copy(deckCode, 'code')}>
             {copied === 'code' ? 'Copied!' : 'Copy code'}
           </button>
