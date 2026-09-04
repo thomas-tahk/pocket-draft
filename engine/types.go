@@ -59,12 +59,14 @@ const (
 	Stage2
 )
 
-// Attack is a single attack printed on a card: its energy cost and base damage.
-// Vanilla cards have only this — no special text.
+// Attack is a single attack printed on a card: its energy cost, base damage,
+// and optional effect. Vanilla cards leave Effect nil — today's base-damage
+// path, unchanged.
 type Attack struct {
 	Name   string
 	Cost   []Energy // Colorless entries are paid by any leftover energy
 	Damage int
+	Effect []EffectOp // nil = vanilla; runs before weakness in applyAttack
 }
 
 // Card is the static, printed definition of a Pokémon. The engine never

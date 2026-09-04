@@ -65,6 +65,37 @@ func TestToEngineCard(t *testing.T) {
 	}
 }
 
+func TestToEngineCardAttachesSlice1Effects(t *testing.T) {
+	// Sneasel's real printing (B3a-038): Quick Attack must carry the
+	// FlipForBonus verb attached by ID, since effect text is authored in Go,
+	// not parsed (docs/superpowers/specs/2026-07-13-effect-engine-slice-1-design.md).
+	rc := rawCard{
+		ID: "B3a-038", Name: "Sneasel", CardType: "Darkness", Stage: "Basic", HP: 60,
+		Attacks: []rawAttack{{Cost: "D", Name: "Quick Attack", Damage: "10+", Effect: "Flip a coin. If heads, this attack does 20 more damage."}},
+	}
+	card, err := toEngineCard(rc)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	want := []engine.EffectOp{engine.FlipForBonus{Bonus: 20}}
+	if !reflect.DeepEqual(card.Attacks[0].Effect, want) {
+		t.Errorf("Sneasel Quick Attack effect = %+v, want %+v", card.Attacks[0].Effect, want)
+	}
+
+	// A card ID not in effectsByID must stay vanilla (nil Effect) — the
+	// slice-1 attachment must not leak onto every card.
+	other, err := toEngineCard(rawCard{
+		ID: "B3a-039", Name: "Not Sneasel", CardType: "Darkness", Stage: "Basic", HP: 60,
+		Attacks: []rawAttack{{Cost: "D", Name: "Quick Attack", Damage: "10", Effect: ""}},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if other.Attacks[0].Effect != nil {
+		t.Errorf("unattached card got an effect: %+v", other.Attacks[0].Effect)
+	}
+}
+
 func TestToEngineCardModelsDragon(t *testing.T) {
 	// Dragon is a modeled type: a Dragon Pokémon converts (its attacks are paid
 	// by other energies; Dragon never enters the Energy Zone — see energyTypesOf).

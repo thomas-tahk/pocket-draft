@@ -280,6 +280,131 @@ func TestDeterminism(t *testing.T) {
 	}
 }
 
+// --- Effect engine slice 1: EffectOp verbs, seeded for determinism ---
+
+// newEffectTestGame builds a minimal Game with both Actives in play, for
+// testing EffectOp.Apply directly against a known-seed rng (ADR-0005: coin
+// flips must derive from the engine's seeded RNG, never a second source).
+func newEffectTestGame(seed uint64) *Game {
+	g := &Game{Seed: seed, rng: newRng(seed)}
+	g.S = &State{Winner: -1}
+	for i := range g.S.Players {
+		g.S.Players[i].Active = &InPlay{
+			Card:   Card{Name: "Test", HP: 100},
+			Energy: map[Energy]int{},
+		}
+	}
+	return g
+}
+
+// Vanilla regression: an attack with Effect: nil must add exactly its printed
+// damage — the effect-engine hook must not change today's base-damage path.
+func TestVanillaAttackUnaffectedByEffectHook(t *testing.T) {
+	d0, d1 := twoDecks() // Embor (Fire, weak Water) vs Volt (Lightning, weak Fighting): no weakness match
+	g := NewGame(42, d0, d1)
+	doSetup(t, g)
+
+	first := g.S.Active
+	if err := g.Submit(EndTurn{Player: first}); err != nil {
+		t.Fatalf("end turn: %v", err)
+	}
+	p := g.S.Active
+	if err := g.Submit(AttachEnergy{Player: p, Target: 0}); err != nil {
+		t.Fatalf("attach energy: %v", err)
+	}
+	atk := g.S.Players[p].Active.Card.Attacks[0]
+	if atk.Effect != nil {
+		t.Fatalf("test fixture attack must have a nil Effect")
+	}
+	defender := 1 - p
+	before := g.S.Players[defender].Active.Damage
+
+	if err := g.Submit(UseAttack{Player: p, Index: 0}); err != nil {
+		t.Fatalf("attack: %v", err)
+	}
+	if got, want := g.S.Players[defender].Active.Damage-before, atk.Damage; got != want {
+		t.Errorf("nil-effect attack dealt %d, want exactly the printed %d", got, want)
+	}
+}
+
+// FlipForBonus: Sneasel's Quick Attack (10+): flip a coin, heads +20.
+func TestFlipForBonus(t *testing.T) {
+	cases := []struct {
+		name string
+		seed uint64
+		want int
+	}{
+		{"heads", 0, 30},
+		{"tails", 1, 10},
+	}
+	for _, c := range cases {
+		g := newEffectTestGame(c.seed)
+		ctx := &EffectContext{g: g, attacker: 0, Damage: 10}
+		FlipForBonus{Bonus: 20}.Apply(ctx)
+		if ctx.Damage != c.want {
+			t.Errorf("%s: Damage = %d, want %d", c.name, ctx.Damage, c.want)
+		}
+	}
+}
+
+// DamagePerHeads: Petilil's Double Spin (20x): flip 2, 20 per heads.
+func TestDamagePerHeads(t *testing.T) {
+	cases := []struct {
+		name string
+		seed uint64
+		want int
+	}{
+		{"2 heads", 7, 40},
+		{"1 heads", 0, 20},
+		{"0 heads", 6, 0},
+	}
+	for _, c := range cases {
+		g := newEffectTestGame(c.seed)
+		ctx := &EffectContext{g: g, attacker: 0, Damage: 0}
+		DamagePerHeads{Coins: 2, Per: 20}.Apply(ctx)
+		if ctx.Damage != c.want {
+			t.Errorf("%s: Damage = %d, want %d", c.name, ctx.Damage, c.want)
+		}
+	}
+}
+
+// ApplyStatus: Ponyta's Singe leaves the opponent's Active Burned.
+func TestApplyStatusBurn(t *testing.T) {
+	g := newEffectTestGame(1)
+	ctx := &EffectContext{g: g, attacker: 0, Damage: 0}
+	ApplyStatus{Status: Burn}.Apply(ctx)
+	if !g.S.Players[1].Active.Burned {
+		t.Error("expected the defending Active to be Burned")
+	}
+}
+
+// DamagePerEnergy: Indeedee ex's Psychic (30+): +30 per Energy on the
+// opponent's Active, i.e. 30 + 30N against an N-energy Active.
+func TestDamagePerEnergy(t *testing.T) {
+	g := newEffectTestGame(1)
+	g.S.Players[1].Active.Energy[Fire] = 2
+	ctx := &EffectContext{g: g, attacker: 0, Damage: 30}
+	DamagePerEnergy{Per: 30, Where: OppActive}.Apply(ctx)
+	if want := 30 + 30*2; ctx.Damage != want {
+		t.Errorf("Damage = %d, want %d", ctx.Damage, want)
+	}
+}
+
+// DrawCards: Munchlax's Hungrily Draw draws a card.
+func TestDrawCards(t *testing.T) {
+	g := newEffectTestGame(1)
+	g.S.Players[0].Deck = []Card{{ID: "X"}, {ID: "Y"}}
+	beforeHand := len(g.S.Players[0].Hand)
+	ctx := &EffectContext{g: g, attacker: 0}
+	DrawCards{N: 1}.Apply(ctx)
+	if len(g.S.Players[0].Hand) != beforeHand+1 {
+		t.Errorf("hand size = %d, want %d", len(g.S.Players[0].Hand), beforeHand+1)
+	}
+	if len(g.S.Players[0].Deck) != 1 {
+		t.Errorf("deck size = %d, want 1", len(g.S.Players[0].Deck))
+	}
+}
+
 // Bonus (supports criterion 1's scoring rules): an EX is worth 2 points.
 func TestEXWorthTwoPoints(t *testing.T) {
 	d0 := deckOf(demoVolt(), 20)
