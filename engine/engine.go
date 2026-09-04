@@ -300,7 +300,11 @@ func (g *Game) applyAttack(e UseAttack) error {
 	if opp.Active == nil {
 		return errors.New("there is no defending Pokémon")
 	}
-	dmg := atk.Damage
+	ctx := &EffectContext{g: g, attacker: e.Player, Damage: atk.Damage}
+	for _, op := range atk.Effect {
+		op.Apply(ctx)
+	}
+	dmg := ctx.Damage
 	weak := opp.Active.Card.Weakness != NoEnergy && opp.Active.Card.Weakness == pl.Active.Card.Type
 	if weak {
 		dmg += 20
