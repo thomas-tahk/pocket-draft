@@ -30,10 +30,18 @@ type rawAttack struct {
 	Effect string `json:"effect"`
 }
 
+type rawAbility struct {
+	Name   string `json:"name"`
+	Effect string `json:"effect"`
+}
+
 type rawCard struct {
 	ID          string      `json:"id"`
+	SetID       string      `json:"setId"`
 	Name        string      `json:"name"`
+	Rarity      string      `json:"rarity"`
 	CardType    string      `json:"cardType"`
+	TrainerKind string      `json:"trainerKind"`
 	Stage       string      `json:"stage"`
 	EvolvesFrom string      `json:"evolvesFrom"`
 	HP          int         `json:"hp"`
@@ -41,6 +49,8 @@ type rawCard struct {
 	Weakness    string      `json:"weakness"`
 	Retreat     int         `json:"retreat"`
 	Attacks     []rawAttack `json:"attacks"`
+	Ability     *rawAbility `json:"ability"`
+	TrainerText string      `json:"trainerText"`
 	ImageThumb  string      `json:"imageThumb"`
 }
 
@@ -194,21 +204,16 @@ type deckEntry struct {
 	count int
 }
 
-// Two curated "preset AI" decks of real cards — a stepping stone to playing
-// drafted decks. Each is single-type Basics with a base-damage attack so the
+// fireDeckList is player 1's curated stand-in deck for the demo matchup (no
+// "you" deck supplied) — single-type Basics with a base-damage attack so the
 // Energy Zone always feeds a cost and auto-play reliably reaches a winner.
-var (
-	fireDeckList = []deckEntry{
-		{"B2a-126", 6}, // Entei ex   — Blazing Beatdown [RR] 60
-		{"A4b-069", 7}, // Torkoal    — Flamethrower [RR] 70
-		{"A4b-076", 7}, // Heatran    — Ragin' Mad Strike [RR] 40
-	}
-	waterDeckList = []deckEntry{
-		{"A4b-101", 6}, // Articuno ex — Ice Wing [WC] 40
-		{"A3-044", 7},  // Lapras      — Surf [WWC] 70
-		{"A3b-021", 7}, // Alomomola   — Water Pulse [WCC] 50
-	}
-)
+// Player 1's flow is unchanged by issue #9; only the opponent's deck (player 2,
+// see draftBotDeck) stopped being a curated preset.
+var fireDeckList = []deckEntry{
+	{"B2a-126", 6}, // Entei ex   — Blazing Beatdown [RR] 60
+	{"A4b-069", 7}, // Torkoal    — Flamethrower [RR] 70
+	{"A4b-076", 7}, // Heatran    — Ragin' Mad Strike [RR] 40
+}
 
 // buildDeck expands a curated list into engine cards, erroring if a card ID is
 // missing from the loaded data or cannot be modeled.
@@ -269,13 +274,7 @@ func deckFromIDs(ids []string) ([]engine.Card, error) {
 	return deck, nil
 }
 
-// curatedDecks builds the Fire and Water preset decks from loaded card data.
-func curatedDecks() (fire, water []engine.Card, err error) {
-	if fire, err = buildDeck(fireDeckList); err != nil {
-		return nil, nil, err
-	}
-	if water, err = buildDeck(waterDeckList); err != nil {
-		return nil, nil, err
-	}
-	return fire, water, nil
+// fireDeckPreset builds player 1's curated demo stand-in from loaded card data.
+func fireDeckPreset() ([]engine.Card, error) {
+	return buildDeck(fireDeckList)
 }
