@@ -16,16 +16,22 @@ import (
 )
 
 // One game, guarded by a mutex so overlapping HTTP requests can't corrupt it.
-// The two curated decks are built once at startup and reused for every new game.
+// Player 1's curated stand-in deck is built once at startup and reused; player
+// 2's (the bot's) deck is drafted fresh for every new game so it varies by seed
+// (issue #9).
 var (
-	mu        sync.Mutex
-	game      *engine.Game
-	fireDeck  []engine.Card
-	waterDeck []engine.Card
+	mu       sync.Mutex
+	game     *engine.Game
+	fireDeck []engine.Card
 )
 
-func newGame(seed uint64) {
-	game = engine.NewGame(seed, fireDeck, waterDeck)
+func newGame(seed uint64) error {
+	bot, err := draftBotDeck(seed)
+	if err != nil {
+		return err
+	}
+	game = engine.NewGame(seed, fireDeck, bot)
+	return nil
 }
 
 func main() {
@@ -33,11 +39,13 @@ func main() {
 		log.Fatal(err)
 	}
 	var err error
-	if fireDeck, waterDeck, err = curatedDecks(); err != nil {
+	if fireDeck, err = fireDeckPreset(); err != nil {
 		log.Fatal(err)
 	}
 
-	newGame(1)
+	if err := newGame(1); err != nil {
+		log.Fatal(err)
+	}
 
 	http.HandleFunc("/api/new", handleNew)
 	http.HandleFunc("/api/state", handleState)
@@ -63,16 +71,18 @@ func handleState(w http.ResponseWriter, r *http.Request) {
 }
 
 // newReq is the optional JSON body for POST /api/new. `you` is your deck as a
-// list of card IDs; when present you play it (player 0) against the curated bot
-// deck (player 1). An empty body falls back to the curated demo matchup.
+// list of card IDs; when present you play it (player 0) against the drafted bot
+// deck (player 1). An empty body falls back to the demo matchup (player 1's
+// curated stand-in vs the bot).
 type newReq struct {
 	You  []string `json:"you"`
 	Seed *uint64  `json:"seed"`
 }
 
 // POST /api/new — start a fresh game. With a {you:[cardId...], seed} body you play
-// your deck vs the bot preset; with no body it's the curated demo matchup. A fixed
-// seed makes a game reproducible (same seed -> same shuffles). ?seed=N still works.
+// your deck vs a freshly drafted bot deck; with no body it's the demo matchup. A
+// fixed seed makes a game reproducible (same seed -> same shuffles and the same
+// bot deck). ?seed=N still works.
 func handleNew(w http.ResponseWriter, r *http.Request) {
 	var req newReq
 	if r.Body != nil {
@@ -88,7 +98,14 @@ func handleNew(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	p0, p1 := fireDeck, waterDeck
+	bot, err := draftBotDeck(seed)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		writeJSON(w, map[string]string{"error": err.Error()})
+		return
+	}
+
+	p0, p1 := fireDeck, bot
 	if len(req.You) > 0 {
 		d, err := deckFromIDs(req.You)
 		if err != nil {
@@ -96,7 +113,7 @@ func handleNew(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, map[string]string{"error": err.Error()})
 			return
 		}
-		p0, p1 = d, fireDeck
+		p0, p1 = d, bot
 	}
 
 	mu.Lock()
