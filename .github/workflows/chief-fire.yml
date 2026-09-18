@@ -1,0 +1,93 @@
+name: chief-fire
+
+# Bridges "I labelled an issue `build` from my phone" to a Claude Code cloud run.
+#
+# This exists because Claude Code's native GitHub triggers cover only
+# `pull_request` and `release` events — there is no issue-labeled event. So the
+# label is caught here and handed to the routine's API trigger instead.
+#
+# No AI runs in this workflow. It is one curl and one comment, so it costs
+# nothing against Actions minutes on a public repo and next to nothing on a
+# private one.
+#
+# Setup (both are one-time, in Settings → Secrets and variables → Actions):
+#   CHIEF_ROUTINE_ID     the routine's id, e.g. trig_01ABCDEF...
+#   CHIEF_ROUTINE_TOKEN  the routine's API-trigger bearer token
+# Generate the token at claude.ai/code/routines → the routine → Edit →
+# Select a trigger → Add another trigger → API → Generate token. It is shown
+# once and cannot be retrieved later.
+
+on:
+  issues:
+    types: [labeled]
+
+concurrency:
+  group: chief-${{ github.repository }}
+  cancel-in-progress: false
+
+permissions:
+  issues: write
+
+jobs:
+  fire:
+    if: github.event.label.name == 'build'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fire the chief routine
+        id: fire
+        env:
+          ROUTINE_ID: ${{ secrets.CHIEF_ROUTINE_ID }}
+          ROUTINE_TOKEN: ${{ secrets.CHIEF_ROUTINE_TOKEN }}
+          REPO: ${{ github.repository }}
+          ISSUE: ${{ github.event.issue.number }}
+          TITLE: ${{ github.event.issue.title }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${ROUTINE_ID:-}" ] || [ -z "${ROUTINE_TOKEN:-}" ]; then
+            echo "::error::CHIEF_ROUTINE_ID or CHIEF_ROUTINE_TOKEN is not set. See kit/README.md." >&2
+            exit 1
+          fi
+
+          # The payload is freeform text, not parsed. Keep it to the three
+          # identifiers the run needs; the run reads the issue itself for the
+          # rest. Anything else here arrives as untrusted data anyway.
+          payload="$(jq -n --arg repo "$REPO" --arg issue "$ISSUE" --arg title "$TITLE" \
+            '{text: "repo: \($repo)\nissue: \($issue)\ntitle: \($title)"}')"
+
+          code="$(curl -sS -o response.json -w '%{http_code}' \
+            -X POST "https://api.anthropic.com/v1/claude_code/routines/${ROUTINE_ID}/fire" \
+            -H "Authorization: Bearer ${ROUTINE_TOKEN}" \
+            -H "anthropic-beta: experimental-cc-routine-2026-04-01" \
+            -H "anthropic-version: 2023-06-01" \
+            -H "Content-Type: application/json" \
+            -d "$payload")"
+
+          echo "http_code=$code"
+
+          if [ "$code" != "200" ]; then
+            # The body can echo request fields, so surface only the error type.
+            echo "::error::Routine fire failed with HTTP $code: $(jq -r '.error.type // .type // "unknown"' response.json)" >&2
+            exit 1
+          fi
+
+          url="$(jq -r '.claude_code_session_url // empty' response.json)"
+          echo "session_url=$url" >> "$GITHUB_OUTPUT"
+          echo "Started $url"
+
+      - name: Acknowledge on the issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          ISSUE: ${{ github.event.issue.number }}
+          URL: ${{ steps.fire.outputs.session_url }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          if [ -n "${URL:-}" ]; then
+            body="🔨 chief is on it — [watch the run]($URL)"
+          else
+            body="⚠️ chief could not start. [Workflow log]($RUN)"
+          fi
+          gh issue comment "$ISSUE" --repo "$REPO" --body "$body"
