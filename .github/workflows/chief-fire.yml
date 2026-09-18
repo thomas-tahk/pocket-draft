@@ -17,13 +17,13 @@ name: chief-fire
 # Select a trigger → Add another trigger → API → Generate token. It is shown
 # once and cannot be retrieved later.
 
+# Deliberately no `concurrency` group. GitHub keeps only one pending run per
+# group, so a third fire queued while one is running cancels the second — a
+# silently dropped build. This job is one curl; there is nothing to serialize.
+
 on:
   issues:
     types: [labeled]
-
-concurrency:
-  group: chief-${{ github.repository }}
-  cancel-in-progress: false
 
 permissions:
   issues: write
