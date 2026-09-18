@@ -14,18 +14,36 @@ and asks rather than guessing.
 
 ### The decision line for this repo
 
-**Brought to the owner** (`your-call`): anything a user sees — UX flow, visuals,
-wording, feature scope · anything that costs money or adds an outside service ·
-hard-to-undo data or schema changes · auth and security · deleting features or data.
+**Brought to the owner** (`your-call`): anything a player sees — board layout,
+wording, what a card's text does · **any rule interpretation**, because a wrong
+one is a wrong game, not a bug · adding a dependency (both Go modules are stdlib
+only today) · deploying anything, or anything that costs money · changing the
+draft format or deck-construction rules · deleting features or scraped data.
 
 **Decided by the run:** internal implementation · file layout · tests · refactors ·
-choosing between equivalent libraries · fixing its own bugs.
-
-_(Adjust these two lists for this repo. They override the chief's defaults.)_
+which `EffectOp` verbs to add and how to shape them · fixing its own bugs.
 
 ### How to run and preview
 
+Two Go modules and a Vite SPA. No external dependencies in either Go module, so
+there is no `go.sum` — do not add one.
+
+```sh
+# the playable board — this is what a done-gate is exercised against
+cd server && go build . && ./server        # http://localhost:8080
+
+# tests
+(cd engine && go test ./...)
+(cd server && go test ./...)
+
+# the draft SPA
+npm ci && npm run lint && npm run build
 ```
-<!-- install/dev/test/build commands, and where the preview shows up -->
-```
+
+**Start the server in its own shell call.** A process backgrounded in the same
+call as the command that probes it dies when that call returns. `go build .`,
+then start the binary, then curl — three calls.
+
+Go here is 1.24.7 while both `go.mod` ask for 1.25. That is fine: the toolchain
+downloads itself on first build. Do not "fix" the `go.mod`.
 <!-- chief:end -->
