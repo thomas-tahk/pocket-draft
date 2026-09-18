@@ -1,0 +1,56 @@
+name: CI
+
+# Runs on every pull request so a PR has a check to be judged on, and on main
+# so a broken main is visible immediately rather than at the next PR.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  go:
+    name: go test (${{ matrix.module }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [engine, server]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: ${{ matrix.module }}/go.mod
+          # Neither module has external dependencies, so there is no go.sum and
+          # nothing to cache. Left on, setup-go fails looking for one.
+          cache: false
+
+      - name: Test
+        working-directory: ${{ matrix.module }}
+        run: go test ./...
+
+      - name: Vet
+        working-directory: ${{ matrix.module }}
+        run: go vet ./...
+
+  web:
+    name: typecheck and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
