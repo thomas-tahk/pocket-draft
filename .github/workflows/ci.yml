@@ -36,6 +36,32 @@ jobs:
         working-directory: ${{ matrix.module }}
         run: go vet ./...
 
+  wasm:
+    name: wasm binary is current
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    # public/pd.wasm is committed because Vercel's build image has no Go
+    # toolchain, which makes it possible to change the engine and ship a stale
+    # binary. Comparing rebuilt bytes is unreliable across machines, so check
+    # the thing that actually matters: Go sources changed, binary did not.
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Engine changes must rebuild the wasm
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          changed=$(git diff --name-only "$BASE" "$HEAD")
+          if echo "$changed" | grep -qE '^(engine|server)/[^/]*\.go$' \
+             && ! echo "$changed" | grep -qx 'public/pd.wasm'; then
+            echo "::error::Go sources changed but public/pd.wasm did not. Run 'npm run build:wasm' and commit it."
+            exit 1
+          fi
+          echo "wasm binary is consistent with the Go sources in this PR"
+
   web:
     name: typecheck and build
     runs-on: ubuntu-latest

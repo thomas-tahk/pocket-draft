@@ -85,8 +85,14 @@ type botResp struct {
 
 // POST /api/bot — make one greedy move for the current actor.
 func handleBot(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, botStep())
+}
+
+// botStep takes the bot's single move. Split out of the handler so the
+// WebAssembly build, which has no HTTP, can call the same code.
+func botStep() botResp {
 	mu.Lock()
 	defer mu.Unlock()
 	acted := botMove()
-	writeJSON(w, botResp{Acted: acted, State: toGameView(game)})
+	return botResp{Acted: acted, State: toGameView(game)}
 }
