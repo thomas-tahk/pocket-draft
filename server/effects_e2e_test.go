@@ -193,3 +193,110 @@ func TestEndToEndMunchlaxDraws(t *testing.T) {
 		t.Errorf("hand size after attacking = %d, want %d (drew a card)", got, want)
 	}
 }
+
+// Illumise's real printing: Ire-Fly (30+) reads the board — with an empty
+// discard pile it is just its printed 30.
+func TestEndToEndIllumiseIreFlyWithEmptyDiscard(t *testing.T) {
+	illumise := illumiseCard(t)
+	deck0 := deckOfCard(illumise, 20)
+	deck1 := deckOfCard(dummyOpponent(t), 20)
+
+	g := engine.NewGame(1, deck0, deck1)
+	doSetup(t, g)
+	waitForAttackerReady(t, g, 0)
+	beforeNarration := len(g.Narration)
+	if len(g.S.Players[0].Discard) != 0 {
+		t.Fatalf("fixture should start with an empty discard, got %+v", g.S.Players[0].Discard)
+	}
+	if err := g.Submit(engine.UseAttack{Player: 0, Index: 0}); err != nil {
+		t.Fatalf("attack: %v", err)
+	}
+
+	// The dummy is Colorless with no weakness, so nothing but the verb moves
+	// the number off Ire-Fly's printed 30.
+	if got, want := g.S.Players[1].Active.Damage, 30; got != want {
+		t.Errorf("damage dealt = %d, want %d (no Volbeat in the discard)", got, want)
+	}
+	if !containsSubstring(g.Narration[beforeNarration:], "no Volbeat in the discard") {
+		t.Errorf("narration = %v, want a line saying the bonus did not apply", g.Narration[beforeNarration:])
+	}
+}
+
+// ...and once a Volbeat has actually been knocked out and sent to the
+// attacker's discard pile in real play, the same attack does 90.
+func TestEndToEndIllumiseIreFlyAfterVolbeatIsKnockedOut(t *testing.T) {
+	illumise := illumiseCard(t)
+	volbeat, err := toEngineCard(rawCard{
+		ID: "B4a-001", Name: "Volbeat", CardType: "Grass", Stage: "Basic", HP: 80, Weakness: "Fire", Retreat: 1,
+		Attacks: []rawAttack{{Cost: "G", Name: "Tackle", Damage: "30"}},
+	})
+	if err != nil {
+		t.Fatalf("toEngineCard: %v", err)
+	}
+	// A Colorless heavy hitter: one Haymaker knocks out an 80 HP Volbeat, which
+	// is how the Volbeat gets into its owner's discard pile — no weakness, so it
+	// cannot confound the damage the Illumise later deals to it.
+	bruiser, err := toEngineCard(rawCard{
+		ID: "BRUISER", Name: "Bruiser", CardType: "Colorless", Stage: "Basic", HP: 200,
+		Attacks: []rawAttack{{Cost: "C", Name: "Haymaker", Damage: "100"}},
+	})
+	if err != nil {
+		t.Fatalf("toEngineCard: %v", err)
+	}
+
+	deck0 := append(deckOfCard(volbeat, 10), deckOfCard(illumise, 10)...)
+	deck1 := deckOfCard(bruiser, 20)
+	g := engine.NewGame(1, deck0, deck1)
+
+	// Volbeat Active, Illumise waiting on the bench: seed 1 deals player 0 both.
+	if err := g.Submit(engine.SetupPlace{Player: 0, ActiveCardID: volbeat.ID, BenchCardIDs: []string{illumise.ID}}); err != nil {
+		t.Fatalf("setup for player 0 (needs a Volbeat and an Illumise in the opening hand): %v", err)
+	}
+	doSetup(t, g) // player 1 places its Bruiser
+
+	// The opponent knocks the Volbeat out for real.
+	waitForAttackerReady(t, g, 1)
+	if err := g.Submit(engine.UseAttack{Player: 1, Index: 0}); err != nil {
+		t.Fatalf("opponent attack: %v", err)
+	}
+	if g.S.Pending == nil || g.S.Pending.Kind != engine.PromptNewActive {
+		t.Fatalf("expected a promote-new-Active prompt after the knockout, got %+v", g.S.Pending)
+	}
+	if err := g.Submit(engine.ChooseNewActive{Player: 0, BenchIndex: 0}); err != nil {
+		t.Fatalf("promote Illumise: %v", err)
+	}
+	if len(g.S.Players[0].Discard) != 1 || g.S.Players[0].Discard[0].Name != "Volbeat" {
+		t.Fatalf("discard pile = %+v, want the knocked-out Volbeat", g.S.Players[0].Discard)
+	}
+	if g.S.Players[0].Active.Card.Name != "Illumise" {
+		t.Fatalf("Active = %s, want Illumise", g.S.Players[0].Active.Card.Name)
+	}
+
+	// Ire-Fly costs GC — two energies — and now finds Volbeat in the discard.
+	waitForAttackerReady(t, g, 0)
+	beforeNarration := len(g.Narration)
+	beforeDamage := g.S.Players[1].Active.Damage
+	if err := g.Submit(engine.UseAttack{Player: 0, Index: 0}); err != nil {
+		t.Fatalf("attack: %v", err)
+	}
+	if got, want := g.S.Players[1].Active.Damage-beforeDamage, 90; got != want {
+		t.Errorf("damage dealt = %d, want %d (30 printed +60 for Volbeat in the discard)", got, want)
+	}
+	if !containsSubstring(g.Narration[beforeNarration:], "found Volbeat in the discard") {
+		t.Errorf("narration = %v, want a line naming the discard-pile bonus", g.Narration[beforeNarration:])
+	}
+}
+
+// illumiseCard builds Illumise's real printing (B4a-002) through the data
+// bridge, so the attack under test carries whatever effectsByID wires to it.
+func illumiseCard(t *testing.T) engine.Card {
+	t.Helper()
+	card, err := toEngineCard(rawCard{
+		ID: "B4a-002", Name: "Illumise", CardType: "Grass", Stage: "Basic", HP: 70,
+		Attacks: []rawAttack{{Cost: "GC", Name: "Ire-Fly", Damage: "30+", Effect: "If Volbeat is in your discard pile, this attack does 60 more damage."}},
+	})
+	if err != nil {
+		t.Fatalf("toEngineCard: %v", err)
+	}
+	return card
+}

@@ -117,3 +117,23 @@ func (v DrawCards) Apply(ctx *EffectContext) {
 		pl.Deck = pl.Deck[1:]
 	}
 }
+
+// BonusIfInDiscard: if a card named CardName is in the attacker's own discard
+// pile, add Bonus damage. E.g. Illumise's Ire-Fly (30+): if Volbeat is in your
+// discard pile, this attack does 60 more damage. Matches on card Name, not ID —
+// the printed text names the Pokémon, and several printings of Volbeat exist.
+type BonusIfInDiscard struct {
+	CardName string
+	Bonus    int
+}
+
+func (v BonusIfInDiscard) Apply(ctx *EffectContext) {
+	for _, c := range ctx.attackerPlayer().Discard {
+		if c.Name == v.CardName {
+			ctx.Damage += v.Bonus
+			ctx.narrate("found %s in the discard: +%d damage.", v.CardName, v.Bonus)
+			return
+		}
+	}
+	ctx.narrate("found no %s in the discard: no bonus.", v.CardName)
+}

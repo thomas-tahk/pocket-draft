@@ -405,6 +405,38 @@ func TestDrawCards(t *testing.T) {
 	}
 }
 
+// BonusIfInDiscard: Illumise's Ire-Fly (30+): +60 if Volbeat is in your
+// discard pile. Matches on Name, so any Volbeat printing counts — and it reads
+// the attacker's own discard, never the opponent's.
+func TestBonusIfInDiscard(t *testing.T) {
+	cases := []struct {
+		name            string
+		attackerDiscard []Card
+		defenderDiscard []Card
+		want            int
+	}{
+		{"volbeat in the attacker's discard", []Card{{ID: "B4a-001", Name: "Volbeat"}}, nil, 90},
+		{"empty discard", nil, nil, 30},
+		{"only some other card", []Card{{ID: "B3a-038", Name: "Sneasel"}}, nil, 30},
+		{"another printing of volbeat still counts", []Card{{ID: "B2b-003", Name: "Volbeat"}}, nil, 90},
+		// The printed text is a condition ("If Volbeat is in your discard
+		// pile"), not a per-copy multiplier, so a second Volbeat adds nothing.
+		{"two volbeat still add the bonus only once",
+			[]Card{{ID: "B4a-001", Name: "Volbeat"}, {ID: "B2b-003", Name: "Volbeat"}}, nil, 90},
+		{"volbeat in the defender's discard only", nil, []Card{{ID: "B4a-001", Name: "Volbeat"}}, 30},
+	}
+	for _, c := range cases {
+		g := newEffectTestGame(1)
+		g.S.Players[0].Discard = c.attackerDiscard
+		g.S.Players[1].Discard = c.defenderDiscard
+		ctx := &EffectContext{g: g, attacker: 0, Damage: 30}
+		BonusIfInDiscard{CardName: "Volbeat", Bonus: 60}.Apply(ctx)
+		if ctx.Damage != c.want {
+			t.Errorf("%s: Damage = %d, want %d", c.name, ctx.Damage, c.want)
+		}
+	}
+}
+
 // Bonus (supports criterion 1's scoring rules): an EX is worth 2 points.
 func TestEXWorthTwoPoints(t *testing.T) {
 	d0 := deckOf(demoVolt(), 20)

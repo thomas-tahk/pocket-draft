@@ -154,7 +154,7 @@ func stageFromName(s string) engine.Stage {
 // 2026-07-13-effect-engine-slice-1-design.md) to specific printings, keyed by
 // attack name so a multi-attack card's other attacks are untouched. Effects
 // are authored here as data, not parsed from the scraped effect text — only
-// these 5 cards' printed attacks carry a real effect; every other card still
+// these 6 cards' printed attacks carry a real effect; every other card still
 // plays at base-damage fidelity per ADR-0002.
 var effectsByID = map[string]map[string][]engine.EffectOp{
 	"B3a-038": {"Quick Attack": {engine.FlipForBonus{Bonus: 20}}},                      // Sneasel
@@ -162,6 +162,7 @@ var effectsByID = map[string]map[string][]engine.EffectOp{
 	"B2b-010": {"Singe": {engine.ApplyStatus{Status: engine.Burn}}},                    // Ponyta
 	"B3b-104": {"Psychic": {engine.DamagePerEnergy{Per: 30, Where: engine.OppActive}}}, // Indeedee ex
 	"B3b-054": {"Hungrily Draw": {engine.DrawCards{N: 1}}},                             // Munchlax
+	"B4a-002": {"Ire-Fly": {engine.BonusIfInDiscard{CardName: "Volbeat", Bonus: 60}}},  // Illumise
 }
 
 // toEngineCard converts a scraped card into the engine's Card. It errors only if
