@@ -419,6 +419,10 @@ func TestBonusIfInDiscard(t *testing.T) {
 		{"empty discard", nil, nil, 30},
 		{"only some other card", []Card{{ID: "B3a-038", Name: "Sneasel"}}, nil, 30},
 		{"another printing of volbeat still counts", []Card{{ID: "B2b-003", Name: "Volbeat"}}, nil, 90},
+		// The printed text is a condition ("If Volbeat is in your discard
+		// pile"), not a per-copy multiplier, so a second Volbeat adds nothing.
+		{"two volbeat still add the bonus only once",
+			[]Card{{ID: "B4a-001", Name: "Volbeat"}, {ID: "B2b-003", Name: "Volbeat"}}, nil, 90},
 		{"volbeat in the defender's discard only", nil, []Card{{ID: "B4a-001", Name: "Volbeat"}}, 30},
 	}
 	for _, c := range cases {
