@@ -8,7 +8,9 @@
     "build": "tsc -b && vite build",
     "lint": "tsc -b --noEmit",
     "preview": "vite preview",
-    "scrape": "node scripts/scrape-limitless.mjs"
+    "scrape": "node scripts/scrape-limitless.mjs",
+    "build:wasm": "cd server && GOOS=js GOARCH=wasm go build -o ../public/pd.wasm . && cp \"$(go env GOROOT)/lib/wasm/wasm_exec.js\" ../public/wasm_exec.js",
+    "build:wasm-site": "VITE_WASM=1 npm run build"
   },
   "dependencies": {
     "react": "^18.3.1",

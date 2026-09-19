@@ -68,9 +68,15 @@ func loadCards(path string) error {
 	if err != nil {
 		return fmt.Errorf("read %s: %w (run the server from the server/ directory)", path, err)
 	}
+	return loadCardsFromJSON(b)
+}
+
+// loadCardsFromJSON populates rawByID and cardImages from scraped card JSON.
+// The WebAssembly build has no filesystem, so it hands the bytes in directly.
+func loadCardsFromJSON(b []byte) error {
 	var raws []rawCard
 	if err := json.Unmarshal(b, &raws); err != nil {
-		return fmt.Errorf("parse %s: %w", path, err)
+		return fmt.Errorf("parse cards: %w", err)
 	}
 	for _, rc := range raws {
 		rawByID[rc.ID] = rc

@@ -7,7 +7,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"sync"
@@ -32,30 +31,6 @@ func newGame(seed uint64) error {
 	}
 	game = engine.NewGame(seed, fireDeck, bot)
 	return nil
-}
-
-func main() {
-	if err := loadCards(cardsPath); err != nil {
-		log.Fatal(err)
-	}
-	var err error
-	if fireDeck, err = fireDeckPreset(); err != nil {
-		log.Fatal(err)
-	}
-
-	if err := newGame(1); err != nil {
-		log.Fatal(err)
-	}
-
-	http.HandleFunc("/api/new", handleNew)
-	http.HandleFunc("/api/state", handleState)
-	http.HandleFunc("/api/move", handleMove)
-	http.HandleFunc("/api/bot", handleBot)
-	http.Handle("/", http.FileServer(http.Dir("static")))
-
-	const addr = ":8080"
-	log.Printf("pocket-draft simulator on http://localhost%s", addr)
-	log.Fatal(http.ListenAndServe(addr, nil))
 }
 
 func writeJSON(w http.ResponseWriter, v any) {
@@ -88,38 +63,54 @@ func handleNew(w http.ResponseWriter, r *http.Request) {
 	if r.Body != nil {
 		_ = json.NewDecoder(r.Body).Decode(&req) // empty/invalid body -> no deck
 	}
+	if req.Seed == nil {
+		if s := r.URL.Query().Get("seed"); s != "" {
+			if n, err := strconv.ParseUint(s, 10, 64); err == nil {
+				req.Seed = &n
+			}
+		}
+	}
+	view, err := startGame(req)
+	if err != nil {
+		w.WriteHeader(err.status)
+		writeJSON(w, map[string]string{"error": err.Error()})
+		return
+	}
+	writeJSON(w, view)
+}
 
+// startGame builds both decks and replaces the in-memory game. It is the whole
+// body of POST /api/new minus the HTTP, so the WebAssembly build can reuse it.
+func startGame(req newReq) (gameView, *startErr) {
 	seed := uint64(1)
 	if req.Seed != nil {
 		seed = *req.Seed
-	} else if s := r.URL.Query().Get("seed"); s != "" {
-		if n, err := strconv.ParseUint(s, 10, 64); err == nil {
-			seed = n
-		}
 	}
 
 	bot, err := draftBotDeck(seed)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		writeJSON(w, map[string]string{"error": err.Error()})
-		return
+		return gameView{}, &startErr{err, http.StatusInternalServerError}
 	}
 
 	p0, p1 := fireDeck, bot
 	if len(req.You) > 0 {
 		d, err := deckFromIDs(req.You)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			writeJSON(w, map[string]string{"error": err.Error()})
-			return
+			return gameView{}, &startErr{err, http.StatusBadRequest}
 		}
-		p0, p1 = d, bot
+		p0 = d
 	}
 
 	mu.Lock()
 	defer mu.Unlock()
 	game = engine.NewGame(seed, p0, p1)
-	writeJSON(w, toGameView(game))
+	return toGameView(game), nil
+}
+
+// startErr carries the status code a failed start should report over HTTP.
+type startErr struct {
+	error
+	status int
 }
 
 // moveReq is the superset of fields any move might carry; only the ones relevant
@@ -150,19 +141,23 @@ func handleMove(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "bad request body", http.StatusBadRequest)
 		return
 	}
+	writeJSON(w, applyMove(req))
+}
+
+// applyMove validates and applies one move. An illegal move changes nothing and
+// comes back with ok:false and a reason.
+func applyMove(req moveReq) moveResp {
 	ev, err := toEvent(req)
 
 	mu.Lock()
 	defer mu.Unlock()
 	if err != nil {
-		writeJSON(w, moveResp{OK: false, Error: err.Error(), State: toGameView(game)})
-		return
+		return moveResp{OK: false, Error: err.Error(), State: toGameView(game)}
 	}
 	if err := game.Submit(ev); err != nil {
-		writeJSON(w, moveResp{OK: false, Error: err.Error(), State: toGameView(game)})
-		return
+		return moveResp{OK: false, Error: err.Error(), State: toGameView(game)}
 	}
-	writeJSON(w, moveResp{OK: true, State: toGameView(game)})
+	return moveResp{OK: true, State: toGameView(game)}
 }
 
 // toEvent maps a decoded request to the engine's typed Event.
