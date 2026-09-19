@@ -96,6 +96,26 @@ func TestToEngineCardAttachesSlice1Effects(t *testing.T) {
 	}
 }
 
+func TestToEngineCardAttachesIllumiseIreFly(t *testing.T) {
+	// Illumise's real printing (B4a-002): Ire-Fly must carry BonusIfInDiscard
+	// naming Volbeat, the state-reading verb wired by ID alongside the slice-1
+	// coin-flip verbs.
+	card, err := toEngineCard(rawCard{
+		ID: "B4a-002", Name: "Illumise", CardType: "Grass", Stage: "Basic", HP: 70,
+		Attacks: []rawAttack{{Cost: "GC", Name: "Ire-Fly", Damage: "30+", Effect: "If Volbeat is in your discard pile, this attack does 60 more damage."}},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	want := []engine.EffectOp{engine.BonusIfInDiscard{CardName: "Volbeat", Bonus: 60}}
+	if !reflect.DeepEqual(card.Attacks[0].Effect, want) {
+		t.Errorf("Illumise Ire-Fly effect = %+v, want %+v", card.Attacks[0].Effect, want)
+	}
+	if card.Attacks[0].Damage != 30 {
+		t.Errorf("Ire-Fly base damage = %d, want 30 (the \"+\" lives in the verb)", card.Attacks[0].Damage)
+	}
+}
+
 func TestToEngineCardModelsDragon(t *testing.T) {
 	// Dragon is a modeled type: a Dragon Pokémon converts (its attacks are paid
 	// by other energies; Dragon never enters the Energy Zone — see energyTypesOf).
