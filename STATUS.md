@@ -25,13 +25,17 @@ Three pieces, one repo:
   (`FlipForBonus`, `DamagePerHeads`, `ApplyStatus`, `DamagePerEnergy`,
   `DrawCards`), wired to five real cards in `server/carddata.go`. Effects are
   authored as data, never per-card code — Approach A, see ADR-0002.
+- Card effects, **slice 2** opened: `BonusIfInDiscard` is the first verb that
+  reads the board instead of flipping a coin, wired to Illumise's Ire-Fly
+  (`B4a-002`) — 30 damage normally, 90 with a Volbeat in your own discard pile.
+  Six verbs, six cards. Driven end to end on the real board on 2026-09-19.
 - The bot drafts its own 16-round deck rather than using a fixed preset
   (`server/draft_rarity.go`).
 - Tests and the production build now run on every pull request (`ci.yml`).
 
 ## What is mocked, stubbed, or hardcoded
 
-- **Only 5 cards of the whole set have effects.** Every other card plays at base
+- **Only 6 cards of the whole set have effects.** Every other card plays at base
   damage. This is deliberate per ADR-0002 (add coverage one card at a time), not
   an oversight — but it means "the game works" is still a narrow claim.
 - **Player 1's deck is still a curated three-card stand-in** (`fireDeckList` in
@@ -46,7 +50,11 @@ Three pieces, one repo:
 
 ## Next
 
-- Effect slice 2: a verb that reads game state rather than flipping a coin.
-  Issue #5 (Illumise's Ire-Fly, +60 if Volbeat is in the discard) is written up
-  with a done-gate already and is the natural next one.
+- More slice 2 verbs now that one state-reading verb exists: the obvious
+  neighbours are a "+X if the opponent's Active is Confused" condition
+  (Illumise's other printing, `B2b-004`) and a heal.
+- No card effect is reachable from a preset deck yet, so effects only show up in
+  a drafted or posted deck. Exercising one means posting a deck to `/api/new`.
 - Give player 1 a real drafted deck, closing the last preset.
+- `Confused` has no engine support, which is what blocks the `B2b-004` verb
+  above — the status set is `Burn`/`Poison` today.
