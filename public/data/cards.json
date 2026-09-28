@@ -259,7 +259,7 @@
     "trainerKind": null,
     "hp": 90,
     "stage": "Stage 1",
-    "evolvesFrom": "Team Rocket’s Houndour",
+    "evolvesFrom": "Team Rocket's Houndour",
     "attacks": [
       {
         "cost": "R",
@@ -595,7 +595,7 @@
     "trainerKind": null,
     "hp": 70,
     "stage": "Stage 1",
-    "evolvesFrom": "Team Rocket’s Voltorb",
+    "evolvesFrom": "Team Rocket's Voltorb",
     "attacks": [
       {
         "cost": "L",
@@ -784,7 +784,7 @@
     "trainerKind": null,
     "hp": 130,
     "stage": "Stage 1",
-    "evolvesFrom": "Team Rocket’s Slowpoke",
+    "evolvesFrom": "Team Rocket's Slowpoke",
     "attacks": [
       {
         "cost": "PC",
@@ -847,7 +847,7 @@
     "trainerKind": null,
     "hp": 90,
     "stage": "Stage 1",
-    "evolvesFrom": "Team Rocket’s Drowzee",
+    "evolvesFrom": "Team Rocket's Drowzee",
     "attacks": [
       {
         "cost": "PP",
@@ -1177,7 +1177,7 @@
     "trainerKind": null,
     "hp": 100,
     "stage": "Stage 1",
-    "evolvesFrom": "Team Rocket’s Ekans",
+    "evolvesFrom": "Team Rocket's Ekans",
     "attacks": [
       {
         "cost": "DDC",
@@ -1237,7 +1237,7 @@
     "trainerKind": null,
     "hp": 120,
     "stage": "Stage 1",
-    "evolvesFrom": "Team Rocket’s Grimer",
+    "evolvesFrom": "Team Rocket's Grimer",
     "attacks": [
       {
         "cost": "DDC",
@@ -1297,7 +1297,7 @@
     "trainerKind": null,
     "hp": 140,
     "stage": "Stage 1",
-    "evolvesFrom": "Team Rocket’s Koffing",
+    "evolvesFrom": "Team Rocket's Koffing",
     "attacks": [
       {
         "cost": "DD",
@@ -1480,7 +1480,7 @@
     "trainerKind": null,
     "hp": 80,
     "stage": "Stage 1",
-    "evolvesFrom": "Team Rocket’s Tinkatink",
+    "evolvesFrom": "Team Rocket's Tinkatink",
     "attacks": [
       {
         "cost": "MC",
@@ -1510,7 +1510,7 @@
     "trainerKind": null,
     "hp": 140,
     "stage": "Stage 2",
-    "evolvesFrom": "Team Rocket’s Tinkatuff",
+    "evolvesFrom": "Team Rocket's Tinkatuff",
     "attacks": [
       {
         "cost": "MMC",
@@ -1786,7 +1786,7 @@
     "trainerKind": null,
     "hp": 120,
     "stage": "Stage 1",
-    "evolvesFrom": "Team Rocket’s Rattata",
+    "evolvesFrom": "Team Rocket's Rattata",
     "attacks": [
       {
         "cost": "CC",
@@ -1849,7 +1849,7 @@
     "trainerKind": null,
     "hp": 100,
     "stage": "Stage 1",
-    "evolvesFrom": "Team Rocket’s Meowth",
+    "evolvesFrom": "Team Rocket's Meowth",
     "attacks": [
       {
         "cost": "CC",
@@ -2203,7 +2203,7 @@
     "trainerKind": null,
     "hp": 90,
     "stage": "Stage 1",
-    "evolvesFrom": "Team Rocket’s Drowzee",
+    "evolvesFrom": "Team Rocket's Drowzee",
     "attacks": [
       {
         "cost": "PP",
@@ -2233,7 +2233,7 @@
     "trainerKind": null,
     "hp": 140,
     "stage": "Stage 2",
-    "evolvesFrom": "Team Rocket’s Tinkatuff",
+    "evolvesFrom": "Team Rocket's Tinkatuff",
     "attacks": [
       {
         "cost": "MMC",
@@ -2464,7 +2464,7 @@
     "trainerKind": null,
     "hp": 130,
     "stage": "Stage 1",
-    "evolvesFrom": "Team Rocket’s Slowpoke",
+    "evolvesFrom": "Team Rocket's Slowpoke",
     "attacks": [
       {
         "cost": "PC",
@@ -2497,7 +2497,7 @@
     "trainerKind": null,
     "hp": 140,
     "stage": "Stage 1",
-    "evolvesFrom": "Team Rocket’s Koffing",
+    "evolvesFrom": "Team Rocket's Koffing",
     "attacks": [
       {
         "cost": "DD",
@@ -2530,7 +2530,7 @@
     "trainerKind": null,
     "hp": 120,
     "stage": "Stage 1",
-    "evolvesFrom": "Team Rocket’s Rattata",
+    "evolvesFrom": "Team Rocket's Rattata",
     "attacks": [
       {
         "cost": "CC",
@@ -2740,7 +2740,7 @@
     "trainerKind": null,
     "hp": 130,
     "stage": "Stage 1",
-    "evolvesFrom": "Team Rocket’s Slowpoke",
+    "evolvesFrom": "Team Rocket's Slowpoke",
     "attacks": [
       {
         "cost": "PC",
@@ -2773,7 +2773,7 @@
     "trainerKind": null,
     "hp": 140,
     "stage": "Stage 1",
-    "evolvesFrom": "Team Rocket’s Koffing",
+    "evolvesFrom": "Team Rocket's Koffing",
     "attacks": [
       {
         "cost": "DD",
@@ -2806,7 +2806,7 @@
     "trainerKind": null,
     "hp": 120,
     "stage": "Stage 1",
-    "evolvesFrom": "Team Rocket’s Rattata",
+    "evolvesFrom": "Team Rocket's Rattata",
     "attacks": [
       {
         "cost": "CC",
@@ -6209,7 +6209,7 @@
     "trainerKind": null,
     "hp": 80,
     "stage": "Stage 1",
-    "evolvesFrom": "GalarianZigzagoon",
+    "evolvesFrom": "Galarian Zigzagoon",
     "attacks": [
       {
         "cost": "D",
@@ -6239,7 +6239,7 @@
     "trainerKind": null,
     "hp": 140,
     "stage": "Stage 2",
-    "evolvesFrom": "GalarianLinoone",
+    "evolvesFrom": "Galarian Linoone",
     "attacks": [
       {
         "cost": "DCC",
@@ -53542,7 +53542,7 @@
     },
     "weakness": "Fire",
     "retreat": 1,
-    "pack": "",
+    "pack": "Premium Missions",
     "trainerText": null,
     "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_079_EN_SM.webp",
     "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_079_EN.png",
@@ -53572,7 +53572,7 @@
     "ability": null,
     "weakness": "Water",
     "retreat": 2,
-    "pack": "",
+    "pack": "Promo",
     "trainerText": null,
     "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_080_EN_SM.webp",
     "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_080_EN.png",
@@ -53602,7 +53602,7 @@
     "ability": null,
     "weakness": "Lightning",
     "retreat": 1,
-    "pack": "",
+    "pack": "Promo",
     "trainerText": null,
     "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_081_EN_SM.webp",
     "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_081_EN.png",
@@ -53632,7 +53632,7 @@
     "ability": null,
     "weakness": "Fighting",
     "retreat": 1,
-    "pack": "",
+    "pack": "Promo",
     "trainerText": null,
     "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_082_EN_SM.webp",
     "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_082_EN.png",
@@ -53662,7 +53662,7 @@
     "ability": null,
     "weakness": null,
     "retreat": 1,
-    "pack": "",
+    "pack": "Promo",
     "trainerText": null,
     "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_083_EN_SM.webp",
     "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_083_EN.png",
@@ -53692,7 +53692,7 @@
     "ability": null,
     "weakness": "Fighting",
     "retreat": 1,
-    "pack": "",
+    "pack": "Promo",
     "trainerText": null,
     "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_084_EN_SM.webp",
     "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_084_EN.png",
@@ -53722,7 +53722,7 @@
     "ability": null,
     "weakness": "Fighting",
     "retreat": 1,
-    "pack": "",
+    "pack": "Wonder Pick",
     "trainerText": null,
     "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_085_EN_SM.webp",
     "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_085_EN.png",
@@ -53755,12 +53755,252 @@
     },
     "weakness": "Fire",
     "retreat": 2,
-    "pack": "",
+    "pack": "Wonder Pick",
     "trainerText": null,
     "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_086_EN_SM.webp",
     "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_086_EN.png",
     "artist": "Naoyo Kimura",
     "flavor": "All its cells are magnets. It communicates with others of its kind by transmitting magnetic forces from its body."
+  },
+  {
+    "id": "P-B-087",
+    "setId": "P-B",
+    "number": 87,
+    "name": "Mega Sceptile ex",
+    "rarity": "Promo",
+    "exKind": "mega-ex",
+    "cardType": "Grass",
+    "trainerKind": null,
+    "hp": 210,
+    "stage": "Stage 2",
+    "evolvesFrom": "Grovyle",
+    "attacks": [
+      {
+        "cost": "GG",
+        "name": "Terminating Tail",
+        "damage": "130",
+        "effect": "Discard a [G] Energy from this Pokémon. Your opponent's Active Pokémon is now Poisoned."
+      }
+    ],
+    "ability": null,
+    "weakness": "Fire",
+    "retreat": 1,
+    "pack": "Premium Missions",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_087_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_087_EN.png",
+    "artist": "PLANETA CG Works",
+    "flavor": null
+  },
+  {
+    "id": "P-B-088",
+    "setId": "P-B",
+    "number": 88,
+    "name": "Team Rocket's Scyther",
+    "rarity": "Promo",
+    "exKind": "regular",
+    "cardType": "Grass",
+    "trainerKind": null,
+    "hp": 60,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "GC",
+        "name": "Second Strike",
+        "damage": "20+",
+        "effect": "If your opponent's Active Pokémon has damage on it, this attack does 70 more damage."
+      }
+    ],
+    "ability": null,
+    "weakness": "Fire",
+    "retreat": 1,
+    "pack": "Promo",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_088_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_088_EN.png",
+    "artist": "Anesaki Dynamic",
+    "flavor": "The sharp scythes on its forearms become increasingly sharp by cutting through hard objects."
+  },
+  {
+    "id": "P-B-089",
+    "setId": "P-B",
+    "number": 89,
+    "name": "Team Rocket's Lapras",
+    "rarity": "Promo",
+    "exKind": "regular",
+    "cardType": "Water",
+    "trainerKind": null,
+    "hp": 90,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "WC",
+        "name": "Ruthless Whirlpool",
+        "damage": "40+",
+        "effect": "If this Pokémon has more Energy attached than your opponent's Active Pokémon, this attack does 40 more damage."
+      }
+    ],
+    "ability": null,
+    "weakness": "Lightning",
+    "retreat": 1,
+    "pack": "Promo",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_089_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_089_EN.png",
+    "artist": "matazo",
+    "flavor": "Able to understand human speech and very intelligent, it loves to swim in the sea with people on its back."
+  },
+  {
+    "id": "P-B-090",
+    "setId": "P-B",
+    "number": 90,
+    "name": "Wingull",
+    "rarity": "Promo",
+    "exKind": "regular",
+    "cardType": "Water",
+    "trainerKind": null,
+    "hp": 60,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "C",
+        "name": "Flap",
+        "damage": "10",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Lightning",
+    "retreat": 1,
+    "pack": "Promo",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_090_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_090_EN.png",
+    "artist": "Midori Harada",
+    "flavor": "It rides upon ocean winds as if it were a glider. In the winter, it hides food around its nest."
+  },
+  {
+    "id": "P-B-091",
+    "setId": "P-B",
+    "number": 91,
+    "name": "Team Rocket's Wobbuffet",
+    "rarity": "Promo",
+    "exKind": "regular",
+    "cardType": "Psychic",
+    "trainerKind": null,
+    "hp": 80,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "CC",
+        "name": "Rocket Frenzy",
+        "damage": "30x",
+        "effect": "Reveal the top 6 cards of your deck. This attack does 30 damage for each Pokémon you find there that has “Team Rocket” in its name. Shuffle the revealed cards back into your deck."
+      }
+    ],
+    "ability": null,
+    "weakness": "Darkness",
+    "retreat": 2,
+    "pack": "Promo",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_091_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_091_EN.png",
+    "artist": "cochi8i",
+    "flavor": "To keep its pitch-black tail hidden, it lives quietly in the darkness. It is never first to attack."
+  },
+  {
+    "id": "P-B-092",
+    "setId": "P-B",
+    "number": 92,
+    "name": "Marowak",
+    "rarity": "Promo",
+    "exKind": "regular",
+    "cardType": "Fighting",
+    "trainerKind": null,
+    "hp": 110,
+    "stage": "Stage 1",
+    "evolvesFrom": "Cubone",
+    "attacks": [
+      {
+        "cost": "FC",
+        "name": "Punish",
+        "damage": "50+",
+        "effect": "If your opponent's Active Pokémon has “Team Rocket” in its name, this attack does 70 more damage."
+      }
+    ],
+    "ability": null,
+    "weakness": "Grass",
+    "retreat": 2,
+    "pack": "Promo",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_092_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_092_EN.png",
+    "artist": "kawayoo",
+    "flavor": "When this Pokémon evolved, the skull of its mother fused to it. Marowak’s temperament also turned vicious at the same time."
+  },
+  {
+    "id": "P-B-093",
+    "setId": "P-B",
+    "number": 93,
+    "name": "Fennekin",
+    "rarity": "Promo",
+    "exKind": "regular",
+    "cardType": "Fire",
+    "trainerKind": null,
+    "hp": 60,
+    "stage": "Basic",
+    "evolvesFrom": null,
+    "attacks": [
+      {
+        "cost": "C",
+        "name": "Scratch",
+        "damage": "10",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Water",
+    "retreat": 1,
+    "pack": "Wonder Pick",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_093_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_093_EN.png",
+    "artist": "Kanako Eo",
+    "flavor": "Twigs make for Fennekin’s snacks. When it nibbles on twigs, it finds the courage to face strong foes."
+  },
+  {
+    "id": "P-B-094",
+    "setId": "P-B",
+    "number": 94,
+    "name": "Meowstic",
+    "rarity": "Promo",
+    "exKind": "regular",
+    "cardType": "Psychic",
+    "trainerKind": null,
+    "hp": 90,
+    "stage": "Stage 1",
+    "evolvesFrom": "Espurr",
+    "attacks": [
+      {
+        "cost": "PP",
+        "name": "Super Psy Bolt",
+        "damage": "70",
+        "effect": ""
+      }
+    ],
+    "ability": null,
+    "weakness": "Darkness",
+    "retreat": 1,
+    "pack": "Wonder Pick",
+    "trainerText": null,
+    "imageThumb": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_094_EN_SM.webp",
+    "imageFull": "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/P-B/P-B_094_EN.png",
+    "artist": "Kagemaru Himeno",
+    "flavor": "When they sense danger, they exert their psychic power at its maximum output. They have no regard for their opponents."
   },
   {
     "id": "A4b-001",
