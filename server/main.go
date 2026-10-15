@@ -5,6 +5,8 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -79,13 +81,21 @@ func handleNew(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, view)
 }
 
+// seedFor returns the requested seed, or a fresh one so every game differs.
+// The seed is narrated at game start, so any game can still be replayed exactly.
+func seedFor(req newReq) uint64 {
+	if req.Seed != nil {
+		return *req.Seed
+	}
+	var b [8]byte
+	rand.Read(b[:])
+	return binary.LittleEndian.Uint64(b[:])
+}
+
 // startGame builds both decks and replaces the in-memory game. It is the whole
 // body of POST /api/new minus the HTTP, so the WebAssembly build can reuse it.
 func startGame(req newReq) (gameView, *startErr) {
-	seed := uint64(1)
-	if req.Seed != nil {
-		seed = *req.Seed
-	}
+	seed := seedFor(req)
 
 	bot, err := draftBotDeck(seed)
 	if err != nil {
