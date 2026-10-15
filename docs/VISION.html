@@ -13,8 +13,9 @@
   }
   h1 { font-size: 1.9rem; margin: 0 0 .25rem; }
   h2 { font-size: 1.25rem; margin: 2.2rem 0 .6rem; border-bottom: 1px solid #e3e3e0; padding-bottom: .3rem; }
+  h3 { font-size: 1.05rem; margin: 1.6rem 0 .4rem; }
   .sub { color: #666; font-style: italic; margin: 0 0 1.5rem; font-size: .95rem; }
-  ul { padding-left: 1.3rem; }
+  ul, ol { padding-left: 1.3rem; }
   li { margin: .3rem 0; }
   strong { font-weight: 650; }
   blockquote {
@@ -24,6 +25,15 @@
   code { background: rgba(0,0,0,.06); padding: .1rem .35rem; border-radius: 3px; font-size: .88em; }
   .out { color: #b00020; font-weight: 600; }
   .in { color: #1a7a3a; font-weight: 600; }
+  table { border-collapse: collapse; width: 100%; margin: 1.1rem 0; font-size: .94rem; }
+  th, td { text-align: left; padding: .5rem .7rem; border-bottom: 1px solid #e3e3e0; vertical-align: top; }
+  th { font-weight: 650; border-bottom: 2px solid #d4d4d0; }
+  .lede { font-size: 1.12rem; font-weight: 650; margin: .8rem 0 1.1rem; }
+  .tag {
+    display: inline-block; font-size: .72rem; font-weight: 700; letter-spacing: .04em;
+    text-transform: uppercase; padding: .12rem .45rem; border-radius: 3px; vertical-align: .12em;
+    background: #c9a227; color: #fff; margin-left: .4rem;
+  }
   @media (prefers-color-scheme: dark) {
     body { color: #e6e6e6; background: #161616; }
     h2 { border-color: #333; }
@@ -32,58 +42,97 @@
     code { background: rgba(255,255,255,.1); }
     .out { color: #ff6b6b; }
     .in { color: #5fd08a; }
+    th, td { border-color: #333; }
+    th { border-bottom-color: #444; }
   }
 </style>
 </head>
 <body>
 <h1>Pocket Draft — Vision &amp; Intent</h1>
-<p class="sub">Captured 2026-07-12. The "why" and the destination. Architecture and build-order live in the ADRs; this is what they serve.</p>
+<p class="sub">Rewritten 2026-09-18, from the owner directly. The previous version framed this as “two aims, one loop” with drafting as half the purpose. That framing was wrong, and it propagated — agents read it and reproduced the error. Architecture lives in the ADRs; build order lives in the milestone specs. This is the thing they serve.</p>
 
 <h2>What this is</h2>
-<p>Building the actual <strong>TCG Pocket battle game, played for real — a better version of it.</strong> Not a tech demo, not a throwaway engine slice. When this is done, you draft a deck and play a full, faithful game with it.</p>
+<p class="lede">Play the battles of Pokémon TCG Pocket, without the bullshit.</p>
+<p>That’s the whole purpose, and it is defined by subtraction. The battles are good. What surrounds them is not:</p>
+<table>
+  <tr><th>Removed</th><th>Why</th></tr>
+  <tr><td><strong>Collecting</strong></td><td>Cards gated behind packs, money, and grind</td></tr>
+  <tr><td><strong>Per-tap lag</strong></td><td>The real game round-trips to its server over every small interaction</td></tr>
+  <tr><td><strong>Long animations</strong></td><td>Tolerable once, excruciating across fifty games</td></tr>
+  <tr><td><strong>Ladder downtime</strong></td><td>Ranked runs roughly 2 weeks in every 4-week cycle</td></tr>
+  <tr><td><strong>Missing modes</strong></td><td>Drafting most of all — but not only drafting</td></tr>
+</table>
+<p>Every item there is friction that <strong>compounds with volume</strong>. This is built for someone who intends to play <em>a lot</em> of games. That is the thread connecting all five, and it is the tiebreaker when a design question is close.</p>
+<p><span class="out">Also out of scope:</span> rarities (shiny / rainbow / full-art), trade, economy. Those serve the business model, not the game.</p>
+<blockquote><strong>The one thing that makes it real rather than a demo:</strong> cards doing what their text says. Attack effects, abilities, Trainers, status. A game where only base damage works is not the game. Effects being built incrementally (ADR-0002) is a statement about <em>build order</em>, never about scope.</blockquote>
 
-<h2>Two aims, one loop</h2>
+<h2>Multiplayer is the point</h2>
+<p>This is a multiplayer game with solo surfaces — not a solo game that acquires multiplayer later. Battles are meant to be against people.</p>
+<p>Two surfaces are solo, permanently and by choice:</p>
+<ul>
+  <li><strong>Drafting.</strong> You draft alone against the pool. Not a group opening packs and passing them around a table — that belongs to paper card games.</li>
+  <li><strong>Replay review.</strong> Looking back over your own games.</li>
+</ul>
+<p>So the multiplayer requirement is <strong>battles only</strong>. That is a far smaller surface than “the app is multiplayer,” and it should stay that way.</p>
+
+<h2>The modes</h2>
+<p>Three modes of play, plus replay across all of them.</p>
+<table>
+  <tr><th>Mode</th><th>Deck comes from</th><th>Wrapped by</th><th>People</th></tr>
+  <tr><td><strong>Ranked</strong></td><td>constructed, full pool</td><td>ladder + rating, always on</td><td>PvP, always</td></tr>
+  <tr><td><strong>Draft</strong></td><td>a solo draft session</td><td>a run (3 losses / 9 wins)</td><td>solo draft, then battle</td></tr>
+  <tr><td><strong>Custom</strong></td><td>constructed, or given</td><td>a preset’s rules, or nothing</td><td>solo or invited</td></tr>
+</table>
+<p><strong>Ranked is PvP without exception.</strong> A rating against a bot means nothing, so no interim single-player version of Ranked exists or can be faked. Ranked ships after rooms and transport, or it does not ship.</p>
+<p><strong>VS Bot is a separate concept, not a Ranked substitute.</strong> Its purpose is practising a deck and building confidence in it. The bot is expected to be braindead next to a person, and that is fine — it needs to play legally and not be a wall. Bot intelligence is explicitly not worth investment.</p>
+<p><strong>Casual mode</strong> is likely and deliberately unspecified. See open questions.</p>
+
+<h3>Custom is probably the substrate, not a third mode <span class="tag">proposed</span></h3>
+<p class="sub">Not locked — this is a reading of the owner’s intent that has not yet been ratified.</p>
+<p>Custom is a normal game of Pocket with adjustable match and format settings, and fixed combinations of those settings get promoted into named modes over time. Follow that one step and Ranked is itself a preset — standard format, ladder attached — and Draft is a preset plus a different way of getting a deck.</p>
+<p>If that holds, only three things ever vary:</p>
+<ul>
+  <li><strong>where the deck comes from</strong> — drafted, constructed, or inherited from a replayed game</li>
+  <li><strong>where the starting state comes from</strong> — a fresh setup, or a prefix of a recorded game’s event log</li>
+  <li><strong>what wraps the game</strong> — a ladder, a run, a preset’s rules, or nothing</li>
+</ul>
+<p>The engine never changes across any of it. “Add a mode” becomes a config entry rather than a project.</p>
+<blockquote><strong>Caveat, held deliberately:</strong> decide the <em>model</em> now, generalise the <em>code</em> later. A settings engine built before anyone knows which knobs matter is premature abstraction. Build one concrete mode end to end; leave the seam visible.</blockquote>
+
+<h2>Replay, and playing from it</h2>
+<p>Every mode emits an event log, because the engine is event-sourced and deterministic (ADR-0005). Replay is re-applying that log.</p>
+<p><strong>Play-from-replay</strong> is the feature worth naming: branch at any point in a recorded game and keep playing from there — alone, to explore a different line, or with someone invited in to see how it could have gone. Architecturally this is not a new system. It is loading a game from a <em>prefix</em> of a log rather than from a fresh setup. The July 2026 decision to make the engine event-sourced paid for this in advance.</p>
+<p>One fork inside it, cheap to build either way and not yet decided:</p>
+<ul>
+  <li><strong>Study</strong> — reuse the original seed, so draws stay identical and your decisions are the only variable. Answers “was that attack the mistake?”</li>
+  <li><strong>What-if</strong> — re-roll from the branch point, so luck varies too. Answers “how else could this have gone?”</li>
+</ul>
+<p>They feel identical to a player and answer different questions.</p>
+
+<h2>What this implies architecturally</h2>
+<p class="sub">Recorded here because these follow from the vision rather than from taste. The detail belongs in ADRs.</p>
+<ul>
+  <li><strong>Rooms are the primitive, not a lobby.</strong> Four things need two clients in one game: Ranked matchmaking, Custom invites, shared replay branching, and any future battle mode. Build a joinable game instance with an id; matchmaking and friend-invites are then policies on top of it. A “lobby system” designed as a feature tends to swallow rating, chat and friends lists.</li>
+  <li><strong>WebAssembly implements ADR-0006, it does not supersede it.</strong> The previous vision claimed WASM replaced client-side prediction. That holds only if solo play is primary. It is not. Two people sharing a game means the server is the authority and the round-trip is unavoidable — WASM cannot remove latency the design requires. You beat that with prediction: play locally and instantly, reconcile with the server. WASM is simply the best way to <em>implement</em> that predictor, because it is the identical Go engine rather than a TypeScript reimplementation that drifts.</li>
+  <li><strong>The engine was the right thing to build first.</strong> Two people connected to a server that does not know the rules is nothing. Event sourcing, determinism and seeding are mild overkill for solo play and mandatory for netcode and replay.</li>
+  <li><strong>The solo assumption shaped only the shell.</strong> One global in-memory game, request/response HTTP instead of a connection, two separate boards. All of it sits outside the rules and is cheap to replace.</li>
+</ul>
+
+<h2>Open questions</h2>
+<p class="sub">Real gaps, recorded rather than guessed at.</p>
 <ol>
-  <li><strong>Draft mode the real game doesn't have</strong> — draft a deck from a shared pool, then play <em>that</em> deck.</li>
-  <li><strong>Faithful core battle gameplay</strong> — including Pokémon <strong>attack effects and abilities</strong>, not just base-damage attacks.</li>
+  <li><strong>What are the Custom sliders, concretely?</strong> Three or four examples decide whether Custom means format variants (deck size, copy limit, points to win) or something wider (starting energy, HP scaling, ban lists). Very different amounts of work.</li>
+  <li><strong>Constructed deck-building does not exist.</strong> Decks come from drafting only today. Ranked and Custom both need “build 20 from the whole pool,” and that surface has never been scoped. Two of three modes depend on it.</li>
+  <li><strong>Where do replays live?</strong> Per-browser local storage is free and private. Ranked replays you would probably want kept and shareable, which means server storage and running cost.</li>
+  <li><strong>Study or what-if</strong> for play-from-replay, or both.</li>
+  <li><strong>Casual mode</strong> — whether it is a distinct mode or just Custom’s default preset.</li>
 </ol>
-<p>These are not separate features. They are one loop: <strong>draft → play your drafted deck.</strong> The whole thing becomes real the moment those two meet.</p>
 
-<h2>Why (the motivations — these drive priorities)</h2>
+<h2>Where this is written down</h2>
 <ul>
-  <li><strong>Equal access.</strong> The real game locks cards behind paying for hundreds/thousands of packs. A shared draft pool means everyone starts equal, zero grind.</li>
-  <li><strong>Zero-lag play.</strong> The real game round-trips to its server on every little tap — constant lag, frustrating UX. Play here must feel instant.</li>
-  <li><strong>Always-on ranked.</strong> The real game gives ~2 weeks of ranked per ~4-week cycle. Here, ranked/ladder is always available.</li>
+  <li><code>docs/adr/</code> — locked architecture decisions.</li>
+  <li><code>docs/superpowers/specs/2026-07-12-draft-mode-full-flow-design.md</code> — the draft milestone. Predates this document; its “constructed mode” conflates what are now Ranked and Custom, and its deferral of rooms (“no rooms needed until multiplayer”) is the line everything above crosses.</li>
+  <li><code>docs/decisions/2026-10-15-rework-answers.md</code> — the owner's answers on the battle rework, the real Pocket rules, and the draft changes. The battle spec is built from it.</li>
 </ul>
-
-<h2>In scope / Out of scope</h2>
-<p><span class="in">In:</span> full battle rules — attacks, <strong>attack effects</strong>, <strong>abilities</strong>, Trainer/Supporter/Item cards, status conditions, coin flips, weakness / retreat / EX rules, evolution lines; <strong>legal deck construction (exactly 20 cards, ≤2 copies by name)</strong>; draft mode; eventually PvP + an always-on ladder.</p>
-<p><span class="out">Out:</span> collectibility (packs, economy, rarities — shiny / rainbow / full-art), animations / visual flair, trade.</p>
-<blockquote><strong>Ethos — equal access, not a card-ownership gate.</strong> The digital equivalent of paper proxies: every card is freely available to draft and build with — no packs, no grind, no pay-to-access. What <em>is</em> enforced is the deck <strong>format</strong> (exactly 20 cards, ≤2 copies by name) — a rule of fair play both sides share, not an access gate.</blockquote>
-<blockquote>Effects and abilities being "incremental" (ADR-0002) is about <strong>build order</strong>, not scope. They are core to playing the game and are not optional.</blockquote>
-
-<h2>Where we are vs. where we're going</h2>
-<p><strong>Built and real:</strong></p>
-<ul>
-  <li>Go rules engine skeleton — turn loop, energy zone, base-damage attacks, KO / points, setup, retreat, evolve, poison / burn. Tested, green.</li>
-  <li>Seven ADRs locking architecture.</li>
-  <li>Real-card data bridge (<code>server/carddata.go</code>) loading scraped card data.</li>
-  <li>The mature draft tool (deployed on Vercel).</li>
-  <li>React gameplay board mounted at <code>?play</code> (PR #1).</li>
-</ul>
-<p><strong>Not built yet (the real work ahead):</strong></p>
-<ul>
-  <li><strong>Effects / ability engine</strong> — the bulk. Every card's text actually doing something. Incremental, bounded by the draftable card pool.</li>
-  <li><strong>Playing your <em>chosen</em> deck.</strong> Today the sim uses a hardcoded preset (Entei ex×6, Torkoal×7, Heatran×7) and ignores your draft — the point isn't the preset's copy counts, it's that it's not <em>your</em> deck.</li>
-  <li><strong>Learnable play UX.</strong> Today's board is a debug harness, not a designed game.</li>
-  <li><strong>Low-latency deploy architecture</strong> (below).</li>
-</ul>
-
-<h2>Key architecture decision pending</h2>
-<p>The sim is server-authoritative: every move is a round-trip to the Go server. On localhost that's instant, but <strong>deployed off localhost it reproduces the exact per-tap lag this project exists to escape.</strong></p>
-<p><strong>Leading candidate:</strong> compile the Go engine to <strong>WebAssembly</strong> and run it in the browser — play is fully local and instant; the server runs the <em>same</em> Go code only as the authority for real-time PvP. One rules codebase, no input lag for solo / vs-bot, network only where genuinely required. Supersedes ADR-0006's "reimplement the rules in TypeScript" plan (same responsiveness, half the code, no engine drift). To be confirmed before multiplayer.</p>
-
-<h2>Full plan</h2>
-<p>The full draft-mode milestone (un-silo → deck bridge → effect engine → run wrapper) is specified in <code>docs/superpowers/specs/2026-07-12-draft-mode-full-flow-design.md</code>. In short: wire the chosen/drafted deck into the sim so you play a real deck instead of the preset; deck <strong>format</strong> is enforced (20 cards, ≤2 copies), card choice is unrestricted; card effects/abilities are built as a shared primitive toolbox. Local either way, so the WASM decision doesn't block it.</p>
 </body>
 </html>
