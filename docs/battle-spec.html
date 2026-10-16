@@ -1,0 +1,309 @@
+<title>Pocket Battle Spec</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: one reading column of numbered rule rows; each row = id · statement · status chip · engine chip · correct box. Board mock sits beside the screen section. */
+:root {
+  --bg: #f3f5fa; --surface: #ffffff; --ink: #121a2e; --muted: #4b5675; --line: #d5dbea;
+  --accent: #1d5fe0; --lit: #ffbf00;
+  --ok: #0c8a4b; --proposed: #b25e00; --question: #c2187a; --gap: #d02020;
+  --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --body: "Atkinson Hyperlegible", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0d1222; --surface: #161d33; --ink: #eef1fa; --muted: #a3acc8; --line: #2a3352;
+  --accent: #6c9dff; --lit: #ffcc33;
+  --ok: #3fd486; --proposed: #ffa53d; --question: #ff5fb4; --gap: #ff5c5c; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0d1222; --surface: #161d33; --ink: #eef1fa; --muted: #a3acc8; --line: #2a3352;
+  --accent: #6c9dff; --lit: #ffcc33;
+  --ok: #3fd486; --proposed: #ffa53d; --question: #ff5fb4; --gap: #ff5c5c; color-scheme: dark }
+
+body { background: var(--bg); color: var(--ink); font: 16px/1.55 var(--body); }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 28px 80px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.1; }
+h1 { font-size: 2.6rem; letter-spacing: .01em; }
+h2 { font-size: 1.7rem; margin-top: 44px; padding-bottom: 6px; border-bottom: 3px solid var(--ink); }
+h3 { font-size: 1.2rem; margin-top: 26px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+p { max-width: 68ch; }
+.lede { color: var(--muted); max-width: 68ch; }
+code, .id { font-family: var(--mono); font-size: .85em; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 16px 0 0; padding: 0; list-style: none; font-size: .9rem; color: var(--muted); }
+.chip { display: inline-block; font: 700 .72rem/1 var(--body); text-transform: uppercase; letter-spacing: .07em;
+  padding: 4px 7px; border-radius: 4px; border: 1.5px solid currentColor; white-space: nowrap; }
+.c-confirmed { color: var(--ok); } .c-proposed { color: var(--proposed); } .c-question { color: var(--question); }
+.e-ok { color: var(--ok); } .e-wrong, .e-missing { color: var(--gap); background: color-mix(in srgb, var(--gap) 12%, transparent); }
+.e-na { color: var(--muted); }
+
+.tally { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-top: 22px; }
+.tally div { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; }
+.tally b { display: block; font: 700 1.8rem/1 var(--display); font-variant-numeric: tabular-nums; }
+.tally span { font-size: .85rem; color: var(--muted); }
+
+.gate { margin-top: 22px; padding: 14px 16px; background: var(--surface); border-left: 5px solid var(--lit); max-width: 72ch; }
+.gate strong { font-family: var(--display); text-transform: uppercase; letter-spacing: .06em; }
+
+.rows { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 0; }
+.row { display: grid; grid-template-columns: 3.4rem 1fr auto; gap: 4px 14px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.row .id { color: var(--accent); padding-top: 2px; }
+.row .txt { min-width: 0; }
+.row .note { color: var(--muted); font-size: .9rem; margin-top: 3px; }
+.row .note b { color: var(--ink); }
+.row .chips { display: flex; flex-direction: column; gap: 5px; align-items: flex-end; }
+.row .fix { grid-column: 2 / 4; display: flex; flex-direction: column; gap: 6px; }
+.row.flagged { background: color-mix(in srgb, var(--question) 7%, transparent); }
+button { font: 700 .82rem var(--body); color: var(--accent); background: none; border: 1.5px solid var(--line);
+  border-radius: 5px; padding: 6px 10px; cursor: pointer; align-self: flex-start; }
+button:hover { border-color: var(--accent); }
+button:focus-visible, textarea:focus-visible { outline: 3px solid var(--lit); outline-offset: 2px; }
+textarea { font: 15px/1.4 var(--body); color: var(--ink); background: var(--surface); border: 1.5px solid var(--line);
+  border-radius: 5px; padding: 8px; min-height: 64px; width: 100%; box-sizing: border-box; resize: vertical; }
+@media (max-width: 560px) {
+  .row { grid-template-columns: 2.8rem 1fr; }
+  .row .chips { grid-column: 2; flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .row .fix { grid-column: 2; }
+}
+
+/* board mock */
+.screen { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 28px; align-items: start; margin-top: 18px; }
+@media (max-width: 760px) { .screen { grid-template-columns: 1fr; } .phone { margin: 0 auto; } }
+.phone { width: 100%; max-width: 300px; aspect-ratio: 9 / 18.5; background: var(--surface); border: 3px solid var(--ink);
+  border-radius: 26px; padding: 14px 10px; box-sizing: border-box; display: grid; position: sticky; top: env(safe-area-inset-top, 0px);
+  grid-template-rows: auto 1fr auto 1fr auto auto; gap: 6px; font-size: .62rem; }
+.zone { display: flex; justify-content: center; gap: 5px; align-items: center; }
+.slot { width: 46px; aspect-ratio: 5 / 7; border: 1.5px dashed var(--line); border-radius: 4px; display: grid; place-items: center;
+  color: var(--muted); text-align: center; line-height: 1.1; }
+.slot.mon { border: 1.5px solid var(--muted); border-style: solid; color: var(--ink); background: var(--bg); }
+.slot.active { width: 62px; }
+.slot.lit { border: 2px solid var(--lit); box-shadow: 0 0 0 3px color-mix(in srgb, var(--lit) 35%, transparent); color: var(--ink); }
+.half { display: grid; align-content: center; gap: 6px; }
+.meta { display: flex; justify-content: space-between; color: var(--muted); font-family: var(--mono); }
+.energy { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.dot { width: 18px; height: 18px; border-radius: 50%; background: #e8471c; border: 2px solid var(--ink); }
+.dot.next { width: 11px; height: 11px; background: #2a8be0; opacity: .85; }
+.hand { display: flex; justify-content: center; gap: 3px; }
+.hand .slot { width: 32px; border-style: solid; background: var(--bg); }
+.hand .lift { transform: translateY(-8px); border: 2px solid var(--lit); }
+.bar { display: flex; justify-content: space-between; align-items: center; }
+.bar .end { font: 700 .7rem var(--display); text-transform: uppercase; border: 1.5px solid var(--ink); border-radius: 4px; padding: 3px 8px; }
+.log { font-family: var(--mono); color: var(--muted); border-top: 1px solid var(--line); padding-top: 4px; }
+.caption { font-size: .85rem; color: var(--muted); margin-top: 8px; text-align: center; }
+
+.shots { columns: 2 240px; gap: 28px; padding-left: 1.2em; }
+.shots li { break-inside: avoid; margin-bottom: 4px; }
+
+.dock { position: fixed; left: 0; right: 0; bottom: 0; background: var(--ink); color: var(--bg);
+  padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; font-size: .9rem; }
+.dock button { color: var(--bg); border-color: var(--bg); }
+#out { width: 100%; min-height: 120px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <h1>Pocket Battle Spec</h1>
+  <p class="lede">Rules and screen behaviour for the rebuilt battle, drafted 2026-10-16 from your answers of 2026-10-15. Every row has an id. Mark the wrong ones with <em>Correct this</em>, then use <em>Copy corrections</em> at the bottom and paste the text back to me.</p>
+
+  <ul class="legend">
+    <li><span class="chip c-confirmed">Confirmed</span> you stated it</li>
+    <li><span class="chip c-proposed">Proposed</span> my reading of Pocket, check it</li>
+    <li><span class="chip c-question">Question</span> I need your answer</li>
+    <li><span class="chip e-wrong">Engine wrong</span> / <span class="chip e-missing">Engine missing</span> what the Go engine does today</li>
+  </ul>
+
+  <div class="tally" id="tally"></div>
+
+  <div class="gate"><strong>Done-gate.</strong> On my phone, I play a full game against the bot by tapping cards onto the board. The only buttons I use are attack (picking the attack on the card, not a UI button) and End Turn, and every rule confirmed above is followed.</div>
+
+  <h2>Rules</h2>
+  <h3>Deck and setup</h3><ol class="rows" data-group="setup"></ol>
+  <h3>Your turn</h3><ol class="rows" data-group="turn"></ol>
+  <h3>Trainers and abilities</h3><ol class="rows" data-group="trainer"></ol>
+  <h3>Special conditions</h3><ol class="rows" data-group="status"></ol>
+  <h3>Points, knockouts, game end</h3><ol class="rows" data-group="end"></ol>
+  <h3>Timers and turn cap</h3><ol class="rows" data-group="time"></ol>
+
+  <h2>The screen</h2>
+  <div class="screen">
+    <div><ol class="rows" data-group="layout"></ol></div>
+    <figure style="margin:0">
+      <div class="phone" aria-label="Phone layout sketch, playing a Basic to the bench">
+        <div class="meta"><span>Opp ● 1/3</span><span>hand 4 · deck 11</span></div>
+        <div class="half">
+          <div class="zone"><div class="slot mon">bench</div><div class="slot mon">bench</div><div class="slot">empty</div></div>
+          <div class="zone"><div class="slot mon active">Active<br>70/90</div></div>
+        </div>
+        <div class="bar"><span style="color:var(--muted)">Turn 7 · 0:62</span></div>
+        <div class="half">
+          <div class="zone"><div class="slot mon active">Active<br>40/70</div>
+            <div class="energy"><div class="dot" title="this turn"></div><div class="dot next" title="next turn"></div><span>now · next</span></div></div>
+          <div class="zone"><div class="slot mon">bench</div><div class="slot lit">tap<br>here</div><div class="slot lit">tap<br>here</div></div>
+        </div>
+        <div class="bar"><span style="color:var(--muted)">You ● 2/3</span><span class="end">End turn</span></div>
+        <div>
+          <div class="hand"><div class="slot"></div><div class="slot lift">Basic</div><div class="slot"></div><div class="slot"></div><div class="slot"></div></div>
+          <div class="log">Opp: Potion → Active +20</div>
+        </div>
+      </div>
+      <figcaption class="caption">Sketch only. A Basic is lifted from the hand; the two empty bench slots glow.</figcaption>
+    </figure>
+  </div>
+
+  <h2>How each move is played</h2>
+  <ol class="rows" data-group="flow"></ol>
+
+  <h2>Screenshots I need from Pocket</h2>
+  <p>These settle the layout rows above. Any order; one each is enough.</p>
+  <ul class="shots">
+    <li>Setup: placing Active and Bench</li><li>A full board mid-game</li><li>Lit targets after tapping a card</li>
+    <li>Energy zone (now and next)</li><li>Picking an attack</li><li>Playing a Supporter with no target</li>
+    <li>Playing a targeted Item (Potion)</li><li>Using an ability</li><li>Retreat</li>
+    <li>Promoting after a knockout</li><li>Each skip-confirm prompt</li><li>Opponent mid-turn</li>
+    <li>Long-press card view</li><li>Status icons on a Pokémon</li><li>End-of-game screen</li>
+  </ul>
+</div>
+
+<div class="dock">
+  <span id="count">No corrections yet.</span>
+  <button type="button" id="copy">Copy corrections</button>
+  <textarea id="out" hidden readonly aria-label="Corrections text"></textarea>
+</div>
+
+<script>
+// [id, group, status, engine, statement, note]
+// status: confirmed | proposed | question ; engine: ok | wrong | missing | na
+const R = [
+ ["S1","setup","confirmed","ok","A deck is exactly 20 cards, at most 2 copies of a name, at least 1 Basic.","Enforced by the deck layer, not the engine."],
+ ["S2","setup","confirmed","wrong","You choose up to 3 energy types for a deck; the Energy Zone rolls among them.","<b>Engine:</b> uses every type found in the deck, no choice, no cap. <b>Question:</b> for a drafted deck, is the choice made at deckbuild?"],
+ ["S3","setup","confirmed","ok","Opening hand is 5 cards and always holds at least one Basic. No mulligan.","No-mulligan is my addition."],
+ ["S4","setup","proposed","ok","The coin flip happens and is shown first; then both players set up.",""],
+ ["S5","setup","proposed","wrong","Both players place their Active and up to 3 Bench at the same time, face down, and they are revealed together.","<b>Engine:</b> player 1 sets up, then player 2. The screen could hide this, but PvP needs it in the engine."],
+
+ ["T1","turn","confirmed","ok","Every turn starts by drawing 1 card, including the first player's first turn.",""],
+ ["T2","turn","confirmed","ok","An empty deck means you stop drawing. It is not a loss.",""],
+ ["T3","turn","confirmed","missing","Hand maximum is 10. Draws and other additions past 10 are prevented; the card stays where it was.",""],
+ ["T4","turn","confirmed","missing","The Energy Zone shows this turn's energy and next turn's.","<b>Engine:</b> only knows this turn's."],
+ ["T5","turn","confirmed","ok","The player going first gets no energy on their first turn. The zone still shows their next-turn energy.","Second sentence is proposed."],
+ ["T6","turn","confirmed","ok","One energy attach per turn, onto your Active or a Benched Pokémon. Energy not attached is lost at end of turn.","Second sentence is proposed."],
+ ["T7","turn","confirmed","ok","The Bench holds 3. Basics can be played to it any number of times during your turn.",""],
+ ["T8","turn","confirmed","wrong","No evolving on either player's own first turn, or on the turn the Pokémon was played or evolved.","<b>Engine:</b> blocks only game turn 1, so the second player can evolve on their first turn."],
+ ["T9","turn","confirmed","ok","Retreat once per turn, discarding energy equal to the retreat cost.","<b>Question:</b> when the Pokémon holds mixed energy, do you pick which to discard? The engine picks for you in a fixed order."],
+ ["T10","turn","confirmed","ok","Attacking ends your turn. Attacking is optional.","Second sentence is proposed."],
+ ["T11","turn","confirmed","ok","Weakness adds 20 damage. There is no Resistance.","Dual types (expected November) will break the engine's single-type check."],
+
+ ["A1","trainer","confirmed","missing","One Supporter per turn, from the very first turn, including the player going first.","<b>Engine:</b> no Trainers exist at all. 263 Item and Supporter cards are dropped when card data loads."],
+ ["A2","trainer","confirmed","missing","Items are unlimited. Each Pokémon holds at most one Tool.",""],
+ ["A3","trainer","proposed","missing","A played Item or Supporter goes to the discard pile. A Tool stays on its Pokémon and is discarded with it.",""],
+ ["A4","trainer","question","missing","Abilities (451 cards): an ability you activate can be used once per turn per Pokémon unless its text says otherwise; a passive one is always on. Is that right?",""],
+ ["A5","trainer","proposed","missing","Fossil Items are played to the Bench like a Basic.",""],
+
+ ["C1","status","confirmed","ok","Conditions apply only to the Active and resolve at the Pokémon Checkup at the end of each player's turn.","<b>Question:</b> each Checkup affects both Actives, not only the player whose turn ended? The engine does both."],
+ ["C2","status","proposed","ok","Poison deals 10, Burn deals 20 at each Checkup.","Amounts were not in your answers."],
+ ["C3","status","confirmed","missing","Poison and Burn stack with each other and with one other condition. At most 3 at once.","<b>Engine:</b> has Poison and Burn only."],
+ ["C4","status","confirmed","missing","Sleep, Paralysis and Confusion are mutually exclusive; a new one replaces the old one.",""],
+ ["C5","status","confirmed","missing","Asleep or Paralyzed: cannot attack or retreat normally. You can still play cards and attach energy.","Second sentence is proposed."],
+ ["C6","status","confirmed","ok","Burn and Sleep: coin flip at Checkup, heads cures.","Burn done; Sleep missing."],
+ ["C7","status","confirmed","missing","Paralysis clears automatically after its owner's next turn.",""],
+ ["C8","status","confirmed","missing","Confusion: coin flip before attacking; tails means the attack fails and the condition stays. A Confused Pokémon can retreat.","Retreat sentence is proposed."],
+ ["C9","status","confirmed","wrong","Cured by evolving, by moving to the Bench, by Lum Berry, and by Koga.","<b>Engine:</b> evolving and retreating both keep the condition."],
+
+ ["E1","end","confirmed","wrong","A knockout scores 1, an ex 2, a Mega ex 3.","<b>Engine:</b> Mega ex scores 2."],
+ ["E2","end","confirmed","ok","First to 3 points wins. You also win if the opponent has no Pokémon left in play.",""],
+ ["E3","end","confirmed","missing","Both players reaching 3 or more at the same time is a tie.","<b>Engine:</b> ends the game the moment the first player reaches 3, so a tie can never happen."],
+ ["E4","end","proposed","missing","Simultaneous resolution: apply all damage from one event, then remove every knocked-out Pokémon, then award all points, then check for a win or tie.","Lets a Checkup that knocks out both Actives end in a tie. Also a tie if both sides run out of Pokémon at once."],
+ ["E5","end","question","ok","After a knockout, its owner picks the new Active from the Bench before play continues. If both players must pick, who picks first, and does either see the other's pick?",""],
+ ["E6","end","proposed","wrong","Conceding is allowed at any time, including during the opponent's turn, and counts as a loss.","<b>Engine:</b> only on your own turn."],
+
+ ["M1","time","confirmed","missing","90 seconds per turn. Letting it run out without acting halves your next turn to 45 seconds.","<b>Question:</b> what happens at zero: the turn ends with no attack? After how many timeouts is a player removed?"],
+ ["M2","time","confirmed","missing","Each player's total action time is capped at 20 minutes. Past it, points decide the winner; equal points is a tie.",""],
+ ["M3","time","confirmed","missing","Turn cap: turn 1 is the first player's first turn, +1 per turn. Cap is 30 against a player, 50 against the bot.","<b>Question:</b> at the cap, do points decide the result, as in M2?"],
+ ["M4","time","proposed","na","Against the bot there is no turn timer or total-time cap; only the 50-turn cap applies.",""],
+
+ ["L1","layout","confirmed","na","Copy Pocket's layout: opponent at the top, you at the bottom, Actives facing each other in the middle, Benches behind them, Energy Zone beside your Active, hand along the bottom edge.",""],
+ ["L2","layout","confirmed","na","Always visible on every Pokémon: remaining HP, attached energy as type icons, status icons, and its Tool.",""],
+ ["L3","layout","confirmed","na","Always visible: both players' points, and this turn's and next turn's energy.",""],
+ ["L4","layout","proposed","na","Also visible: opponent's hand count, both deck counts, both discard piles (tap to look through).",""],
+ ["L5","layout","proposed","na","Whose turn it is, the turn number, and the turn timer sit between the two halves.",""],
+ ["L6","layout","proposed","na","Desktop uses the same layout scaled up, with the action log docked to the right. Phone is portrait only.",""],
+ ["L7","layout","confirmed","na","No bot or debug buttons. Not shown: Supporter, energy and retreat used this turn.",""],
+
+ ["F1","flow","confirmed","na","Tap a card: it lifts, the spots it can legally go glow, and the rest dims. Tap a glowing spot to play it. Tap anywhere else, or the card again, to cancel.",""],
+ ["F2","flow","confirmed","na","Long-press a card (hover on desktop) to see the whole card; releasing closes it.","Proposed: about 350 ms before long-press opens, so ordinary taps never trigger it."],
+ ["F3","flow","question","na","Setup: tap a Basic and the Active spot glows; after that the Bench spots glow. Finish with a Ready button. Is Ready allowed, given the done-gate names only attack and End Turn?",""],
+ ["F4","flow","proposed","na","Play a Basic: tap it, the empty Bench spots glow.",""],
+ ["F5","flow","proposed","na","Evolve: tap the evolution and only Pokémon it can evolve right now glow. If none can, tapping the card says why (e.g. \"No evolving on your first turn\").",""],
+ ["F6","flow","proposed","na","Attach energy: tap this turn's energy in the zone, all your Pokémon glow, tap one. (Pocket uses a drag; tap-tap keeps one input model.)",""],
+ ["F7","flow","proposed","na","Targeted Trainer (Potion, a Tool, Rare Candy, Cyrus): tap it and only legal targets glow, on either side of the board.",""],
+ ["F8","flow","question","na","Trainer with no target (Professor's Research, Poké Ball, Red Card, Giovanni): tap it and the middle of the board glows as a play area; tap that. Or would you rather tap once to enlarge the card and press Play?",""],
+ ["F9","flow","proposed","na","A Trainer that needs a choice after it is played (pick from your deck; Sabrina's new Active) opens a picker over the board for whoever owns the choice.",""],
+ ["F10","flow","confirmed","na","Tap your Active to open its card: attacks listed (ones you can't pay greyed out), its ability if any, and Retreat. Tapping an attack uses it. Retreat makes your Bench glow; tap the replacement.","Card-as-menu for ability and Retreat is proposed."],
+ ["F11","flow","proposed","na","Tap a Benched Pokémon with an ability to open its card with the ability to use.",""],
+ ["F12","flow","proposed","na","Coin flips show their result briefly before the effect resolves, and the result goes in the log.",""],
+ ["F13","flow","confirmed","na","End Turn asks to confirm if you could still attach energy, or could still attack.","Proposed: one prompt naming both when both apply."],
+ ["F14","flow","proposed","na","After a knockout: a banner says \"Choose your new Active\", your Bench glows, and nothing else can be done.",""],
+ ["F15","flow","confirmed","na","Opponent's turn plays out one action at a time, about 0.5 s each: the card appears, the target flashes, numbers change. A Skip control exists only against the bot.","<b>Question:</b> does Skip jump to the end of their whole turn?"],
+ ["F16","flow","confirmed","na","A small action log, Hearthstone style.","Proposed: last 3 lines on phone, tap to expand; full column on desktop."],
+ ["F17","flow","confirmed","na","Motion is functional and under 150 ms (opponent pacing aside). No undo.",""],
+ ["F18","flow","proposed","na","An illegal move is never sent: a card with nowhere legal to go shows nothing glowing and a one-line reason.",""],
+ ["F19","flow","proposed","na","Concede sits in a small menu and asks to confirm.",""],
+ ["F20","flow","proposed","na","End screen: Win, Loss or Tie, the reason (3 points, no Pokémon left, concede, time, turn cap), the final score, and Rematch and Back. In a draft run the result is added to the run record.",""]
+];
+
+const KEY = "battle-spec-fixes";
+let fixes = {};
+try { fixes = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(fixes)); } catch (e) {} };
+const engLabel = { ok: "Engine OK", wrong: "Engine wrong", missing: "Engine missing", na: "Screen" };
+
+function rowEl([id, , st, en, txt, note]) {
+  const li = document.createElement("li");
+  li.className = "row";
+  li.innerHTML = `<span class="id">${id}</span>
+    <div class="txt">${txt}${note ? `<div class="note">${note}</div>` : ""}</div>
+    <div class="chips"><span class="chip c-${st}">${st}</span><span class="chip e-${en}">${engLabel[en]}</span></div>
+    <div class="fix"><button type="button">Correct this</button>
+      <textarea id="fix-${id}" hidden aria-label="Correction for ${id}" placeholder="What is actually true?"></textarea></div>`;
+  const btn = li.querySelector("button"), ta = li.querySelector("textarea");
+  const sync = () => { li.classList.toggle("flagged", !!fixes[id]); btn.textContent = ta.hidden ? (fixes[id] ? "Edit correction" : "Correct this") : "Done"; };
+  if (fixes[id]) ta.value = fixes[id];
+  btn.onclick = () => { ta.hidden = !ta.hidden; if (!ta.hidden) ta.focus(); sync(); };
+  ta.oninput = () => { const v = ta.value.trim(); if (v) fixes[id] = v; else delete fixes[id]; save(); sync(); count(); };
+  sync();
+  return li;
+}
+
+function count() {
+  const n = Object.keys(fixes).length;
+  document.getElementById("count").textContent = n ? `${n} correction${n > 1 ? "s" : ""} written.` : "No corrections yet.";
+}
+
+function tally() {
+  const n = (f) => R.filter(f).length;
+  const cells = [
+    [n(r => r[3] === "wrong"), "rules the engine gets wrong"],
+    [n(r => r[3] === "missing"), "rules the engine lacks"],
+    [n(r => r[2] === "question"), "questions for you"],
+    [n(r => r[2] === "proposed"), "proposals to check"]
+  ];
+  document.getElementById("tally").innerHTML = cells.map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join("");
+}
+
+document.querySelectorAll(".rows[data-group]").forEach(ol => {
+  R.filter(r => r[1] === ol.dataset.group).forEach(r => ol.appendChild(rowEl(r)));
+});
+tally(); count();
+
+document.getElementById("copy").onclick = () => {
+  const order = R.map(r => r[0]).filter(id => fixes[id]);
+  const text = order.length ? order.map(id => `${id}: ${fixes[id]}`).join("\n") : "No corrections — spec is right as written.";
+  const out = document.getElementById("out");
+  out.value = text;
+  navigator.clipboard.writeText(text).then(() => {
+    document.getElementById("count").textContent = "Copied. Paste it back to Claude.";
+  }).catch(() => { out.hidden = false; out.select(); });
+};
+</script>
