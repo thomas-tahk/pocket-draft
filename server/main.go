@@ -44,7 +44,7 @@ func writeJSON(w http.ResponseWriter, v any) {
 func handleState(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
 	defer mu.Unlock()
-	writeJSON(w, toGameView(game))
+	writeJSON(w, toGameView(game, humanSeat))
 }
 
 // newReq is the optional JSON body for POST /api/new. `you` is your deck as a
@@ -114,7 +114,7 @@ func startGame(req newReq) (gameView, *startErr) {
 	mu.Lock()
 	defer mu.Unlock()
 	game = engine.NewGame(seed, p0, p1)
-	return toGameView(game), nil
+	return toGameView(game, humanSeat), nil
 }
 
 // startErr carries the status code a failed start should report over HTTP.
@@ -162,12 +162,12 @@ func applyMove(req moveReq) moveResp {
 	mu.Lock()
 	defer mu.Unlock()
 	if err != nil {
-		return moveResp{OK: false, Error: err.Error(), State: toGameView(game)}
+		return moveResp{OK: false, Error: err.Error(), State: toGameView(game, humanSeat)}
 	}
 	if err := game.Submit(ev); err != nil {
-		return moveResp{OK: false, Error: err.Error(), State: toGameView(game)}
+		return moveResp{OK: false, Error: err.Error(), State: toGameView(game, humanSeat)}
 	}
-	return moveResp{OK: true, State: toGameView(game)}
+	return moveResp{OK: true, State: toGameView(game, humanSeat)}
 }
 
 // toEvent maps a decoded request to the engine's typed Event.

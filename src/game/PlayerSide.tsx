@@ -39,7 +39,7 @@ export function PlayerSide({ player, role, playerIndex, changes }: { player: Pla
     <section style={{ padding: 12, border: '1px solid #33363d', borderRadius: 10 }}>
       <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>
         {role === 'you' ? 'YOU' : 'OPPONENT'} · pts {player.points}/3 · deck {player.deckCount} · discard {player.discardCount}
-        {role === 'opponent' ? ` · hand ${player.hand.length}` : ''}
+        {role === 'opponent' ? ` · hand ${player.handCount}` : ''}
       </div>
       {role === 'you' && (
         <div style={{ fontSize: 12, marginBottom: 6 }}>

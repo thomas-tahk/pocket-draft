@@ -39,6 +39,7 @@ type inPlayView struct {
 
 type playerView struct {
 	Hand         []cardView   `json:"hand"`
+	HandCount    int          `json:"handCount"`
 	Active       *inPlayView  `json:"active"`
 	Bench        []inPlayView `json:"bench"`
 	Points       int          `json:"points"`
@@ -149,10 +150,15 @@ func toInPlayView(p *engine.InPlay) *inPlayView {
 	}
 }
 
-func toPlayerView(p engine.Player) playerView {
-	hand := make([]cardView, len(p.Hand))
-	for i, c := range p.Hand {
-		hand[i] = toCardView(c)
+// toPlayerView renders one player's side. Only the viewer's own hand is shown;
+// for anyone else the hand is empty and only its size is reported. The deck is
+// only ever a count, so its order never leaves the server.
+func toPlayerView(p engine.Player, isViewer bool) playerView {
+	hand := []cardView{}
+	if isViewer {
+		for _, c := range p.Hand {
+			hand = append(hand, toCardView(c))
+		}
 	}
 	bench := make([]inPlayView, len(p.Bench))
 	for i, m := range p.Bench {
@@ -160,6 +166,7 @@ func toPlayerView(p engine.Player) playerView {
 	}
 	return playerView{
 		Hand:         hand,
+		HandCount:    len(p.Hand),
 		Active:       toInPlayView(p.Active),
 		Bench:        bench,
 		Points:       p.Points,
@@ -171,14 +178,19 @@ func toPlayerView(p engine.Player) playerView {
 	}
 }
 
-func toGameView(g *engine.Game) gameView {
+// humanSeat is the player the browser plays; the bot is the other seat.
+const humanSeat = 0
+
+// toGameView is the game as seen from viewer's seat. It is the one place hidden
+// information is removed: anything the viewer may not see is stripped here.
+func toGameView(g *engine.Game, viewer int) gameView {
 	s := g.S
 	var pending *promptView
 	if s.Pending != nil {
 		pending = &promptView{Player: s.Pending.Player, Kind: promptKindName(s.Pending.Kind)}
 	}
 	return gameView{
-		Players:   [2]playerView{toPlayerView(s.Players[0]), toPlayerView(s.Players[1])},
+		Players:   [2]playerView{toPlayerView(s.Players[0], viewer == 0), toPlayerView(s.Players[1], viewer == 1)},
 		Active:    s.Active,
 		Turn:      s.Turn,
 		Phase:     phaseName(s.Phase),

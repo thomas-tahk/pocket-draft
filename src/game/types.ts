@@ -26,7 +26,8 @@ export type InPlayView = {
 };
 
 export type PlayerView = {
-  hand: CardView[];
+  hand: CardView[]; // empty for the opponent: only your own hand is sent
+  handCount: number;
   active: InPlayView | null;
   bench: InPlayView[];
   points: number;

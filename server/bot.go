@@ -94,5 +94,5 @@ func botStep() botResp {
 	mu.Lock()
 	defer mu.Unlock()
 	acted := botMove()
-	return botResp{Acted: acted, State: toGameView(game)}
+	return botResp{Acted: acted, State: toGameView(game, humanSeat)}
 }
