@@ -30,6 +30,9 @@ const (
 	BenchSlots
 )
 
+// hasPokemon reports whether the player has any Pokémon left in play.
+func (p *Player) hasPokemon() bool { return p.Active != nil || p.BenchCount() > 0 }
+
 // BenchCount is how many Pokémon are on the bench.
 func (p *Player) BenchCount() int {
 	n := 0

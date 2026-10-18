@@ -343,9 +343,7 @@ func (g *Game) applyAttack(e UseAttack) error {
 		g.narrate("%s's %s used %s for %d.", side(e.Player), pl.Active.Card.Name, atk.Name, dmg)
 	}
 
-	if opp.Active.remainingHP() <= 0 {
-		g.koActive(1 - e.Player)
-	}
+	g.resolveAction()
 	// Attacking ends the turn — but a knockout may owe a prompt first.
 	if g.S.Phase == PhaseOver {
 		return nil
@@ -369,7 +367,7 @@ func (g *Game) applyChooseActive(e ChooseNewActive) error {
 	g.S.Pending = nil
 	g.narrate("%s promoted %s to Active.", side(e.Player), mon.Card.Name)
 
-	if g.S.Phase == PhaseOver {
+	if g.S.Phase == PhaseOver || g.promptPromotion() {
 		return nil
 	}
 	switch g.S.resume {
@@ -396,32 +394,84 @@ func koPoints(c Card) int {
 	return 1
 }
 
-// koActive knocks out a player's Active, scores for the opponent, and either
-// ends the game or raises a "promote a new Active" prompt (ADR-0007, mode 3).
-func (g *Game) koActive(owner int) {
+// resolveAction finishes one action (spec E4) once all its damage has landed:
+// remove every knocked-out Active, then award points, then check the result.
+func (g *Game) resolveAction() {
+	var pts [2]int
+	for owner := 0; owner < 2; owner++ {
+		pts[1-owner] += g.removeIfKnockedOut(owner)
+	}
+	for scorer := 0; scorer < 2; scorer++ {
+		if pts[scorer] == 0 {
+			continue
+		}
+		g.S.Players[scorer].Points += pts[scorer]
+		g.narrate("%s scored %d (%d/3).", side(scorer), pts[scorer], g.S.Players[scorer].Points)
+	}
+	if g.checkResult() {
+		return
+	}
+	g.promptPromotion()
+}
+
+// removeIfKnockedOut discards a player's Active if it has no HP left and
+// returns what the KO scores for the opponent (0 if it is still standing).
+func (g *Game) removeIfKnockedOut(owner int) int {
 	pl := &g.S.Players[owner]
 	mon := pl.Active
-	if mon == nil {
-		return
+	if mon == nil || mon.remainingHP() > 0 {
+		return 0
 	}
 	pl.Discard = append(pl.Discard, mon.Card)
 	pl.Active = nil
 	g.narrate("%s's %s was Knocked Out.", side(owner), mon.Card.Name)
+	return koPoints(mon.Card)
+}
 
-	scorer := 1 - owner
-	pts := koPoints(mon.Card)
-	g.S.Players[scorer].Points += pts
-	g.narrate("%s scored %d (%d/3).", side(scorer), pts, g.S.Players[scorer].Points)
+// checkResult ends the game if an action decided it (spec E2, E3, E5): both at
+// 3 or more is a tie whatever the Benches hold; otherwise first to 3 wins;
+// otherwise a player with no Pokémon left loses (both without = tie).
+func (g *Game) checkResult() bool {
+	won0, won1 := g.S.Players[0].Points >= 3, g.S.Players[1].Points >= 3
+	switch {
+	case won0 && won1:
+		g.tie(ReasonPoints)
+	case won0:
+		g.gameOver(0, ReasonPoints)
+	case won1:
+		g.gameOver(1, ReasonPoints)
+	default:
+		return g.checkNoPokemon()
+	}
+	return true
+}
 
-	if g.S.Players[scorer].Points >= 3 {
-		g.gameOver(scorer, ReasonPoints)
-		return
+func (g *Game) checkNoPokemon() bool {
+	has0, has1 := g.S.Players[0].hasPokemon(), g.S.Players[1].hasPokemon()
+	switch {
+	case has0 && has1:
+		return false
+	case has0:
+		g.gameOver(0, ReasonNoPokemon)
+	case has1:
+		g.gameOver(1, ReasonNoPokemon)
+	default:
+		g.tie(ReasonNoPokemon)
 	}
-	if pl.BenchCount() == 0 {
-		g.gameOver(scorer, ReasonNoPokemon) // no Pokémon left to promote
-		return
+	return true
+}
+
+// promptPromotion raises a "promote a new Active" prompt (ADR-0007, mode 3)
+// for the first player left without an Active. Reports whether it raised one.
+// Who promotes first after a double KO is spec E6, issue 1.13.
+func (g *Game) promptPromotion() bool {
+	for p := 0; p < 2; p++ {
+		if g.S.Players[p].Active == nil {
+			g.S.Pending = &Prompt{Player: p, Kind: PromptNewActive}
+			return true
+		}
 	}
-	g.S.Pending = &Prompt{Player: owner, Kind: PromptNewActive}
+	return false
 }
 
 // concludeTurn ends the current turn: resolve end-of-turn status, then advance
@@ -439,7 +489,7 @@ func (g *Game) concludeTurn() {
 }
 
 // resolveStatus applies poison/burn to both Actives at end of turn (mode 2,
-// automatic), chaining into a knockout prompt if it KOs a Pokémon.
+// automatic), then resolves any knockouts as one action.
 func (g *Game) resolveStatus() {
 	for i := 0; i < 2; i++ {
 		pl := &g.S.Players[i]
@@ -458,13 +508,8 @@ func (g *Game) resolveStatus() {
 				g.narrate("%s's %s recovered from burn.", side(i), pl.Active.Card.Name)
 			}
 		}
-		if pl.Active.remainingHP() <= 0 {
-			g.koActive(i)
-			if g.S.Pending != nil || g.S.Phase == PhaseOver {
-				return // handle one knockout at a time
-			}
-		}
 	}
+	g.resolveAction() // one Checkup is one action (spec E4)
 }
 
 func (g *Game) advanceTurn() {
