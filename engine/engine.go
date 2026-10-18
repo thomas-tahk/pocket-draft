@@ -48,10 +48,26 @@ func NewGame(seed uint64, deck0, deck1 []Card) *Game {
 		pl.EnergyZone = NoEnergy
 		g.dealOpeningHand(i)
 	}
-	st.firstPlayer = g.rng.intn(2)
+	g.flipForFirst()
 	st.Pending = &Prompt{Player: 0, Kind: PromptSetup}
-	g.narrate("Game start (seed %d). %s goes first.", seed, side(st.firstPlayer))
+	g.narrate("Game start (seed %d). %s goes first.", seed, side(st.FirstPlayer))
 	return g
+}
+
+// flipForFirst picks a random player to flip a coin (spec S4): the flipper
+// goes first on heads, second on tails. Both draws come from the seeded rng.
+func (g *Game) flipForFirst() {
+	flip := CoinFlip{Flipper: g.rng.intn(2), Heads: g.rng.intn(2) == 0}
+	g.S.OpeningFlip = flip
+	g.S.FirstPlayer = flip.Flipper
+	if !flip.Heads {
+		g.S.FirstPlayer = 1 - flip.Flipper
+	}
+	result := "tails"
+	if flip.Heads {
+		result = "heads"
+	}
+	g.narrate("%s flips for first: %s.", side(flip.Flipper), result)
 }
 
 func (g *Game) dealOpeningHand(i int) {
@@ -187,7 +203,7 @@ func (g *Game) applySetup(e SetupPlace) error {
 	default:
 		g.S.Pending = nil
 		g.S.Phase = PhaseMain
-		g.S.Active = g.S.firstPlayer
+		g.S.Active = g.S.FirstPlayer
 		g.S.Turn = 1
 		g.startTurn(g.S.Active)
 	}

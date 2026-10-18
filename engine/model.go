@@ -80,9 +80,19 @@ type State struct {
 	Reason  EndReason // why the game ended; NoReason until it does
 	Mode    Mode      // who the game is against; set before the first event
 
-	resume      resumeAction
-	firstPlayer int
-	setup       [2]bool
+	// OpeningFlip is the coin flip that decided FirstPlayer (spec S4), kept so
+	// the screen can show who flipped and how it landed.
+	OpeningFlip CoinFlip
+	FirstPlayer int
+
+	resume resumeAction
+	setup  [2]bool
+}
+
+// CoinFlip records one flip: which player flipped and whether it was heads.
+type CoinFlip struct {
+	Flipper int
+	Heads   bool
 }
 
 // --- Events: the canonical log entries (ADR-0005). Player intents and prompt
