@@ -477,6 +477,10 @@ func (g *Game) advanceTurn() {
 	g.startTurn(g.S.Active)
 }
 
+// handMax is the hand size at which draws are blocked (spec T3); the card
+// stays in the deck.
+const handMax = 10
+
 // startTurn begins a player's turn: reset per-turn flags, draw, and generate
 // the Energy Zone energy (skipped on the very first turn of the game).
 func (g *Game) startTurn(p int) {
@@ -484,7 +488,7 @@ func (g *Game) startTurn(p int) {
 	pl.EnergyUsed = false
 	pl.Retreated = false
 
-	if len(pl.Deck) > 0 {
+	if len(pl.Deck) > 0 && len(pl.Hand) < handMax {
 		c := pl.Deck[0]
 		pl.Deck = pl.Deck[1:]
 		pl.Hand = append(pl.Hand, c)
