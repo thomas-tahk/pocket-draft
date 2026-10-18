@@ -374,6 +374,17 @@ func (g *Game) applyChooseActive(e ChooseNewActive) error {
 
 // --- Turn flow & resolution ---
 
+// koPoints is what knocking out c scores (spec E1): 1, an ex 2, a Mega ex 3.
+func koPoints(c Card) int {
+	switch {
+	case c.IsMegaEX:
+		return 3
+	case c.IsEX:
+		return 2
+	}
+	return 1
+}
+
 // koActive knocks out a player's Active, scores for the opponent, and either
 // ends the game or raises a "promote a new Active" prompt (ADR-0007, mode 3).
 func (g *Game) koActive(owner int) {
@@ -387,10 +398,7 @@ func (g *Game) koActive(owner int) {
 	g.narrate("%s's %s was Knocked Out.", side(owner), mon.Card.Name)
 
 	scorer := 1 - owner
-	pts := 1
-	if mon.Card.IsEX {
-		pts = 2
-	}
+	pts := koPoints(mon.Card)
 	g.S.Players[scorer].Points += pts
 	g.narrate("%s scored %d (%d/3).", side(scorer), pts, g.S.Players[scorer].Points)
 

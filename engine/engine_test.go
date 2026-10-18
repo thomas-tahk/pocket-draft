@@ -438,3 +438,27 @@ func TestEXWorthTwoPoints(t *testing.T) {
 		t.Errorf("knocking out an EX should score 2, points went %d→%d", before, got)
 	}
 }
+
+// E1: a Mega ex is worth 3 points.
+func TestMegaEXWorthThreePoints(t *testing.T) {
+	// Arrange
+	mega := demoEmborEX()
+	mega.IsMegaEX = true
+	g := NewGame(3, deckOf(demoVolt(), 20), deckOf(mega, 20))
+	doSetup(t, g)
+	p := g.S.Active
+	m := g.S.Players[1].Active
+	m.Poisoned = true
+	m.Damage = m.Card.HP - 5
+	before := g.S.Players[0].Points
+
+	// Act
+	if err := g.Submit(EndTurn{Player: p}); err != nil {
+		t.Fatalf("end turn: %v", err)
+	}
+
+	// Assert
+	if got := g.S.Players[0].Points; got != before+3 {
+		t.Errorf("knocking out a Mega ex should score 3, points went %d→%d", before, got)
+	}
+}

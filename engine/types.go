@@ -83,6 +83,7 @@ type Card struct {
 	Weakness    Energy // NoEnergy if the card has no weakness
 	RetreatCost int
 	IsEX        bool
+	IsMegaEX    bool // a Mega ex; IsEX is also true
 }
 
 // canPay reports whether the energy attached to a Pokémon (have) covers an

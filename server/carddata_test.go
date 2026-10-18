@@ -109,6 +109,22 @@ func TestToEngineCardModelsDragon(t *testing.T) {
 	}
 }
 
+func TestToEngineCardMarksMegaEX(t *testing.T) {
+	// Arrange
+	rc := rawCard{ID: "B4a-108", Name: "Mega Mawile ex", CardType: "Metal", Stage: "Basic", HP: 170, ExKind: "mega-ex"}
+
+	// Act
+	card, err := toEngineCard(rc)
+
+	// Assert
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !card.IsEX || !card.IsMegaEX {
+		t.Errorf("IsEX/IsMegaEX = %v/%v, want true/true for exKind mega-ex", card.IsEX, card.IsMegaEX)
+	}
+}
+
 func TestDeckFromIDsSkipsTrainers(t *testing.T) {
 	// A finalized deck can include the free universal Trainers (Poké Ball,
 	// Professor's Research). The engine can't model Trainers yet (effects are
