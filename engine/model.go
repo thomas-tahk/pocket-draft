@@ -21,12 +21,32 @@ func (p *InPlay) totalEnergy() int {
 	return t
 }
 
+// The Bench is three fixed slots around the Active (spec T7). Slot numbers run
+// left to right on screen, and the slot a Pokémon was placed in is kept.
+const (
+	BenchLeft = iota
+	BenchBehind
+	BenchRight
+	BenchSlots
+)
+
+// BenchCount is how many Pokémon are on the bench.
+func (p *Player) BenchCount() int {
+	n := 0
+	for _, m := range p.Bench {
+		if m != nil {
+			n++
+		}
+	}
+	return n
+}
+
 // Player is one side's full state.
 type Player struct {
 	Deck        []Card // top of deck is index 0
 	Hand        []Card
 	Active      *InPlay
-	Bench       []*InPlay // max 3
+	Bench       [BenchSlots]*InPlay // indexed by slot; nil is an empty slot
 	Discard     []Card
 	Points      int
 	EnergyTypes []Energy
@@ -102,21 +122,23 @@ type CoinFlip struct {
 type Event interface{ event() }
 
 // SetupPlace answers a setup prompt: place one Basic as Active and up to three
-// more on the bench.
+// more on the bench. BenchCardIDs is positional: index i is bench slot i, and
+// "" (or a short list) leaves that slot empty.
 type SetupPlace struct {
 	Player       int
 	ActiveCardID string
 	BenchCardIDs []string
 }
 
-// PlayBasic plays a Basic Pokémon from hand to the bench.
+// PlayBasic plays a Basic Pokémon from hand into an empty bench slot.
 type PlayBasic struct {
 	Player int
 	CardID string
+	Slot   int // BenchLeft, BenchBehind or BenchRight
 }
 
 // AttachEnergy attaches the turn's Energy Zone energy to a Pokémon.
-// Target 0 is the Active; Target n is bench index n-1.
+// Target 0 is the Active; Target n is bench slot n-1.
 type AttachEnergy struct {
 	Player int
 	Target int
@@ -126,14 +148,14 @@ type AttachEnergy struct {
 type Evolve struct {
 	Player     int
 	HandCardID string
-	Target     int // 0 active, n bench[n-1]
+	Target     int // 0 active, n bench slot n-1
 }
 
 // Retreat swaps the Active with a benched Pokémon, paying the retreat cost in
 // energy.
 type Retreat struct {
 	Player     int
-	BenchIndex int
+	BenchIndex int // the bench slot to swap with
 }
 
 // UseAttack uses one of the Active Pokémon's attacks. Attacking ends the turn.
@@ -150,7 +172,7 @@ type EndTurn struct {
 // ChooseNewActive answers a "promote a new Active" prompt after a knockout.
 type ChooseNewActive struct {
 	Player     int
-	BenchIndex int
+	BenchIndex int // the bench slot to promote from
 }
 
 // Concede forfeits the game at any time, from either player; the opponent wins.

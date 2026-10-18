@@ -129,6 +129,7 @@ type moveReq struct {
 	Type         string   `json:"type"`
 	Player       int      `json:"player"`
 	CardID       string   `json:"cardId"`
+	Slot         int      `json:"slot"`
 	ActiveCardID string   `json:"activeCardId"`
 	BenchCardIDs []string `json:"benchCardIds"`
 	HandCardID   string   `json:"handCardId"`
@@ -176,7 +177,7 @@ func toEvent(r moveReq) (engine.Event, error) {
 	case "SetupPlace":
 		return engine.SetupPlace{Player: r.Player, ActiveCardID: r.ActiveCardID, BenchCardIDs: r.BenchCardIDs}, nil
 	case "PlayBasic":
-		return engine.PlayBasic{Player: r.Player, CardID: r.CardID}, nil
+		return engine.PlayBasic{Player: r.Player, CardID: r.CardID, Slot: r.Slot}, nil
 	case "AttachEnergy":
 		return engine.AttachEnergy{Player: r.Player, Target: r.Target}, nil
 	case "Evolve":

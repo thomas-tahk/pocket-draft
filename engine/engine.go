@@ -171,12 +171,15 @@ func (g *Game) applySetup(e SetupPlace) error {
 	if pl.Hand[idx].Stage != Basic {
 		return errors.New("the Active must be a Basic Pokémon")
 	}
-	if len(e.BenchCardIDs) > 3 {
+	if len(e.BenchCardIDs) > BenchSlots {
 		return errors.New("the bench holds at most 3")
 	}
 	remove := map[int]bool{idx: true}
-	var benchCards []Card
-	for _, bid := range e.BenchCardIDs {
+	var benchCards [BenchSlots]*Card
+	for slot, bid := range e.BenchCardIDs {
+		if bid == "" {
+			continue
+		}
 		bi := indexInHandExcept(pl.Hand, bid, remove)
 		if bi < 0 {
 			return errors.New("bench card is not in hand")
@@ -185,16 +188,19 @@ func (g *Game) applySetup(e SetupPlace) error {
 			return errors.New("only Basics may be benched")
 		}
 		remove[bi] = true
-		benchCards = append(benchCards, pl.Hand[bi])
+		c := pl.Hand[bi]
+		benchCards[slot] = &c
 	}
 
 	activeCard := pl.Hand[idx]
 	pl.Hand = removeFromHand(pl.Hand, remove)
 	pl.Active = newInPlay(activeCard, 0)
-	for _, c := range benchCards {
-		pl.Bench = append(pl.Bench, newInPlay(c, 0))
+	for slot, c := range benchCards {
+		if c != nil {
+			pl.Bench[slot] = newInPlay(*c, 0)
+		}
 	}
-	g.narrate("%s placed %s as Active with %d on the bench.", side(e.Player), activeCard.Name, len(benchCards))
+	g.narrate("%s placed %s as Active with %d on the bench.", side(e.Player), activeCard.Name, pl.BenchCount())
 	g.S.setup[e.Player] = true
 
 	switch {
@@ -221,12 +227,15 @@ func (g *Game) applyPlayBasic(e PlayBasic) error {
 	if pl.Hand[idx].Stage != Basic {
 		return errors.New("only Basic Pokémon may be played to the bench")
 	}
-	if len(pl.Bench) >= 3 {
-		return errors.New("the bench is full")
+	if e.Slot < 0 || e.Slot >= BenchSlots {
+		return errors.New("invalid bench slot")
+	}
+	if pl.Bench[e.Slot] != nil {
+		return errors.New("that bench slot is taken")
 	}
 	c := pl.Hand[idx]
 	pl.Hand = removeAt(pl.Hand, idx)
-	pl.Bench = append(pl.Bench, newInPlay(c, g.S.Turn))
+	pl.Bench[e.Slot] = newInPlay(c, g.S.Turn)
 	g.narrate("%s played %s to the bench.", side(e.Player), c.Name)
 	return nil
 }
@@ -288,8 +297,8 @@ func (g *Game) applyRetreat(e Retreat) error {
 	if pl.Active == nil {
 		return errors.New("no Active Pokémon to retreat")
 	}
-	if e.BenchIndex < 0 || e.BenchIndex >= len(pl.Bench) {
-		return errors.New("invalid bench index")
+	if benchAt(pl, e.BenchIndex) == nil {
+		return errors.New("no Pokémon in that bench slot")
 	}
 	cost := pl.Active.Card.RetreatCost
 	if pl.Active.totalEnergy() < cost {
@@ -351,11 +360,11 @@ func (g *Game) applyAttack(e UseAttack) error {
 
 func (g *Game) applyChooseActive(e ChooseNewActive) error {
 	pl := &g.S.Players[e.Player]
-	if e.BenchIndex < 0 || e.BenchIndex >= len(pl.Bench) {
-		return errors.New("invalid bench index")
+	mon := benchAt(pl, e.BenchIndex)
+	if mon == nil {
+		return errors.New("no Pokémon in that bench slot")
 	}
-	mon := pl.Bench[e.BenchIndex]
-	pl.Bench = append(pl.Bench[:e.BenchIndex], pl.Bench[e.BenchIndex+1:]...)
+	pl.Bench[e.BenchIndex] = nil
 	pl.Active = mon
 	g.S.Pending = nil
 	g.narrate("%s promoted %s to Active.", side(e.Player), mon.Card.Name)
@@ -408,7 +417,7 @@ func (g *Game) koActive(owner int) {
 		g.gameOver(scorer, ReasonPoints)
 		return
 	}
-	if len(pl.Bench) == 0 {
+	if pl.BenchCount() == 0 {
 		g.gameOver(scorer, ReasonNoPokemon) // no Pokémon left to promote
 		return
 	}
@@ -531,10 +540,16 @@ func targetMon(pl *Player, target int) *InPlay {
 	if target == 0 {
 		return pl.Active
 	}
-	if target-1 < len(pl.Bench) {
-		return pl.Bench[target-1]
+	return benchAt(pl, target-1)
+}
+
+// benchAt returns the Pokémon in a bench slot, or nil if the slot is empty or
+// does not exist.
+func benchAt(pl *Player, slot int) *InPlay {
+	if slot < 0 || slot >= BenchSlots {
+		return nil
 	}
-	return nil
+	return pl.Bench[slot]
 }
 
 func discardEnergy(mon *InPlay, n int) {

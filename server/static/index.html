@@ -148,9 +148,10 @@ function panel(s, p, i) {
 
   el.innerHTML += `<div class="lbl">Active</div>`;
   el.appendChild(monEl(p.active, true));
-  el.innerHTML += `<div class="lbl">Bench (${p.bench.length}/3)</div>`;
-  if (!p.bench.length) el.innerHTML += `<div class="sub">empty</div>`;
-  p.bench.forEach(m => el.appendChild(monEl(m, false)));
+  const benched = p.bench.filter(m => m);
+  el.innerHTML += `<div class="lbl">Bench (${benched.length}/3)</div>`;
+  if (!benched.length) el.innerHTML += `<div class="sub">empty</div>`;
+  benched.forEach(m => el.appendChild(monEl(m, false)));
 
   el.innerHTML += `<div class="lbl">Hand (${p.hand.length})</div>`;
   el.appendChild(handEl(s, p, i, isActor));
@@ -215,7 +216,7 @@ function actionsEl(s, p, i) {
   // 3. prompt: choose a new Active after a knockout
   if (s.pending && s.pending.kind === 'new_active') {
     wrap.innerHTML = `<span class="sub">Promote from bench:</span>`;
-    p.bench.forEach((m, bi) => wrap.appendChild(btn(`${m.card.name}`, () => move({ type: 'ChooseNewActive', player: i, benchIndex: bi }))));
+    p.bench.forEach((m, bi) => { if (m) wrap.appendChild(btn(`${m.card.name}`, () => move({ type: 'ChooseNewActive', player: i, benchIndex: bi }))); });
     return wrap;
   }
 
@@ -239,12 +240,13 @@ function actionsEl(s, p, i) {
   if (s.phase === 'main') {
     if (p.energyZone && !p.energyUsed) {
       wrap.appendChild(btn(`⚡ ${p.energyZone} → Active`, () => move({ type: 'AttachEnergy', player: i, target: 0 })));
-      p.bench.forEach((m, bi) => wrap.appendChild(btn(`⚡ → ${m.card.name} (b${bi + 1})`, () => move({ type: 'AttachEnergy', player: i, target: bi + 1 }))));
+      p.bench.forEach((m, bi) => { if (m) wrap.appendChild(btn(`⚡ → ${m.card.name} (b${bi + 1})`, () => move({ type: 'AttachEnergy', player: i, target: bi + 1 }))); });
     }
     (p.active ? p.active.card.attacks : []).forEach((a, ai) =>
       wrap.appendChild(btn(`⚔ ${a.name} (${a.damage})`, () => move({ type: 'UseAttack', player: i, index: ai }))));
-    p.hand.forEach(c => { if (c.stage === 'Basic') wrap.appendChild(btn(`Play ${c.name} → bench`, () => move({ type: 'PlayBasic', player: i, cardId: c.id }))); });
-    p.bench.forEach((m, bi) => wrap.appendChild(btn(`Retreat → ${m.card.name}`, () => move({ type: 'Retreat', player: i, benchIndex: bi }))));
+    const slot = p.bench.findIndex(m => !m);
+    p.hand.forEach(c => { if (c.stage === 'Basic' && slot >= 0) wrap.appendChild(btn(`Play ${c.name} → bench`, () => move({ type: 'PlayBasic', player: i, cardId: c.id, slot }))); });
+    p.bench.forEach((m, bi) => { if (m) wrap.appendChild(btn(`Retreat → ${m.card.name}`, () => move({ type: 'Retreat', player: i, benchIndex: bi }))); });
     wrap.appendChild(btn('End turn', () => move({ type: 'EndTurn', player: i })));
   }
   return wrap;

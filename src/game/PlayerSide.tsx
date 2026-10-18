@@ -61,7 +61,7 @@ export function PlayerSide({ player, role, playerIndex, changes }: { player: Pla
           energyFlash={changes.energy.has(`${playerIndex}:active`)}
         />
         <div style={{ display: 'flex', gap: 8 }}>
-          {player.bench.map((mon, i) => (
+          {player.bench.map((mon, i) => mon && (
             <div key={i}>
               <GameCard
                 card={mon.card}

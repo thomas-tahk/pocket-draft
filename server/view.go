@@ -38,16 +38,16 @@ type inPlayView struct {
 }
 
 type playerView struct {
-	Hand         []cardView   `json:"hand"`
-	HandCount    int          `json:"handCount"`
-	Active       *inPlayView  `json:"active"`
-	Bench        []inPlayView `json:"bench"`
-	Points       int          `json:"points"`
-	DeckCount    int          `json:"deckCount"`
-	DiscardCount int          `json:"discardCount"`
-	EnergyZone   string       `json:"energyZone"`
-	EnergyUsed   bool         `json:"energyUsed"`
-	Retreated    bool         `json:"retreated"`
+	Hand         []cardView    `json:"hand"`
+	HandCount    int           `json:"handCount"`
+	Active       *inPlayView   `json:"active"`
+	Bench        []*inPlayView `json:"bench"` // one entry per slot (left, behind, right); null is empty
+	Points       int           `json:"points"`
+	DeckCount    int           `json:"deckCount"`
+	DiscardCount int           `json:"discardCount"`
+	EnergyZone   string        `json:"energyZone"`
+	EnergyUsed   bool          `json:"energyUsed"`
+	Retreated    bool          `json:"retreated"`
 }
 
 type promptView struct {
@@ -160,9 +160,9 @@ func toPlayerView(p engine.Player, isViewer bool) playerView {
 			hand = append(hand, toCardView(c))
 		}
 	}
-	bench := make([]inPlayView, len(p.Bench))
+	bench := make([]*inPlayView, len(p.Bench))
 	for i, m := range p.Bench {
-		bench[i] = *toInPlayView(m)
+		bench[i] = toInPlayView(m)
 	}
 	return playerView{
 		Hand:         hand,

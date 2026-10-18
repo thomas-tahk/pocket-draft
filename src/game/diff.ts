@@ -23,7 +23,7 @@ export function changedSlots(prev: GameView | null, next: GameView): ChangeSet {
     compare(p, 'active', prev.players[p].active, next.players[p].active);
     const pb = prev.players[p].bench;
     const nb = next.players[p].bench;
-    for (let i = 0; i < nb.length; i++) compare(p, String(i), pb[i] ?? null, nb[i]);
+    for (let i = 0; i < nb.length; i++) compare(p, String(i), pb[i] ?? null, nb[i] ?? null);
   }
   return { hp, energy };
 }

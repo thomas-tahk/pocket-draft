@@ -29,7 +29,7 @@ export type PlayerView = {
   hand: CardView[]; // empty for the opponent: only your own hand is sent
   handCount: number;
   active: InPlayView | null;
-  bench: InPlayView[];
+  bench: (InPlayView | null)[]; // one entry per slot: left, behind, right; null is empty
   points: number;
   deckCount: number;
   discardCount: number;
@@ -54,7 +54,7 @@ export type GameView = {
 // actor (gameView.active, or pending.player during a prompt).
 export type Move =
   | { type: 'SetupPlace'; player: number; activeCardId: string; benchCardIds: string[] }
-  | { type: 'PlayBasic'; player: number; cardId: string }
+  | { type: 'PlayBasic'; player: number; cardId: string; slot: number }
   | { type: 'AttachEnergy'; player: number; target: number }
   | { type: 'Evolve'; player: number; handCardId: string; target: number }
   | { type: 'Retreat'; player: number; benchIndex: number }

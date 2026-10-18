@@ -58,7 +58,7 @@ func autoPlay(t *testing.T, g *Game) {
 				a, b := pickSetup(g.S.Players[p].Hand)
 				err = g.Submit(SetupPlace{Player: p, ActiveCardID: a, BenchCardIDs: b})
 			case PromptNewActive:
-				err = g.Submit(ChooseNewActive{Player: p, BenchIndex: 0})
+				err = g.Submit(ChooseNewActive{Player: p, BenchIndex: firstSlot(g.S.Players[p], true)})
 			}
 			if err != nil {
 				t.Fatalf("prompt response failed: %v", err)
@@ -72,9 +72,9 @@ func autoPlay(t *testing.T, g *Game) {
 		switch {
 		case pl.EnergyZone != NoEnergy && !pl.EnergyUsed:
 			err = g.Submit(AttachEnergy{Player: p, Target: 0})
-		case len(pl.Bench) < 3 && hasBasicInHand(pl.Hand):
+		case pl.BenchCount() < BenchSlots && hasBasicInHand(pl.Hand):
 			id, _ := firstBasicID(pl.Hand)
-			err = g.Submit(PlayBasic{Player: p, CardID: id})
+			err = g.Submit(PlayBasic{Player: p, CardID: id, Slot: firstSlot(pl, false)})
 		default:
 			if ai, ok := playableAttack(pl); ok {
 				err = g.Submit(UseAttack{Player: p, Index: ai})
@@ -89,6 +89,17 @@ func autoPlay(t *testing.T, g *Game) {
 	if g.S.Phase != PhaseOver {
 		t.Fatalf("game did not finish within step budget")
 	}
+}
+
+// firstSlot returns the first bench slot that is filled (filled=true) or empty
+// (filled=false), or -1 if there is none.
+func firstSlot(pl Player, filled bool) int {
+	for i, m := range pl.Bench {
+		if (m != nil) == filled {
+			return i
+		}
+	}
+	return -1
 }
 
 func hasBasicInHand(hand []Card) bool {
@@ -183,18 +194,20 @@ func TestIllegalMovesRefused(t *testing.T) {
 		if !ok {
 			break
 		}
-		err := g.Submit(PlayBasic{Player: q, CardID: id})
-		if len(g.S.Players[q].Bench) == 3 && err == nil {
+		err := g.Submit(PlayBasic{Player: q, CardID: id, Slot: firstSlot(g.S.Players[q], false)})
+		if g.S.Players[q].BenchCount() == 3 && err == nil {
 			// keep going; next one must fail
 			continue
 		}
 	}
-	if len(g.S.Players[q].Bench) != 3 {
-		t.Fatalf("expected a full bench of 3, got %d", len(g.S.Players[q].Bench))
+	if g.S.Players[q].BenchCount() != 3 {
+		t.Fatalf("expected a full bench of 3, got %d", g.S.Players[q].BenchCount())
 	}
 	if id, ok := firstBasicID(g.S.Players[q].Hand); ok {
-		if err := g.Submit(PlayBasic{Player: q, CardID: id}); err == nil {
-			t.Error("expected error playing onto a full bench")
+		for slot := 0; slot < BenchSlots; slot++ {
+			if err := g.Submit(PlayBasic{Player: q, CardID: id, Slot: slot}); err == nil {
+				t.Errorf("expected error playing onto full bench slot %d", slot)
+			}
 		}
 	}
 }
@@ -209,7 +222,7 @@ func TestPoisonKnockoutRaisesPrompt(t *testing.T) {
 	p := g.S.Active
 	opp := 1 - p
 	oppActive := g.S.Players[opp].Active
-	if oppActive == nil || len(g.S.Players[opp].Bench) == 0 {
+	if oppActive == nil || g.S.Players[opp].BenchCount() == 0 {
 		t.Fatalf("test setup expected opponent to have an Active and a bench")
 	}
 

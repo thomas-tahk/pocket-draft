@@ -109,7 +109,8 @@ export function ActionBar({ view }: { view: GameView }) {
         );
       })}
       <button style={btn} onClick={() => {
-        if (selection?.kind === 'hand') dispatch({ type: 'PlayBasic', player: actor, cardId: selection.cardId });
+        const slot = me.bench.findIndex((m) => m === null);
+        if (selection?.kind === 'hand' && slot >= 0) dispatch({ type: 'PlayBasic', player: actor, cardId: selection.cardId, slot });
       }}>Play basic (selected)</button>
       <button style={btn} onClick={() => {
         if (selection?.kind === 'hand') dispatch({ type: 'Evolve', player: actor, handCardId: selection.cardId, target: 0 });

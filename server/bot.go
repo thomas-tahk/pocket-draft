@@ -43,7 +43,10 @@ func candidates(actor int) []engine.Event {
 			return []engine.Event{setupChoice(actor, pl)}
 		case engine.PromptNewActive:
 			var evs []engine.Event
-			for bi := range pl.Bench {
+			for bi, m := range pl.Bench {
+				if m == nil {
+					continue
+				}
 				evs = append(evs, engine.ChooseNewActive{Player: actor, BenchIndex: bi})
 			}
 			return evs
