@@ -48,3 +48,4 @@ Thumbs.db
 scratch/
 test-results/
 playwright-report/
+.pd-e2e-server
