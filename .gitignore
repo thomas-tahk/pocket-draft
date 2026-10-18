@@ -46,3 +46,5 @@ Thumbs.db
 
 # Scratch — local working notes, HTML outputs, handoffs
 scratch/
+test-results/
+playwright-report/
