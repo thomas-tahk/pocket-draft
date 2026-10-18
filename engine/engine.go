@@ -108,6 +108,10 @@ func (g *Game) Submit(ev Event) error {
 
 func (g *Game) validateAndApply(ev Event) error {
 	st := g.S
+	// Concede is accepted from either player at any time, prompts included (spec E7).
+	if e, ok := ev.(Concede); ok {
+		return g.applyConcede(e)
+	}
 	// Mode 3: blocked on a prompt — only the owed response is accepted.
 	if st.Pending != nil {
 		switch e := ev.(type) {
@@ -139,8 +143,6 @@ func (g *Game) validateAndApply(ev Event) error {
 		return g.requireTurn(e.Player, func() error { return g.applyAttack(e) })
 	case EndTurn:
 		return g.requireTurn(e.Player, func() error { g.concludeTurn(); return nil })
-	case Concede:
-		return g.requireTurn(e.Player, func() error { return g.applyConcede(e) })
 	case SetupPlace, ChooseNewActive:
 		return errors.New("no prompt is pending")
 	default:
@@ -490,6 +492,9 @@ func (g *Game) startTurn(p int) {
 
 // applyConcede ends the game in the opponent's favor when a player forfeits.
 func (g *Game) applyConcede(e Concede) error {
+	if e.Player != 0 && e.Player != 1 {
+		return fmt.Errorf("no player %d", e.Player)
+	}
 	g.narrate("%s conceded.", side(e.Player))
 	g.gameOver(1-e.Player, ReasonConcede)
 	return nil

@@ -127,12 +127,6 @@ func TestConcedeEndsGame(t *testing.T) {
 	if g.S.Winner != 1-p {
 		t.Fatalf("winner = %d, want %d (the opponent)", g.S.Winner, 1-p)
 	}
-	// Conceding when it isn't your turn is refused.
-	g2 := NewGame(42, d0, d1)
-	doSetup(t, g2)
-	if err := g2.Submit(Concede{Player: 1 - g2.S.Active}); err == nil {
-		t.Error("concede off-turn should be refused")
-	}
 }
 
 // Criterion 1: a full game runs start→finish and ends with a 3-point winner.

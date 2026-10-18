@@ -153,7 +153,7 @@ type ChooseNewActive struct {
 	BenchIndex int
 }
 
-// Concede forfeits the game on the conceding player's turn; the opponent wins.
+// Concede forfeits the game at any time, from either player; the opponent wins.
 type Concede struct {
 	Player int
 }
