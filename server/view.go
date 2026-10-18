@@ -49,6 +49,9 @@ type playerView struct {
 	EnergyTypes  []string      `json:"energyTypes"` // the deck's Energy Zone types (spec S2)
 	EnergyUsed   bool          `json:"energyUsed"`
 	Retreated    bool          `json:"retreated"`
+	// LegalMoves is everything the viewer may do right now, each in the exact
+	// shape POST /api/move accepts. Only filled on the viewer's own side.
+	LegalMoves []moveReq `json:"legalMoves"`
 }
 
 type promptView struct {
@@ -199,8 +202,11 @@ func toGameView(g *engine.Game, viewer int) gameView {
 	if s.Pending != nil {
 		pending = &promptView{Player: s.Pending.Player, Kind: promptKindName(s.Pending.Kind)}
 	}
+	players := [2]playerView{toPlayerView(s.Players[0], viewer == 0), toPlayerView(s.Players[1], viewer == 1)}
+	players[viewer].LegalMoves = toMoveReqs(g.LegalMoves(viewer))
+	players[1-viewer].LegalMoves = []moveReq{}
 	return gameView{
-		Players:   [2]playerView{toPlayerView(s.Players[0], viewer == 0), toPlayerView(s.Players[1], viewer == 1)},
+		Players:   players,
 		Active:    s.Active,
 		Turn:      s.Turn,
 		Phase:     phaseName(s.Phase),
@@ -208,4 +214,12 @@ func toGameView(g *engine.Game, viewer int) gameView {
 		Winner:    s.Winner,
 		Narration: g.Narration,
 	}
+}
+
+func toMoveReqs(evs []engine.Event) []moveReq {
+	out := make([]moveReq, len(evs))
+	for i, ev := range evs {
+		out[i] = fromEvent(ev)
+	}
+	return out
 }

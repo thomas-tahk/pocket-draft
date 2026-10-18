@@ -113,74 +113,40 @@ func (g *Game) Submit(ev Event) error {
 	return nil
 }
 
+// validateAndApply refuses anything LegalMoves doesn't list, with the reason,
+// then applies it. Apply functions assume the move is legal.
 func (g *Game) validateAndApply(ev Event) error {
-	st := g.S
-	// Concede is accepted from either player at any time, prompts included (spec E7).
-	if e, ok := ev.(Concede); ok {
-		return g.applyConcede(e)
+	if err := g.legality(ev); err != nil {
+		return err
 	}
-	// Mode 3: blocked on a prompt — only the owed response is accepted.
-	if st.Pending != nil {
-		switch e := ev.(type) {
-		case SetupPlace:
-			if st.Pending.Kind != PromptSetup || e.Player != st.Pending.Player {
-				return errBadPrompt
-			}
-			return g.applySetup(e)
-		case ChooseNewActive:
-			if st.Pending.Kind != PromptNewActive || e.Player != st.Pending.Player {
-				return errBadPrompt
-			}
-			return g.applyChooseActive(e)
-		default:
-			return fmt.Errorf("waiting on %s to answer a prompt", side(st.Pending.Player))
-		}
-	}
-	// Modes 1: free-form intents from the active player.
 	switch e := ev.(type) {
+	case SetupPlace:
+		g.applySetup(e)
+	case ChooseNewActive:
+		g.applyChooseActive(e)
 	case PlayBasic:
-		return g.requireTurn(e.Player, func() error { return g.applyPlayBasic(e) })
+		g.applyPlayBasic(e)
 	case AttachEnergy:
-		return g.requireTurn(e.Player, func() error { return g.applyAttach(e) })
+		g.applyAttach(e)
 	case Evolve:
-		return g.requireTurn(e.Player, func() error { return g.applyEvolve(e) })
+		g.applyEvolve(e)
 	case Retreat:
-		return g.requireTurn(e.Player, func() error { return g.applyRetreat(e) })
+		g.applyRetreat(e)
 	case UseAttack:
-		return g.requireTurn(e.Player, func() error { return g.applyAttack(e) })
+		g.applyAttack(e)
 	case EndTurn:
-		return g.requireTurn(e.Player, func() error { g.concludeTurn(); return nil })
-	case SetupPlace, ChooseNewActive:
-		return errors.New("no prompt is pending")
-	default:
-		return errors.New("unknown event")
+		g.concludeTurn()
+	case Concede:
+		g.applyConcede(e)
 	}
-}
-
-func (g *Game) requireTurn(p int, fn func() error) error {
-	if g.S.Phase != PhaseMain {
-		return errors.New("not in the main phase")
-	}
-	if p != g.S.Active {
-		return fmt.Errorf("it is not %s's turn", side(p))
-	}
-	return fn()
+	return nil
 }
 
 // --- Intent handlers ---
 
-func (g *Game) applySetup(e SetupPlace) error {
+func (g *Game) applySetup(e SetupPlace) {
 	pl := &g.S.Players[e.Player]
 	idx := indexInHand(pl.Hand, e.ActiveCardID)
-	if idx < 0 {
-		return errors.New("active card is not in hand")
-	}
-	if pl.Hand[idx].Stage != Basic {
-		return errors.New("the Active must be a Basic Pokémon")
-	}
-	if len(e.BenchCardIDs) > BenchSlots {
-		return errors.New("the bench holds at most 3")
-	}
 	remove := map[int]bool{idx: true}
 	var benchCards [BenchSlots]*Card
 	for slot, bid := range e.BenchCardIDs {
@@ -188,12 +154,6 @@ func (g *Game) applySetup(e SetupPlace) error {
 			continue
 		}
 		bi := indexInHandExcept(pl.Hand, bid, remove)
-		if bi < 0 {
-			return errors.New("bench card is not in hand")
-		}
-		if pl.Hand[bi].Stage != Basic {
-			return errors.New("only Basics may be benched")
-		}
 		remove[bi] = true
 		c := pl.Hand[bi]
 		benchCards[slot] = &c
@@ -222,118 +182,50 @@ func (g *Game) applySetup(e SetupPlace) error {
 		g.S.Turn = 1
 		g.startTurn(g.S.Active)
 	}
-	return nil
 }
 
-func (g *Game) applyPlayBasic(e PlayBasic) error {
+func (g *Game) applyPlayBasic(e PlayBasic) {
 	pl := &g.S.Players[e.Player]
 	idx := indexInHand(pl.Hand, e.CardID)
-	if idx < 0 {
-		return errors.New("card is not in hand")
-	}
-	if pl.Hand[idx].Stage != Basic {
-		return errors.New("only Basic Pokémon may be played to the bench")
-	}
-	if e.Slot < 0 || e.Slot >= BenchSlots {
-		return errors.New("invalid bench slot")
-	}
-	if pl.Bench[e.Slot] != nil {
-		return errors.New("that bench slot is taken")
-	}
 	c := pl.Hand[idx]
 	pl.Hand = removeAt(pl.Hand, idx)
 	pl.Bench[e.Slot] = newInPlay(c, g.S.Turn)
 	g.narrate("%s played %s to the bench.", side(e.Player), c.Name)
-	return nil
 }
 
-func (g *Game) applyAttach(e AttachEnergy) error {
+func (g *Game) applyAttach(e AttachEnergy) {
 	pl := &g.S.Players[e.Player]
-	if pl.EnergyUsed {
-		return errors.New("energy was already attached this turn")
-	}
-	if pl.EnergyZone == NoEnergy {
-		return errors.New("no energy is available this turn")
-	}
 	mon := targetMon(pl, e.Target)
-	if mon == nil {
-		return errors.New("invalid energy target")
-	}
 	mon.Energy[pl.EnergyZone]++
 	g.narrate("%s attached %s energy to %s.", side(e.Player), pl.EnergyZone, mon.Card.Name)
 	pl.EnergyZone = NoEnergy
 	pl.EnergyUsed = true
-	return nil
 }
 
-func (g *Game) applyEvolve(e Evolve) error {
+func (g *Game) applyEvolve(e Evolve) {
 	pl := &g.S.Players[e.Player]
 	hidx := indexInHand(pl.Hand, e.HandCardID)
-	if hidx < 0 {
-		return errors.New("evolution card is not in hand")
-	}
 	ev := pl.Hand[hidx]
-	if ev.Stage == Basic {
-		return errors.New("that card is not an evolution")
-	}
 	mon := targetMon(pl, e.Target)
-	if mon == nil {
-		return errors.New("invalid evolution target")
-	}
-	if mon.Card.Name != ev.EvolvesFrom {
-		return fmt.Errorf("%s does not evolve from %s", ev.Name, mon.Card.Name)
-	}
-	if mon.PlacedTurn == g.S.Turn {
-		return errors.New("a Pokémon cannot evolve the turn it was played")
-	}
-	if g.S.Turn == 1 {
-		return errors.New("no Pokémon may evolve on the first turn")
-	}
 	pl.Hand = removeAt(pl.Hand, hidx)
 	mon.Card = ev
 	mon.PlacedTurn = g.S.Turn
 	g.narrate("%s evolved into %s.", side(e.Player), ev.Name)
-	return nil
 }
 
-func (g *Game) applyRetreat(e Retreat) error {
+func (g *Game) applyRetreat(e Retreat) {
 	pl := &g.S.Players[e.Player]
-	if pl.Retreated {
-		return errors.New("already retreated this turn")
-	}
-	if pl.Active == nil {
-		return errors.New("no Active Pokémon to retreat")
-	}
-	if benchAt(pl, e.BenchIndex) == nil {
-		return errors.New("no Pokémon in that bench slot")
-	}
 	cost := pl.Active.Card.RetreatCost
-	if pl.Active.totalEnergy() < cost {
-		return errors.New("not enough energy to retreat")
-	}
 	discardEnergy(pl.Active, cost)
 	pl.Active, pl.Bench[e.BenchIndex] = pl.Bench[e.BenchIndex], pl.Active
 	pl.Retreated = true
 	g.narrate("%s retreated to %s.", side(e.Player), pl.Active.Card.Name)
-	return nil
 }
 
-func (g *Game) applyAttack(e UseAttack) error {
+func (g *Game) applyAttack(e UseAttack) {
 	pl := &g.S.Players[e.Player]
-	if pl.Active == nil {
-		return errors.New("no Active Pokémon to attack with")
-	}
-	if e.Index < 0 || e.Index >= len(pl.Active.Card.Attacks) {
-		return errors.New("invalid attack index")
-	}
 	atk := pl.Active.Card.Attacks[e.Index]
-	if !canPay(pl.Active.Energy, atk.Cost) {
-		return errors.New("not enough energy for that attack")
-	}
 	opp := &g.S.Players[1-e.Player]
-	if opp.Active == nil {
-		return errors.New("there is no defending Pokémon")
-	}
 	ctx := &EffectContext{g: g, attacker: e.Player, Damage: atk.Damage}
 	for _, op := range atk.Effect {
 		op.Apply(ctx)
@@ -353,29 +245,25 @@ func (g *Game) applyAttack(e UseAttack) error {
 	g.resolveAction()
 	// Attacking ends the turn — but a knockout may owe a prompt first.
 	if g.S.Phase == PhaseOver {
-		return nil
+		return
 	}
 	if g.S.Pending != nil {
 		g.S.resume = resumeConclude
-		return nil
+		return
 	}
 	g.concludeTurn()
-	return nil
 }
 
-func (g *Game) applyChooseActive(e ChooseNewActive) error {
+func (g *Game) applyChooseActive(e ChooseNewActive) {
 	pl := &g.S.Players[e.Player]
 	mon := benchAt(pl, e.BenchIndex)
-	if mon == nil {
-		return errors.New("no Pokémon in that bench slot")
-	}
 	pl.Bench[e.BenchIndex] = nil
 	pl.Active = mon
 	g.S.Pending = nil
 	g.narrate("%s promoted %s to Active.", side(e.Player), mon.Card.Name)
 
 	if g.S.Phase == PhaseOver || g.promptPromotion() {
-		return nil
+		return
 	}
 	switch g.S.resume {
 	case resumeConclude:
@@ -385,7 +273,6 @@ func (g *Game) applyChooseActive(e ChooseNewActive) error {
 		g.S.resume = resumeNone
 		g.advanceTurn()
 	}
-	return nil
 }
 
 // --- Turn flow & resolution ---
@@ -556,13 +443,9 @@ func (g *Game) startTurn(p int) {
 }
 
 // applyConcede ends the game in the opponent's favor when a player forfeits.
-func (g *Game) applyConcede(e Concede) error {
-	if e.Player != 0 && e.Player != 1 {
-		return fmt.Errorf("no player %d", e.Player)
-	}
+func (g *Game) applyConcede(e Concede) {
 	g.narrate("%s conceded.", side(e.Player))
 	g.gameOver(1-e.Player, ReasonConcede)
-	return nil
 }
 
 func (g *Game) gameOver(winner int, reason EndReason) {

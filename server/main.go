@@ -218,3 +218,28 @@ func toEvent(r moveReq) (engine.Event, error) {
 	}
 	return nil, fmt.Errorf("unknown move type %q", r.Type)
 }
+
+// fromEvent is the inverse of toEvent: the request that would submit ev.
+func fromEvent(ev engine.Event) moveReq {
+	switch e := ev.(type) {
+	case engine.SetupPlace:
+		return moveReq{Type: "SetupPlace", Player: e.Player, ActiveCardID: e.ActiveCardID, BenchCardIDs: e.BenchCardIDs}
+	case engine.PlayBasic:
+		return moveReq{Type: "PlayBasic", Player: e.Player, CardID: e.CardID, Slot: e.Slot}
+	case engine.AttachEnergy:
+		return moveReq{Type: "AttachEnergy", Player: e.Player, Target: e.Target}
+	case engine.Evolve:
+		return moveReq{Type: "Evolve", Player: e.Player, HandCardID: e.HandCardID, Target: e.Target}
+	case engine.Retreat:
+		return moveReq{Type: "Retreat", Player: e.Player, BenchIndex: e.BenchIndex}
+	case engine.UseAttack:
+		return moveReq{Type: "UseAttack", Player: e.Player, Index: e.Index}
+	case engine.EndTurn:
+		return moveReq{Type: "EndTurn", Player: e.Player}
+	case engine.ChooseNewActive:
+		return moveReq{Type: "ChooseNewActive", Player: e.Player, BenchIndex: e.BenchIndex}
+	case engine.Concede:
+		return moveReq{Type: "Concede", Player: e.Player}
+	}
+	panic(fmt.Sprintf("fromEvent: no request shape for %T", ev))
+}

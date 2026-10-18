@@ -1,0 +1,416 @@
+package engine
+
+import (
+	"errors"
+	"fmt"
+	"strings"
+)
+
+// LegalMoves is the single source of truth for what a player may do right now.
+// Submit refuses any event that is not in this list, the screen lights spots
+// from it and the bot picks from it.
+//
+// Each kind of move is one entry in moveRules: a generator that lists every
+// candidate of that kind (legal or not) and a check that says why a candidate
+// is illegal. A candidate is legal when its check passes. Adding a move kind
+// means adding its Event type, one rule here, and its apply case in engine.go.
+
+// moveRule is one kind of move, type-erased so the rules can sit in one list.
+type moveRule struct {
+	is    func(Event) bool
+	list  func(g *Game, p int) []Event
+	check func(g *Game, ev Event) error
+	key   func(ev Event) string // identity for matching a submitted event to a listed one
+}
+
+// rule builds a moveRule for event type E. key may be nil when the event's
+// printed value is already its identity.
+func rule[E Event](list func(g *Game, p int) []E, check func(g *Game, e E) error, key func(e E) string) moveRule {
+	if key == nil {
+		key = func(e E) string { return fmt.Sprintf("%#v", e) }
+	}
+	return moveRule{
+		is: func(ev Event) bool { _, ok := ev.(E); return ok },
+		list: func(g *Game, p int) []Event {
+			var out []Event
+			for _, e := range list(g, p) {
+				out = append(out, e)
+			}
+			return out
+		},
+		check: func(g *Game, ev Event) error { return check(g, ev.(E)) },
+		key:   func(ev Event) string { return key(ev.(E)) },
+	}
+}
+
+// moveRules is in the order LegalMoves lists moves.
+var moveRules = []moveRule{
+	rule(listSetup, (*Game).checkSetup, setupKey),
+	rule(listChooseActive, (*Game).checkChooseActive, nil),
+	rule(listPlayBasic, (*Game).checkPlayBasic, nil),
+	rule(listAttach, (*Game).checkAttach, nil),
+	rule(listEvolve, (*Game).checkEvolve, nil),
+	rule(listRetreat, (*Game).checkRetreat, nil),
+	rule(listAttack, (*Game).checkAttack, nil),
+	rule(func(_ *Game, p int) []EndTurn { return []EndTurn{{Player: p}} }, (*Game).checkEndTurn, nil),
+	rule(func(_ *Game, p int) []Concede { return []Concede{{Player: p}} }, (*Game).checkConcede, nil),
+}
+
+// LegalMoves returns every move player p may submit right now, each fully
+// specified (card and target), with duplicates removed. Empty when p has
+// nothing to do.
+func (g *Game) LegalMoves(p int) []Event {
+	var out []Event
+	for _, r := range moveRules {
+		seen := map[string]bool{}
+		for _, ev := range r.list(g, p) {
+			k := r.key(ev)
+			if seen[k] || r.check(g, ev) != nil {
+				continue
+			}
+			seen[k] = true
+			out = append(out, ev)
+		}
+	}
+	return out
+}
+
+// legality returns nil if ev is in LegalMoves, otherwise the reason it isn't.
+func (g *Game) legality(ev Event) error {
+	r, ok := ruleFor(ev)
+	if !ok {
+		return errors.New("unknown event")
+	}
+	if err := r.check(g, ev); err != nil {
+		return err
+	}
+	k := r.key(ev)
+	for p := 0; p < 2; p++ {
+		for _, legal := range g.LegalMoves(p) {
+			if r.is(legal) && r.key(legal) == k {
+				return nil
+			}
+		}
+	}
+	return errors.New("that move is not available right now")
+}
+
+func ruleFor(ev Event) (moveRule, bool) {
+	for _, r := range moveRules {
+		if r.is(ev) {
+			return r, true
+		}
+	}
+	return moveRule{}, false
+}
+
+// --- gates: who may act at all ---
+
+func (g *Game) onTurn(p int) error {
+	if g.S.Pending != nil {
+		return fmt.Errorf("waiting on %s to answer a prompt", side(g.S.Pending.Player))
+	}
+	if g.S.Phase != PhaseMain {
+		return errors.New("not in the main phase")
+	}
+	if p != g.S.Active {
+		return fmt.Errorf("it is not %s's turn", side(p))
+	}
+	return nil
+}
+
+func (g *Game) onPrompt(p int, k PromptKind) error {
+	if g.S.Pending == nil {
+		return errors.New("no prompt is pending")
+	}
+	if g.S.Pending.Kind != k || g.S.Pending.Player != p {
+		return errBadPrompt
+	}
+	return nil
+}
+
+// --- candidate lists (legal or not; the checks filter them) ---
+
+func listSetup(g *Game, p int) []SetupPlace {
+	hand := g.S.Players[p].Hand
+	var out []SetupPlace
+	for i, c := range hand {
+		if c.Stage != Basic {
+			continue
+		}
+		for _, bench := range benchFills(hand, map[int]bool{i: true}, 0) {
+			out = append(out, SetupPlace{Player: p, ActiveCardID: c.ID, BenchCardIDs: trimBench(bench)})
+		}
+	}
+	return out
+}
+
+// benchFills lists every way to fill bench slots from slot onward with Basics
+// from hand not already used: each slot empty ("") or one unused Basic.
+func benchFills(hand []Card, used map[int]bool, slot int) [][]string {
+	if slot == BenchSlots {
+		return [][]string{nil}
+	}
+	var out [][]string
+	for _, rest := range benchFills(hand, used, slot+1) {
+		out = append(out, append([]string{""}, rest...))
+	}
+	for i, c := range hand {
+		if used[i] || c.Stage != Basic {
+			continue
+		}
+		used[i] = true
+		for _, rest := range benchFills(hand, used, slot+1) {
+			out = append(out, append([]string{c.ID}, rest...))
+		}
+		delete(used, i)
+	}
+	return out
+}
+
+// trimBench drops trailing empty slots, so an empty bench is nil.
+func trimBench(bench []string) []string {
+	for len(bench) > 0 && bench[len(bench)-1] == "" {
+		bench = bench[:len(bench)-1]
+	}
+	if len(bench) == 0 {
+		return nil
+	}
+	return bench
+}
+
+// setupKey makes trailing empty slots and nil-vs-empty irrelevant.
+func setupKey(e SetupPlace) string {
+	return fmt.Sprintf("%d|%s|%s", e.Player, e.ActiveCardID, strings.Join(trimBench(e.BenchCardIDs), ","))
+}
+
+func listChooseActive(g *Game, p int) []ChooseNewActive {
+	var out []ChooseNewActive
+	for slot := 0; slot < BenchSlots; slot++ {
+		out = append(out, ChooseNewActive{Player: p, BenchIndex: slot})
+	}
+	return out
+}
+
+// listPlayBasic offers every hand card into every slot; one placement per
+// empty slot survives the check.
+func listPlayBasic(g *Game, p int) []PlayBasic {
+	var out []PlayBasic
+	for _, c := range g.S.Players[p].Hand {
+		for slot := 0; slot < BenchSlots; slot++ {
+			out = append(out, PlayBasic{Player: p, CardID: c.ID, Slot: slot})
+		}
+	}
+	return out
+}
+
+// targets lists every in-play spot: 0 the Active, n bench slot n-1.
+func targets() []int {
+	out := make([]int, 0, 1+BenchSlots)
+	for t := 0; t <= BenchSlots; t++ {
+		out = append(out, t)
+	}
+	return out
+}
+
+func listAttach(g *Game, p int) []AttachEnergy {
+	var out []AttachEnergy
+	for _, t := range targets() {
+		out = append(out, AttachEnergy{Player: p, Target: t})
+	}
+	return out
+}
+
+func listEvolve(g *Game, p int) []Evolve {
+	var out []Evolve
+	for _, c := range g.S.Players[p].Hand {
+		for _, t := range targets() {
+			out = append(out, Evolve{Player: p, HandCardID: c.ID, Target: t})
+		}
+	}
+	return out
+}
+
+func listRetreat(g *Game, p int) []Retreat {
+	var out []Retreat
+	for slot := 0; slot < BenchSlots; slot++ {
+		out = append(out, Retreat{Player: p, BenchIndex: slot})
+	}
+	return out
+}
+
+func listAttack(g *Game, p int) []UseAttack {
+	pl := g.S.Players[p]
+	if pl.Active == nil {
+		return nil
+	}
+	var out []UseAttack
+	for i := range pl.Active.Card.Attacks {
+		out = append(out, UseAttack{Player: p, Index: i})
+	}
+	return out
+}
+
+// --- checks: nil when legal, otherwise the reason ---
+
+func (g *Game) checkSetup(e SetupPlace) error {
+	if err := g.onPrompt(e.Player, PromptSetup); err != nil {
+		return err
+	}
+	pl := &g.S.Players[e.Player]
+	idx := indexInHand(pl.Hand, e.ActiveCardID)
+	if idx < 0 {
+		return errors.New("active card is not in hand")
+	}
+	if pl.Hand[idx].Stage != Basic {
+		return errors.New("the Active must be a Basic Pokémon")
+	}
+	if len(e.BenchCardIDs) > BenchSlots {
+		return errors.New("the bench holds at most 3")
+	}
+	used := map[int]bool{idx: true}
+	for _, bid := range e.BenchCardIDs {
+		if bid == "" {
+			continue
+		}
+		bi := indexInHandExcept(pl.Hand, bid, used)
+		if bi < 0 {
+			return errors.New("bench card is not in hand")
+		}
+		if pl.Hand[bi].Stage != Basic {
+			return errors.New("only Basics may be benched")
+		}
+		used[bi] = true
+	}
+	return nil
+}
+
+func (g *Game) checkChooseActive(e ChooseNewActive) error {
+	if err := g.onPrompt(e.Player, PromptNewActive); err != nil {
+		return err
+	}
+	if benchAt(&g.S.Players[e.Player], e.BenchIndex) == nil {
+		return errors.New("no Pokémon in that bench slot")
+	}
+	return nil
+}
+
+func (g *Game) checkPlayBasic(e PlayBasic) error {
+	if err := g.onTurn(e.Player); err != nil {
+		return err
+	}
+	pl := &g.S.Players[e.Player]
+	idx := indexInHand(pl.Hand, e.CardID)
+	if idx < 0 {
+		return errors.New("card is not in hand")
+	}
+	if pl.Hand[idx].Stage != Basic {
+		return errors.New("only Basic Pokémon may be played to the bench")
+	}
+	if e.Slot < 0 || e.Slot >= BenchSlots {
+		return errors.New("invalid bench slot")
+	}
+	if pl.Bench[e.Slot] != nil {
+		return errors.New("that bench slot is taken")
+	}
+	return nil
+}
+
+func (g *Game) checkAttach(e AttachEnergy) error {
+	if err := g.onTurn(e.Player); err != nil {
+		return err
+	}
+	pl := &g.S.Players[e.Player]
+	if pl.EnergyUsed {
+		return errors.New("energy was already attached this turn")
+	}
+	if pl.EnergyZone == NoEnergy {
+		return errors.New("no energy is available this turn")
+	}
+	if targetMon(pl, e.Target) == nil {
+		return errors.New("invalid energy target")
+	}
+	return nil
+}
+
+func (g *Game) checkEvolve(e Evolve) error {
+	if err := g.onTurn(e.Player); err != nil {
+		return err
+	}
+	pl := &g.S.Players[e.Player]
+	hidx := indexInHand(pl.Hand, e.HandCardID)
+	if hidx < 0 {
+		return errors.New("evolution card is not in hand")
+	}
+	ev := pl.Hand[hidx]
+	if ev.Stage == Basic {
+		return errors.New("that card is not an evolution")
+	}
+	mon := targetMon(pl, e.Target)
+	if mon == nil {
+		return errors.New("invalid evolution target")
+	}
+	if mon.Card.Name != ev.EvolvesFrom {
+		return fmt.Errorf("%s does not evolve from %s", ev.Name, mon.Card.Name)
+	}
+	if mon.PlacedTurn == g.S.Turn {
+		return errors.New("a Pokémon cannot evolve the turn it was played")
+	}
+	if g.S.Turn == 1 {
+		return errors.New("no Pokémon may evolve on the first turn")
+	}
+	return nil
+}
+
+func (g *Game) checkRetreat(e Retreat) error {
+	if err := g.onTurn(e.Player); err != nil {
+		return err
+	}
+	pl := &g.S.Players[e.Player]
+	if pl.Retreated {
+		return errors.New("already retreated this turn")
+	}
+	if pl.Active == nil {
+		return errors.New("no Active Pokémon to retreat")
+	}
+	if benchAt(pl, e.BenchIndex) == nil {
+		return errors.New("no Pokémon in that bench slot")
+	}
+	if pl.Active.totalEnergy() < pl.Active.Card.RetreatCost {
+		return errors.New("not enough energy to retreat")
+	}
+	return nil
+}
+
+func (g *Game) checkAttack(e UseAttack) error {
+	if err := g.onTurn(e.Player); err != nil {
+		return err
+	}
+	pl := &g.S.Players[e.Player]
+	if pl.Active == nil {
+		return errors.New("no Active Pokémon to attack with")
+	}
+	if e.Index < 0 || e.Index >= len(pl.Active.Card.Attacks) {
+		return errors.New("invalid attack index")
+	}
+	if !canPay(pl.Active.Energy, pl.Active.Card.Attacks[e.Index].Cost) {
+		return errors.New("not enough energy for that attack")
+	}
+	if g.S.Players[1-e.Player].Active == nil {
+		return errors.New("there is no defending Pokémon")
+	}
+	return nil
+}
+
+func (g *Game) checkEndTurn(e EndTurn) error { return g.onTurn(e.Player) }
+
+// checkConcede: either player, at any time, prompts included (spec E7).
+func (g *Game) checkConcede(e Concede) error {
+	if g.S.Phase == PhaseOver {
+		return errors.New("game is over")
+	}
+	if e.Player != 0 && e.Player != 1 {
+		return fmt.Errorf("no player %d", e.Player)
+	}
+	return nil
+}
