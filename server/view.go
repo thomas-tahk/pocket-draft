@@ -67,6 +67,22 @@ type gameView struct {
 	Pending   *promptView   `json:"pending"`
 	Winner    int           `json:"winner"`
 	Narration []string      `json:"narration"`
+	Actions   []actionView  `json:"actions"`
+}
+
+type spotView struct {
+	Player int `json:"player"`
+	Pos    int `json:"pos"` // 0 is the Active, n is bench slot n-1; -1 is none
+}
+
+// actionView is one applied move for the opponent-turn playback and the
+// history list (spec F14, F15).
+type actionView struct {
+	Player int       `json:"player"`
+	Kind   string    `json:"kind"`
+	Card   *cardView `json:"card"` // null when the move used no card, or it is hidden
+	Target spotView  `json:"target"`
+	Result []string  `json:"result"`
 }
 
 func stageName(s engine.Stage) string {
@@ -213,6 +229,7 @@ func toGameView(g *engine.Game, viewer int) gameView {
 		Pending:   pending,
 		Winner:    s.Winner,
 		Narration: g.Narration,
+		Actions:   toActionViews(g, viewer),
 	}
 }
 
@@ -220,6 +237,25 @@ func toMoveReqs(evs []engine.Event) []moveReq {
 	out := make([]moveReq, len(evs))
 	for i, ev := range evs {
 		out[i] = fromEvent(ev)
+	}
+	return out
+}
+
+// toActionViews renders the action log for viewer. Setup is placed in secret,
+// so an opponent's setup pick shows only that they placed until the game has
+// left setup (Turn is 0 until then).
+func toActionViews(g *engine.Game, viewer int) []actionView {
+	out := make([]actionView, 0, len(g.Actions))
+	for _, a := range g.Actions {
+		v := actionView{Player: a.Player, Kind: string(a.Kind), Target: spotView{a.Target.Player, a.Target.Pos}, Result: a.Result}
+		if a.Card.ID != "" {
+			c := toCardView(a.Card)
+			v.Card = &c
+		}
+		if a.Kind == engine.ActSetup && a.Player != viewer && g.S.Turn == 0 {
+			v.Card, v.Result = nil, []string{}
+		}
+		out = append(out, v)
 	}
 	return out
 }

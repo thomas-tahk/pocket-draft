@@ -42,3 +42,31 @@ func TestViewForPlayer0NeverContainsPlayer1HandCardIDs(t *testing.T) {
 		t.Fatalf("own hand has %d cards, want %d", got, len(g.S.Players[0].Hand))
 	}
 }
+
+// F15: the history the viewer sees carries every action, but the opponent's
+// setup picks stay hidden until setup ends (both placed in secret).
+func TestViewActionsHideOpponentSetupUntilRevealed(t *testing.T) {
+	// Arrange: the opponent places first; the viewer has not placed yet.
+	g := engine.NewGame(7, viewTestDeck("mine"), viewTestDeck("theirs"))
+	theirs := g.S.Players[1].Hand[0].ID
+	g.S.Pending = &engine.Prompt{Player: 1, Kind: engine.PromptSetup}
+	if err := g.Submit(engine.SetupPlace{Player: 1, ActiveCardID: theirs}); err != nil {
+		t.Fatal(err)
+	}
+
+	// Act
+	hidden := toGameView(g, 0)
+	if err := g.Submit(engine.SetupPlace{Player: 0, ActiveCardID: g.S.Players[0].Hand[0].ID}); err != nil {
+		t.Fatal(err)
+	}
+	shown := toGameView(g, 0)
+
+	// Assert
+	raw, _ := json.Marshal(hidden.Actions)
+	if strings.Contains(string(raw), "theirs-") || len(hidden.Actions) != 1 || hidden.Actions[0].Card != nil {
+		t.Fatalf("opponent's unrevealed setup leaks: %s", raw)
+	}
+	if len(shown.Actions) != 2 || shown.Actions[0].Card == nil || shown.Actions[0].Card.ID != theirs {
+		t.Fatalf("after setup the opponent's pick should show: %+v", shown.Actions)
+	}
+}

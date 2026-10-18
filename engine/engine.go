@@ -16,6 +16,7 @@ type Game struct {
 	S         *State
 	Events    []Event
 	Narration []string
+	Actions   []Action // one per applied event, for replay and history (actions.go)
 }
 
 var errBadPrompt = errors.New("invalid response to the current prompt")
@@ -106,10 +107,13 @@ func (g *Game) Submit(ev Event) error {
 	if g.S.Phase == PhaseOver {
 		return errors.New("game is over")
 	}
+	act, before := g.describe(ev), len(g.Narration)
 	if err := g.validateAndApply(ev); err != nil {
 		return err
 	}
+	act.Result = append([]string(nil), g.Narration[before:]...)
 	g.Events = append(g.Events, ev)
+	g.Actions = append(g.Actions, act)
 	return nil
 }
 
