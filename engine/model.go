@@ -49,7 +49,7 @@ const (
 type resumeAction uint8
 
 const (
-	resumeNone resumeAction = iota
+	resumeNone     resumeAction = iota
 	resumeConclude              // after the prompt, run end-of-turn + advance
 	resumeAdvance               // after the prompt, just advance to the next turn
 )
@@ -76,7 +76,9 @@ type State struct {
 	Turn    int // turn counter, starts at 1
 	Phase   Phase
 	Pending *Prompt
-	Winner  int // -1 until the game ends
+	Winner  int       // -1 until the game ends, and on a tie
+	Reason  EndReason // why the game ended; NoReason until it does
+	Mode    Mode      // who the game is against; set before the first event
 
 	resume      resumeAction
 	firstPlayer int

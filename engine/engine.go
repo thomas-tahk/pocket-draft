@@ -379,11 +379,11 @@ func (g *Game) koActive(owner int) {
 	g.narrate("%s scored %d (%d/3).", side(scorer), pts, g.S.Players[scorer].Points)
 
 	if g.S.Players[scorer].Points >= 3 {
-		g.gameOver(scorer)
+		g.gameOver(scorer, ReasonPoints)
 		return
 	}
 	if len(pl.Bench) == 0 {
-		g.gameOver(scorer) // no Pokémon left to promote
+		g.gameOver(scorer, ReasonNoPokemon) // no Pokémon left to promote
 		return
 	}
 	g.S.Pending = &Prompt{Player: owner, Kind: PromptNewActive}
@@ -433,6 +433,10 @@ func (g *Game) resolveStatus() {
 }
 
 func (g *Game) advanceTurn() {
+	if g.S.Turn >= g.S.Mode.turnCap() {
+		g.tie(ReasonTurnCap)
+		return
+	}
 	g.S.Active = 1 - g.S.Active
 	g.S.Turn++
 	g.startTurn(g.S.Active)
@@ -463,13 +467,14 @@ func (g *Game) startTurn(p int) {
 // applyConcede ends the game in the opponent's favor when a player forfeits.
 func (g *Game) applyConcede(e Concede) error {
 	g.narrate("%s conceded.", side(e.Player))
-	g.gameOver(1 - e.Player)
+	g.gameOver(1-e.Player, ReasonConcede)
 	return nil
 }
 
-func (g *Game) gameOver(winner int) {
+func (g *Game) gameOver(winner int, reason EndReason) {
 	g.S.Phase = PhaseOver
 	g.S.Winner = winner
+	g.S.Reason = reason
 	g.S.Pending = nil
 	g.narrate("Game over — %s wins %d-%d.", side(winner), g.S.Players[winner].Points, g.S.Players[1-winner].Points)
 }
