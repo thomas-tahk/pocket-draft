@@ -35,7 +35,7 @@ code, .id { font-family: var(--mono); font-size: .85em; }
 .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 16px 0 0; padding: 0; list-style: none; font-size: .9rem; color: var(--muted); }
 .chip { display: inline-block; font: 700 .72rem/1 var(--body); text-transform: uppercase; letter-spacing: .07em;
   padding: 4px 7px; border-radius: 4px; border: 1.5px solid currentColor; white-space: nowrap; }
-.c-confirmed { color: var(--ok); } .c-proposed { color: var(--proposed); } .c-question { color: var(--question); }
+.c-confirmed { color: var(--ok); } .c-accepted { color: var(--muted); } .c-research { color: var(--proposed); }
 .e-ok { color: var(--ok); } .e-wrong, .e-missing { color: var(--gap); background: color-mix(in srgb, var(--gap) 12%, transparent); }
 .e-na { color: var(--muted); }
 
@@ -93,6 +93,29 @@ textarea { font: 15px/1.4 var(--body); color: var(--ink); background: var(--surf
 .log { font-family: var(--mono); color: var(--muted); border-top: 1px solid var(--line); padding-top: 4px; }
 .caption { font-size: .85rem; color: var(--muted); margin-top: 8px; text-align: center; }
 
+/* board sketch traced from the Pocket screenshot */
+.board { width: 100%; max-width: 300px; aspect-ratio: 9 / 20; background: var(--surface); border: 3px solid var(--ink); border-radius: 26px;
+  box-sizing: border-box; position: relative; font-size: .6rem; color: var(--muted); position: sticky; top: env(safe-area-inset-top, 0px); overflow: hidden; }
+.board > div { position: absolute; display: flex; gap: 4px; align-items: center; }
+.board b { display: grid; place-items: center; width: 44px; aspect-ratio: 5/7; border: 1.5px solid var(--muted); border-radius: 4px; background: var(--bg); color: var(--ink); font-weight: 400; position: relative; }
+.board b.big { width: 64px; } .board b.e { border-style: dashed; background: none; }
+.board b.lit { border: 2px solid var(--lit); box-shadow: 0 0 0 3px color-mix(in srgb, var(--lit) 35%, transparent); }
+.board i { display: block; width: 40px; aspect-ratio: 5/7; border-radius: 4px; background: var(--muted); opacity: .5; }
+.board i.lift { opacity: 1; background: var(--bg); border: 2px solid var(--lit); transform: translateY(-6px); }
+.pts { font-family: var(--mono); color: var(--ink); } .pts.opp { top: 4%; right: 6%; } .pts.me { bottom: 2%; left: 6%; }
+.ohand { top: 8%; left: 34%; } .ohand i { width: 34px; }
+.orb { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--ink); background: #2a8be0; }
+.oorb { top: 15%; left: 12%; } .morb { bottom: 9%; right: 10%; background: #c4561a; }
+.morb span { position: absolute; right: -8px; bottom: -6px; width: 10px; height: 10px; border-radius: 50%; background: #c4561a; border: 1.5px solid var(--ink); }
+.obench { top: 19%; left: 20%; } .oact { top: 30%; left: 37%; } .opile { top: 24%; left: 2%; flex-direction: column; } .opile b { width: 36px; }
+.ups { width: 26px; height: 26px; border-radius: 50%; justify-content: center; background: var(--bg); color: #f08a00; font-size: .9rem; }
+.oups { top: 21%; right: 8%; } .mups { top: 70%; left: 4%; } .menu { top: 77%; left: 5%; font-size: 1rem; color: var(--ink); }
+.endt { top: 46%; right: 4%; border: 2px solid var(--accent); border-radius: 14px; padding: 4px 9px; color: var(--ink); font-family: var(--display); font-size: .75rem; }
+.stad { top: 50%; left: 3%; } .stad b { width: 40px; }
+.act { top: 47%; left: 37%; } .pile { top: 48%; right: 2%; flex-direction: column; } .pile b { width: 36px; }
+.badge { position: absolute; right: 3px; top: 10px; color: #f08a00; font-size: .7rem; }
+.bench { top: 67%; left: 21%; } .hand2 { bottom: 6%; left: 30%; }
+
 .shots { columns: 2 240px; gap: 28px; padding-left: 1.2em; }
 .shots li { break-inside: avoid; margin-bottom: 4px; }
 
@@ -106,12 +129,13 @@ textarea { font: 15px/1.4 var(--body); color: var(--ink); background: var(--surf
 
 <div class="wrap">
   <h1>Pocket Battle Spec</h1>
-  <p class="lede">Rules and screen behaviour for the rebuilt battle, drafted 2026-10-16 from your answers of 2026-10-15. Every row has an id. Mark the wrong ones with <em>Correct this</em>, then use <em>Copy corrections</em> at the bottom and paste the text back to me.</p>
+  <p class="lede">Final version, 2026-10-18. Built from your answers of 10-15 and 10-18, your Pocket screenshot, and online research. Rows marked <em>research</em> came from sources you haven't seen; correct any row with <em>Correct this</em>.</p>
+  <p class="lede" id="count" role="status">No answers yet.</p>
 
   <ul class="legend">
-    <li><span class="chip c-confirmed">Confirmed</span> you stated it</li>
-    <li><span class="chip c-proposed">Proposed</span> my reading of Pocket, check it</li>
-    <li><span class="chip c-question">Question</span> I need your answer</li>
+    <li><span class="chip c-confirmed">Confirmed</span> you said it</li>
+    <li><span class="chip c-accepted">Accepted</span> drafted, you didn't object</li>
+    <li><span class="chip c-research">Research</span> found online, not yet seen by you</li>
     <li><span class="chip e-wrong">Engine wrong</span> / <span class="chip e-missing">Engine missing</span> what the Go engine does today</li>
   </ul>
 
@@ -126,137 +150,151 @@ textarea { font: 15px/1.4 var(--body); color: var(--ink); background: var(--surf
   <h3>Special conditions</h3><ol class="rows" data-group="status"></ol>
   <h3>Points, knockouts, game end</h3><ol class="rows" data-group="end"></ol>
   <h3>Timers and turn cap</h3><ol class="rows" data-group="time"></ol>
+  <h3>Card text</h3><ol class="rows" data-group="cards"></ol>
 
   <h2>The screen</h2>
   <div class="screen">
     <div><ol class="rows" data-group="layout"></ol></div>
     <figure style="margin:0">
-      <div class="phone" aria-label="Phone layout sketch, playing a Basic to the bench">
-        <div class="meta"><span>Opp ● 1/3</span><span>hand 4 · deck 11</span></div>
-        <div class="half">
-          <div class="zone"><div class="slot mon">bench</div><div class="slot mon">bench</div><div class="slot">empty</div></div>
-          <div class="zone"><div class="slot mon active">Active<br>70/90</div></div>
-        </div>
-        <div class="bar"><span style="color:var(--muted)">Turn 7 · 0:62</span></div>
-        <div class="half">
-          <div class="zone"><div class="slot mon active">Active<br>40/70</div>
-            <div class="energy"><div class="dot" title="this turn"></div><div class="dot next" title="next turn"></div><span>now · next</span></div></div>
-          <div class="zone"><div class="slot mon">bench</div><div class="slot lit">tap<br>here</div><div class="slot lit">tap<br>here</div></div>
-        </div>
-        <div class="bar"><span style="color:var(--muted)">You ● 2/3</span><span class="end">End turn</span></div>
-        <div>
-          <div class="hand"><div class="slot"></div><div class="slot lift">Basic</div><div class="slot"></div><div class="slot"></div><div class="slot"></div></div>
-          <div class="log">Opp: Potion → Active +20</div>
-        </div>
+      <div class="board" aria-label="Phone layout sketch traced from the Pocket screenshot">
+        <div class="pts opp">Opponent ① ② ○</div>
+        <div class="ohand"><i></i><i></i></div>
+        <div class="orb oorb"></div>
+        <div class="obench"><b>Bench</b><b>Bench</b><b class="e"></b></div>
+        <div class="ups oups">▲</div>
+        <div class="opile"><b>Disc.</b><b>Deck</b></div>
+        <div class="oact"><b class="big">Active</b></div>
+        <div class="endt">End Turn</div>
+        <div class="stad"><b>Stadium</b></div>
+        <div class="act"><b class="big">Active<span class="badge">▲</span></b></div>
+        <div class="pile"><b>Deck</b><b>Disc.</b></div>
+        <div class="ups mups">▲</div><div class="menu">≡</div>
+        <div class="bench"><b>Bench</b><b class="lit">Bench</b><b>Bench</b></div>
+        <div class="hand2"><i></i><i class="lift"></i></div>
+        <div class="orb morb"><span></span></div>
+        <div class="pts me">You ① ② ○</div>
       </div>
-      <figcaption class="caption">Sketch only. A Basic is lifted from the hand; the two empty bench slots glow.</figcaption>
+      <figcaption class="caption">Traced from your screenshot. ▲ = damage modifier in effect (L6).</figcaption>
     </figure>
   </div>
 
   <h2>How each move is played</h2>
   <ol class="rows" data-group="flow"></ol>
 
-  <h2>Screenshots I need from Pocket</h2>
-  <p>These settle the layout rows above. Any order; one each is enough.</p>
-  <ul class="shots">
-    <li>Setup: placing Active and Bench</li><li>A full board mid-game</li><li>Lit targets after tapping a card</li>
-    <li>Energy zone (now and next)</li><li>Picking an attack</li><li>Playing a Supporter with no target</li>
-    <li>Playing a targeted Item (Potion)</li><li>Using an ability</li><li>Retreat</li>
-    <li>Promoting after a knockout</li><li>Each skip-confirm prompt</li><li>Opponent mid-turn</li>
-    <li>Long-press card view</li><li>Status icons on a Pokémon</li><li>End-of-game screen</li>
-  </ul>
 </div>
 
-<div class="dock">
-  <span id="count">No corrections yet.</span>
-  <button type="button" id="copy">Copy corrections</button>
-  <textarea id="out" hidden readonly aria-label="Corrections text"></textarea>
+<div class="wrap" style="padding-block:0 40px">
+  <button type="button" id="copy">Copy answers (backup)</button>
+  <textarea id="out" hidden readonly aria-label="Answers text"></textarea>
 </div>
 
 <script>
 // [id, group, status, engine, statement, note]
-// status: confirmed | proposed | question ; engine: ok | wrong | missing | na
+// status: confirmed (you said it) | accepted (drafted, you didn't object) | research (found online, not yet seen by you)
+// engine: ok | wrong | missing | na
 const R = [
- ["S1","setup","confirmed","ok","A deck is exactly 20 cards, at most 2 copies of a name, at least 1 Basic.","Enforced by the deck layer, not the engine."],
- ["S2","setup","confirmed","wrong","You choose up to 3 energy types for a deck; the Energy Zone rolls among them.","<b>Engine:</b> uses every type found in the deck, no choice, no cap. <b>Question:</b> for a drafted deck, is the choice made at deckbuild?"],
- ["S3","setup","confirmed","ok","Opening hand is 5 cards and always holds at least one Basic. No mulligan.","No-mulligan is my addition."],
- ["S4","setup","proposed","ok","The coin flip happens and is shown first; then both players set up.",""],
- ["S5","setup","proposed","wrong","Both players place their Active and up to 3 Bench at the same time, face down, and they are revealed together.","<b>Engine:</b> player 1 sets up, then player 2. The screen could hide this, but PvP needs it in the engine."],
-
+ ["S1","setup","confirmed","ok","A deck is exactly 20 cards, at most 2 copies of a name, at least 1 Basic. A Fossil does not count as the Basic.","Enforced by the deck layer."],
+ ["S2","setup","confirmed","wrong","A deck has up to 3 energy types, locked in at the final deck build. The choice defaults to the types its Pokémon's attacks need and can be edited. Defaults lean mono-energy. Each turn the Energy Zone rolls one of the chosen types at random.","<b>Engine:</b> uses every type in the deck, no choice."],
+ ["S3","setup","confirmed","ok","Opening hand is 5 cards and always holds at least one Basic Pokémon (a Fossil doesn't count). No mulligan.",""],
+ ["S4","setup","confirmed","wrong","Order: a random player is picked to flip → the coin is shown landing → \"You go first / second\" → both players set up at the same time; each side's first energy is shown from here on → both press Ready → the game starts. The player who flipped goes first on heads, second on tails.","<b>Engine:</b> no flip step; setup is one player after the other."],
+ ["S5","setup","confirmed","wrong","Setup is simultaneous: each player places an Active and up to 3 Bench Basics, then presses Ready. The opponent's choices are hidden until both are Ready.","Fossils can't be placed at setup."],
  ["T1","turn","confirmed","ok","Every turn starts by drawing 1 card, including the first player's first turn.",""],
  ["T2","turn","confirmed","ok","An empty deck means you stop drawing. It is not a loss.",""],
- ["T3","turn","confirmed","missing","Hand maximum is 10. Draws and other additions past 10 are prevented; the card stays where it was.",""],
- ["T4","turn","confirmed","missing","The Energy Zone shows this turn's energy and next turn's.","<b>Engine:</b> only knows this turn's."],
- ["T5","turn","confirmed","ok","The player going first gets no energy on their first turn. The zone still shows their next-turn energy.","Second sentence is proposed."],
- ["T6","turn","confirmed","ok","One energy attach per turn, onto your Active or a Benched Pokémon. Energy not attached is lost at end of turn.","Second sentence is proposed."],
- ["T7","turn","confirmed","ok","The Bench holds 3. Basics can be played to it any number of times during your turn.",""],
- ["T8","turn","confirmed","wrong","No evolving on either player's own first turn, or on the turn the Pokémon was played or evolved.","<b>Engine:</b> blocks only game turn 1, so the second player can evolve on their first turn."],
- ["T9","turn","confirmed","ok","Retreat once per turn, discarding energy equal to the retreat cost.","<b>Question:</b> when the Pokémon holds mixed energy, do you pick which to discard? The engine picks for you in a fixed order."],
- ["T10","turn","confirmed","ok","Attacking ends your turn. Attacking is optional.","Second sentence is proposed."],
- ["T11","turn","confirmed","ok","Weakness adds 20 damage. There is no Resistance.","Dual types (expected November) will break the engine's single-type check."],
-
- ["A1","trainer","confirmed","missing","One Supporter per turn, from the very first turn, including the player going first.","<b>Engine:</b> no Trainers exist at all. 263 Item and Supporter cards are dropped when card data loads."],
+ ["T3","turn","confirmed","missing","Hand maximum is 10. At 10, draws and effects that put cards in your hand can't be used; the card stays where it was.",""],
+ ["T4","turn","confirmed","missing","The Energy Zone shows this turn's energy (large) and next turn's (small). Attaching leaves an empty grey circle in the large spot.",""],
+ ["T5","turn","confirmed","ok","The player going first gets no energy on their first turn. The zone still shows their next-turn energy. They can still attack if an attack costs nothing or a card gives energy.","Attack sentence: official FAQ."],
+ ["T6","turn","confirmed","wrong","One attach per turn from the zone, onto your Active or a Benched Pokémon. Energy you don't attach stays visible through the opponent's turn and is discarded at the start of your next turn, where it counts as discarded energy for cards that care. Then next turn's energy moves into the large spot and a new next is rolled.","<b>Engine:</b> drops it silently at end of turn."],
+ ["T7","turn","confirmed","missing","The Bench is 3 fixed slots behind the Active: one directly behind it, one to its left, one to its right. Each slot holds one Pokémon. On your turn you may place a Basic into any empty slot, as many times as you have Basics and empty slots. Which slot you choose is kept, because some cards care.","<b>Engine:</b> Bench is an unordered list."],
+ ["T8","turn","confirmed","wrong","No evolving on either player's own first turn, or a Pokémon played or evolved this turn. A card can override this only when its text says so (one Eevee's ability lets it evolve the turn it is played, in the Active spot).","<b>Engine:</b> blocks only game turn 1."],
+ ["T9","turn","confirmed","wrong","Retreat once per turn, discarding energy equal to the retreat cost. With mixed energy you pick which to discard; the order it was attached doesn't matter. If only one choice is possible it is made for you.","<b>Engine:</b> picks for you."],
+ ["T10","turn","accepted","ok","Attacking ends your turn. Attacking is optional.",""],
+ ["T11","turn","confirmed","ok","Weakness adds 20 damage. There is no Resistance. Some Pokémon have no Weakness. Cards can change damage and Weakness (a Stadium can make Weakness ×2).","Dual types (expected November) not in scope."],
+ ["A1","trainer","confirmed","missing","One Supporter per turn, from the very first turn, including the player going first.","<b>Engine:</b> no Trainers exist; 263 cards are dropped at load."],
  ["A2","trainer","confirmed","missing","Items are unlimited. Each Pokémon holds at most one Tool.",""],
- ["A3","trainer","proposed","missing","A played Item or Supporter goes to the discard pile. A Tool stays on its Pokémon and is discarded with it.",""],
- ["A4","trainer","question","missing","Abilities (451 cards): an ability you activate can be used once per turn per Pokémon unless its text says otherwise; a passive one is always on. Is that right?",""],
- ["A5","trainer","proposed","missing","Fossil Items are played to the Bench like a Basic.",""],
-
- ["C1","status","confirmed","ok","Conditions apply only to the Active and resolve at the Pokémon Checkup at the end of each player's turn.","<b>Question:</b> each Checkup affects both Actives, not only the player whose turn ended? The engine does both."],
- ["C2","status","proposed","ok","Poison deals 10, Burn deals 20 at each Checkup.","Amounts were not in your answers."],
+ ["A3","trainer","confirmed","missing","A played Item or Supporter goes to the discard pile. A Tool stays on its Pokémon until it is discarded with it or removed by a card (Field Blower, Guzma). After removal, its owner may attach a different Tool.",""],
+ ["A4","trainer","confirmed","missing","An ability whose text says once per turn can be used once per turn per Pokémon. One without that wording can be used repeatedly or is passive, as its text says.",""],
+ ["A5","trainer","confirmed","missing","A Fossil is an Item in hand. On your turn it is played to an empty Bench slot as a 40 HP Basic that can't retreat. On your turn you may discard it from play; the opponent gets no point.","Not a Basic for the opening hand or setup (S1, S3, S5)."],
+ ["A6","trainer","research","missing","Stadiums: one in play, shared by both players. A new one replaces it. One Stadium per turn per player. You can't play a Stadium with the same name as the one in play.","Source: Bulbapedia. You referenced Bounded Field, so Stadiums are in scope."],
+ ["A7","trainer","research","missing","There is no deck search. A card that \"searches\" puts a random matching card from your deck into your hand.","Source: Bulbapedia, Serebii."],
+ ["C1","status","confirmed","ok","Conditions apply only to the Active. The Pokémon Checkup between every turn checks both Actives, in the order Poison → Burn → Asleep → Paralyzed.","Reference: game8.co/…/483132."],
+ ["C2","status","confirmed","ok","At base, Poison deals 10 and Burn deals 20 at each Checkup. Cards can change this.",""],
  ["C3","status","confirmed","missing","Poison and Burn stack with each other and with one other condition. At most 3 at once.","<b>Engine:</b> has Poison and Burn only."],
- ["C4","status","confirmed","missing","Sleep, Paralysis and Confusion are mutually exclusive; a new one replaces the old one.",""],
- ["C5","status","confirmed","missing","Asleep or Paralyzed: cannot attack or retreat normally. You can still play cards and attach energy.","Second sentence is proposed."],
- ["C6","status","confirmed","ok","Burn and Sleep: coin flip at Checkup, heads cures.","Burn done; Sleep missing."],
- ["C7","status","confirmed","missing","Paralysis clears automatically after its owner's next turn.",""],
- ["C8","status","confirmed","missing","Confusion: coin flip before attacking; tails means the attack fails and the condition stays. A Confused Pokémon can retreat.","Retreat sentence is proposed."],
- ["C9","status","confirmed","wrong","Cured by evolving, by moving to the Bench, by Lum Berry, and by Koga.","<b>Engine:</b> evolving and retreating both keep the condition."],
-
- ["E1","end","confirmed","wrong","A knockout scores 1, an ex 2, a Mega ex 3.","<b>Engine:</b> Mega ex scores 2."],
+ ["C4","status","accepted","missing","Sleep, Paralysis and Confusion are mutually exclusive; a new one replaces the old one.",""],
+ ["C5","status","accepted","missing","Asleep or Paralyzed: can't attack or retreat. You can still play cards and attach energy.",""],
+ ["C6","status","accepted","ok","Burn and Sleep: coin flip at Checkup, heads cures.","Burn done; Sleep missing."],
+ ["C7","status","accepted","missing","Paralysis wears off at the Checkup after its owner's next turn.",""],
+ ["C8","status","research","missing","Confusion: flip before attacking. Tails, the attack fails, no self-damage, and the condition stays. A Confused Pokémon can retreat.","No self-damage: Bulbapedia."],
+ ["C9","status","confirmed","wrong","Leaving the Active spot (retreat, switch, any effect) removes all conditions and every other effect on that Pokémon. Evolving and Lum Berry also cure. Some cards prevent conditions (Arceus, Ogerpon ex, Steel Apron on Metal Pokémon).","<b>Engine:</b> evolving and retreating keep conditions."],
+ ["E1","end","confirmed","wrong","A knockout scores 1, an ex 2, a Mega ex 3. A Pokémon removed by an effect (e.g. a discarded Fossil) scores nothing.","<b>Engine:</b> Mega ex scores 2."],
  ["E2","end","confirmed","ok","First to 3 points wins. You also win if the opponent has no Pokémon left in play.",""],
- ["E3","end","confirmed","missing","Both players reaching 3 or more at the same time is a tie.","<b>Engine:</b> ends the game the moment the first player reaches 3, so a tie can never happen."],
- ["E4","end","proposed","missing","Simultaneous resolution: apply all damage from one event, then remove every knocked-out Pokémon, then award all points, then check for a win or tie.","Lets a Checkup that knocks out both Actives end in a tie. Also a tie if both sides run out of Pokémon at once."],
- ["E5","end","question","ok","After a knockout, its owner picks the new Active from the Bench before play continues. If both players must pick, who picks first, and does either see the other's pick?",""],
- ["E6","end","proposed","wrong","Conceding is allowed at any time, including during the opponent's turn, and counts as a loss.","<b>Engine:</b> only on your own turn."],
-
- ["M1","time","confirmed","missing","90 seconds per turn. Letting it run out without acting halves your next turn to 45 seconds.","<b>Question:</b> what happens at zero: the turn ends with no attack? After how many timeouts is a player removed?"],
- ["M2","time","confirmed","missing","Each player's total action time is capped at 20 minutes. Past it, points decide the winner; equal points is a tie.",""],
- ["M3","time","confirmed","missing","Turn cap: turn 1 is the first player's first turn, +1 per turn. Cap is 30 against a player, 50 against the bot.","<b>Question:</b> at the cap, do points decide the result, as in M2?"],
- ["M4","time","proposed","na","Against the bot there is no turn timer or total-time cap; only the 50-turn cap applies.",""],
-
- ["L1","layout","confirmed","na","Copy Pocket's layout: opponent at the top, you at the bottom, Actives facing each other in the middle, Benches behind them, Energy Zone beside your Active, hand along the bottom edge.",""],
- ["L2","layout","confirmed","na","Always visible on every Pokémon: remaining HP, attached energy as type icons, status icons, and its Tool.",""],
- ["L3","layout","confirmed","na","Always visible: both players' points, and this turn's and next turn's energy.",""],
- ["L4","layout","proposed","na","Also visible: opponent's hand count, both deck counts, both discard piles (tap to look through).",""],
- ["L5","layout","proposed","na","Whose turn it is, the turn number, and the turn timer sit between the two halves.",""],
- ["L6","layout","proposed","na","Desktop uses the same layout scaled up, with the action log docked to the right. Phone is portrait only.",""],
- ["L7","layout","confirmed","na","No bot or debug buttons. Not shown: Supporter, energy and retreat used this turn.",""],
-
- ["F1","flow","confirmed","na","Tap a card: it lifts, the spots it can legally go glow, and the rest dims. Tap a glowing spot to play it. Tap anywhere else, or the card again, to cancel.",""],
- ["F2","flow","confirmed","na","Long-press a card (hover on desktop) to see the whole card; releasing closes it.","Proposed: about 350 ms before long-press opens, so ordinary taps never trigger it."],
- ["F3","flow","question","na","Setup: tap a Basic and the Active spot glows; after that the Bench spots glow. Finish with a Ready button. Is Ready allowed, given the done-gate names only attack and End Turn?",""],
- ["F4","flow","proposed","na","Play a Basic: tap it, the empty Bench spots glow.",""],
- ["F5","flow","proposed","na","Evolve: tap the evolution and only Pokémon it can evolve right now glow. If none can, tapping the card says why (e.g. \"No evolving on your first turn\").",""],
- ["F6","flow","proposed","na","Attach energy: tap this turn's energy in the zone, all your Pokémon glow, tap one. (Pocket uses a drag; tap-tap keeps one input model.)",""],
- ["F7","flow","proposed","na","Targeted Trainer (Potion, a Tool, Rare Candy, Cyrus): tap it and only legal targets glow, on either side of the board.",""],
- ["F8","flow","question","na","Trainer with no target (Professor's Research, Poké Ball, Red Card, Giovanni): tap it and the middle of the board glows as a play area; tap that. Or would you rather tap once to enlarge the card and press Play?",""],
- ["F9","flow","proposed","na","A Trainer that needs a choice after it is played (pick from your deck; Sabrina's new Active) opens a picker over the board for whoever owns the choice.",""],
- ["F10","flow","confirmed","na","Tap your Active to open its card: attacks listed (ones you can't pay greyed out), its ability if any, and Retreat. Tapping an attack uses it. Retreat makes your Bench glow; tap the replacement.","Card-as-menu for ability and Retreat is proposed."],
- ["F11","flow","proposed","na","Tap a Benched Pokémon with an ability to open its card with the ability to use.",""],
- ["F12","flow","proposed","na","Coin flips show their result briefly before the effect resolves, and the result goes in the log.",""],
- ["F13","flow","confirmed","na","End Turn asks to confirm if you could still attach energy, or could still attack.","Proposed: one prompt naming both when both apply."],
- ["F14","flow","proposed","na","After a knockout: a banner says \"Choose your new Active\", your Bench glows, and nothing else can be done.",""],
- ["F15","flow","confirmed","na","Opponent's turn plays out one action at a time, about 0.5 s each: the card appears, the target flashes, numbers change. A Skip control exists only against the bot.","<b>Question:</b> does Skip jump to the end of their whole turn?"],
- ["F16","flow","confirmed","na","A small action log, Hearthstone style.","Proposed: last 3 lines on phone, tap to expand; full column on desktop."],
- ["F17","flow","confirmed","na","Motion is functional and under 150 ms (opponent pacing aside). No undo.",""],
- ["F18","flow","proposed","na","An illegal move is never sent: a card with nowhere legal to go shows nothing glowing and a one-line reason.",""],
- ["F19","flow","proposed","na","Concede sits in a small menu and asks to confirm.",""],
- ["F20","flow","proposed","na","End screen: Win, Loss or Tie, the reason (3 points, no Pokémon left, concede, time, turn cap), the final score, and Rematch and Back. In a draft run the result is added to the run record.",""]
+ ["E3","end","confirmed","missing","If one action gives both players 3 or more points, it is a tie, whatever their Benches hold.","<b>Engine:</b> stops at the first player to 3. Game8 says Bench decides; you overruled it."],
+ ["E4","end","confirmed","missing","Win check after each action. One action = an attack with everything it triggers (its damage, recoil, Rocky Helmet), or one Checkup. All damage from that action lands, then every knocked-out Pokémon is removed, then points are awarded, then the result is checked. Example: Mega Charizard Y ex takes the last point but dies to its own recoil plus Rocky Helmet → tie. If it instead dies to Poison at the next Checkup → its player already won.",""],
+ ["E5","end","confirmed","missing","If an action leaves both players short of 3 but one has no Pokémon left, the player with Pokémon left wins; if neither has any, tie.",""],
+ ["E6","end","confirmed","missing","After a knockout its owner picks the new Active from the Bench. If both must pick, the player whose turn is next picks first. The opponent sees the pick once it has moved to the Active spot.","<b>Engine:</b> one player at a time, no order rule."],
+ ["E7","end","accepted","wrong","Conceding is allowed at any time and counts as a loss.","<b>Engine:</b> only on your own turn."],
+ ["M1","time","confirmed","missing","PvP only: 90 seconds per turn. At zero the turn ends with no attack and passes to the other player; a timeout halves the next turn to 45 s.","Not needed against the bot (M4). Removal after repeated timeouts left until PvP exists."],
+ ["M2","time","confirmed","missing","PvP only: each player has a 20-minute chess clock. When it runs out, higher points win; equal is a tie.",""],
+ ["M3","time","confirmed","missing","Every player's turn counts as one turn (15 each in PvP). When turn 30 ends (50 against the bot), the game is a tie regardless of points.",""],
+ ["M4","time","accepted","na","Against the bot there is no turn timer or match clock; only the 50-turn cap applies.",""],
+ ["L1","layout","confirmed","na","Copy your Pocket screenshot. Opponent on top, mirrored. Actives face each other in the middle, Benches behind them (3 slots: behind, left, right). Your deck with the discard pile under it sits off to the right of your Active and Bench; the opponent's mirror it on the left. Your Energy Zone sits right of your hand, a little below the Bench; the opponent's top left. End Turn sits at the middle of the screen, right of centre. Opponent's hand shows as card backs along the top; yours fans along the bottom. The Stadium in play sits at the left edge.",""],
+ ["L2","layout","confirmed","na","Every Pokémon shows its real card image with HP number and bar at the top right, attached energy as type icons along the bottom, status icons, and its Tool.",""],
+ ["L3","layout","confirmed","na","Points are 3 Poké Ball pips per player that fill up: the opponent's top right beside their name, yours bottom left beside yours.",""],
+ ["L4","layout","accepted","na","Also visible: opponent's hand count, both deck counts, both discard piles (tap to look through).",""],
+ ["L5","layout","confirmed","na","No permanent turn indicator. At each turn start a banner flashes YOUR TURN or OPPONENT'S TURN in different colours. On your turn, cards you can use right now pulse with a glow.",""],
+ ["L6","layout","confirmed","na","An orange up-arrow badge on a Pokémon (and beside the Stadium) means a damage modifier is in effect, e.g. from the Stadium or a Benched Lucario. Tapping it shows where each modifier comes from and its value.","From your screenshot."],
+ ["L7","layout","accepted","na","Phone is portrait. Desktop uses the same layout scaled up.",""],
+ ["L8","layout","accepted","na","No bot or debug buttons, no Auto toggle. Not shown: Supporter, energy and retreat used this turn.","Pocket's Auto toggle is solo-only; left out."],
+ ["F1","flow","confirmed","na","Main input is press-and-drag on phone and desktop: hold a card, drag it onto the board, drop it on a legal spot. Cards can't be queued. On desktop a tap-then-tap also works.",""],
+ ["F2","flow","confirmed","na","Holding a card in hand without moving opens it large, centred, filling most of the screen. Starting to drag shrinks it back to normal size under your finger. Long-press on any board card also opens it.","~350 ms before it opens, so quick taps never trigger it."],
+ ["F3","flow","confirmed","na","While you hold or drag a card, the spots it can legally go glow and the rest dims slightly. A line at the bottom says what to do (e.g. \"Choose a Pokémon to attach energy to\"). Dropping anywhere else cancels.",""],
+ ["F4","flow","accepted","na","Basic: drag to an empty Bench slot. Evolution: drag onto a Pokémon it can evolve right now; only those glow.",""],
+ ["F5","flow","confirmed","na","Energy: drag this turn's energy from your zone onto any of your Pokémon.",""],
+ ["F6","flow","accepted","na","Targeted Trainer (Potion, a Tool, Rare Candy, Cyrus): only legal targets glow, on either side of the board.",""],
+ ["F7","flow","confirmed","na","Trainer with no target (Professor's Research, Poké Ball, Giovanni): the whole board glows except the hands; drop it anywhere on the board.",""],
+ ["F8","flow","confirmed","na","When a card needs a choice (a Pokémon, an energy to discard, a new Active), everything dims except the cards involved and the player who chooses is prompted. If only one choice is possible it is made automatically.",""],
+ ["F9","flow","accepted","na","Tap your Active to open its card: attacks listed (unaffordable ones greyed), its ability if any, and Retreat. Tapping an attack uses it. Retreat makes your Bench glow; tap the replacement.",""],
+ ["F10","flow","accepted","na","Tap a Benched Pokémon with a usable ability to open its card and use it.",""],
+ ["F11","flow","confirmed","na","Every coin flip is shown. For the first flip of an effect the flipping player taps the coin; any further flips run on their own in a grid 3 coins wide, as many rows as needed. The bot's flips run on their own.",""],
+ ["F12","flow","accepted","na","End Turn asks to confirm if you could still attach energy or attack; one prompt names both when both apply.",""],
+ ["F13","flow","accepted","na","After a knockout: \"Choose your new Active\", your Bench glows, nothing else can be done.",""],
+ ["F14","flow","accepted","na","The opponent's turn plays out one action at a time, about 0.5 s each: the card appears, the target flashes, numbers change. A Skip control against the bot jumps to the end of their whole turn.","Skip scope was unanswered; this is the default."],
+ ["F15","flow","confirmed","na","History: a small Poké Ball notebook icon opens a scrollable list of recently used cards with what they did. Desktop shows more of it at once. Both show the same information.",""],
+ ["F16","flow","confirmed","na","Motion means the small movements between states: a card sliding to its spot, glows and dims fading, a number ticking down. Each is under 150 ms so the game never waits on an animation (opponent pacing in F14 aside). No undo.","You asked what this was. It came from your 10-15 answer \"snappy, no slow animations\"."],
+ ["F17","flow","confirmed","na","Trying something illegal (dragging a card with nowhere to go) briefly flashes a one-line reason on screen, e.g. \"No evolving on your first turn\".",""],
+ ["F18","flow","accepted","na","Concede sits in a small menu and asks to confirm.",""],
+ ["F19","flow","accepted","na","End screen: Win, Loss or Tie, the reason (3 points, no Pokémon left, concede, turn cap), the final score, Rematch and Back. In a draft run the result is added to the run record.",""],
+ ["X1","cards","confirmed","missing","Every card's text works: all 565 attack texts, 158 abilities, and 153 Trainer, Tool and Stadium texts across the 3,879 cards. A test fails if any card text has no working effect.","You: \"it's time to build them in\"."]
 ];
 
-const KEY = "battle-spec-fixes";
+const KEY = "battle-spec-fixes-v2";
 let fixes = {};
 try { fixes = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) {}
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(fixes)); } catch (e) {} };
+let answersDoc = null, saveTimer = null;
+const status = (t) => { document.getElementById("count").textContent = t; };
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(fixes)); } catch (e) {}
+  if (!answersDoc) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    answersDoc.set({ fixes, savedAt: new Date().toISOString() })
+      .then(() => status(`${Object.keys(fixes).length} answers saved. Claude can read them.`))
+      .catch(() => status("Couldn't save to the shared store. Use Copy answers instead."));
+  }, 800);
+}
+// Shared store: Claude reads answers from here. Answers typed before it existed live in localStorage and are uploaded once.
+(async () => {
+  const db = await window.claude?.use?.("db");
+  if (!db) return;
+  answersDoc = db.doc("spec/answers-v2");
+  const snap = await answersDoc.get().catch(() => null);
+  const stored = (snap?.exists && snap.data().fixes) || {};
+  const merged = { ...stored, ...fixes };
+  const changed = Object.keys(merged).some(k => stored[k] !== merged[k]);
+  fixes = merged;
+  document.querySelectorAll(".row").forEach(li => li.refresh?.());
+  count();
+  if (changed) save(); else if (Object.keys(fixes).length) status(`${Object.keys(fixes).length} answers saved. Claude can read them.`);
+})();
 const engLabel = { ok: "Engine OK", wrong: "Engine wrong", missing: "Engine missing", na: "Screen" };
 
 function rowEl([id, , st, en, txt, note]) {
@@ -269,6 +307,7 @@ function rowEl([id, , st, en, txt, note]) {
       <textarea id="fix-${id}" hidden aria-label="Correction for ${id}" placeholder="What is actually true?"></textarea></div>`;
   const btn = li.querySelector("button"), ta = li.querySelector("textarea");
   const sync = () => { li.classList.toggle("flagged", !!fixes[id]); btn.textContent = ta.hidden ? (fixes[id] ? "Edit correction" : "Correct this") : "Done"; };
+  li.refresh = () => { ta.value = fixes[id] || ""; sync(); };
   if (fixes[id]) ta.value = fixes[id];
   btn.onclick = () => { ta.hidden = !ta.hidden; if (!ta.hidden) ta.focus(); sync(); };
   ta.oninput = () => { const v = ta.value.trim(); if (v) fixes[id] = v; else delete fixes[id]; save(); sync(); count(); };
@@ -278,7 +317,7 @@ function rowEl([id, , st, en, txt, note]) {
 
 function count() {
   const n = Object.keys(fixes).length;
-  document.getElementById("count").textContent = n ? `${n} correction${n > 1 ? "s" : ""} written.` : "No corrections yet.";
+  status(n ? `${n} answer${n > 1 ? "s" : ""} written${answersDoc ? "" : " (saved in this browser only)"}.` : "No answers yet.");
 }
 
 function tally() {
@@ -286,8 +325,8 @@ function tally() {
   const cells = [
     [n(r => r[3] === "wrong"), "rules the engine gets wrong"],
     [n(r => r[3] === "missing"), "rules the engine lacks"],
-    [n(r => r[2] === "question"), "questions for you"],
-    [n(r => r[2] === "proposed"), "proposals to check"]
+    [n(r => r[2] === "research"), "from research"],
+    [n(r => r[0]), "rules in total"]
   ];
   document.getElementById("tally").innerHTML = cells.map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join("");
 }
