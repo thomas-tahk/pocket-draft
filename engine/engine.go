@@ -33,18 +33,25 @@ func (g *Game) narrate(format string, args ...any) {
 
 // NewGame deals a fresh match: shuffle both decks, draw opening hands
 // (guaranteeing at least one Basic), flip for first player, and open the setup
-// prompts. All randomness derives from seed.
+// prompts. All randomness derives from seed. Each deck's Energy Zone uses its
+// default energy types; see NewGameFromDecks to pass a chosen set.
 func NewGame(seed uint64, deck0, deck1 []Card) *Game {
+	return NewGameFromDecks(seed, [2]Deck{{Cards: deck0}, {Cards: deck1}})
+}
+
+// NewGameFromDecks is NewGame for decks that carry their chosen energy types
+// (spec S2). The caller validates a choice with ValidateEnergyTypes.
+func NewGameFromDecks(seed uint64, decks [2]Deck) *Game {
 	g := &Game{Seed: seed, rng: newRng(seed)}
-	g.decks[0] = deck0
-	g.decks[1] = deck1
+	g.decks[0] = decks[0].Cards
+	g.decks[1] = decks[1].Cards
 	st := &State{Winner: -1, Phase: PhaseSetup}
 	g.S = st
 
 	for i := 0; i < 2; i++ {
 		pl := &st.Players[i]
 		pl.Deck = append([]Card(nil), g.decks[i]...)
-		pl.EnergyTypes = energyTypesOf(pl.Deck)
+		pl.EnergyTypes = decks[i].energyTypes()
 		pl.EnergyZone = NoEnergy
 		g.dealOpeningHand(i)
 	}
@@ -570,7 +577,12 @@ func (g *Game) gameOver(winner int, reason EndReason) {
 // event. Same inputs → identical game (ADR-0005). This is also how reconnection
 // and replay viewing work.
 func Replay(seed uint64, deck0, deck1 []Card, events []Event) (*Game, error) {
-	g := NewGame(seed, deck0, deck1)
+	return ReplayDecks(seed, [2]Deck{{Cards: deck0}, {Cards: deck1}}, events)
+}
+
+// ReplayDecks is Replay for decks that carry their chosen energy types.
+func ReplayDecks(seed uint64, decks [2]Deck, events []Event) (*Game, error) {
+	g := NewGameFromDecks(seed, decks)
 	for i, ev := range events {
 		if err := g.Submit(ev); err != nil {
 			return nil, fmt.Errorf("event %d (%T): %w", i, ev, err)

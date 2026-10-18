@@ -50,10 +50,29 @@ func handleState(w http.ResponseWriter, r *http.Request) {
 // newReq is the optional JSON body for POST /api/new. `you` is your deck as a
 // list of card IDs; when present you play it (player 0) against the drafted bot
 // deck (player 1). An empty body falls back to the demo matchup (player 1's
-// curated stand-in vs the bot).
+// curated stand-in vs the bot). `energy` is your deck's chosen Energy Zone
+// types by name (1–3, spec S2); omitted means the default from its attack costs.
 type newReq struct {
-	You  []string `json:"you"`
-	Seed *uint64  `json:"seed"`
+	You    []string `json:"you"`
+	Seed   *uint64  `json:"seed"`
+	Energy []string `json:"energy"`
+}
+
+// energyChoice parses and validates a requested energy choice; nil when none
+// was requested, so the engine applies the deck's default.
+func energyChoice(names []string) ([]engine.Energy, error) {
+	if len(names) == 0 {
+		return nil, nil
+	}
+	types := make([]engine.Energy, len(names))
+	for i, n := range names {
+		e, ok := energyByName(n)
+		if !ok {
+			return nil, fmt.Errorf("unknown energy type %q", n)
+		}
+		types[i] = e
+	}
+	return types, engine.ValidateEnergyTypes(types)
 }
 
 // POST /api/new — start a fresh game. With a {you:[cardId...], seed} body you play
@@ -110,10 +129,14 @@ func startGame(req newReq) (gameView, *startErr) {
 		}
 		p0 = d
 	}
+	energy, err := energyChoice(req.Energy)
+	if err != nil {
+		return gameView{}, &startErr{err, http.StatusBadRequest}
+	}
 
 	mu.Lock()
 	defer mu.Unlock()
-	game = engine.NewGame(seed, p0, p1)
+	game = engine.NewGameFromDecks(seed, [2]engine.Deck{{Cards: p0, Energy: energy}, {Cards: p1}})
 	return toGameView(game, humanSeat), nil
 }
 

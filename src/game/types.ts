@@ -34,6 +34,7 @@ export type PlayerView = {
   deckCount: number;
   discardCount: number;
   energyZone: string;
+  energyTypes: string[];
   energyUsed: boolean;
   retreated: boolean;
 };

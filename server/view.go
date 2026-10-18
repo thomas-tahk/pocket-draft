@@ -46,6 +46,7 @@ type playerView struct {
 	DeckCount    int           `json:"deckCount"`
 	DiscardCount int           `json:"discardCount"`
 	EnergyZone   string        `json:"energyZone"`
+	EnergyTypes  []string      `json:"energyTypes"` // the deck's Energy Zone types (spec S2)
 	EnergyUsed   bool          `json:"energyUsed"`
 	Retreated    bool          `json:"retreated"`
 }
@@ -101,6 +102,14 @@ func energyLabel(e engine.Energy) string {
 		return ""
 	}
 	return e.String()
+}
+
+func energyLabels(es []engine.Energy) []string {
+	out := make([]string, len(es))
+	for i, e := range es {
+		out[i] = e.String()
+	}
+	return out
 }
 
 func toCardView(c engine.Card) cardView {
@@ -173,6 +182,7 @@ func toPlayerView(p engine.Player, isViewer bool) playerView {
 		DeckCount:    len(p.Deck),
 		DiscardCount: len(p.Discard),
 		EnergyZone:   energyLabel(p.EnergyZone),
+		EnergyTypes:  energyLabels(p.EnergyTypes),
 		EnergyUsed:   p.EnergyUsed,
 		Retreated:    p.Retreated,
 	}

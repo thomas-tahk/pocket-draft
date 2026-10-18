@@ -14,7 +14,7 @@ const (
 	Fighting
 	Darkness
 	Metal
-	Dragon // a Pokémon type only: Dragon has no Energy Zone energy (see energyTypesOf)
+	Dragon // a Pokémon type only: Dragon has no Energy Zone energy (see ValidateEnergyTypes)
 
 	NoEnergy Energy = 255
 )
@@ -111,23 +111,4 @@ func canPay(have map[Energy]int, cost []Energy) bool {
 		leftover += n
 	}
 	return leftover >= colorless
-}
-
-// energyTypesOf derives a deck's registered Energy Zone types from the types of
-// the Pokémon in it. Colorless-only decks fall back to Colorless.
-func energyTypesOf(deck []Card) []Energy {
-	seen := map[Energy]bool{}
-	var out []Energy
-	for _, c := range deck {
-		// Colorless and Dragon have no Energy Zone energy of their own; their
-		// attacks are paid by the deck's other types.
-		if c.Type != Colorless && c.Type != Dragon && !seen[c.Type] {
-			seen[c.Type] = true
-			out = append(out, c.Type)
-		}
-	}
-	if len(out) == 0 {
-		out = []Energy{Colorless}
-	}
-	return out
 }
