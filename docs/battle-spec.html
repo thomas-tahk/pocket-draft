@@ -263,7 +263,7 @@ const R = [
  ["F17","flow","confirmed","na","Trying something illegal (dragging a card with nowhere to go) briefly flashes a one-line reason on screen, e.g. \"No evolving on your first turn\".",""],
  ["F18","flow","accepted","na","Concede sits in a small menu and asks to confirm.",""],
  ["F19","flow","accepted","na","End screen: Win, Loss or Tie, the reason (3 points, no Pokémon left, concede, turn cap), the final score, Rematch and Back. In a draft run the result is added to the run record.",""],
- ["X1","cards","confirmed","missing","Every card's text works: all 565 attack texts, 158 abilities, and 153 Trainer, Tool and Stadium texts across the 3,879 cards. A test fails if any card text has no working effect.","You: \"it's time to build them in\"."]
+ ["X1","cards","confirmed","missing","Every card's text gets an implementation: all 565 attack texts, 158 abilities, and 153 Trainer, Tool and Stadium texts across the 3,879 cards. Tests prove each wording does what it says on at least one real card, and that no text is left unmapped. They can't prove every niche interaction: that comes from playing, and bugs are expected long after.","You: \"it's time to build them in\"."]
 ];
 
 const KEY = "battle-spec-fixes-v2";

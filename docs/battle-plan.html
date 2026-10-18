@@ -48,10 +48,11 @@ td.test { font-size: .85rem; color: var(--muted); min-width: 14em; }
   <div class="tally" id="tally"></div>
 
   <div class="box">
-    <h3>Three things to OK with the list</h3>
+    <h3>Four things to OK with the list</h3>
     <ol>
       <li><b>Screen issues can't be checked by a Go test.</b> Everything the screen decides (what glows, prompts, banners, modifier breakdowns) comes from the Go engine and gets a Go test. Drag, drop and layout get a browser test on a phone-sized screen. That needs <b>Playwright</b> as a new dev-only dependency. Without it, screen issues have no automatic done check and I'd have to check them by hand at milestone end.</li>
       <li><b>Draft pool during milestones 1–3.</b> Until milestone 4 finishes card text, the draft only offers cards whose text already works, so every test game plays correctly. Milestone 4 ends with every card in the pool.</li>
+      <li><b>What the card-text tests prove, and what they don't.</b> Each batch passes when every text in it is mapped to an effect and each distinct wording has a test on a real card checking it does what it says. That catches "this card does nothing" and "this wording is read wrong". It does not catch odd interactions between cards. Those come from your play-testing, so each milestone ends with a list of specific cards to try, and bugs you find become issues handled like any other. Expect a long tail.</li>
       <li><b>How it runs.</b> Each milestone gets its own branch. Agents take the next unblocked issue, write the failing test, make it pass, and merge into the milestone branch when all tests pass. Questions go to <code>docs/questions/M#.md</code> and the agent moves on. <code>pd.wasm</code> is rebuilt once per milestone, not per issue, because agents would otherwise collide on that one binary file. At milestone end I stop and hand you a summary, the questions, and play steps. Merging the milestone into main, and deploying, stay your call.</li>
     </ol>
   </div>
@@ -104,9 +105,9 @@ const M = [
   ["2.4","engine","Coin flips as events: each flip recorded, first one waits for the flipping player's tap","F11","1.17","Effect with 3 flips emits 3 results; only the first waits"],
   ["2.5","screen","Coin grid 3 wide, first flip tapped, rest automatic","F11","2.4","Browser test sees the grid for a multi-flip attack"],
   ["2.6","screen","Status icons on Pokémon","L2","2.1","Each condition shows its icon"],
-  ["2.7","cards","Attack texts: flip for bonus damage / per heads / until tails","X1","2.4","Coverage test for these wordings passes"],
-  ["2.8","cards","Attack texts: flip to fail, flip for an effect","X1","2.4","Coverage test for these wordings passes"],
-  ["2.9","cards","Attack texts that inflict conditions, with or without a flip","X1","2.1, 2.4","Coverage test for these wordings passes"]
+  ["2.7","cards","Attack texts: flip for bonus damage / per heads / until tails","X1","2.4","Every text mapped; each wording tested on a real card"],
+  ["2.8","cards","Attack texts: flip to fail, flip for an effect","X1","2.4","Every text mapped; each wording tested on a real card"],
+  ["2.9","cards","Attack texts that inflict conditions, with or without a flip","X1","2.1, 2.4","Every text mapped; each wording tested on a real card"]
  ]},
  { n: 3, name: "Trainers, Tools, Stadiums, Fossils",
    play: "Decks with Items, Supporters, Tools, Stadiums and Fossils, including damage-modifier arrows you can tap.",
@@ -119,11 +120,11 @@ const M = [
   ["3.6","engine","Card \"search\" draws a random matching card; hand at 10 blocks draw effects","A7, T3","3.1","Search result is random among matches; blocked at 10"],
   ["3.7","screen","Trainer play: targets glow, or whole board glows for no-target cards; Stadium spot; Tool on card","F6, F7, L2","3.1, 1.20","Browser test plays a Potion on a target and a Supporter on the board"],
   ["3.8","screen","Orange modifier badges; tap shows each source and value","L6","3.5","Tapping a badge lists the modifiers"],
-  ["3.9","cards","Supporter texts, part 1 of 3","X1","3.1","Coverage test for this batch passes"],
-  ["3.10","cards","Supporter texts, part 2 of 3","X1","3.1","Coverage test for this batch passes"],
-  ["3.11","cards","Supporter texts, part 3 of 3","X1","3.1","Coverage test for this batch passes"],
-  ["3.12","cards","Item texts","X1","3.1","Coverage test for this batch passes"],
-  ["3.13","cards","Tool and Stadium texts","X1","3.2, 3.3, 3.5","Coverage test for this batch passes"]
+  ["3.9","cards","Supporter texts, part 1 of 3","X1","3.1","Every text mapped; each wording tested on a real card"],
+  ["3.10","cards","Supporter texts, part 2 of 3","X1","3.1","Every text mapped; each wording tested on a real card"],
+  ["3.11","cards","Supporter texts, part 3 of 3","X1","3.1","Every text mapped; each wording tested on a real card"],
+  ["3.12","cards","Item texts","X1","3.1","Every text mapped; each wording tested on a real card"],
+  ["3.13","cards","Tool and Stadium texts","X1","3.2, 3.3, 3.5","Every text mapped; each wording tested on a real card"]
  ]},
  { n: 4, name: "Abilities and every remaining card",
    play: "The done-gate: a full game against the bot, on your phone, with any drafted deck, where every card's text works.",
@@ -131,18 +132,18 @@ const M = [
   ["4.1","engine","Activated abilities: once-per-turn when the text says so, from the Bench when the text allows; passive ones through rule hooks","A4","1.1, 3.5","Once-per-turn ability isn't legal twice"],
   ["4.2","engine","Abilities that override rules (the Eevee that evolves the turn it is played, \"no Abilities\" effects)","T8, A4","4.1","That Eevee can evolve on the turn it is played"],
   ["4.3","screen","Use an ability from the card, Active or Bench","F9, F10","4.1, 1.23","Browser test uses a Bench ability"],
-  ["4.4","cards","Ability texts, part 1 of 3","X1","4.1","Coverage test for this batch passes"],
-  ["4.5","cards","Ability texts, part 2 of 3","X1","4.1","Coverage test for this batch passes"],
-  ["4.6","cards","Ability texts, part 3 of 3","X1","4.1, 4.2","Coverage test for this batch passes"],
-  ["4.7","cards","Attack texts about energy, part 1 of 2","X1","—","Coverage test for this batch passes"],
-  ["4.8","cards","Attack texts about energy, part 2 of 2","X1","—","Coverage test for this batch passes"],
-  ["4.9","cards","Attack texts that change damage, part 1 of 2","X1","3.5","Coverage test for this batch passes"],
-  ["4.10","cards","Attack texts that change damage, part 2 of 2","X1","3.5","Coverage test for this batch passes"],
-  ["4.11","cards","Attack texts: switching, Bench damage","X1","1.3","Coverage test for this batch passes"],
-  ["4.12","cards","Attack texts: draw, search, heal","X1","3.6","Coverage test for this batch passes"],
-  ["4.13","cards","Attack texts: can't attack / can't retreat / other locks","X1","3.5","Coverage test for this batch passes"],
-  ["4.14","cards","Remaining attack texts that fit no family","X1","4.7–4.13","Coverage test for this batch passes"],
-  ["4.15","cards","Coverage gate: every card text has a working effect; draft pool back to every card","X1","all 4.x cards","Test over all 3,879 cards passes"]
+  ["4.4","cards","Ability texts, part 1 of 3","X1","4.1","Every text mapped; each wording tested on a real card"],
+  ["4.5","cards","Ability texts, part 2 of 3","X1","4.1","Every text mapped; each wording tested on a real card"],
+  ["4.6","cards","Ability texts, part 3 of 3","X1","4.1, 4.2","Every text mapped; each wording tested on a real card"],
+  ["4.7","cards","Attack texts about energy, part 1 of 2","X1","—","Every text mapped; each wording tested on a real card"],
+  ["4.8","cards","Attack texts about energy, part 2 of 2","X1","—","Every text mapped; each wording tested on a real card"],
+  ["4.9","cards","Attack texts that change damage, part 1 of 2","X1","3.5","Every text mapped; each wording tested on a real card"],
+  ["4.10","cards","Attack texts that change damage, part 2 of 2","X1","3.5","Every text mapped; each wording tested on a real card"],
+  ["4.11","cards","Attack texts: switching, Bench damage","X1","1.3","Every text mapped; each wording tested on a real card"],
+  ["4.12","cards","Attack texts: draw, search, heal","X1","3.6","Every text mapped; each wording tested on a real card"],
+  ["4.13","cards","Attack texts: can't attack / can't retreat / other locks","X1","3.5","Every text mapped; each wording tested on a real card"],
+  ["4.14","cards","Remaining attack texts that fit no family","X1","4.7–4.13","Every text mapped; each wording tested on a real card"],
+  ["4.15","cards","Coverage gate: every card text has a working effect; draft pool back to every card","X1","all 4.x cards","No card text unmapped; then your play-test list"]
  ]}
 ];
 const kindLabel = { engine: "Engine", screen: "Screen", cards: "Card text" };
