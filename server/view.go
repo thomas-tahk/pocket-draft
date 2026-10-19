@@ -70,6 +70,8 @@ type gameView struct {
 	Phase     string        `json:"phase"`
 	Pending   *promptView   `json:"pending"`
 	Winner    int           `json:"winner"`
+	Outcome   string        `json:"outcome"` // viewer's "win", "loss" or "tie"; "" until the game is over
+	Reason    string        `json:"reason"`  // why it ended (spec F19); "" until it does
 	Narration []string      `json:"narration"`
 	Actions   []actionView  `json:"actions"`
 }
@@ -111,6 +113,32 @@ func phaseName(p engine.Phase) string {
 		return "over"
 	}
 	return "?"
+}
+
+func outcomeName(o engine.Outcome) string {
+	switch o {
+	case engine.Win:
+		return "win"
+	case engine.Loss:
+		return "loss"
+	case engine.Tie:
+		return "tie"
+	}
+	return ""
+}
+
+func reasonName(r engine.EndReason) string {
+	switch r {
+	case engine.ReasonPoints:
+		return "points"
+	case engine.ReasonNoPokemon:
+		return "no_pokemon"
+	case engine.ReasonConcede:
+		return "concede"
+	case engine.ReasonTurnCap:
+		return "turn_cap"
+	}
+	return ""
 }
 
 func promptKindName(k engine.PromptKind) string {
@@ -253,6 +281,8 @@ func toGameView(g *engine.Game, viewer int) gameView {
 		Phase:     phaseName(s.Phase),
 		Pending:   pending,
 		Winner:    s.Winner,
+		Outcome:   outcomeName(s.Outcome(viewer)),
+		Reason:    reasonName(s.Reason),
 		Narration: g.Narration,
 		Actions:   toActionViews(g, viewer),
 	}

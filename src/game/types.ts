@@ -40,6 +40,7 @@ export type PlayerView = {
   energyUsed: boolean;
   retreated: boolean;
   discardedEnergy: string[]; // oldest first
+  legalMoves: Move[]; // everything you may do right now; empty on the opponent's side
 };
 
 export type PromptView = { player: number; kind: 'setup' | 'new_active' | 'retreat_energy' };
@@ -51,6 +52,8 @@ export type GameView = {
   phase: 'setup' | 'main' | 'over';
   pending: PromptView | null;
   winner: number; // -1 while ongoing, else 0 or 1
+  outcome: '' | 'win' | 'loss' | 'tie'; // yours; '' until the game is over
+  reason: '' | 'points' | 'no_pokemon' | 'concede' | 'turn_cap'; // why it ended (spec F19)
   narration: string[];
 };
 

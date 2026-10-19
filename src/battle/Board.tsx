@@ -128,7 +128,7 @@ function YourSide({ p }: { p: PlayerView }) {
   );
 }
 
-export function Board({ view }: { view: GameView }) {
+export function Board({ view, onEndTurn, children }: { view: GameView; onEndTurn: () => void; children?: ReactNode }) {
   const [you, opp] = view.players;
   const yourTurn = view.phase === 'main' && view.active === 0 && !view.pending;
   return (
@@ -137,9 +137,10 @@ export function Board({ view }: { view: GameView }) {
       {/* No Stadium is tracked by the engine yet; the slot marks where it goes. */}
       <Zone id="stadium" place={{ top: 432, left: 6, width: 66, height: 92 }}>{null}</Zone>
       <Zone id="end-turn" place={{ top: 400, right: 10 }}>
-        <button className="bt-endturn" disabled={!yourTurn}>End Turn</button>
+        <button className="bt-endturn" disabled={!yourTurn} onClick={onEndTurn}>End Turn</button>
       </Zone>
       <YourSide p={you} />
+      {children}
     </div>
   );
 }
