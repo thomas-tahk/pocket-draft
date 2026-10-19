@@ -7,6 +7,7 @@ import { ReviewView } from './components/ReviewView';
 import { SharedDeckView } from './components/SharedDeckView';
 import { HistoryView } from './components/HistoryView';
 import { GameView } from './game/GameView';
+import { BattleScreen } from './battle/BattleScreen';
 import { expandDeck } from './game/deck';
 import { derivePhase, HISTORY_CAP, TOTAL_PACKS, useDraftStore } from './stores/draftStore';
 import { decodeDeck, type Decklist } from './share/deckCode';
@@ -88,6 +89,10 @@ export function App() {
   // Legacy quick-test entry: ?play plays the server's current curated game.
   const isPlayParam = new URLSearchParams(window.location.search).has('play');
   if (isPlayParam) return <GameView />;
+
+  // The new battle screen (plan 1.19), on the server's current game. Not yet
+  // reachable from the draft; that wiring is a later issue.
+  if (new URLSearchParams(window.location.search).has('battle')) return <BattleScreen />;
 
   // In-app deck play, launched from the review screen with the finalized deck.
   if (playing) return <GameView deck={expandDeck(deck)} onExit={() => setPlaying(false)} />;
