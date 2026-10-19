@@ -123,6 +123,8 @@ type State struct {
 	// retreatTo is the bench slot a retreat swaps into while its
 	// PromptRetreatEnergy is pending.
 	retreatTo int
+
+	hidden *HiddenPromotion // the last promotion, while it may still be hidden (spec E6)
 }
 
 // Ready reports whether player p has placed their setup and pressed Ready

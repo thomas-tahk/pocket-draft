@@ -384,14 +384,20 @@ func (g *Game) promote(e ChooseNewActive) {
 	mon := benchAt(pl, e.BenchIndex)
 	pl.Bench[e.BenchIndex] = nil
 	pl.Active = mon
+	g.S.hidden = nil
+	if g.S.Players[1-e.Player].Active == nil { // double KO: the other still picks (E6)
+		g.S.hidden = &HiddenPromotion{e.Player, e.BenchIndex, len(g.Actions), len(g.Narration)}
+	}
 	g.narrate("%s promoted %s to Active.", side(e.Player), mon.Card.Name)
 }
 
 // promptPromotion asks each player left without an Active, in turn, to
 // promote a new one (ADR-0007, mode 3). Reports whether a prompt is left
-// pending. Who promotes first after a double KO is spec E6, issue 1.13.
+// pending. After a double KO the player whose turn is next picks first (spec
+// E6); every KO resolves before the turn passes, so that is the non-active one.
 func (g *Game) promptPromotion() bool {
-	for p := 0; p < 2; p++ {
+	first := 1 - g.S.Active
+	for _, p := range [2]int{first, 1 - first} {
 		if g.S.Players[p].Active == nil && g.ask(p, PromptNewActive) {
 			return true
 		}

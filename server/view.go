@@ -246,7 +246,7 @@ func toGameView(g *engine.Game, viewer int) gameView {
 	}
 	players[viewer].LegalMoves = toMoveReqs(g.LegalMoves(viewer))
 	players[1-viewer].LegalMoves = []moveReq{}
-	return gameView{
+	v := gameView{
 		Players:   players,
 		Active:    s.Active,
 		Turn:      s.Turn,
@@ -256,6 +256,8 @@ func toGameView(g *engine.Game, viewer int) gameView {
 		Narration: g.Narration,
 		Actions:   toActionViews(g, viewer),
 	}
+	hidePromotion(g, viewer, &v)
+	return v
 }
 
 func toMoveReqs(evs []engine.Event) []moveReq {
