@@ -17,6 +17,8 @@ type Game struct {
 	Events    []Event
 	Narration []string
 	Actions   []Action // one per applied event, for replay and history (actions.go)
+
+	flips []CoinFlip // coins flipped by the move being applied (coin.go)
 }
 
 var errBadPrompt = errors.New("invalid response to the current prompt")
@@ -118,10 +120,12 @@ func (g *Game) Submit(ev Event) error {
 		return errors.New("game is over")
 	}
 	act, before := g.describe(ev), len(g.Narration)
+	g.flips = nil
 	if err := g.validateAndApply(ev); err != nil {
 		return err
 	}
 	act.Result = append([]string(nil), g.Narration[before:]...)
+	act.Flips = g.flips
 	g.Events = append(g.Events, ev)
 	g.Actions = append(g.Actions, act)
 	return nil
@@ -295,7 +299,7 @@ func (g *Game) applyAttack(e UseAttack) {
 // with no self-damage and the condition stays.
 func (g *Game) confusionFails(p int) bool {
 	mon := g.S.Players[p].Active
-	if !mon.Has(Confused) || g.rng.intn(2) == 0 {
+	if !mon.Has(Confused) || g.flipCoin(p, true) {
 		return false
 	}
 	g.narrate("%s's %s is Confused: tails, the attack failed.", side(p), mon.Card.Name)
@@ -493,7 +497,7 @@ func (g *Game) resolveStatus() {
 		if pl.Active.Burned {
 			pl.Active.Damage += 20
 			g.narrate("%s's %s took 20 from burn.", side(i), pl.Active.Card.Name)
-			if g.rng.intn(2) == 0 {
+			if g.flipCoin(i, true) {
 				pl.Active.Burned = false
 				g.narrate("%s's %s recovered from burn.", side(i), pl.Active.Card.Name)
 			}

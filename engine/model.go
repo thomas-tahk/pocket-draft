@@ -136,9 +136,13 @@ type State struct {
 func (s *State) Ready(p int) bool { return s.setup[p] }
 
 // CoinFlip records one flip: which player flipped and whether it was heads.
+// Waits marks the first flip of an effect, which the screen holds until the
+// flipping player taps the coin (spec F11); the rest run on their own. The
+// bot's flips and the opening flip never wait.
 type CoinFlip struct {
 	Flipper int
 	Heads   bool
+	Waits   bool
 }
 
 // --- Events: the canonical log entries (ADR-0005). Player intents and prompt

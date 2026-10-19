@@ -101,11 +101,28 @@ type spotView struct {
 // actionView is one applied move for the opponent-turn playback and the
 // history list (spec F14, F15).
 type actionView struct {
-	Player int       `json:"player"`
-	Kind   string    `json:"kind"`
-	Card   *cardView `json:"card"` // null when the move used no card, or it is hidden
-	Target spotView  `json:"target"`
-	Result []string  `json:"result"`
+	Player int        `json:"player"`
+	Kind   string     `json:"kind"`
+	Card   *cardView  `json:"card"` // null when the move used no card, or it is hidden
+	Target spotView   `json:"target"`
+	Result []string   `json:"result"`
+	Flips  []coinView `json:"flips"` // every coin the move flipped, in order (spec F11)
+}
+
+// coinView is one coin flip. Waits: the screen holds this coin until the
+// flipper taps it; the rest of the effect's coins run on their own.
+type coinView struct {
+	Flipper int  `json:"flipper"`
+	Heads   bool `json:"heads"`
+	Waits   bool `json:"waits"`
+}
+
+func toCoinViews(flips []engine.CoinFlip) []coinView {
+	out := make([]coinView, 0, len(flips))
+	for _, f := range flips {
+		out = append(out, coinView{f.Flipper, f.Heads, f.Waits})
+	}
+	return out
 }
 
 func stageName(s engine.Stage) string {
@@ -345,7 +362,7 @@ func toMoveReqs(evs []engine.Event) []moveReq {
 func toActionViews(g *engine.Game, viewer int) []actionView {
 	out := make([]actionView, 0, len(g.Actions))
 	for _, a := range g.Actions {
-		v := actionView{Player: a.Player, Kind: string(a.Kind), Target: spotView{a.Target.Player, a.Target.Pos}, Result: a.Result}
+		v := actionView{Player: a.Player, Kind: string(a.Kind), Target: spotView{a.Target.Player, a.Target.Pos}, Result: a.Result, Flips: toCoinViews(a.Flips)}
 		if a.Card.ID != "" {
 			c := toCardView(a.Card)
 			v.Card = &c

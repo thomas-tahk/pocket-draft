@@ -15,11 +15,17 @@ type EffectContext struct {
 	g        *Game
 	attacker int
 	Damage   int
+	flipped  bool // this effect has flipped a coin already
 }
 
-// Flip draws one coin from the engine's seeded RNG — never a second RNG
-// source, so folding the same log always reproduces the same flips.
-func (ctx *EffectContext) Flip() bool { return ctx.g.rng.intn(2) == 0 }
+// Flip flips one coin for the attacker and records it (spec F11). The first
+// flip of an effect waits for a tap; every later one in the same effect runs
+// on its own. One EffectContext is one effect.
+func (ctx *EffectContext) Flip() bool {
+	heads := ctx.g.flipCoin(ctx.attacker, !ctx.flipped)
+	ctx.flipped = true
+	return heads
+}
 
 func (ctx *EffectContext) attackerMon() *InPlay    { return ctx.g.S.Players[ctx.attacker].Active }
 func (ctx *EffectContext) defenderMon() *InPlay    { return ctx.g.S.Players[1-ctx.attacker].Active }

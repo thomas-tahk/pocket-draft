@@ -57,6 +57,8 @@ export type ActionView = {
   card: CardView | null;
   target: { player: number; pos: number };
   result: string[];
+  // every coin the move flipped, in order (spec F11); waits: hold for the flipper's tap
+  flips: { flipper: number; heads: boolean; waits: boolean }[];
 };
 
 export type PromptView = { player: number; kind: 'setup' | 'new_active' | 'retreat_energy' };
