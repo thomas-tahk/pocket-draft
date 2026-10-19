@@ -224,11 +224,13 @@ function actionsEl(s, p, i) {
   if (s.phase === 'setup') {
     wrap.className = 'actions setup';
     const ok = setupSel && setupSel.activeIdx !== null;
-    const confirm = btn('Confirm setup', () => {
+    const confirm = btn('Confirm setup', async () => {
       const ids = idx => p.hand[idx].id;
-      const ev = { type: 'SetupPlace', player: i, activeCardId: ids(setupSel.activeIdx), benchCardIds: [...setupSel.bench].map(ids) };
+      const evs = [{ type: 'SetupActive', player: i, cardId: ids(setupSel.activeIdx) }];
+      [...setupSel.bench].forEach((idx, slot) => evs.push({ type: 'SetupBench', player: i, cardId: ids(idx), slot }));
+      evs.push({ type: 'SetupReady', player: i });
       setupSel = null;
-      move(ev);
+      for (const ev of evs) if (!(await move(ev))) return;
     });
     confirm.disabled = !ok;
     wrap.appendChild(confirm);

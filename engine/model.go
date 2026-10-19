@@ -136,13 +136,23 @@ type CoinFlip struct {
 
 type Event interface{ event() }
 
-// SetupPlace answers a setup prompt: place one Basic as Active and up to three
-// more on the bench. BenchCardIDs is positional: index i is bench slot i, and
-// "" (or a short list) leaves that slot empty.
-type SetupPlace struct {
-	Player       int
-	ActiveCardID string
-	BenchCardIDs []string
+// SetupActive places a Basic from hand as the Active during setup (spec S5).
+type SetupActive struct {
+	Player int
+	CardID string
+}
+
+// SetupBench places a Basic from hand into an empty bench slot during setup.
+type SetupBench struct {
+	Player int
+	CardID string
+	Slot   int // BenchLeft, BenchBehind or BenchRight
+}
+
+// SetupReady ends a player's setup. It needs an Active; once both players are
+// Ready the opponent's picks are revealed and turn 1 starts (spec S5).
+type SetupReady struct {
+	Player int
 }
 
 // PlayBasic plays a Basic Pokémon from hand into an empty bench slot.
@@ -195,7 +205,9 @@ type Concede struct {
 	Player int
 }
 
-func (SetupPlace) event()      {}
+func (SetupActive) event()     {}
+func (SetupBench) event()      {}
+func (SetupReady) event()      {}
 func (PlayBasic) event()       {}
 func (AttachEnergy) event()    {}
 func (Evolve) event()          {}

@@ -40,7 +40,7 @@ func candidates(actor int) []engine.Event {
 	if s.Pending != nil {
 		switch s.Pending.Kind {
 		case engine.PromptSetup:
-			return []engine.Event{setupChoice(actor, pl)}
+			return []engine.Event{setupStep(actor, pl)}
 		case engine.PromptNewActive:
 			var evs []engine.Event
 			for bi, m := range pl.Bench {
@@ -63,22 +63,24 @@ func candidates(actor int) []engine.Event {
 	return append(evs, engine.EndTurn{Player: actor})
 }
 
-// setupChoice puts the first Basic in hand into the Active spot and the next few
-// Basics (up to the 3-slot bench) behind it.
-func setupChoice(actor int, pl engine.Player) engine.SetupPlace {
-	var active string
-	var bench []string
+// setupStep is the bot's next setup move, one card at a time: the first Basic
+// in hand to the Active, then Basics into the empty bench slots left to right,
+// then Ready.
+func setupStep(actor int, pl engine.Player) engine.Event {
 	for _, c := range pl.Hand {
 		if c.Stage != engine.Basic {
 			continue
 		}
-		if active == "" {
-			active = c.ID
-		} else if len(bench) < 3 {
-			bench = append(bench, c.ID)
+		if pl.Active == nil {
+			return engine.SetupActive{Player: actor, CardID: c.ID}
+		}
+		for slot, m := range pl.Bench {
+			if m == nil {
+				return engine.SetupBench{Player: actor, CardID: c.ID, Slot: slot}
+			}
 		}
 	}
-	return engine.SetupPlace{Player: actor, ActiveCardID: active, BenchCardIDs: bench}
+	return engine.SetupReady{Player: actor}
 }
 
 type botResp struct {

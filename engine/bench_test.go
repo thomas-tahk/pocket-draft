@@ -8,7 +8,7 @@ func setupActiveOnly(t *testing.T, g *Game) {
 	for g.S.Pending != nil && g.S.Pending.Kind == PromptSetup {
 		p := g.S.Pending.Player
 		id, _ := firstBasicID(g.S.Players[p].Hand)
-		if err := g.Submit(SetupPlace{Player: p, ActiveCardID: id}); err != nil {
+		if err := submitSetup(g, p, id, nil); err != nil {
 			t.Fatalf("setup failed: %v", err)
 		}
 	}
@@ -48,14 +48,14 @@ func TestBenchPlacementKeepsSlot(t *testing.T) {
 	}
 }
 
-// Setup places bench cards positionally: index i of BenchCardIDs is slot i, "" leaves it empty.
+// Setup places bench cards positionally: a card placed in slot i stays in slot i.
 func TestSetupBenchKeepsSlots(t *testing.T) {
 	d0, d1 := twoDecks()
 	g := NewGame(7, d0, d1)
 	p := g.S.Pending.Player
 	hand := g.S.Players[p].Hand
 	activeID, benchID := hand[0].ID, hand[1].ID
-	if err := g.Submit(SetupPlace{Player: p, ActiveCardID: activeID, BenchCardIDs: []string{"", "", benchID}}); err != nil {
+	if err := submitSetup(g, p, activeID, []string{"", "", benchID}); err != nil {
 		t.Fatalf("setup failed: %v", err)
 	}
 	bench := g.S.Players[p].Bench

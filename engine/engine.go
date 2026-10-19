@@ -125,8 +125,12 @@ func (g *Game) validateAndApply(ev Event) error {
 		return err
 	}
 	switch e := ev.(type) {
-	case SetupPlace:
-		g.applySetup(e)
+	case SetupActive:
+		g.applySetupActive(e)
+	case SetupBench:
+		g.applySetupBench(e)
+	case SetupReady:
+		g.applySetupReady(e)
 	case ChooseNewActive:
 		g.applyChooseActive(e)
 	case PlayBasic:
@@ -149,29 +153,25 @@ func (g *Game) validateAndApply(ev Event) error {
 
 // --- Intent handlers ---
 
-func (g *Game) applySetup(e SetupPlace) {
+// Setup narration goes to both players, so it names no cards until both are
+// Ready (spec S5).
+func (g *Game) applySetupActive(e SetupActive) {
 	pl := &g.S.Players[e.Player]
-	idx := indexInHand(pl.Hand, e.ActiveCardID)
-	remove := map[int]bool{idx: true}
-	var benchCards [BenchSlots]*Card
-	for slot, bid := range e.BenchCardIDs {
-		if bid == "" {
-			continue
-		}
-		bi := indexInHandExcept(pl.Hand, bid, remove)
-		remove[bi] = true
-		c := pl.Hand[bi]
-		benchCards[slot] = &c
-	}
+	idx := indexInHand(pl.Hand, e.CardID)
+	pl.Active = newInPlay(pl.Hand[idx], 0)
+	pl.Hand = removeAt(pl.Hand, idx)
+	g.narrate("%s placed an Active.", side(e.Player))
+}
 
-	activeCard := pl.Hand[idx]
-	pl.Hand = removeFromHand(pl.Hand, remove)
-	pl.Active = newInPlay(activeCard, 0)
-	for slot, c := range benchCards {
-		if c != nil {
-			pl.Bench[slot] = newInPlay(*c, 0)
-		}
-	}
+func (g *Game) applySetupBench(e SetupBench) {
+	pl := &g.S.Players[e.Player]
+	idx := indexInHand(pl.Hand, e.CardID)
+	pl.Bench[e.Slot] = newInPlay(pl.Hand[idx], 0)
+	pl.Hand = removeAt(pl.Hand, idx)
+	g.narrate("%s placed a Pokémon on the bench.", side(e.Player))
+}
+
+func (g *Game) applySetupReady(e SetupReady) {
 	// Narration goes to both players, so it names no cards until both are Ready.
 	g.narrate("%s is Ready.", side(e.Player))
 	g.S.setup[e.Player] = true
@@ -588,27 +588,8 @@ func indexInHand(hand []Card, id string) int {
 	return -1
 }
 
-func indexInHandExcept(hand []Card, id string, used map[int]bool) int {
-	for i, c := range hand {
-		if c.ID == id && !used[i] {
-			return i
-		}
-	}
-	return -1
-}
-
 func removeAt(hand []Card, i int) []Card {
 	out := make([]Card, 0, len(hand)-1)
 	out = append(out, hand[:i]...)
 	return append(out, hand[i+1:]...)
-}
-
-func removeFromHand(hand []Card, idxs map[int]bool) []Card {
-	out := make([]Card, 0, len(hand))
-	for i, c := range hand {
-		if !idxs[i] {
-			out = append(out, c)
-		}
-	}
-	return out
 }

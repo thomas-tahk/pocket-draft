@@ -49,16 +49,14 @@ func TestViewActionsHideOpponentSetupUntilRevealed(t *testing.T) {
 	// Arrange: the opponent places first; the viewer has not placed yet.
 	g := engine.NewGame(7, viewTestDeck("mine"), viewTestDeck("theirs"))
 	theirs := g.S.Players[1].Hand[0].ID
-	g.S.Pending = &engine.Prompt{Player: 1, Kind: engine.PromptSetup}
-	if err := g.Submit(engine.SetupPlace{Player: 1, ActiveCardID: theirs}); err != nil {
+	if err := g.Submit(engine.SetupActive{Player: 1, CardID: theirs}); err != nil {
 		t.Fatal(err)
 	}
 
 	// Act
 	hidden := toGameView(g, 0)
-	if err := g.Submit(engine.SetupPlace{Player: 0, ActiveCardID: g.S.Players[0].Hand[0].ID}); err != nil {
-		t.Fatal(err)
-	}
+	readyUp(t, g, 1)
+	readyUp(t, g, 0)
 	shown := toGameView(g, 0)
 
 	// Assert
@@ -66,7 +64,10 @@ func TestViewActionsHideOpponentSetupUntilRevealed(t *testing.T) {
 	if strings.Contains(string(raw), "theirs-") || len(hidden.Actions) != 1 || hidden.Actions[0].Card != nil {
 		t.Fatalf("opponent's unrevealed setup leaks: %s", raw)
 	}
-	if len(shown.Actions) != 2 || shown.Actions[0].Card == nil || shown.Actions[0].Card.ID != theirs {
+	if hidden.Actions[0].Target.Player != -1 {
+		t.Fatalf("opponent's unrevealed setup shows the spot it went to: %+v", hidden.Actions[0].Target)
+	}
+	if len(shown.Actions) < 2 || shown.Actions[0].Card == nil || shown.Actions[0].Card.ID != theirs {
 		t.Fatalf("after setup the opponent's pick should show: %+v", shown.Actions)
 	}
 }

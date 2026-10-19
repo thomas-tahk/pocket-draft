@@ -5,7 +5,7 @@ import "testing"
 func placeSetup(t *testing.T, g *Game, p int) {
 	t.Helper()
 	a, b := pickSetup(g.S.Players[p].Hand)
-	if err := g.Submit(SetupPlace{Player: p, ActiveCardID: a, BenchCardIDs: b}); err != nil {
+	if err := submitSetup(g, p, a, b); err != nil {
 		t.Fatalf("P%d setup: %v", p+1, err)
 	}
 }
@@ -33,19 +33,33 @@ func TestSetupEitherPlayerMayBeReadyFirst(t *testing.T) {
 	}
 }
 
-// Ready is final: a player who is Ready can't place again.
-func TestSetupReadyTwiceIsRejected(t *testing.T) {
+// Ready is final: a Ready player can't place more.
+func TestSetupNothingAfterReady(t *testing.T) {
 	// Arrange
 	d0, d1 := twoDecks()
 	g := NewGame(3, d0, d1)
 	placeSetup(t, g, 0)
-	a, b := pickSetup(g.S.Players[0].Hand)
 
 	// Act
-	err := g.Submit(SetupPlace{Player: 0, ActiveCardID: a, BenchCardIDs: b})
+	moves := g.LegalMoves(0)
+
+	// Assert
+	if len(moves) != 1 || moves[0] != (Concede{Player: 0}) {
+		t.Fatalf("a Ready player may still %v", moves)
+	}
+}
+
+// Ready needs an Active.
+func TestSetupReadyNeedsAnActive(t *testing.T) {
+	// Arrange
+	d0, d1 := twoDecks()
+	g := NewGame(3, d0, d1)
+
+	// Act
+	err := g.Submit(SetupReady{Player: 0})
 
 	// Assert
 	if err == nil {
-		t.Fatal("a second SetupPlace from a Ready player was accepted")
+		t.Fatal("Ready without an Active was accepted")
 	}
 }

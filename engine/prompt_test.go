@@ -70,6 +70,7 @@ func TestAutoChoiceIsNotLogged(t *testing.T) {
 	opp.Bench[BenchBehind] = newInPlay(legalBasic("Z", "Mon", 1), 0)
 	opp.Active.Damage = opp.Active.Card.HP - 5
 	opp.Active.Poisoned = true
+	before := len(g.Events)
 
 	// Act
 	if err := g.Submit(EndTurn{Player: g.S.Active}); err != nil {
@@ -80,7 +81,7 @@ func TestAutoChoiceIsNotLogged(t *testing.T) {
 	if g.S.Pending != nil || opp.Active == nil || opp.Active.Card.ID != "Z" {
 		t.Fatalf("poison KO with one benched Pokémon should promote it, pending %+v", g.S.Pending)
 	}
-	if n := len(g.Events); n != 3 {
-		t.Errorf("the automatic choice should not be logged as an event; %d events", n)
+	if n := len(g.Events) - before; n != 1 {
+		t.Errorf("the automatic choice should not be logged as an event; end turn logged %d events", n)
 	}
 }

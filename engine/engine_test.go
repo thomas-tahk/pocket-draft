@@ -25,6 +25,23 @@ func pickSetup(hand []Card) (string, []string) {
 	return active, bench
 }
 
+// submitSetup places active and bench for p (bench index i is slot i, "" is
+// empty), then presses Ready.
+func submitSetup(g *Game, p int, active string, bench []string) error {
+	evs := []Event{SetupActive{Player: p, CardID: active}}
+	for slot, id := range bench {
+		if id != "" {
+			evs = append(evs, SetupBench{Player: p, CardID: id, Slot: slot})
+		}
+	}
+	for _, ev := range append(evs, SetupReady{Player: p}) {
+		if err := g.Submit(ev); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func firstBasicID(hand []Card) (string, bool) {
 	for _, c := range hand {
 		if c.Stage == Basic {
@@ -56,7 +73,7 @@ func autoPlay(t *testing.T, g *Game) {
 			switch g.S.Pending.Kind {
 			case PromptSetup:
 				a, b := pickSetup(g.S.Players[p].Hand)
-				err = g.Submit(SetupPlace{Player: p, ActiveCardID: a, BenchCardIDs: b})
+				err = submitSetup(g, p, a, b)
 			case PromptNewActive:
 				err = g.Submit(ChooseNewActive{Player: p, BenchIndex: firstSlot(g.S.Players[p], true)})
 			}
@@ -112,7 +129,7 @@ func doSetup(t *testing.T, g *Game) {
 	for g.S.Pending != nil && g.S.Pending.Kind == PromptSetup {
 		p := g.S.Pending.Player
 		a, b := pickSetup(g.S.Players[p].Hand)
-		if err := g.Submit(SetupPlace{Player: p, ActiveCardID: a, BenchCardIDs: b}); err != nil {
+		if err := submitSetup(g, p, a, b); err != nil {
 			t.Fatalf("setup failed: %v", err)
 		}
 	}

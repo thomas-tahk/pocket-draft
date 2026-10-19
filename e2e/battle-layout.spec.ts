@@ -25,8 +25,11 @@ async function runBotUntilYourTurn(api: APIRequestContext) {
 async function playToSecondTurn(api: APIRequestContext) {
   const start = await post(api, '/api/new', { seed: 7 });
   const basics = start.players[0].hand.filter((c) => c.stage === 'Basic');
-  await post(api, '/api/move', { type: 'SetupPlace', player: 0, activeCardId: basics[0].id, benchCardIds: [basics[1].id] });
-  await post(api, '/api/bot'); // the bot places its setup
+  await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: basics[0].id });
+  await post(api, '/api/move', { type: 'SetupBench', player: 0, cardId: basics[1].id, slot: 0 });
+  await post(api, '/api/move', { type: 'SetupReady', player: 0 });
+  // the bot places its setup one card per call, then presses Ready
+  for (let i = 0; i < 6 && (await post(api, '/api/bot')).phase === 'setup'; i++);
   await post(api, '/api/move', { type: 'EndTurn', player: 0 });
   await runBotUntilYourTurn(api);
   await post(api, '/api/move', { type: 'AttachEnergy', player: 0, target: 0 });

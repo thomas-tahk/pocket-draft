@@ -275,7 +275,7 @@ func toActionViews(g *engine.Game, viewer int) []actionView {
 			v.Card = &c
 		}
 		if a.Kind == engine.ActSetup && a.Player != viewer && g.S.Turn == 0 {
-			v.Card, v.Result = nil, []string{}
+			v.Card, v.Result, v.Target = nil, []string{}, spotView{-1, -1}
 		}
 		out = append(out, v)
 	}

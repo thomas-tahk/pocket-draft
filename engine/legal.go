@@ -3,7 +3,6 @@ package engine
 import (
 	"errors"
 	"fmt"
-	"strings"
 )
 
 // LegalMoves is the single source of truth for what a player may do right now.
@@ -45,7 +44,9 @@ func rule[E Event](list func(g *Game, p int) []E, check func(g *Game, e E) error
 
 // moveRules is in the order LegalMoves lists moves.
 var moveRules = []moveRule{
-	rule(listSetup, (*Game).checkSetup, setupKey),
+	rule(listSetupActive, (*Game).checkSetupActive, nil),
+	rule(listSetupBench, (*Game).checkSetupBench, nil),
+	rule(func(_ *Game, p int) []SetupReady { return []SetupReady{{Player: p}} }, (*Game).checkSetupReady, nil),
 	rule(listChooseActive, (*Game).checkChooseActive, nil),
 	rule(listPlayBasic, (*Game).checkPlayBasic, nil),
 	rule(listAttach, (*Game).checkAttach, nil),
@@ -146,57 +147,22 @@ func (g *Game) onSetup(p int) error {
 
 // --- candidate lists (legal or not; the checks filter them) ---
 
-func listSetup(g *Game, p int) []SetupPlace {
-	hand := g.S.Players[p].Hand
-	var out []SetupPlace
-	for i, c := range hand {
-		if c.Stage != Basic {
-			continue
-		}
-		for _, bench := range benchFills(hand, map[int]bool{i: true}, 0) {
-			out = append(out, SetupPlace{Player: p, ActiveCardID: c.ID, BenchCardIDs: trimBench(bench)})
-		}
+func listSetupActive(g *Game, p int) []SetupActive {
+	var out []SetupActive
+	for _, c := range g.S.Players[p].Hand {
+		out = append(out, SetupActive{Player: p, CardID: c.ID})
 	}
 	return out
 }
 
-// benchFills lists every way to fill bench slots from slot onward with Basics
-// from hand not already used: each slot empty ("") or one unused Basic.
-func benchFills(hand []Card, used map[int]bool, slot int) [][]string {
-	if slot == BenchSlots {
-		return [][]string{nil}
-	}
-	var out [][]string
-	for _, rest := range benchFills(hand, used, slot+1) {
-		out = append(out, append([]string{""}, rest...))
-	}
-	for i, c := range hand {
-		if used[i] || c.Stage != Basic {
-			continue
+func listSetupBench(g *Game, p int) []SetupBench {
+	var out []SetupBench
+	for _, c := range g.S.Players[p].Hand {
+		for slot := 0; slot < BenchSlots; slot++ {
+			out = append(out, SetupBench{Player: p, CardID: c.ID, Slot: slot})
 		}
-		used[i] = true
-		for _, rest := range benchFills(hand, used, slot+1) {
-			out = append(out, append([]string{c.ID}, rest...))
-		}
-		delete(used, i)
 	}
 	return out
-}
-
-// trimBench drops trailing empty slots, so an empty bench is nil.
-func trimBench(bench []string) []string {
-	for len(bench) > 0 && bench[len(bench)-1] == "" {
-		bench = bench[:len(bench)-1]
-	}
-	if len(bench) == 0 {
-		return nil
-	}
-	return bench
-}
-
-// setupKey makes trailing empty slots and nil-vs-empty irrelevant.
-func setupKey(e SetupPlace) string {
-	return fmt.Sprintf("%d|%s|%s", e.Player, e.ActiveCardID, strings.Join(trimBench(e.BenchCardIDs), ","))
 }
 
 func listChooseActive(g *Game, p int) []ChooseNewActive {
@@ -268,34 +234,51 @@ func listAttack(g *Game, p int) []UseAttack {
 
 // --- checks: nil when legal, otherwise the reason ---
 
-func (g *Game) checkSetup(e SetupPlace) error {
+// checkSetupCard says why hand card id can't be placed at setup, or nil.
+func (g *Game) checkSetupCard(p int, id string) error {
+	if err := g.onSetup(p); err != nil {
+		return err
+	}
+	pl := &g.S.Players[p]
+	idx := indexInHand(pl.Hand, id)
+	if idx < 0 {
+		return errors.New("card is not in hand")
+	}
+	if pl.Hand[idx].Stage != Basic {
+		return errors.New("only Basic Pokémon may be placed at setup")
+	}
+	return nil
+}
+
+func (g *Game) checkSetupActive(e SetupActive) error {
+	if err := g.checkSetupCard(e.Player, e.CardID); err != nil {
+		return err
+	}
+	if g.S.Players[e.Player].Active != nil {
+		return errors.New("the Active is already placed")
+	}
+	return nil
+}
+
+func (g *Game) checkSetupBench(e SetupBench) error {
+	if err := g.checkSetupCard(e.Player, e.CardID); err != nil {
+		return err
+	}
+	if e.Slot < 0 || e.Slot >= BenchSlots {
+		return errors.New("invalid bench slot")
+	}
+	if g.S.Players[e.Player].Bench[e.Slot] != nil {
+		return errors.New("that bench slot is taken")
+	}
+	return nil
+}
+
+func (g *Game) checkSetupReady(e SetupReady) error {
 	if err := g.onSetup(e.Player); err != nil {
 		return err
 	}
-	pl := &g.S.Players[e.Player]
-	idx := indexInHand(pl.Hand, e.ActiveCardID)
-	if idx < 0 {
-		return errors.New("active card is not in hand")
-	}
-	if pl.Hand[idx].Stage != Basic {
-		return errors.New("the Active must be a Basic Pokémon")
-	}
-	if len(e.BenchCardIDs) > BenchSlots {
-		return errors.New("the bench holds at most 3")
-	}
-	used := map[int]bool{idx: true}
-	for _, bid := range e.BenchCardIDs {
-		if bid == "" {
-			continue
-		}
-		bi := indexInHandExcept(pl.Hand, bid, used)
-		if bi < 0 {
-			return errors.New("bench card is not in hand")
-		}
-		if pl.Hand[bi].Stage != Basic {
-			return errors.New("only Basics may be benched")
-		}
-		used[bi] = true
+	if g.S.Players[e.Player].Active == nil {
+		return errors.New("place an Active before pressing Ready")
 	}
 	return nil
 }

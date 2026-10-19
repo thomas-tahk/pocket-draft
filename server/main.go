@@ -149,16 +149,14 @@ type startErr struct {
 // moveReq is the superset of fields any move might carry; only the ones relevant
 // to the given type are read.
 type moveReq struct {
-	Type         string   `json:"type"`
-	Player       int      `json:"player"`
-	CardID       string   `json:"cardId"`
-	Slot         int      `json:"slot"`
-	ActiveCardID string   `json:"activeCardId"`
-	BenchCardIDs []string `json:"benchCardIds"`
-	HandCardID   string   `json:"handCardId"`
-	Target       int      `json:"target"`
-	BenchIndex   int      `json:"benchIndex"`
-	Index        int      `json:"index"`
+	Type       string `json:"type"`
+	Player     int    `json:"player"`
+	CardID     string `json:"cardId"`
+	Slot       int    `json:"slot"`
+	HandCardID string `json:"handCardId"`
+	Target     int    `json:"target"`
+	BenchIndex int    `json:"benchIndex"`
+	Index      int    `json:"index"`
 }
 
 type moveResp struct {
@@ -197,8 +195,12 @@ func applyMove(req moveReq) moveResp {
 // toEvent maps a decoded request to the engine's typed Event.
 func toEvent(r moveReq) (engine.Event, error) {
 	switch r.Type {
-	case "SetupPlace":
-		return engine.SetupPlace{Player: r.Player, ActiveCardID: r.ActiveCardID, BenchCardIDs: r.BenchCardIDs}, nil
+	case "SetupActive":
+		return engine.SetupActive{Player: r.Player, CardID: r.CardID}, nil
+	case "SetupBench":
+		return engine.SetupBench{Player: r.Player, CardID: r.CardID, Slot: r.Slot}, nil
+	case "SetupReady":
+		return engine.SetupReady{Player: r.Player}, nil
 	case "PlayBasic":
 		return engine.PlayBasic{Player: r.Player, CardID: r.CardID, Slot: r.Slot}, nil
 	case "AttachEnergy":
@@ -222,8 +224,12 @@ func toEvent(r moveReq) (engine.Event, error) {
 // fromEvent is the inverse of toEvent: the request that would submit ev.
 func fromEvent(ev engine.Event) moveReq {
 	switch e := ev.(type) {
-	case engine.SetupPlace:
-		return moveReq{Type: "SetupPlace", Player: e.Player, ActiveCardID: e.ActiveCardID, BenchCardIDs: e.BenchCardIDs}
+	case engine.SetupActive:
+		return moveReq{Type: "SetupActive", Player: e.Player, CardID: e.CardID}
+	case engine.SetupBench:
+		return moveReq{Type: "SetupBench", Player: e.Player, CardID: e.CardID, Slot: e.Slot}
+	case engine.SetupReady:
+		return moveReq{Type: "SetupReady", Player: e.Player}
 	case engine.PlayBasic:
 		return moveReq{Type: "PlayBasic", Player: e.Player, CardID: e.CardID, Slot: e.Slot}
 	case engine.AttachEnergy:

@@ -45,8 +45,10 @@ func doSetup(t *testing.T, g *engine.Game) {
 	for i := 0; i < 2 && g.S.Pending != nil; i++ {
 		p := g.S.Pending.Player
 		id := g.S.Players[p].Hand[0].ID
-		if err := g.Submit(engine.SetupPlace{Player: p, ActiveCardID: id}); err != nil {
-			t.Fatalf("setup for player %d: %v", p, err)
+		for _, ev := range []engine.Event{engine.SetupActive{Player: p, CardID: id}, engine.SetupReady{Player: p}} {
+			if err := g.Submit(ev); err != nil {
+				t.Fatalf("setup for player %d: %v", p, err)
+			}
 		}
 	}
 }

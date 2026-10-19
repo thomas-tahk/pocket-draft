@@ -16,7 +16,8 @@ type Action struct {
 type ActionKind string
 
 const (
-	ActSetup        ActionKind = "setup"
+	ActSetup        ActionKind = "setup" // a Basic placed at setup (Active or bench)
+	ActReady        ActionKind = "ready"
 	ActPlayBasic    ActionKind = "play_basic"
 	ActAttachEnergy ActionKind = "attach_energy"
 	ActEvolve       ActionKind = "evolve"
@@ -42,8 +43,12 @@ var NoSpot = Spot{Player: -1, Pos: -1}
 // refused by validateAndApply and its Action is dropped.
 func (g *Game) describe(ev Event) Action {
 	switch e := ev.(type) {
-	case SetupPlace:
-		return Action{e.Player, ActSetup, g.handCard(e.Player, e.ActiveCardID), Spot{e.Player, 0}, nil}
+	case SetupActive:
+		return Action{e.Player, ActSetup, g.handCard(e.Player, e.CardID), Spot{e.Player, 0}, nil}
+	case SetupBench:
+		return Action{e.Player, ActSetup, g.handCard(e.Player, e.CardID), Spot{e.Player, e.Slot + 1}, nil}
+	case SetupReady:
+		return Action{e.Player, ActReady, Card{}, NoSpot, nil}
 	case PlayBasic:
 		return Action{e.Player, ActPlayBasic, g.handCard(e.Player, e.CardID), Spot{e.Player, e.Slot + 1}, nil}
 	case AttachEnergy:

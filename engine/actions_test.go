@@ -8,8 +8,10 @@ import (
 // kindOf is the Action kind each applied event must be recorded as.
 func kindOf(ev Event) ActionKind {
 	switch ev.(type) {
-	case SetupPlace:
+	case SetupActive, SetupBench:
 		return ActSetup
+	case SetupReady:
+		return ActReady
 	case PlayBasic:
 		return ActPlayBasic
 	case AttachEnergy:

@@ -8,10 +8,13 @@ import (
 	"github.com/thomas-tahk/pocket-draft/engine"
 )
 
+// readyUp plays the bot's setup steps for p until p is Ready.
 func readyUp(t *testing.T, g *engine.Game, p int) {
 	t.Helper()
-	if err := g.Submit(setupChoice(p, g.S.Players[p])); err != nil {
-		t.Fatalf("P%d setup: %v", p+1, err)
+	for !g.S.Ready(p) {
+		if err := g.Submit(setupStep(p, g.S.Players[p])); err != nil {
+			t.Fatalf("P%d setup: %v", p+1, err)
+		}
 	}
 }
 

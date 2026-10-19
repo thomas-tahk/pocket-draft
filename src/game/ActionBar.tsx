@@ -13,8 +13,6 @@ function canAfford(energy: Record<string, number>, total: number, cost: string[]
 
 export function ActionBar({ view }: { view: GameView }) {
   const { dispatch, runBot, restart, selection, clearSelection } = useGameStore();
-  const [setupBench, setSetupBench] = useState<string[]>([]);
-  const [setupActive, setSetupActive] = useState<string | null>(null);
   const [confirmConcede, setConfirmConcede] = useState(false);
 
   const actor = view.pending ? view.pending.player : view.active;
@@ -25,28 +23,21 @@ export function ActionBar({ view }: { view: GameView }) {
     return <div><button style={btn} onClick={() => restart()}>New game</button></div>;
   }
 
-  // Setup: choose Active + up to 3 bench Basics from hand.
+  // Setup: place an Active and up to 3 bench Basics one card at a time, then Ready.
   if (view.pending?.kind === 'setup') {
-    const activeId = setupActive ?? '';
+    const freeSlot = me.bench.findIndex((m) => m === null);
     return (
       <div>
         <div style={{ fontSize: 12, marginBottom: 6 }}>
-          Setup P{actor + 1}: pick an Active Basic (click a hand card, then “Set Active”), toggle up to 3 bench, then Place.
+          Setup P{actor + 1}: click a hand Basic, then “Set Active” or “Add to bench”; press Ready when done.
         </div>
-        <button style={btn} onClick={() => {
-          if (selection?.kind === 'hand') setSetupActive(selection.cardId);
+        <button style={btn} disabled={me.active !== null} onClick={() => {
+          if (selection?.kind === 'hand') dispatch({ type: 'SetupActive', player: actor, cardId: selection.cardId });
         }}>Set Active</button>
-        <button style={btn} onClick={() => {
-          if (selection?.kind === 'hand') {
-            const id = selection.cardId;
-            setSetupBench((b) => (b.includes(id) ? b.filter((x) => x !== id) : b.length < 3 ? [...b, id] : b));
-          }
-        }}>Toggle bench ({setupBench.length}/3)</button>
-        <button style={btn} disabled={!activeId} onClick={async () => {
-          await dispatch({ type: 'SetupPlace', player: actor, activeCardId: activeId, benchCardIds: setupBench });
-          setSetupBench([]);
-          setSetupActive(null);
-        }}>Place</button>
+        <button style={btn} disabled={freeSlot < 0} onClick={() => {
+          if (selection?.kind === 'hand') dispatch({ type: 'SetupBench', player: actor, cardId: selection.cardId, slot: freeSlot });
+        }}>Add to bench ({me.bench.filter((m) => m !== null).length}/3)</button>
+        <button style={btn} disabled={me.active === null} onClick={() => dispatch({ type: 'SetupReady', player: actor })}>Ready</button>
         <button style={btn} onClick={() => runBot()}>Bot place</button>
       </div>
     );

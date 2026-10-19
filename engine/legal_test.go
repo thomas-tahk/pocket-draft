@@ -110,29 +110,41 @@ func TestLegalMovesNewActivePrompt(t *testing.T) {
 	assertMoves(t, g.LegalMoves(0), []Event{Concede{Player: 0}})
 }
 
-// The setup prompt lists every Active choice with every positional bench of
-// the other Basics (trailing empty slots trimmed); evolutions never appear.
+// Setup is placed one card at a time (spec S5): each Basic to the Active or an
+// empty bench slot, and Ready once there is an Active. Evolutions never appear,
+// and both players may place at once.
 func TestLegalMovesSetup(t *testing.T) {
+	// Arrange
 	g := &Game{rng: newRng(1)}
 	g.S = &State{Phase: PhaseSetup, Winner: -1, Pending: &Prompt{Player: 0, Kind: PromptSetup}}
 	g.S.Players[0].Hand = []Card{legalBasic("A", "Charm", 1), legalEvo("E", "Charmel", "Charm"), legalBasic("B", "Bulb", 1)}
+	g.S.Players[1].Hand = []Card{legalBasic("C", "Cyn", 1)}
 
+	// Act + Assert: before an Active, there is no Ready.
 	assertMoves(t, g.LegalMoves(0), []Event{
-		SetupPlace{Player: 0, ActiveCardID: "A"},
-		SetupPlace{Player: 0, ActiveCardID: "A", BenchCardIDs: []string{"", "", "B"}},
-		SetupPlace{Player: 0, ActiveCardID: "A", BenchCardIDs: []string{"", "B"}},
-		SetupPlace{Player: 0, ActiveCardID: "A", BenchCardIDs: []string{"B"}},
-		SetupPlace{Player: 0, ActiveCardID: "B"},
-		SetupPlace{Player: 0, ActiveCardID: "B", BenchCardIDs: []string{"", "", "A"}},
-		SetupPlace{Player: 0, ActiveCardID: "B", BenchCardIDs: []string{"", "A"}},
-		SetupPlace{Player: 0, ActiveCardID: "B", BenchCardIDs: []string{"A"}},
+		SetupActive{Player: 0, CardID: "A"},
+		SetupActive{Player: 0, CardID: "B"},
+		SetupBench{Player: 0, CardID: "A", Slot: BenchLeft},
+		SetupBench{Player: 0, CardID: "A", Slot: BenchBehind},
+		SetupBench{Player: 0, CardID: "A", Slot: BenchRight},
+		SetupBench{Player: 0, CardID: "B", Slot: BenchLeft},
+		SetupBench{Player: 0, CardID: "B", Slot: BenchBehind},
+		SetupBench{Player: 0, CardID: "B", Slot: BenchRight},
 		Concede{Player: 0},
 	})
-	assertMoves(t, g.LegalMoves(1), []Event{Concede{Player: 1}})
-	// Trailing empty slots are the same move as a shorter list.
-	if err := g.Submit(SetupPlace{Player: 0, ActiveCardID: "B", BenchCardIDs: []string{"A", "", ""}}); err != nil {
-		t.Errorf("padded bench setup refused: %v", err)
+	if err := g.Submit(SetupActive{Player: 1, CardID: "C"}); err != nil {
+		t.Fatalf("P2 placing while P1 is named by the prompt: %v", err)
 	}
+	assertMoves(t, g.LegalMoves(1), []Event{SetupReady{Player: 1}, Concede{Player: 1}})
+
+	// After an Active and a bench card: only the free slots, and Ready.
+	if err := g.Submit(SetupActive{Player: 0, CardID: "A"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := g.Submit(SetupBench{Player: 0, CardID: "B", Slot: BenchBehind}); err != nil {
+		t.Fatal(err)
+	}
+	assertMoves(t, g.LegalMoves(0), []Event{SetupReady{Player: 0}, Concede{Player: 0}})
 }
 
 func TestLegalMovesGameOver(t *testing.T) {

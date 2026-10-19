@@ -30,6 +30,7 @@ export type PlayerView = {
   handCount: number;
   active: InPlayView | null;
   bench: (InPlayView | null)[]; // one entry per slot: left, behind, right; null is empty
+  ready: boolean; // pressed Ready at setup; the opponent's picks stay hidden until both are
   points: number;
   deckCount: number;
   discardCount: number;
@@ -56,7 +57,9 @@ export type GameView = {
 // Mirrors server toEvent(): one shape per move type. `player` is always the
 // actor (gameView.active, or pending.player during a prompt).
 export type Move =
-  | { type: 'SetupPlace'; player: number; activeCardId: string; benchCardIds: string[] }
+  | { type: 'SetupActive'; player: number; cardId: string }
+  | { type: 'SetupBench'; player: number; cardId: string; slot: number }
+  | { type: 'SetupReady'; player: number }
   | { type: 'PlayBasic'; player: number; cardId: string; slot: number }
   | { type: 'AttachEnergy'; player: number; target: number }
   | { type: 'Evolve'; player: number; handCardId: string; target: number }
