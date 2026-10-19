@@ -22,6 +22,7 @@ const (
 	HookEvolveEarly                // Target may evolve on its owner's first turn or the turn it was played
 	HookColorlessCost              // Value (negative) is added to the [C] in Target's attack costs
 	HookSurviveKO                  // attack damage that would KO Target leaves it at 10 HP (Foe attacks)
+	HookKOPoints                   // Value is added to the points for knocking out Target, the Active, with an attack by Foe
 	hookCount
 )
 

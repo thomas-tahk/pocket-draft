@@ -19,6 +19,8 @@ type Game struct {
 	Actions   []Action // one per applied event, for replay and history (actions.go)
 
 	flips []CoinFlip // coins flipped by the move being applied (coin.go)
+
+	koAttacker *InPlay // the attacking Pokémon while its attack's knockouts resolve; nil otherwise
 }
 
 var errBadPrompt = errors.New("invalid response to the current prompt")
@@ -293,7 +295,9 @@ func (g *Game) applyAttack(e UseAttack) {
 		g.narrate("%s's %s used %s for %d.", side(e.Player), pl.Active.Card.Name, atk.Name, dmg)
 	}
 
+	g.koAttacker = pl.Active
 	g.resolveAction()
+	g.koAttacker = nil
 	// Attacking ends the turn — but a knockout may owe a prompt first.
 	if g.S.Phase == PhaseOver {
 		return
@@ -374,13 +378,17 @@ func (g *Game) removeIfKnockedOut(owner int) int {
 	if mon == nil || mon.remainingHP() > 0 {
 		return 0
 	}
+	pts := koPoints(mon.Card)
+	if a := g.koAttacker; a != nil && owner != g.S.Active {
+		pts += g.sumHook(HookKOPoints, g.holder(owner, 0), a)
+	}
 	pl.Discard = append(pl.Discard, mon.Card)
 	if mon.Tool != nil {
 		pl.Discard = append(pl.Discard, *mon.Tool)
 	}
 	pl.Active = nil
 	g.narrate("%s's %s was Knocked Out.", side(owner), mon.Card.Name)
-	return koPoints(mon.Card)
+	return pts
 }
 
 // checkResult ends the game if an action decided it (spec E2, E3, E5): both at
