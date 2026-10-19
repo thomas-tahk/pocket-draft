@@ -172,7 +172,8 @@ func (g *Game) applySetup(e SetupPlace) {
 			pl.Bench[slot] = newInPlay(*c, 0)
 		}
 	}
-	g.narrate("%s placed %s as Active with %d on the bench.", side(e.Player), activeCard.Name, pl.BenchCount())
+	// Narration goes to both players, so it names no cards until both are Ready.
+	g.narrate("%s is Ready.", side(e.Player))
 	g.S.setup[e.Player] = true
 
 	switch {
@@ -181,11 +182,20 @@ func (g *Game) applySetup(e SetupPlace) {
 	case !g.S.setup[1]:
 		g.S.Pending = &Prompt{Player: 1, Kind: PromptSetup}
 	default:
+		g.narrateSetupReveal()
 		g.S.Pending = nil
 		g.S.Phase = PhaseMain
 		g.S.Active = g.S.FirstPlayer
 		g.S.Turn = 1
 		g.startTurn(g.S.Active)
+	}
+}
+
+// narrateSetupReveal names both players' setup picks once both are Ready.
+func (g *Game) narrateSetupReveal() {
+	for i := 0; i < 2; i++ {
+		pl := &g.S.Players[i]
+		g.narrate("%s placed %s as Active with %d on the bench.", side(i), pl.Active.Card.Name, pl.BenchCount())
 	}
 }
 

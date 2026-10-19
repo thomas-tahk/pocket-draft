@@ -117,8 +117,12 @@ type State struct {
 	FirstPlayer int
 
 	resume resumeAction
-	setup  [2]bool
+	setup  [2]bool // which players have pressed Ready at setup
 }
+
+// Ready reports whether player p has placed their setup and pressed Ready
+// (spec S5). Until both are Ready, each side's picks are hidden from the other.
+func (s *State) Ready(p int) bool { return s.setup[p] }
 
 // CoinFlip records one flip: which player flipped and whether it was heads.
 type CoinFlip struct {

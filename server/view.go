@@ -50,6 +50,7 @@ type playerView struct {
 	EnergyTypes  []string      `json:"energyTypes"` // the deck's Energy Zone types (spec S2)
 	EnergyUsed   bool          `json:"energyUsed"`
 	Retreated    bool          `json:"retreated"`
+	Ready        bool          `json:"ready"` // pressed Ready at setup (spec S5)
 	// LegalMoves is everything the viewer may do right now, each in the exact
 	// shape POST /api/move accepts. Only filled on the viewer's own side.
 	LegalMoves []moveReq `json:"legalMoves"`
@@ -213,6 +214,14 @@ func toPlayerView(p engine.Player, isViewer bool) playerView {
 	}
 }
 
+// hideSetupPicks empties an opponent's Active and Bench while setup is still
+// running: their picks stay hidden until both players are Ready (spec S5).
+// The hand count already moved, which is no more than the real game shows.
+func hideSetupPicks(p *playerView) {
+	p.Active = nil
+	p.Bench = make([]*inPlayView, len(p.Bench))
+}
+
 // humanSeat is the player the browser plays; the bot is the other seat.
 const humanSeat = 0
 
@@ -224,7 +233,14 @@ func toGameView(g *engine.Game, viewer int) gameView {
 	if s.Pending != nil {
 		pending = &promptView{Player: s.Pending.Player, Kind: promptKindName(s.Pending.Kind)}
 	}
-	players := [2]playerView{toPlayerView(s.Players[0], viewer == 0), toPlayerView(s.Players[1], viewer == 1)}
+	var players [2]playerView
+	for i := range players {
+		players[i] = toPlayerView(s.Players[i], viewer == i)
+		players[i].Ready = s.Ready(i)
+		if s.Phase == engine.PhaseSetup && viewer != i {
+			hideSetupPicks(&players[i])
+		}
+	}
 	players[viewer].LegalMoves = toMoveReqs(g.LegalMoves(viewer))
 	players[1-viewer].LegalMoves = []moveReq{}
 	return gameView{

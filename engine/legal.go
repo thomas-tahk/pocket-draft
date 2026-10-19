@@ -129,6 +129,21 @@ func (g *Game) onPrompt(p int, k PromptKind) error {
 	return nil
 }
 
+// onSetup gates setup placement. Setup is simultaneous (spec S5): any player
+// not yet Ready may place, whichever player the setup prompt names.
+func (g *Game) onSetup(p int) error {
+	if g.S.Phase != PhaseSetup || g.S.Pending == nil || g.S.Pending.Kind != PromptSetup {
+		return errors.New("not in setup")
+	}
+	if p != 0 && p != 1 {
+		return fmt.Errorf("no player %d", p)
+	}
+	if g.S.setup[p] {
+		return fmt.Errorf("%s is already Ready", side(p))
+	}
+	return nil
+}
+
 // --- candidate lists (legal or not; the checks filter them) ---
 
 func listSetup(g *Game, p int) []SetupPlace {
@@ -254,7 +269,7 @@ func listAttack(g *Game, p int) []UseAttack {
 // --- checks: nil when legal, otherwise the reason ---
 
 func (g *Game) checkSetup(e SetupPlace) error {
-	if err := g.onPrompt(e.Player, PromptSetup); err != nil {
+	if err := g.onSetup(e.Player); err != nil {
 		return err
 	}
 	pl := &g.S.Players[e.Player]
