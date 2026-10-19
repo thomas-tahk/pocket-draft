@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import type { CardView, GameView, PlayerView } from '../game/types';
 import { ChoiceOverlay, type Choice } from './Choice';
+import { History } from './History';
 import { InPlayCard } from './InPlayCard';
 import { CardBack, CardFace, EmptySlot, EnergyIcon, PointPips } from './pieces';
 import { TurnBanner } from './TurnBanner';
@@ -161,6 +162,7 @@ export function Board({ view, onEndTurn, choice = null, children }: { view: Game
         <button className="bt-endturn" disabled={!yourTurn} onClick={onEndTurn}>End Turn</button>
       </Zone>
       <YourSide p={you} choice={choice} />
+      <History actions={view.actions} />
       <TurnBanner view={view} />
       {choice && <ChoiceOverlay choice={choice} />}
       {children}
