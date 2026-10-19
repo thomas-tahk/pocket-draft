@@ -76,12 +76,12 @@ func TestRefusedMoveEmitsNoAction(t *testing.T) {
 
 // Each kind records the card it used and the spot it touched.
 func TestActionRecordsCardAndTarget(t *testing.T) {
-	// Arrange: both sides set up with an Active only, then past turn 1.
+	// Arrange: both sides set up with an Active only, then past both first turns (T8).
 	base := demoEmbor()
 	evo := Card{ID: "FIR-02", Name: "Blazor", Stage: Stage1, EvolvesFrom: "Embor", HP: 90, Type: Fire}
 	g := NewGame(7, deckOf(base, 20), deckOf(base, 20))
 	setupActiveOnly(t, g)
-	endTurnAt(t, g, 1)
+	endTurnAt(t, g, 2)
 	p := g.S.Active
 	pl := &g.S.Players[p]
 	pl.Hand = append(pl.Hand, base, evo)

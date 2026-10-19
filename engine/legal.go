@@ -356,7 +356,8 @@ func (g *Game) checkEvolve(e Evolve) error {
 	if mon.PlacedTurn == g.S.Turn {
 		return errors.New("a Pokémon cannot evolve the turn it was played")
 	}
-	if g.S.Turn == 1 {
+	// T8: game turn 1 is the first player's first turn, turn 2 the second's.
+	if g.S.Turn <= 2 {
 		return errors.New("no Pokémon may evolve on the first turn")
 	}
 	return nil
