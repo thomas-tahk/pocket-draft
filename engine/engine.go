@@ -497,25 +497,47 @@ func (g *Game) concludeTurn() {
 // automatic), then resolves any knockouts as one action.
 func (g *Game) resolveStatus() {
 	for i := 0; i < 2; i++ {
-		pl := &g.S.Players[i]
-		if pl.Active == nil {
+		if g.S.Players[i].Active == nil {
 			continue
 		}
-		if pl.Active.Poisoned {
-			pl.Active.Damage += 10
-			g.narrate("%s's %s took 10 from poison.", side(i), pl.Active.Card.Name)
-		}
-		if pl.Active.Burned {
-			pl.Active.Damage += 20
-			g.narrate("%s's %s took 20 from burn.", side(i), pl.Active.Card.Name)
-			if g.flipCoin(i, true) {
-				pl.Active.Burned = false
-				g.narrate("%s's %s recovered from burn.", side(i), pl.Active.Card.Name)
-			}
-		}
+		g.checkupPoisonBurn(i)
+		g.checkupSleep(i)
 		g.wearOffParalysis(i)
 	}
 	g.resolveAction() // one Checkup is one action (spec E4)
+}
+
+// checkupPoisonBurn deals player i's Active its Poison (10) and Burn (20)
+// damage, in that order (C1, C2); Burn then flips, heads cures (C6).
+func (g *Game) checkupPoisonBurn(i int) {
+	mon := g.S.Players[i].Active
+	if mon.Poisoned {
+		mon.Damage += 10
+		g.narrate("%s's %s took 10 from poison.", side(i), mon.Card.Name)
+	}
+	if !mon.Burned {
+		return
+	}
+	mon.Damage += 20
+	g.narrate("%s's %s took 20 from burn.", side(i), mon.Card.Name)
+	if g.flipCoin(i, true) {
+		mon.Cure(Burn)
+		g.narrate("%s's %s recovered from burn.", side(i), mon.Card.Name)
+	}
+}
+
+// checkupSleep flips for player i's Asleep Active: heads it wakes up (C6).
+func (g *Game) checkupSleep(i int) {
+	mon := g.S.Players[i].Active
+	if !mon.Has(Asleep) {
+		return
+	}
+	if g.flipCoin(i, true) {
+		mon.Cure(Asleep)
+		g.narrate("%s's %s flipped heads and is no longer Asleep.", side(i), mon.Card.Name)
+		return
+	}
+	g.narrate("%s's %s flipped tails and is still Asleep.", side(i), mon.Card.Name)
 }
 
 // wearOffParalysis cures player i's Paralyzed Active at the Checkup that ends
