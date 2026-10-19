@@ -98,7 +98,7 @@ func TestToEngineCardAttachesSlice1Effects(t *testing.T) {
 
 func TestToEngineCardModelsDragon(t *testing.T) {
 	// Dragon is a modeled type: a Dragon Pokémon converts (its attacks are paid
-	// by other energies; Dragon never enters the Energy Zone — see energyTypesOf).
+	// by other energies; Dragon never enters the Energy Zone — see engine.ValidateEnergyTypes).
 	card, err := toEngineCard(rawCard{ID: "x", Name: "Dragonite", CardType: "Dragon", Stage: "Basic", HP: 140,
 		Attacks: []rawAttack{{Cost: "WWLL", Name: "Draco Meteor", Damage: "120"}}})
 	if err != nil {
@@ -106,6 +106,22 @@ func TestToEngineCardModelsDragon(t *testing.T) {
 	}
 	if card.Type != engine.Dragon {
 		t.Errorf("type = %v, want Dragon", card.Type)
+	}
+}
+
+func TestToEngineCardMarksMegaEX(t *testing.T) {
+	// Arrange
+	rc := rawCard{ID: "B4a-108", Name: "Mega Mawile ex", CardType: "Metal", Stage: "Basic", HP: 170, ExKind: "mega-ex"}
+
+	// Act
+	card, err := toEngineCard(rc)
+
+	// Assert
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !card.IsEX || !card.IsMegaEX {
+		t.Errorf("IsEX/IsMegaEX = %v/%v, want true/true for exKind mega-ex", card.IsEX, card.IsMegaEX)
 	}
 }
 

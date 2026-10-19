@@ -6,76 +6,70 @@ import (
 	"github.com/thomas-tahk/pocket-draft/engine"
 )
 
-// botMove makes ONE legal move for whoever the engine is currently waiting on,
-// using a deliberately predictable greedy policy: get energy onto the Active,
-// swing with it, otherwise pass. It is not meant to play well — it exists so the
-// two-player flow can be exercised without a second human.
-//
-// It leans on the engine's "block the illegal" guarantee (ADR-0004/0007): a
-// rejected Submit changes nothing, so we can try candidate moves in priority
-// order and keep the first that succeeds. Caller must hold mu.
+// botMove makes ONE move for whoever the engine is currently waiting on. The
+// move always comes from the engine's LegalMoves (botChoice), so Submit never
+// refuses it. It is not meant to play well — it exists so the two-player flow
+// can be exercised without a second human. Caller must hold mu.
 func botMove() bool {
-	s := game.S
-	if s.Phase == engine.PhaseOver {
-		return false
-	}
-	actor := s.Active
-	if s.Pending != nil {
-		actor = s.Pending.Player
-	}
-	for _, ev := range candidates(actor) {
-		if game.Submit(ev) == nil {
-			return true
-		}
-	}
-	return false
+	ev, ok := botChoice(game)
+	return ok && game.Submit(ev) == nil
 }
 
-// candidates lists moves to try for the actor, best-effort first. EndTurn is the
-// always-legal fallback in the main phase, so a turn can never stall.
-func candidates(actor int) []engine.Event {
-	s := game.S
-	pl := s.Players[actor]
-
-	if s.Pending != nil {
-		switch s.Pending.Kind {
-		case engine.PromptSetup:
-			return []engine.Event{setupChoice(actor, pl)}
-		case engine.PromptNewActive:
-			var evs []engine.Event
-			for bi := range pl.Bench {
-				evs = append(evs, engine.ChooseNewActive{Player: actor, BenchIndex: bi})
-			}
-			return evs
+// botChoice picks the bot's move from LegalMoves, never Concede. It asks the
+// player the engine is waiting on first, then the other, so any prompt — of a
+// kind the bot has never heard of included — gets answered. False only when
+// the game is over or nobody has a move.
+func botChoice(g *engine.Game) (engine.Event, bool) {
+	first := g.S.Active
+	if g.S.Pending != nil {
+		first = g.S.Pending.Player
+	}
+	for _, p := range []int{first, 1 - first} {
+		if ev, ok := bestMove(g.LegalMoves(p)); ok {
+			return ev, true
 		}
 	}
-
-	// Main phase: attach to the Active, then try each attack, then pass.
-	evs := []engine.Event{engine.AttachEnergy{Player: actor, Target: 0}}
-	if pl.Active != nil {
-		for i := range pl.Active.Card.Attacks {
-			evs = append(evs, engine.UseAttack{Player: actor, Index: i})
-		}
-	}
-	return append(evs, engine.EndTurn{Player: actor})
+	return nil, false
 }
 
-// setupChoice puts the first Basic in hand into the Active spot and the next few
-// Basics (up to the 3-slot bench) behind it.
-func setupChoice(actor int, pl engine.Player) engine.SetupPlace {
-	var active string
-	var bench []string
-	for _, c := range pl.Hand {
-		if c.Stage != engine.Basic {
-			continue
-		}
-		if active == "" {
-			active = c.ID
-		} else if len(bench) < 3 {
-			bench = append(bench, c.ID)
+// bestMove is the highest-ranked move, the earliest listed on a tie.
+func bestMove(moves []engine.Event) (engine.Event, bool) {
+	var best engine.Event
+	bestRank := 0
+	for _, ev := range moves {
+		r, ok := moveRank(ev)
+		if ok && (best == nil || r > bestRank) {
+			best, bestRank = ev, r
 		}
 	}
-	return engine.SetupPlace{Player: actor, ActiveCardID: active, BenchCardIDs: bench}
+	return best, best != nil
+}
+
+// moveRank is the bot's greedy policy: at setup place the Active, fill the
+// bench, then press Ready; in play get energy onto the Active, swing with it,
+// otherwise pass. Main-phase moves it has no policy
+// for rank below EndTurn, so it skips them; a prompt's answers are the only
+// moves listed, so they are chosen whatever their kind. Concede is never ok.
+func moveRank(ev engine.Event) (int, bool) {
+	switch e := ev.(type) {
+	case engine.Concede:
+		return 0, false
+	case engine.SetupActive:
+		return 3, true
+	case engine.SetupBench:
+		return 2, true
+	case engine.SetupReady:
+		return 1, true
+	case engine.AttachEnergy:
+		if e.Target == 0 {
+			return 3, true
+		}
+	case engine.UseAttack:
+		return 2, true
+	case engine.EndTurn:
+		return 1, true
+	}
+	return 0, true
 }
 
 type botResp struct {
@@ -83,7 +77,7 @@ type botResp struct {
 	State gameView `json:"state"`
 }
 
-// POST /api/bot — make one greedy move for the current actor.
+// POST /api/bot — make one bot move for the current actor.
 func handleBot(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, botStep())
 }
@@ -94,5 +88,5 @@ func botStep() botResp {
 	mu.Lock()
 	defer mu.Unlock()
 	acted := botMove()
-	return botResp{Acted: acted, State: toGameView(game)}
+	return botResp{Acted: acted, State: toGameView(game, humanSeat)}
 }

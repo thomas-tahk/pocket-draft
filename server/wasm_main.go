@@ -58,7 +58,7 @@ func pdCall(_ js.Value, args []js.Value) any {
 	case "/api/state":
 		mu.Lock()
 		defer mu.Unlock()
-		return marshal(toGameView(game))
+		return marshal(toGameView(game, humanSeat))
 
 	case "/api/new":
 		var req newReq

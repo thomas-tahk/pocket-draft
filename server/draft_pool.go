@@ -172,7 +172,7 @@ func toDraftablePool() []draftCard {
 
 	deduped := dedupePromoRayquaza(enriched)
 	finals := filterToFinalEvolutions(deduped)
-	pool := functionalDedupe(finals)
+	pool := keepWorkingText(functionalDedupe(finals))
 	sort.Slice(pool, func(i, j int) bool { return pool[i].ID < pool[j].ID })
 	return pool
 }

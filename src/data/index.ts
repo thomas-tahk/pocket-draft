@@ -1,6 +1,8 @@
 import type { Card, RawCard, SetInfo } from '../types/card';
 import {
   getFreeUniversals,
+  keepWorkingText,
+  loadDraftPoolFilter,
   loadRawCards,
   loadSets,
   toDraftablePool,
@@ -18,8 +20,12 @@ export type CardPool = {
 };
 
 export async function loadCardPool(): Promise<CardPool> {
-  const [allCards, sets] = await Promise.all([loadRawCards(), loadSets()]);
-  const draftableCards = toDraftablePool(allCards);
+  const [allCards, sets, poolFilter] = await Promise.all([
+    loadRawCards(),
+    loadSets(),
+    loadDraftPoolFilter(),
+  ]);
+  const draftableCards = keepWorkingText(toDraftablePool(allCards), poolFilter);
   const fullCards = toFullCardPool(allCards);
   const universals = getFreeUniversals(allCards);
   const packs = buildPackComposition(draftableCards, sets);

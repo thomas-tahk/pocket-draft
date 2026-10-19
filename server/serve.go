@@ -9,6 +9,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 )
 
 func main() {
@@ -30,7 +31,11 @@ func main() {
 	http.HandleFunc("/api/bot", handleBot)
 	http.Handle("/", http.FileServer(http.Dir("static")))
 
-	const addr = ":8080"
+	// PD_ADDR lets parallel test runs each use their own port.
+	addr := ":8080"
+	if v := os.Getenv("PD_ADDR"); v != "" {
+		addr = v
+	}
 	log.Printf("pocket-draft simulator on http://localhost%s", addr)
 	log.Fatal(http.ListenAndServe(addr, nil))
 }

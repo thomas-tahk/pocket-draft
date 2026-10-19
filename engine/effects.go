@@ -107,12 +107,13 @@ func (v DamagePerEnergy) Apply(ctx *EffectContext) {
 }
 
 // DrawCards draws N cards from the attacker's deck into their hand. E.g.
-// Munchlax's Hungrily Draw: draw a card.
+// Munchlax's Hungrily Draw: draw a card. At handMax (T3) the card stays in
+// the deck.
 type DrawCards struct{ N int }
 
 func (v DrawCards) Apply(ctx *EffectContext) {
 	pl := ctx.attackerPlayer()
-	for i := 0; i < v.N && len(pl.Deck) > 0; i++ {
+	for i := 0; i < v.N && len(pl.Deck) > 0 && len(pl.Hand) < handMax; i++ {
 		pl.Hand = append(pl.Hand, pl.Deck[0])
 		pl.Deck = pl.Deck[1:]
 	}

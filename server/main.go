@@ -44,16 +44,35 @@ func writeJSON(w http.ResponseWriter, v any) {
 func handleState(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
 	defer mu.Unlock()
-	writeJSON(w, toGameView(game))
+	writeJSON(w, toGameView(game, humanSeat))
 }
 
 // newReq is the optional JSON body for POST /api/new. `you` is your deck as a
 // list of card IDs; when present you play it (player 0) against the drafted bot
 // deck (player 1). An empty body falls back to the demo matchup (player 1's
-// curated stand-in vs the bot).
+// curated stand-in vs the bot). `energy` is your deck's chosen Energy Zone
+// types by name (1–3, spec S2); omitted means the default from its attack costs.
 type newReq struct {
-	You  []string `json:"you"`
-	Seed *uint64  `json:"seed"`
+	You    []string `json:"you"`
+	Seed   *uint64  `json:"seed"`
+	Energy []string `json:"energy"`
+}
+
+// energyChoice parses and validates a requested energy choice; nil when none
+// was requested, so the engine applies the deck's default.
+func energyChoice(names []string) ([]engine.Energy, error) {
+	if len(names) == 0 {
+		return nil, nil
+	}
+	types := make([]engine.Energy, len(names))
+	for i, n := range names {
+		e, ok := energyByName(n)
+		if !ok {
+			return nil, fmt.Errorf("unknown energy type %q", n)
+		}
+		types[i] = e
+	}
+	return types, engine.ValidateEnergyTypes(types)
 }
 
 // POST /api/new — start a fresh game. With a {you:[cardId...], seed} body you play
@@ -110,11 +129,15 @@ func startGame(req newReq) (gameView, *startErr) {
 		}
 		p0 = d
 	}
+	energy, err := energyChoice(req.Energy)
+	if err != nil {
+		return gameView{}, &startErr{err, http.StatusBadRequest}
+	}
 
 	mu.Lock()
 	defer mu.Unlock()
-	game = engine.NewGame(seed, p0, p1)
-	return toGameView(game), nil
+	game = engine.NewGameFromDecks(seed, [2]engine.Deck{{Cards: p0, Energy: energy}, {Cards: p1}})
+	return toGameView(game, humanSeat), nil
 }
 
 // startErr carries the status code a failed start should report over HTTP.
@@ -126,15 +149,15 @@ type startErr struct {
 // moveReq is the superset of fields any move might carry; only the ones relevant
 // to the given type are read.
 type moveReq struct {
-	Type         string   `json:"type"`
-	Player       int      `json:"player"`
-	CardID       string   `json:"cardId"`
-	ActiveCardID string   `json:"activeCardId"`
-	BenchCardIDs []string `json:"benchCardIds"`
-	HandCardID   string   `json:"handCardId"`
-	Target       int      `json:"target"`
-	BenchIndex   int      `json:"benchIndex"`
-	Index        int      `json:"index"`
+	Type       string   `json:"type"`
+	Player     int      `json:"player"`
+	CardID     string   `json:"cardId"`
+	Slot       int      `json:"slot"`
+	HandCardID string   `json:"handCardId"`
+	Target     int      `json:"target"`
+	BenchIndex int      `json:"benchIndex"`
+	Index      int      `json:"index"`
+	Energy     []string `json:"energy,omitempty"`
 }
 
 type moveResp struct {
@@ -162,21 +185,25 @@ func applyMove(req moveReq) moveResp {
 	mu.Lock()
 	defer mu.Unlock()
 	if err != nil {
-		return moveResp{OK: false, Error: err.Error(), State: toGameView(game)}
+		return moveResp{OK: false, Error: err.Error(), State: toGameView(game, humanSeat)}
 	}
 	if err := game.Submit(ev); err != nil {
-		return moveResp{OK: false, Error: err.Error(), State: toGameView(game)}
+		return moveResp{OK: false, Error: err.Error(), State: toGameView(game, humanSeat)}
 	}
-	return moveResp{OK: true, State: toGameView(game)}
+	return moveResp{OK: true, State: toGameView(game, humanSeat)}
 }
 
 // toEvent maps a decoded request to the engine's typed Event.
 func toEvent(r moveReq) (engine.Event, error) {
 	switch r.Type {
-	case "SetupPlace":
-		return engine.SetupPlace{Player: r.Player, ActiveCardID: r.ActiveCardID, BenchCardIDs: r.BenchCardIDs}, nil
+	case "SetupActive":
+		return engine.SetupActive{Player: r.Player, CardID: r.CardID}, nil
+	case "SetupBench":
+		return engine.SetupBench{Player: r.Player, CardID: r.CardID, Slot: r.Slot}, nil
+	case "SetupReady":
+		return engine.SetupReady{Player: r.Player}, nil
 	case "PlayBasic":
-		return engine.PlayBasic{Player: r.Player, CardID: r.CardID}, nil
+		return engine.PlayBasic{Player: r.Player, CardID: r.CardID, Slot: r.Slot}, nil
 	case "AttachEnergy":
 		return engine.AttachEnergy{Player: r.Player, Target: r.Target}, nil
 	case "Evolve":
@@ -189,8 +216,54 @@ func toEvent(r moveReq) (engine.Event, error) {
 		return engine.EndTurn{Player: r.Player}, nil
 	case "ChooseNewActive":
 		return engine.ChooseNewActive{Player: r.Player, BenchIndex: r.BenchIndex}, nil
+	case "RetreatDiscard":
+		return retreatDiscard(r)
 	case "Concede":
 		return engine.Concede{Player: r.Player}, nil
 	}
 	return nil, fmt.Errorf("unknown move type %q", r.Type)
+}
+
+// retreatDiscard decodes the energy named in a retreat-energy answer.
+func retreatDiscard(r moveReq) (engine.Event, error) {
+	energy := make([]engine.Energy, len(r.Energy))
+	for i, n := range r.Energy {
+		e, ok := energyByName(n)
+		if !ok {
+			return nil, fmt.Errorf("unknown energy type %q", n)
+		}
+		energy[i] = e
+	}
+	return engine.RetreatDiscard{Player: r.Player, Energy: energy}, nil
+}
+
+// fromEvent is the inverse of toEvent: the request that would submit ev.
+func fromEvent(ev engine.Event) moveReq {
+	switch e := ev.(type) {
+	case engine.SetupActive:
+		return moveReq{Type: "SetupActive", Player: e.Player, CardID: e.CardID}
+	case engine.SetupBench:
+		return moveReq{Type: "SetupBench", Player: e.Player, CardID: e.CardID, Slot: e.Slot}
+	case engine.SetupReady:
+		return moveReq{Type: "SetupReady", Player: e.Player}
+	case engine.PlayBasic:
+		return moveReq{Type: "PlayBasic", Player: e.Player, CardID: e.CardID, Slot: e.Slot}
+	case engine.AttachEnergy:
+		return moveReq{Type: "AttachEnergy", Player: e.Player, Target: e.Target}
+	case engine.Evolve:
+		return moveReq{Type: "Evolve", Player: e.Player, HandCardID: e.HandCardID, Target: e.Target}
+	case engine.Retreat:
+		return moveReq{Type: "Retreat", Player: e.Player, BenchIndex: e.BenchIndex}
+	case engine.UseAttack:
+		return moveReq{Type: "UseAttack", Player: e.Player, Index: e.Index}
+	case engine.EndTurn:
+		return moveReq{Type: "EndTurn", Player: e.Player}
+	case engine.ChooseNewActive:
+		return moveReq{Type: "ChooseNewActive", Player: e.Player, BenchIndex: e.BenchIndex}
+	case engine.RetreatDiscard:
+		return moveReq{Type: "RetreatDiscard", Player: e.Player, Energy: energyLabels(e.Energy)}
+	case engine.Concede:
+		return moveReq{Type: "Concede", Player: e.Player}
+	}
+	panic(fmt.Sprintf("fromEvent: no request shape for %T", ev))
 }

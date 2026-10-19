@@ -201,6 +201,7 @@ func toEngineCard(rc rawCard) (engine.Card, error) {
 		Weakness:    weak,
 		RetreatCost: rc.Retreat,
 		IsEX:        rc.ExKind != "regular",
+		IsMegaEX:    rc.ExKind == "mega-ex",
 	}, nil
 }
 

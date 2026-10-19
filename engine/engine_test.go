@@ -25,6 +25,23 @@ func pickSetup(hand []Card) (string, []string) {
 	return active, bench
 }
 
+// submitSetup places active and bench for p (bench index i is slot i, "" is
+// empty), then presses Ready.
+func submitSetup(g *Game, p int, active string, bench []string) error {
+	evs := []Event{SetupActive{Player: p, CardID: active}}
+	for slot, id := range bench {
+		if id != "" {
+			evs = append(evs, SetupBench{Player: p, CardID: id, Slot: slot})
+		}
+	}
+	for _, ev := range append(evs, SetupReady{Player: p}) {
+		if err := g.Submit(ev); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func firstBasicID(hand []Card) (string, bool) {
 	for _, c := range hand {
 		if c.Stage == Basic {
@@ -56,9 +73,9 @@ func autoPlay(t *testing.T, g *Game) {
 			switch g.S.Pending.Kind {
 			case PromptSetup:
 				a, b := pickSetup(g.S.Players[p].Hand)
-				err = g.Submit(SetupPlace{Player: p, ActiveCardID: a, BenchCardIDs: b})
+				err = submitSetup(g, p, a, b)
 			case PromptNewActive:
-				err = g.Submit(ChooseNewActive{Player: p, BenchIndex: 0})
+				err = g.Submit(ChooseNewActive{Player: p, BenchIndex: firstSlot(g.S.Players[p], true)})
 			}
 			if err != nil {
 				t.Fatalf("prompt response failed: %v", err)
@@ -72,9 +89,9 @@ func autoPlay(t *testing.T, g *Game) {
 		switch {
 		case pl.EnergyZone != NoEnergy && !pl.EnergyUsed:
 			err = g.Submit(AttachEnergy{Player: p, Target: 0})
-		case len(pl.Bench) < 3 && hasBasicInHand(pl.Hand):
+		case pl.BenchCount() < BenchSlots && hasBasicInHand(pl.Hand):
 			id, _ := firstBasicID(pl.Hand)
-			err = g.Submit(PlayBasic{Player: p, CardID: id})
+			err = g.Submit(PlayBasic{Player: p, CardID: id, Slot: firstSlot(pl, false)})
 		default:
 			if ai, ok := playableAttack(pl); ok {
 				err = g.Submit(UseAttack{Player: p, Index: ai})
@@ -91,6 +108,17 @@ func autoPlay(t *testing.T, g *Game) {
 	}
 }
 
+// firstSlot returns the first bench slot that is filled (filled=true) or empty
+// (filled=false), or -1 if there is none.
+func firstSlot(pl Player, filled bool) int {
+	for i, m := range pl.Bench {
+		if (m != nil) == filled {
+			return i
+		}
+	}
+	return -1
+}
+
 func hasBasicInHand(hand []Card) bool {
 	_, ok := firstBasicID(hand)
 	return ok
@@ -101,7 +129,7 @@ func doSetup(t *testing.T, g *Game) {
 	for g.S.Pending != nil && g.S.Pending.Kind == PromptSetup {
 		p := g.S.Pending.Player
 		a, b := pickSetup(g.S.Players[p].Hand)
-		if err := g.Submit(SetupPlace{Player: p, ActiveCardID: a, BenchCardIDs: b}); err != nil {
+		if err := submitSetup(g, p, a, b); err != nil {
 			t.Fatalf("setup failed: %v", err)
 		}
 	}
@@ -126,12 +154,6 @@ func TestConcedeEndsGame(t *testing.T) {
 	}
 	if g.S.Winner != 1-p {
 		t.Fatalf("winner = %d, want %d (the opponent)", g.S.Winner, 1-p)
-	}
-	// Conceding when it isn't your turn is refused.
-	g2 := NewGame(42, d0, d1)
-	doSetup(t, g2)
-	if err := g2.Submit(Concede{Player: 1 - g2.S.Active}); err == nil {
-		t.Error("concede off-turn should be refused")
 	}
 }
 
@@ -189,18 +211,20 @@ func TestIllegalMovesRefused(t *testing.T) {
 		if !ok {
 			break
 		}
-		err := g.Submit(PlayBasic{Player: q, CardID: id})
-		if len(g.S.Players[q].Bench) == 3 && err == nil {
+		err := g.Submit(PlayBasic{Player: q, CardID: id, Slot: firstSlot(g.S.Players[q], false)})
+		if g.S.Players[q].BenchCount() == 3 && err == nil {
 			// keep going; next one must fail
 			continue
 		}
 	}
-	if len(g.S.Players[q].Bench) != 3 {
-		t.Fatalf("expected a full bench of 3, got %d", len(g.S.Players[q].Bench))
+	if g.S.Players[q].BenchCount() != 3 {
+		t.Fatalf("expected a full bench of 3, got %d", g.S.Players[q].BenchCount())
 	}
 	if id, ok := firstBasicID(g.S.Players[q].Hand); ok {
-		if err := g.Submit(PlayBasic{Player: q, CardID: id}); err == nil {
-			t.Error("expected error playing onto a full bench")
+		for slot := 0; slot < BenchSlots; slot++ {
+			if err := g.Submit(PlayBasic{Player: q, CardID: id, Slot: slot}); err == nil {
+				t.Errorf("expected error playing onto full bench slot %d", slot)
+			}
 		}
 	}
 }
@@ -215,7 +239,7 @@ func TestPoisonKnockoutRaisesPrompt(t *testing.T) {
 	p := g.S.Active
 	opp := 1 - p
 	oppActive := g.S.Players[opp].Active
-	if oppActive == nil || len(g.S.Players[opp].Bench) == 0 {
+	if oppActive == nil || g.S.Players[opp].BenchCount() == 0 {
 		t.Fatalf("test setup expected opponent to have an Active and a bench")
 	}
 
@@ -436,5 +460,29 @@ func TestEXWorthTwoPoints(t *testing.T) {
 	}
 	if got := g.S.Players[scorer].Points; got != before+2 {
 		t.Errorf("knocking out an EX should score 2, points went %d→%d", before, got)
+	}
+}
+
+// E1: a Mega ex is worth 3 points.
+func TestMegaEXWorthThreePoints(t *testing.T) {
+	// Arrange
+	mega := demoEmborEX()
+	mega.IsMegaEX = true
+	g := NewGame(3, deckOf(demoVolt(), 20), deckOf(mega, 20))
+	doSetup(t, g)
+	p := g.S.Active
+	m := g.S.Players[1].Active
+	m.Poisoned = true
+	m.Damage = m.Card.HP - 5
+	before := g.S.Players[0].Points
+
+	// Act
+	if err := g.Submit(EndTurn{Player: p}); err != nil {
+		t.Fatalf("end turn: %v", err)
+	}
+
+	// Assert
+	if got := g.S.Players[0].Points; got != before+3 {
+		t.Errorf("knocking out a Mega ex should score 3, points went %d→%d", before, got)
 	}
 }

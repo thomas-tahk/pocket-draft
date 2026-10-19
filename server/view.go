@@ -38,15 +38,29 @@ type inPlayView struct {
 }
 
 type playerView struct {
-	Hand         []cardView   `json:"hand"`
-	Active       *inPlayView  `json:"active"`
-	Bench        []inPlayView `json:"bench"`
-	Points       int          `json:"points"`
-	DeckCount    int          `json:"deckCount"`
-	DiscardCount int          `json:"discardCount"`
-	EnergyZone   string       `json:"energyZone"`
-	EnergyUsed   bool         `json:"energyUsed"`
-	Retreated    bool         `json:"retreated"`
+	Hand         []cardView    `json:"hand"`
+	HandCount    int           `json:"handCount"`
+	Active       *inPlayView   `json:"active"`
+	Bench        []*inPlayView `json:"bench"` // one entry per slot (left, behind, right); null is empty
+	Points       int           `json:"points"`
+	DeckCount    int           `json:"deckCount"`
+	DiscardCount int           `json:"discardCount"`
+	EnergyZone   string        `json:"energyZone"`  // this turn's energy (spec T4)
+	EnergyNext   string        `json:"energyNext"`  // next turn's energy (spec T4)
+	EnergyTypes  []string      `json:"energyTypes"` // the deck's Energy Zone types (spec S2)
+	EnergyUsed   bool          `json:"energyUsed"`
+	Retreated    bool          `json:"retreated"`
+	Ready        bool          `json:"ready"` // pressed Ready at setup (spec S5)
+	// LegalMoves is everything the viewer may do right now, each in the exact
+	// shape POST /api/move accepts. Only filled on the viewer's own side.
+	LegalMoves []moveReq `json:"legalMoves"`
+	// HandBlocked maps each viewer hand card with no legal move to the reason;
+	// EnergyBlocked is the reason the zone's energy can't be attached, or "".
+	// The screen flashes these when such a card is picked up (spec F17).
+	HandBlocked   map[string]string `json:"handBlocked"`
+	EnergyBlocked string            `json:"energyBlocked"`
+
+	DiscardedEnergy []string `json:"discardedEnergy"` // oldest first (spec T6)
 }
 
 type promptView struct {
@@ -61,7 +75,34 @@ type gameView struct {
 	Phase     string        `json:"phase"`
 	Pending   *promptView   `json:"pending"`
 	Winner    int           `json:"winner"`
+	Outcome   string        `json:"outcome"` // viewer's "win", "loss" or "tie"; "" until the game is over
+	Reason    string        `json:"reason"`  // why it ended (spec F19); "" until it does
 	Narration []string      `json:"narration"`
+	Actions   []actionView  `json:"actions"`
+	// OpeningFlip and FirstPlayer are the coin flip that decided who goes
+	// first, for the setup screen (spec S4). Neither is hidden.
+	OpeningFlip flipView `json:"openingFlip"`
+	FirstPlayer int      `json:"firstPlayer"`
+}
+
+type flipView struct {
+	Flipper int  `json:"flipper"`
+	Heads   bool `json:"heads"`
+}
+
+type spotView struct {
+	Player int `json:"player"`
+	Pos    int `json:"pos"` // 0 is the Active, n is bench slot n-1; -1 is none
+}
+
+// actionView is one applied move for the opponent-turn playback and the
+// history list (spec F14, F15).
+type actionView struct {
+	Player int       `json:"player"`
+	Kind   string    `json:"kind"`
+	Card   *cardView `json:"card"` // null when the move used no card, or it is hidden
+	Target spotView  `json:"target"`
+	Result []string  `json:"result"`
 }
 
 func stageName(s engine.Stage) string {
@@ -88,9 +129,38 @@ func phaseName(p engine.Phase) string {
 	return "?"
 }
 
+func outcomeName(o engine.Outcome) string {
+	switch o {
+	case engine.Win:
+		return "win"
+	case engine.Loss:
+		return "loss"
+	case engine.Tie:
+		return "tie"
+	}
+	return ""
+}
+
+func reasonName(r engine.EndReason) string {
+	switch r {
+	case engine.ReasonPoints:
+		return "points"
+	case engine.ReasonNoPokemon:
+		return "no_pokemon"
+	case engine.ReasonConcede:
+		return "concede"
+	case engine.ReasonTurnCap:
+		return "turn_cap"
+	}
+	return ""
+}
+
 func promptKindName(k engine.PromptKind) string {
-	if k == engine.PromptNewActive {
+	switch k {
+	case engine.PromptNewActive:
 		return "new_active"
+	case engine.PromptRetreatEnergy:
+		return "retreat_energy"
 	}
 	return "setup"
 }
@@ -100,6 +170,14 @@ func energyLabel(e engine.Energy) string {
 		return ""
 	}
 	return e.String()
+}
+
+func energyLabels(es []engine.Energy) []string {
+	out := make([]string, len(es))
+	for i, e := range es {
+		out[i] = e.String()
+	}
+	return out
 }
 
 func toCardView(c engine.Card) cardView {
@@ -149,41 +227,127 @@ func toInPlayView(p *engine.InPlay) *inPlayView {
 	}
 }
 
-func toPlayerView(p engine.Player) playerView {
-	hand := make([]cardView, len(p.Hand))
-	for i, c := range p.Hand {
-		hand[i] = toCardView(c)
+// toPlayerView renders one player's side. Only the viewer's own hand is shown;
+// for anyone else the hand is empty and only its size is reported. The deck is
+// only ever a count, so its order never leaves the server.
+func toPlayerView(p engine.Player, isViewer bool) playerView {
+	hand := []cardView{}
+	if isViewer {
+		for _, c := range p.Hand {
+			hand = append(hand, toCardView(c))
+		}
 	}
-	bench := make([]inPlayView, len(p.Bench))
+	bench := make([]*inPlayView, len(p.Bench))
 	for i, m := range p.Bench {
-		bench[i] = *toInPlayView(m)
+		bench[i] = toInPlayView(m)
 	}
 	return playerView{
 		Hand:         hand,
+		HandCount:    len(p.Hand),
 		Active:       toInPlayView(p.Active),
 		Bench:        bench,
 		Points:       p.Points,
 		DeckCount:    len(p.Deck),
 		DiscardCount: len(p.Discard),
 		EnergyZone:   energyLabel(p.EnergyZone),
+		EnergyNext:   energyLabel(p.EnergyNext),
+		EnergyTypes:  energyLabels(p.EnergyTypes),
 		EnergyUsed:   p.EnergyUsed,
 		Retreated:    p.Retreated,
+
+		DiscardedEnergy: energyLabels(p.DiscardedEnergy),
 	}
 }
 
-func toGameView(g *engine.Game) gameView {
+// hideSetupPicks empties an opponent's Active and Bench while setup is still
+// running: their picks stay hidden until both players are Ready (spec S5).
+// The hand count already moved, which is no more than the real game shows.
+func hideSetupPicks(p *playerView) {
+	p.Active = nil
+	p.Bench = make([]*inPlayView, len(p.Bench))
+}
+
+// humanSeat is the player the browser plays; the bot is the other seat.
+const humanSeat = 0
+
+// toGameView is the game as seen from viewer's seat. It is the one place hidden
+// information is removed: anything the viewer may not see is stripped here.
+func toGameView(g *engine.Game, viewer int) gameView {
 	s := g.S
 	var pending *promptView
 	if s.Pending != nil {
 		pending = &promptView{Player: s.Pending.Player, Kind: promptKindName(s.Pending.Kind)}
 	}
-	return gameView{
-		Players:   [2]playerView{toPlayerView(s.Players[0]), toPlayerView(s.Players[1])},
+	var players [2]playerView
+	for i := range players {
+		players[i] = toPlayerView(s.Players[i], viewer == i)
+		players[i].Ready = s.Ready(i)
+		if s.Phase == engine.PhaseSetup && viewer != i {
+			hideSetupPicks(&players[i])
+		}
+	}
+	players[viewer].LegalMoves = toMoveReqs(g.LegalMoves(viewer))
+	players[1-viewer].LegalMoves = []moveReq{}
+	players[viewer].HandBlocked, players[viewer].EnergyBlocked = blockedReasons(g, viewer)
+	players[1-viewer].HandBlocked = map[string]string{}
+	v := gameView{
+		Players:   players,
 		Active:    s.Active,
 		Turn:      s.Turn,
 		Phase:     phaseName(s.Phase),
 		Pending:   pending,
 		Winner:    s.Winner,
+		Outcome:   outcomeName(s.Outcome(viewer)),
+		Reason:    reasonName(s.Reason),
 		Narration: g.Narration,
+		Actions:   toActionViews(g, viewer),
+
+		OpeningFlip: flipView{Flipper: s.OpeningFlip.Flipper, Heads: s.OpeningFlip.Heads},
+		FirstPlayer: s.FirstPlayer,
 	}
+	hidePromotion(g, viewer, &v)
+	return v
+}
+
+// blockedReasons is the engine's reason for each of p's hand cards with
+// nowhere to go, and for the zone's energy ("" when it can be attached).
+func blockedReasons(g *engine.Game, p int) (map[string]string, string) {
+	hand := map[string]string{}
+	for _, c := range g.S.Players[p].Hand {
+		if err := g.WhyCantPlay(p, c.ID); err != nil {
+			hand[c.ID] = err.Error()
+		}
+	}
+	energy := ""
+	if err := g.WhyCantAttach(p); err != nil {
+		energy = err.Error()
+	}
+	return hand, energy
+}
+
+func toMoveReqs(evs []engine.Event) []moveReq {
+	out := make([]moveReq, len(evs))
+	for i, ev := range evs {
+		out[i] = fromEvent(ev)
+	}
+	return out
+}
+
+// toActionViews renders the action log for viewer. Setup is placed in secret,
+// so an opponent's setup pick shows only that they placed until the game has
+// left setup (Turn is 0 until then).
+func toActionViews(g *engine.Game, viewer int) []actionView {
+	out := make([]actionView, 0, len(g.Actions))
+	for _, a := range g.Actions {
+		v := actionView{Player: a.Player, Kind: string(a.Kind), Target: spotView{a.Target.Player, a.Target.Pos}, Result: a.Result}
+		if a.Card.ID != "" {
+			c := toCardView(a.Card)
+			v.Card = &c
+		}
+		if a.Kind == engine.ActSetup && a.Player != viewer && g.S.Turn == 0 {
+			v.Card, v.Result, v.Target = nil, []string{}, spotView{-1, -1}
+		}
+		out = append(out, v)
+	}
+	return out
 }
