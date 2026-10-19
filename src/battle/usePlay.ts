@@ -105,7 +105,7 @@ export function usePlay(view: GameView) {
   };
 
   usePointerTracking({ holding, setHolding, play, zoomed: opened });
-  return { holding, flash, zoom, onPointerDown };
+  return { holding, flash, zoom, zoomOpened: opened, onPointerDown };
 }
 
 type Tracking = { holding: Holding | null; setHolding: (h: Holding | null) => void; play: (m: Move) => void; zoomed: RefObject<boolean> };

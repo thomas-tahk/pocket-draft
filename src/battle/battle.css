@@ -282,3 +282,21 @@
 .bt-coin[data-face='heads'], .bt-coin[data-face='tails'] { animation: bt-coin-land 140ms ease-out; }
 .bt-coin[data-face='tails'] { background: radial-gradient(circle, #e9ecf5 0 58%, #a3a9bd 60% 100%); border-color: #6b7290; color: #2a3050; }
 @keyframes bt-coin-land { from { transform: rotateY(90deg); } to { transform: rotateY(0deg); } }
+/* ---- your Active's card (F9); look is a placeholder ---- */
+.bt-sheet-backdrop { position: absolute; inset: 0; z-index: 10; display: grid; place-items: center; background: rgba(20, 26, 50, 0.55); }
+.bt-sheet {
+  width: calc(var(--u) * 300); box-sizing: border-box; padding: calc(var(--u) * 14);
+  display: flex; flex-direction: column; align-items: center; gap: calc(var(--u) * 8);
+  border-radius: calc(var(--u) * 14); background: #fff; color: #1c2340;
+}
+.bt-sheet-row {
+  all: unset; cursor: pointer; box-sizing: border-box; width: 100%;
+  display: flex; align-items: center; gap: calc(var(--u) * 8);
+  padding: calc(var(--u) * 8) calc(var(--u) * 10); border-radius: calc(var(--u) * 10);
+  border: calc(var(--u) * 2) solid #2fc6e8; font-weight: 800; font-size: calc(var(--u) * 15);
+}
+.bt-sheet-row:disabled { cursor: default; border-color: #c9ccd8; color: #a3a8b8; background: #eef0f5; }
+.bt-sheet-row:disabled .bt-energy { filter: grayscale(1); opacity: 0.6; }
+.bt-sheet-cost { display: flex; gap: calc(var(--u) * 2); min-width: calc(var(--u) * 40); }
+.bt-sheet-name { flex: 1; }
+.bt-sheet-retreat { justify-content: flex-start; }

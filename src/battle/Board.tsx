@@ -1,5 +1,6 @@
 import { useRef, type CSSProperties, type ReactNode } from 'react';
 import type { CardView, GameView, PlayerView } from '../game/types';
+import { ActiveSheet, useActiveCard } from './ActiveCard';
 import { ChoiceOverlay, type Choice } from './Choice';
 import { History } from './History';
 import { InPlayCard } from './InPlayCard';
@@ -157,12 +158,12 @@ function OpponentSide({ p }: { p: PlayerView }) {
   );
 }
 
-function YourSide({ p, choice }: { p: PlayerView; choice: Choice | null }) {
+function YourSide({ p, choice, onTapActive }: { p: PlayerView; choice: Choice | null; onTapActive: () => void }) {
   const usable = usableCards(p.legalMoves);
   return (
     <>
       <Zone id="my-active" place={{ top: 440, left: 141 }}>
-        <div data-testid="active-card" {...pulse(usable.active)}><Lit pos={0} choice={choice}><ActiveSpot mon={p.active} /></Lit></div>
+        <div data-testid="active-card" {...pulse(usable.active)} onClick={onTapActive}><Lit pos={0} choice={choice}><ActiveSpot mon={p.active} /></Lit></div>
       </Zone>
       <Zone id="my-deck" place={{ top: 446, right: 6 }}><DeckPile count={p.deckCount} /></Zone>
       <Zone id="my-discard" place={{ top: 536, right: 6 }}><DiscardPile count={p.discardCount} /></Zone>
@@ -184,9 +185,16 @@ export function Board({ view, onEndTurn, onReady = () => {}, choice = null, chil
   const [you, opp] = view.players;
   const yourTurn = view.phase === 'main' && view.active === 0 && !view.pending;
   const boardRef = useRef<HTMLDivElement>(null);
-  const { holding, flash, zoom, onPointerDown } = usePlay(view);
+  const { holding, flash, zoom, zoomOpened, onPointerDown } = usePlay(view);
+  const activeCard = useActiveCard(view);
+  const shownChoice = choice ?? activeCard.retreat;
+  // A tap on the Active while a card is tap-held is that card's drop, and a
+  // long press is a zoom (F2); neither opens the card (F9).
+  const heldAtPress = useRef(false);
+  const onTapActive = () => { if (!heldAtPress.current && !zoomOpened.current) activeCard.open(); };
   return (
-    <div className="bt-board" data-testid="battle-board" ref={boardRef} onPointerDown={onPointerDown}>
+    <div className="bt-board" data-testid="battle-board" ref={boardRef}
+      onPointerDownCapture={() => { heldAtPress.current = !!holding; }} onPointerDown={onPointerDown}>
       <PlayContext.Provider value={holding}>
       <OpponentSide p={opp} />
       {/* No Stadium is tracked by the engine yet; the slot marks where it goes. */}
@@ -196,13 +204,14 @@ export function Board({ view, onEndTurn, onReady = () => {}, choice = null, chil
           ? <ReadyButton view={view} onReady={onReady} />
           : <button className="bt-endturn" disabled={!yourTurn} onClick={onEndTurn}>End Turn</button>}
       </Zone>
-      <YourSide p={you} choice={choice} />
+      <YourSide p={you} choice={shownChoice} onTapActive={onTapActive} />
       </PlayContext.Provider>
       <History actions={view.actions} />
       <PlayLayer holding={holding} flash={flash} boardRef={boardRef} />
       <CardZoom card={zoom} />
       <TurnBanner view={view} />
-      {choice && <ChoiceOverlay choice={choice} />}
+      {activeCard.sheet && <ActiveSheet sheet={activeCard.sheet} />}
+      {shownChoice && <ChoiceOverlay choice={shownChoice} />}
       {children}
     </div>
   );
