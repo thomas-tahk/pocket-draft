@@ -43,6 +43,17 @@ export type PlayerView = {
   legalMoves: Move[]; // everything you may do right now; empty on the opponent's side
 };
 
+// One applied move (server actionView), for the opponent-turn playback (F14)
+// and the history (F15). Target pos 0 is the Active, n is bench slot n-1;
+// player -1 means it touched no Pokémon.
+export type ActionView = {
+  player: number;
+  kind: string;
+  card: CardView | null;
+  target: { player: number; pos: number };
+  result: string[];
+};
+
 export type PromptView = { player: number; kind: 'setup' | 'new_active' | 'retreat_energy' };
 
 export type GameView = {
@@ -55,6 +66,7 @@ export type GameView = {
   outcome: '' | 'win' | 'loss' | 'tie'; // yours; '' until the game is over
   reason: '' | 'points' | 'no_pokemon' | 'concede' | 'turn_cap'; // why it ended (spec F19)
   narration: string[];
+  actions: ActionView[]; // oldest first; hidden info already removed for you
 };
 
 // Mirrors server toEvent(): one shape per move type. `player` is always the

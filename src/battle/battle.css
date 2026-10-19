@@ -203,3 +203,35 @@
   border-radius: calc(var(--u) * 14); background: #fff; color: #3d4766; font-size: calc(var(--u) * 13);
   box-shadow: 0 0 0 calc(var(--u) * 2.5) #ffe14a;
 }
+
+/* ---- opponent-turn playback (F14) ---- */
+.bt-playback {
+  position: absolute; left: calc(var(--u) * 8); top: calc(var(--u) * 346); z-index: 4;
+  width: calc(var(--u) * 124); box-sizing: border-box; padding: calc(var(--u) * 6);
+  display: flex; flex-direction: column; align-items: center; gap: calc(var(--u) * 4);
+  border-radius: calc(var(--u) * 10); background: rgba(28, 35, 64, 0.88); color: #fff;
+  font-size: calc(var(--u) * 11); font-weight: 700; text-align: center; pointer-events: none;
+  animation: bt-fade-in 120ms ease-out;
+}
+.bt-playback p { margin: 0; }
+@keyframes bt-fade-in { from { opacity: 0; } }
+/* the spot the step touched glows */
+.bt-root[data-flash-zone='opp-active'] [data-testid='opp-active'],
+.bt-root[data-flash-zone='my-active'] [data-testid='my-active'],
+.bt-root[data-flash-zone='opp-bench'][data-flash-slot='left'] [data-testid='opp-bench'] [data-slot='left'],
+.bt-root[data-flash-zone='opp-bench'][data-flash-slot='behind'] [data-testid='opp-bench'] [data-slot='behind'],
+.bt-root[data-flash-zone='opp-bench'][data-flash-slot='right'] [data-testid='opp-bench'] [data-slot='right'],
+.bt-root[data-flash-zone='my-bench'][data-flash-slot='left'] [data-testid='my-bench'] [data-slot='left'],
+.bt-root[data-flash-zone='my-bench'][data-flash-slot='behind'] [data-testid='my-bench'] [data-slot='behind'],
+.bt-root[data-flash-zone='my-bench'][data-flash-slot='right'] [data-testid='my-bench'] [data-slot='right'] {
+  filter: drop-shadow(0 0 calc(var(--u) * 5) #ffd23f) drop-shadow(0 0 calc(var(--u) * 3) #ffb000);
+  transition: filter 120ms ease-out;
+}
+.bt-skip {
+  all: unset; cursor: pointer; box-sizing: border-box; position: absolute; z-index: 5;
+  right: calc(var(--u) * 10); top: calc(var(--u) * 356);
+  width: calc(var(--u) * 112); height: calc(var(--u) * 34); border-radius: calc(var(--u) * 17);
+  display: grid; place-items: center;
+  background: #fff; color: #3d4766; font-weight: 700; font-size: calc(var(--u) * 14);
+  border: calc(var(--u) * 2.5) solid #9aa0b5;
+}
