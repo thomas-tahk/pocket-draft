@@ -16,7 +16,7 @@ async function post(api: APIRequestContext, url: string, data?: object): Promise
 const actor = (v: View) => (v.pending ? v.pending.player : v.active);
 
 // Seed 1: you go first; on turn 4 the bot attaches energy, then its
-// Passimian attacks your Active (the attack ends its turn). Everything up to
+// Tyrogue attacks your Active (the attack ends its turn). Everything up to
 // your turn 3 is played through the API.
 async function reachTurn3(api: APIRequestContext) {
   const start = await post(api, '/api/new', { seed: 1 });
@@ -63,9 +63,9 @@ test('the bot turn plays one action about every half second', async ({ page, req
   await expect(playback).toHaveAttribute('data-kind', 'attach_energy');
   await expect(page.locator('.bt-root')).toHaveAttribute('data-flash-zone', 'opp-active');
   await expect(playback).toHaveAttribute('data-kind', 'attack');
-  await expect(playback.getByTitle('Passimian')).toBeVisible();
+  await expect(playback.getByTitle('Tyrogue')).toBeVisible();
   await expect(page.locator('.bt-root')).toHaveAttribute('data-flash-zone', 'my-active');
-  await expect(myHp).toHaveText(String(hpBefore - 40));
+  await expect(myHp).toHaveText(String(hpBefore - 20));
   await page.screenshot({ path: 'test-results/opponent-turn-390x844.png' });
 
   const log = await page.evaluate(() => (window as unknown as { pbLog: { t: number; kind: string }[] }).pbLog);

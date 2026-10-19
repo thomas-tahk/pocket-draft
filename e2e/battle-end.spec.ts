@@ -20,10 +20,10 @@ async function post(api: APIRequestContext, url: string, data?: object): Promise
   return body.state ?? body;
 }
 
-// Seed 7: you go first. Setup is placed through the API; the screen has no
+// Seed 8: you go first. Setup is placed through the API; the screen has no
 // setup input yet.
 async function setUpGame(api: APIRequestContext) {
-  const start = await post(api, '/api/new', { seed: 7 });
+  const start = await post(api, '/api/new', { seed: 8 });
   const basics = start.players[0].hand.filter((c) => c.stage === 'Basic');
   await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: basics[0].id });
   await post(api, '/api/move', { type: 'SetupReady', player: 0 });
