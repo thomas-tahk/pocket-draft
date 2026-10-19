@@ -8,7 +8,7 @@ export type Confirm = { text: string; okLabel: string; onOk: () => void };
 
 export function ConfirmDialog({ confirm, onClose }: { confirm: Confirm; onClose: () => void }) {
   return (
-    <div className="bt-overlay" role="dialog" aria-modal="true" data-testid="confirm">
+    <div className="bt-overlay bt-overlay-top" role="dialog" aria-modal="true" data-testid="confirm">
       <div className="bt-dialog">
         <p>{confirm.text}</p>
         <div className="bt-dialog-buttons">

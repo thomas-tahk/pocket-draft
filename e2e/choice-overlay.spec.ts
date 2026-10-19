@@ -80,3 +80,20 @@ test('knockout promotion: overlay dims everything except your Bench', async ({ p
   await expect(page.getByTestId('choice-dim')).toHaveCount(0);
   await expect(page.getByTestId('my-active').locator('[title]').first()).toHaveAttribute('title', chosen);
 });
+
+// 2.14: concede is immediate from any state, including while a choice is up.
+test('concede from the menu while the choice dim is up ends the game', async ({ page, request }) => {
+  await setUp(request);
+  await stepUntilYouPromote(request);
+
+  await page.goto('/?battle');
+  await expect(page.getByTestId('choice-dim')).toBeVisible();
+  expect(await topAt(page, 'menu')).toBe('menu');
+  await page.getByTestId('menu').click();
+  await page.getByTestId('menu-concede').click();
+  await page.getByTestId('confirm-ok').click();
+
+  await expect(page.getByTestId('end-screen')).toBeVisible();
+  await expect(page.getByTestId('end-reason')).toHaveText('Concede');
+  await expect(page.getByTestId('choice-dim')).toHaveCount(0);
+});

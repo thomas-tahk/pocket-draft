@@ -78,6 +78,8 @@ export const useGameStore = create<State & Actions>((set, get) => ({
   runBot: async () => {
     try {
       const res = await botMove();
+      // A concede may have ended the game while this bot move was in flight.
+      if (get().view?.phase === 'over') return;
       // If the bot couldn't act, flag it so the auto-driver stops instead of spinning.
       set({ view: res.state, error: null, botStuck: !res.acted });
     } catch (e) {
