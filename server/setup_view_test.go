@@ -12,7 +12,11 @@ import (
 func readyUp(t *testing.T, g *engine.Game, p int) {
 	t.Helper()
 	for !g.S.Ready(p) {
-		if err := g.Submit(setupStep(p, g.S.Players[p])); err != nil {
+		ev, ok := bestMove(g.LegalMoves(p))
+		if !ok {
+			t.Fatalf("P%d setup: bot found no move", p+1)
+		}
+		if err := g.Submit(ev); err != nil {
 			t.Fatalf("P%d setup: %v", p+1, err)
 		}
 	}
