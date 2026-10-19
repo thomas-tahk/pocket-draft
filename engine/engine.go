@@ -260,12 +260,8 @@ func (g *Game) applyAttack(e UseAttack) {
 }
 
 func (g *Game) applyChooseActive(e ChooseNewActive) {
-	pl := &g.S.Players[e.Player]
-	mon := benchAt(pl, e.BenchIndex)
-	pl.Bench[e.BenchIndex] = nil
-	pl.Active = mon
 	g.S.Pending = nil
-	g.narrate("%s promoted %s to Active.", side(e.Player), mon.Card.Name)
+	g.promote(e)
 
 	if g.S.Phase == PhaseOver || g.promptPromotion() {
 		return
@@ -360,17 +356,61 @@ func (g *Game) checkNoPokemon() bool {
 	return true
 }
 
-// promptPromotion raises a "promote a new Active" prompt (ADR-0007, mode 3)
-// for the first player left without an Active. Reports whether it raised one.
-// Who promotes first after a double KO is spec E6, issue 1.13.
+func (g *Game) promote(e ChooseNewActive) {
+	pl := &g.S.Players[e.Player]
+	mon := benchAt(pl, e.BenchIndex)
+	pl.Bench[e.BenchIndex] = nil
+	pl.Active = mon
+	g.narrate("%s promoted %s to Active.", side(e.Player), mon.Card.Name)
+}
+
+// promptPromotion asks each player left without an Active, in turn, to
+// promote a new one (ADR-0007, mode 3). Reports whether a prompt is left
+// pending. Who promotes first after a double KO is spec E6, issue 1.13.
 func (g *Game) promptPromotion() bool {
 	for p := 0; p < 2; p++ {
-		if g.S.Players[p].Active == nil {
-			g.S.Pending = &Prompt{Player: p, Kind: PromptNewActive}
+		if g.S.Players[p].Active == nil && g.ask(p, PromptNewActive) {
 			return true
 		}
 	}
 	return false
+}
+
+// ask raises a prompt for player p (spec F8). Its options are p's legal
+// answers to it. When there is only one, the engine makes it at once and the
+// prompt never reaches the player; like a coin flip it is re-derived on
+// replay, never logged. Reports whether the prompt is left pending.
+func (g *Game) ask(p int, k PromptKind) bool {
+	pr := &Prompt{Player: p, Kind: k}
+	g.S.Pending = pr
+	pr.Options = g.answers(p)
+	if len(pr.Options) != 1 {
+		return true
+	}
+	g.S.Pending = nil
+	g.choose(pr.Options[0])
+	return false
+}
+
+// answers is every legal move of p's except Concede, which is always open and
+// answers nothing.
+func (g *Game) answers(p int) []Event {
+	var out []Event
+	for _, ev := range g.LegalMoves(p) {
+		if _, quit := ev.(Concede); !quit {
+			out = append(out, ev)
+		}
+	}
+	return out
+}
+
+// choose carries out the one possible answer to a prompt. A prompt kind raised
+// through ask needs a case here.
+func (g *Game) choose(ev Event) {
+	switch e := ev.(type) {
+	case ChooseNewActive:
+		g.promote(e)
+	}
 }
 
 // concludeTurn ends the current turn: resolve end-of-turn status, then advance

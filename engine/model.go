@@ -90,10 +90,13 @@ const (
 )
 
 // Prompt is a pending decision the engine is blocked on: a specific player owes
-// a specific choice before play can continue (ADR-0007, mode 3).
+// a specific choice before play can continue (ADR-0007, mode 3). Every choice
+// is raised through Game.ask, so a prompt with one option never reaches the
+// player (spec F8).
 type Prompt struct {
-	Player int
-	Kind   PromptKind
+	Player  int        // the player who chooses
+	Kind    PromptKind // what is being chosen
+	Options []Event    // every answer the chooser may give; the cards involved
 }
 
 // State is the full game state. It is always derivable by folding the event log
