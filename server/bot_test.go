@@ -48,6 +48,42 @@ func playBotGame(t *testing.T, seed uint64) {
 	t.Errorf("seed %d: game stalled after %d bot moves", seed, botGameSteps)
 }
 
+// T9 through the bot: a retreat paid from mixed energy raises the
+// retreat-energy prompt, and the bot answers it from LegalMoves with no
+// prompt-specific code. The bot's policy never retreats, so the test does.
+func TestBotAnswersRetreatEnergyPrompt(t *testing.T) {
+	// Arrange
+	fire, lightning := engine.DemoDecks()
+	game = engine.NewGame(1, fire, lightning)
+	for game.S.Phase == engine.PhaseSetup {
+		if !botMove() {
+			t.Fatal("bot made no setup move")
+		}
+	}
+	p := game.S.Active
+	pl := &game.S.Players[p]
+	pl.Active.Card.RetreatCost = 1
+	pl.Active.Energy = map[engine.Energy]int{engine.Fire: 1, engine.Water: 1}
+	pl.Bench[engine.BenchLeft] = &engine.InPlay{Card: pl.Active.Card, Energy: map[engine.Energy]int{}}
+	if err := game.Submit(engine.Retreat{Player: p, BenchIndex: engine.BenchLeft}); err != nil {
+		t.Fatalf("retreat refused: %v", err)
+	}
+	if game.S.Pending == nil || game.S.Pending.Kind != engine.PromptRetreatEnergy {
+		t.Fatalf("want a retreat-energy prompt, got %+v", game.S.Pending)
+	}
+
+	// Act
+	acted := botMove()
+
+	// Assert
+	if !acted || game.S.Pending != nil {
+		t.Fatalf("bot left the prompt unanswered (acted %v, pending %+v)", acted, game.S.Pending)
+	}
+	if _, ok := game.Events[len(game.Events)-1].(engine.RetreatDiscard); !ok {
+		t.Errorf("last event = %#v, want a RetreatDiscard", game.Events[len(game.Events)-1])
+	}
+}
+
 // startBotGame alternates the demo matchup with two drafted decks, so evolution
 // lines and mixed types reach the bot too.
 func startBotGame(t *testing.T, seed uint64) {
