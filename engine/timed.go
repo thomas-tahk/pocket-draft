@@ -20,7 +20,7 @@ func (g *Game) timedSources() []passiveSource {
 	for _, t := range g.S.Timed {
 		if g.S.Turn <= t.Until {
 			at := Holder{Spot{t.Owner, -1}, nil}
-			out = append(out, passiveSource{at, t.Card, []Passive{t.Passive}})
+			out = append(out, passiveSource{at, t.Card, []Passive{t.Passive}, false})
 		}
 	}
 	return out

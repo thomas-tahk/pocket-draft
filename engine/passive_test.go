@@ -92,7 +92,7 @@ func TestDamageTakenReducesAfterWeakness(t *testing.T) {
 			g.S.Players[0].Active = newInPlay(fighter("ATK", "Hitmonchan"), 0)
 			def := legalBasic("DEF", "Tank", 1)
 			def.Weakness = Fighting
-			def.Ability = &Ability{Name: "Thick", Passive: []Passive{{Hook: HookDamageTaken, Value: tc.reduce, When: self}}}
+			def.Ability = &Ability{Name: "Thick", Passive: []Passive{{Hook: HookDamageTaken, Value: tc.reduce, When: PassiveCheck.Self}}}
 			g.S.Players[1].Active = newInPlay(def, 0)
 
 			// Act
@@ -107,9 +107,6 @@ func TestDamageTakenReducesAfterWeakness(t *testing.T) {
 		})
 	}
 }
-
-// self is "This Pokémon …": the rule is about the Pokémon printing it.
-func self(c PassiveCheck) bool { return c.Target == c.Source }
 
 // T11: Bounded Field turns Weakness from +20 into ×2.
 func TestWeaknessDouble(t *testing.T) {
@@ -214,7 +211,7 @@ func TestNoConditionsBlocksStatus(t *testing.T) {
 	g.S.Players[0].Active = newInPlay(Card{Name: "Burner", HP: 60, Type: Fire, Weakness: NoEnergy,
 		Attacks: []Attack{{Name: "Singe", Effect: []EffectOp{ApplyStatus{Status: Burn}}}}}, 0)
 	def := legalBasic("DEF", "Ogerpon", 1)
-	def.Ability = &Ability{Name: "Guard", Passive: []Passive{{Hook: HookNoConditions, When: self}}}
+	def.Ability = &Ability{Name: "Guard", Passive: []Passive{{Hook: HookNoConditions, When: PassiveCheck.Self}}}
 	g.S.Players[1].Active = newInPlay(def, 0)
 
 	// Act
@@ -235,7 +232,7 @@ func TestEvolveEarlyHook(t *testing.T) {
 	g := mainGame(1)
 	pl := &g.S.Players[0]
 	baby := legalBasic("A", "Eevee", 1)
-	baby.Ability = &Ability{Name: "Boost", Passive: []Passive{{Hook: HookEvolveEarly, When: self}}}
+	baby.Ability = &Ability{Name: "Boost", Passive: []Passive{{Hook: HookEvolveEarly, When: PassiveCheck.Self}}}
 	pl.Active = newInPlay(baby, 1)
 	pl.Hand = []Card{legalEvo("E", "Vaporeon", "Eevee")}
 

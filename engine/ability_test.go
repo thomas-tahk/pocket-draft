@@ -173,3 +173,49 @@ func TestAbilityReplays(t *testing.T) {
 		t.Errorf("action = %+v, want an ability action on P1's Active", a)
 	}
 }
+
+// alchemy: Alolan Muk's "Basic Pokémon in play (both yours and your
+// opponent's) have no Abilities."
+var alchemy = Passive{Hook: HookNoAbilities, When: func(c PassiveCheck) bool { return c.Target.Card.Stage == Basic }}
+
+func alchemyGame() *Game {
+	g := abilityGame(AnySpot, true)
+	muk := legalEvo("MUK", "Alolan Muk", "Grimer")
+	muk.Ability = &Ability{Name: "Power of Alchemy", Passive: []Passive{alchemy}}
+	g.S.Players[1].Bench[BenchLeft] = newInPlay(muk, 0)
+	return g
+}
+
+// "have no Abilities": a Basic's activated Ability can't be used.
+func TestNoAbilitiesBlocksUse(t *testing.T) {
+	// Arrange
+	g := alchemyGame()
+
+	// Act
+	moves, err := abilityMoves(g, 0), g.Submit(UseAbility{Player: 0, Pos: 0})
+
+	// Assert
+	assertMoves(t, moves, nil)
+	if err == nil {
+		t.Error("a Basic used its Ability under Power of Alchemy")
+	}
+}
+
+// "have no Abilities": a Basic's passive stops; a Stage 1's keeps working.
+func TestNoAbilitiesStopsPassives(t *testing.T) {
+	// Arrange
+	g := alchemyGame()
+	mon := g.S.Players[0].Active
+	mon.Card.Ability = &Ability{Name: "Float", Passive: []Passive{{Hook: HookNoRetreatCost, When: PassiveCheck.Self}}}
+	mon.Card.RetreatCost = 2
+
+	// Act
+	basic := g.RetreatCost(0)
+	mon.Card.Stage = Stage1
+	stage1 := g.RetreatCost(0)
+
+	// Assert
+	if basic != 2 || stage1 != 0 {
+		t.Errorf("retreat cost Basic %d, Stage 1 %d; want 2 and 0", basic, stage1)
+	}
+}

@@ -24,6 +24,7 @@ const (
 	HookSurviveKO                  // attack damage that would KO Target leaves it at 10 HP (Foe attacks)
 	HookKOPoints                   // Value is added to the points for knocking out Target, the Active, with an attack by Foe
 	HookNoHeal                     // no Pokémon can be healed (both players')
+	HookNoAbilities                // Target has no Abilities: its Ability neither works nor can be used
 	hookCount
 )
 
@@ -60,15 +61,45 @@ type Modifier struct {
 	Value  int
 }
 
+// Self is "this Pokémon …": the rule is about the Pokémon printing it.
+func (c PassiveCheck) Self() bool { return c.Target == c.Source }
+
 type passiveSource struct {
-	at   Holder
-	card Card
-	list []Passive
+	at      Holder
+	card    Card
+	list    []Passive
+	ability bool // from the holder's Ability (HookNoAbilities can turn it off)
 }
 
-// passiveSources is every card in play with passives: each Pokémon's Ability,
-// both players in turn, Active first; then the Stadium.
+// passiveSources is every passive in effect: allPassiveSources less the
+// Abilities a HookNoAbilities passive turns off.
 func (g *Game) passiveSources() []passiveSource {
+	all := g.allPassiveSources()
+	var out []passiveSource
+	for _, src := range all {
+		if !src.ability || !noAbilitiesIn(all, src.at) {
+			out = append(out, src)
+		}
+	}
+	return out
+}
+
+// noAbilitiesIn reports whether a HookNoAbilities passive among srcs applies
+// to h. It reads srcs unfiltered, so turning Abilities off never loops.
+func noAbilitiesIn(srcs []passiveSource, h Holder) bool {
+	for _, src := range srcs {
+		for _, ps := range src.list {
+			if ps.Hook == HookNoAbilities && (ps.When == nil || ps.When(PassiveCheck{Source: src.at, Target: h})) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// allPassiveSources is every card in play with passives: each Pokémon's
+// Ability and Tool, both players in turn, Active first; then the Stadium.
+func (g *Game) allPassiveSources() []passiveSource {
 	var out []passiveSource
 	for p := 0; p < 2; p++ {
 		for _, pos := range targets() {
@@ -77,15 +108,15 @@ func (g *Game) passiveSources() []passiveSource {
 				continue
 			}
 			if a := at.Card.Ability; a != nil {
-				out = append(out, passiveSource{at, at.Card, a.Passive})
+				out = append(out, passiveSource{at, at.Card, a.Passive, true})
 			}
 			if tool := at.Tool; tool != nil {
-				out = append(out, passiveSource{at, *tool, tool.Passive})
+				out = append(out, passiveSource{at, *tool, tool.Passive, false})
 			}
 		}
 	}
 	if st := g.S.Stadium; st != nil {
-		out = append(out, passiveSource{Holder{NoSpot, nil}, *st, st.Passive})
+		out = append(out, passiveSource{Holder{NoSpot, nil}, *st, st.Passive, false})
 	}
 	return append(out, g.timedSources()...)
 }

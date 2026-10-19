@@ -9,8 +9,9 @@ import (
 // (rule hooks, passive.go); Use is the part a player activates, as one
 // UseAbility move.
 //
-// Adding an Ability text is one Ability value on the card, authored as data
-// in server/carddata.go: Use is the effect, built from the same EffectOp verbs
+// Adding an Ability text is one Ability value keyed by its printed wording in
+// server's abilityTexts (registered from server/texts_<plan-id>.go, e.g.
+// texts_4_2.go): Use is the effect, built from the same EffectOp verbs
 // as attacks (effects.go); OncePerTurn is "Once during your turn"; Where is
 // "if this Pokémon is in the Active Spot" / "on your Bench"; When is any other
 // condition in the text. A new kind of effect is one new EffectOp. Inside
@@ -106,9 +107,10 @@ func abilityTargets(a *Ability, ctx *EffectContext) []Spot {
 	return out
 }
 
-// abilityOf is the Ability of the Pokémon at h, or nil.
+// abilityOf is the Ability of the Pokémon at h, or nil when it has none or a
+// "no Abilities" passive (HookNoAbilities) turns it off.
 func (g *Game) abilityOf(h Holder) *Ability {
-	if h.InPlay == nil {
+	if h.InPlay == nil || h.Card.Ability == nil || noAbilitiesIn(g.allPassiveSources(), h) {
 		return nil
 	}
 	return h.Card.Ability
