@@ -63,6 +63,8 @@ func (g *Game) describe(ev Event) Action {
 		return Action{e.Player, ActRetreatPay, g.monCard(e.Player, 0), Spot{e.Player, 0}, nil, nil}
 	case PlayTrainer:
 		return Action{e.Player, ActPlayTrainer, g.handCard(e.Player, e.CardID), e.Target, nil, nil}
+	case DiscardFossil:
+		return Action{e.Player, ActDiscardFossil, g.monCard(e.Player, e.Pos), Spot{e.Player, e.Pos}, nil, nil}
 	case UseAttack:
 		return Action{e.Player, ActAttack, g.monCard(e.Player, 0), Spot{1 - e.Player, 0}, nil, nil}
 	case EndTurn:

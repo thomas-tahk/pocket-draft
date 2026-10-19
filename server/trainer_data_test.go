@@ -197,3 +197,53 @@ func TestFieldBlower(t *testing.T) {
 		t.Errorf("Stadium %v, Tool %v; want no Stadium and the new Tool", g.S.Stadium, pl.Active.Tool)
 	}
 }
+
+// "Play this card as if it were a 40-HP Basic [C] Pokémon. …" — Helix Fossil
+// (A1-216): to the Bench as 40 HP, Omanyte evolves from it next turn, and
+// discarding it scores nothing (spec A5).
+func TestHelixFossil(t *testing.T) {
+	useRealCards(t)
+	g, p := trainerGame(t, realCard(t, "A1-216"))
+	pl := &g.S.Players[p]
+	pl.Bench = [engine.BenchSlots]*engine.InPlay{}
+	if err := g.Submit(engine.PlayTrainer{Player: p, CardID: "A1-216", Target: engine.Spot{Player: p, Pos: 1}}); err != nil {
+		t.Fatalf("play Helix Fossil: %v", err)
+	}
+	if mon := pl.Bench[0]; mon == nil || mon.Card.HP != 40 {
+		t.Fatalf("bench slot = %+v, want a 40 HP Fossil", mon)
+	}
+	if err := g.Submit(engine.DiscardFossil{Player: p, Pos: 1}); err != nil {
+		t.Fatalf("discard Helix Fossil: %v", err)
+	}
+	if pl.Bench[0] != nil || g.S.Players[1-p].Points != 0 {
+		t.Errorf("after discard: bench %v, opponent points %d", pl.Bench[0], g.S.Players[1-p].Points)
+	}
+}
+
+func TestHelixFossilEvolves(t *testing.T) {
+	useRealCards(t)
+	g, p := trainerGame(t, realCard(t, "A1-216"))
+	pl := &g.S.Players[p]
+	pl.Bench = [engine.BenchSlots]*engine.InPlay{}
+	pl.Hand = append(pl.Hand, realCard(t, "A1-081"))
+	for _, ev := range []engine.Event{
+		engine.PlayTrainer{Player: p, CardID: "A1-216", Target: engine.Spot{Player: p, Pos: 1}},
+		engine.EndTurn{Player: p},
+		engine.EndTurn{Player: 1 - p},
+		engine.Evolve{Player: p, HandCardID: "A1-081", Target: 1},
+	} {
+		if err := g.Submit(ev); err != nil {
+			t.Fatalf("%#v: %v", ev, err)
+		}
+	}
+	if pl.Bench[0].Card.Name != "Omanyte" {
+		t.Errorf("bench slot holds %s, want Omanyte", pl.Bench[0].Card.Name)
+	}
+}
+
+func TestDiscardFossilRequestRoundTrips(t *testing.T) {
+	ev := engine.DiscardFossil{Player: 1, Pos: 2}
+	if got, err := toEvent(fromEvent(ev)); err != nil || got != ev {
+		t.Errorf("round trip of %+v = %+v, %v", ev, got, err)
+	}
+}

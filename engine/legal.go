@@ -52,6 +52,7 @@ var moveRules = []moveRule{
 	rule(listAttach, (*Game).checkAttach, nil),
 	rule(listEvolve, (*Game).checkEvolve, nil),
 	rule(listPlayTrainer, (*Game).checkPlayTrainer, nil),
+	rule(listDiscardFossil, (*Game).checkDiscardFossil, nil),
 	rule(listRetreat, (*Game).checkRetreat, nil),
 	rule(listRetreatDiscard, (*Game).checkRetreatDiscard, nil),
 	rule(listAttack, (*Game).checkAttack, nil),
@@ -427,6 +428,9 @@ func (g *Game) checkRetreat(e Retreat) error {
 	}
 	if pl.Active == nil {
 		return errors.New("no Active Pokémon to retreat")
+	}
+	if pl.Active.Card.Fossil {
+		return fmt.Errorf("%s can't retreat", pl.Active.Card.Name)
 	}
 	if pl.Active.cantAct() {
 		return fmt.Errorf("%s is %s and can't retreat", pl.Active.Card.Name, pl.Active.special)

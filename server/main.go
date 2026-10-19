@@ -214,6 +214,8 @@ func toEvent(r moveReq) (engine.Event, error) {
 		return engine.Retreat{Player: r.Player, BenchIndex: r.BenchIndex}, nil
 	case "PlayTrainer":
 		return engine.PlayTrainer{Player: r.Player, CardID: r.CardID, Target: toSpot(r.Spot)}, nil
+	case "DiscardFossil":
+		return engine.DiscardFossil{Player: r.Player, Pos: r.Target}, nil
 	case "UseAttack":
 		return engine.UseAttack{Player: r.Player, Index: r.Index}, nil
 	case "EndTurn":
@@ -260,6 +262,8 @@ func fromEvent(ev engine.Event) moveReq {
 		return moveReq{Type: "Retreat", Player: e.Player, BenchIndex: e.BenchIndex}
 	case engine.PlayTrainer:
 		return moveReq{Type: "PlayTrainer", Player: e.Player, CardID: e.CardID, Spot: fromSpot(e.Target)}
+	case engine.DiscardFossil:
+		return moveReq{Type: "DiscardFossil", Player: e.Player, Target: e.Pos}
 	case engine.UseAttack:
 		return moveReq{Type: "UseAttack", Player: e.Player, Index: e.Index}
 	case engine.EndTurn:

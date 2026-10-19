@@ -15,6 +15,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/thomas-tahk/pocket-draft/engine"
@@ -201,7 +203,15 @@ func trainerKind(rc rawCard) engine.CardKind {
 	return engine.KindStadium
 }
 
+// fossilText is how every Fossil's text begins; the number is its HP.
+var fossilText = regexp.MustCompile(`^Play this card as if it were a (\d+)-HP Basic \[C\] Pokémon\.`)
+
 func toTrainerCard(rc rawCard) engine.Card {
+	if m := fossilText.FindStringSubmatch(rc.TrainerText); m != nil {
+		hp, _ := strconv.Atoi(m[1])
+		return engine.Card{ID: rc.ID, Name: rc.Name, Kind: engine.KindItem, Fossil: true,
+			HP: hp, Type: engine.Colorless, Weakness: engine.NoEnergy}
+	}
 	return engine.Card{
 		ID:       rc.ID,
 		Name:     rc.Name,

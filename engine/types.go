@@ -94,6 +94,8 @@ type Card struct {
 	// Trainer is what a Trainer card does when played, run in order (see
 	// trainer.go). Nil means its text isn't built yet, so it can't be played.
 	Trainer []EffectOp
+	// Fossil marks an Item played as a Basic with this card's HP (fossil.go).
+	Fossil bool
 }
 
 // CardKind is what sort of card this is: a Pokémon or a Trainer of some kind.
@@ -112,7 +114,7 @@ func (c Card) IsTrainer() bool { return c.Kind != KindPokemon }
 
 // TextBuilt reports whether a Trainer's text is built: ops to run when played,
 // or always-on passives (a Tool or Stadium). An unbuilt Trainer can't be played.
-func (c Card) TextBuilt() bool { return c.Trainer != nil || c.Passive != nil }
+func (c Card) TextBuilt() bool { return c.Trainer != nil || c.Passive != nil || c.Fossil }
 
 // IsBasicPokemon reports whether c is a Basic Pokémon: what setup, the
 // opening hand and the Bench accept (a Trainer is never one).

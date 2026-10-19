@@ -23,7 +23,7 @@ import (
 //
 // The played Item or Supporter is in the discard pile before its ops run.
 // A Tool is attached instead (tool.go), a Stadium put in play (stadium.go);
-// their text is Card.Passive.
+// their text is Card.Passive. A Fossil goes to the Bench (fossil.go).
 
 // Gated is an optional EffectOp method for Trainers: why it can't be played now.
 type Gated interface {
@@ -72,6 +72,9 @@ func listPlayTrainer(g *Game, p int) []PlayTrainer {
 func trainerTargets(ctx *EffectContext) []Spot {
 	if ctx.Card.Kind == KindTool {
 		return toolTargets(ctx.g, ctx.attacker)
+	}
+	if ctx.Card.Fossil {
+		return fossilTargets(ctx.g, ctx.attacker)
 	}
 	var out []Spot
 	targeted := false
@@ -142,11 +145,14 @@ func (g *Game) applyPlayTrainer(e PlayTrainer) {
 	idx := indexInHand(pl.Hand, e.CardID)
 	c := pl.Hand[idx]
 	pl.Hand = removeAt(pl.Hand, idx)
-	switch c.Kind {
-	case KindTool:
+	switch {
+	case c.Fossil:
+		g.playFossil(e.Player, c, e.Target)
+		return
+	case c.Kind == KindTool:
 		g.attachTool(e.Player, c, e.Target)
 		return
-	case KindStadium:
+	case c.Kind == KindStadium:
 		g.playStadium(e.Player, c)
 		return
 	}

@@ -159,6 +159,8 @@ func (g *Game) validateAndApply(ev Event) error {
 		g.finishRetreat(e)
 	case PlayTrainer:
 		g.applyPlayTrainer(e)
+	case DiscardFossil:
+		g.applyDiscardFossil(e)
 	case UseAttack:
 		g.applyAttack(e)
 	case EndTurn:
