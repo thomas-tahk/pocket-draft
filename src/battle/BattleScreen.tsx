@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useGameStore } from '../game/store';
 import { Board } from './Board';
 import { ConfirmDialog, EndScreen, GameMenu, endTurnWarning, type Confirm } from './EndControls';
+import { choiceFor } from './Choice';
 import './battle.css';
 
 // The new battle screen (plan 1.19): renders the server's current game on the
@@ -39,7 +40,7 @@ export function BattleScreen() {
 
   return (
     <div className="bt-root">
-      <Board view={view} onEndTurn={onEndTurn}>
+      <Board view={view} onEndTurn={onEndTurn} choice={choiceFor(view, 0, (m) => void dispatch(m))}>
         {view.phase !== 'over' && <GameMenu onConcede={onConcede} />}
         {confirm && <ConfirmDialog confirm={confirm} onClose={() => setConfirm(null)} />}
         {view.phase === 'over' && <EndScreen view={view} onRematch={() => void restart()} onBack={() => window.location.assign('/')} />}

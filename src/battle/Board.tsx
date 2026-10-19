@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
 import type { CardView, GameView, PlayerView } from '../game/types';
+import { ChoiceOverlay, type Choice } from './Choice';
 import { InPlayCard } from './InPlayCard';
 import { CardBack, CardFace, EmptySlot, EnergyIcon, PointPips } from './pieces';
 import { TurnBanner } from './TurnBanner';
@@ -28,17 +29,25 @@ const PILE_W = 56;
 
 // Bench slots in screen order. Yours read left, behind, right; the opponent
 // faces you, so their left is on your right.
-function Bench({ bench, mirrored, usable }: { bench: PlayerView['bench']; mirrored: boolean; usable?: Set<number> }) {
+function Bench({ bench, mirrored, usable, choice }: { bench: PlayerView['bench']; mirrored: boolean; usable?: Set<number>; choice?: Choice | null }) {
   const order = mirrored ? [2, 1, 0] : [0, 1, 2];
   return (
     <div style={{ display: 'flex', gap: 'calc(var(--u) * 8)' }}>
       {order.map((i) => (
-        <div key={i} data-testid="bench-slot" data-slot={SLOT_NAMES[i]} {...pulse(usable?.has(i))}>
-          <InPlayCard mon={bench[i] ?? null} width={BENCH_W} />
+        <div key={i} data-testid="bench-slot" data-slot={SLOT_NAMES[i]} data-pos={i + 1} {...pulse(usable?.has(i))}>
+          <Lit pos={i + 1} choice={choice}><InPlayCard mon={bench[i] ?? null} width={BENCH_W} /></Lit>
         </div>
       ))}
     </div>
   );
+}
+
+// A card on your side involved in the current choice is drawn above the dim
+// layer; if tapping it answers the choice, it glows and takes the tap.
+function Lit({ pos, choice, children }: { pos: number; choice?: Choice | null; children: ReactNode }) {
+  const spot = choice?.lit.get(pos);
+  if (!spot) return <>{children}</>;
+  return <div className="bt-lit" data-lit="true" data-pickable={!!spot.pick} onClick={spot.pick}>{children}</div>;
 }
 
 function DeckPile({ count }: { count: number }) {
@@ -119,16 +128,16 @@ function OpponentSide({ p }: { p: PlayerView }) {
   );
 }
 
-function YourSide({ p }: { p: PlayerView }) {
+function YourSide({ p, choice }: { p: PlayerView; choice: Choice | null }) {
   const usable = usableCards(p.legalMoves);
   return (
     <>
       <Zone id="my-active" place={{ top: 440, left: 141 }}>
-        <div data-testid="active-card" {...pulse(usable.active)}><InPlayCard mon={p.active} width={ACTIVE_W} /></div>
+        <div data-testid="active-card" {...pulse(usable.active)}><Lit pos={0} choice={choice}><InPlayCard mon={p.active} width={ACTIVE_W} /></Lit></div>
       </Zone>
       <Zone id="my-deck" place={{ top: 446, right: 6 }}><DeckPile count={p.deckCount} /></Zone>
       <Zone id="my-discard" place={{ top: 536, right: 6 }}><DiscardPile count={p.discardCount} /></Zone>
-      <Zone id="my-bench" place={{ top: 604, left: 76 }}><Bench bench={p.bench} mirrored={false} usable={usable.bench} /></Zone>
+      <Zone id="my-bench" place={{ top: 604, left: 76 }}><Bench bench={p.bench} mirrored={false} usable={usable.bench} choice={choice} /></Zone>
       <Zone id="my-hand" place={{ top: 722, left: 36, width: 274, height: 112 }}>
         <Fan count={p.hand.length} width={274} cardW={80} render={(i) => (
           <div data-testid="hand-card" {...pulse(usable.hand.has(p.hand[i].id))}><CardFace card={p.hand[i] as CardView} width={80} /></div>
@@ -140,7 +149,7 @@ function YourSide({ p }: { p: PlayerView }) {
   );
 }
 
-export function Board({ view, onEndTurn, children }: { view: GameView; onEndTurn: () => void; children?: ReactNode }) {
+export function Board({ view, onEndTurn, choice = null, children }: { view: GameView; onEndTurn: () => void; choice?: Choice | null; children?: ReactNode }) {
   const [you, opp] = view.players;
   const yourTurn = view.phase === 'main' && view.active === 0 && !view.pending;
   return (
@@ -151,8 +160,9 @@ export function Board({ view, onEndTurn, children }: { view: GameView; onEndTurn
       <Zone id="end-turn" place={{ top: 400, right: 10 }}>
         <button className="bt-endturn" disabled={!yourTurn} onClick={onEndTurn}>End Turn</button>
       </Zone>
-      <YourSide p={you} />
+      <YourSide p={you} choice={choice} />
       <TurnBanner view={view} />
+      {choice && <ChoiceOverlay choice={choice} />}
       {children}
     </div>
   );

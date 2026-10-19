@@ -184,3 +184,22 @@
   from { box-shadow: 0 0 calc(var(--u) * 4) calc(var(--u) * 2) rgba(255, 200, 0, 0.6); }
   to { box-shadow: 0 0 calc(var(--u) * 14) calc(var(--u) * 6) rgba(255, 200, 0, 1); }
 }
+
+/* ---- choice overlay (F8, F13) ---- */
+.bt-dim { position: absolute; inset: 0; z-index: 20; background: rgba(10, 14, 30, 0.62); }
+.bt-lit { position: relative; z-index: 30; border-radius: calc(var(--u) * 5); }
+.bt-lit[data-pickable='true'] { cursor: pointer; box-shadow: 0 0 0 calc(var(--u) * 2.5) #ffe14a, 0 0 calc(var(--u) * 12) #ffe14a; }
+.bt-prompt {
+  position: absolute; z-index: 30; left: 0; right: 0; top: calc(var(--u) * 392);
+  display: flex; flex-direction: column; align-items: center; gap: calc(var(--u) * 6);
+  color: #fff; font-weight: 800; font-size: calc(var(--u) * 17);
+  text-shadow: 0 calc(var(--u) * 1) calc(var(--u) * 3) #000;
+  pointer-events: none;
+}
+.bt-prompt-buttons { display: flex; gap: calc(var(--u) * 8); }
+.bt-prompt-button {
+  all: unset; pointer-events: auto; cursor: pointer;
+  display: flex; gap: calc(var(--u) * 3); padding: calc(var(--u) * 5) calc(var(--u) * 10);
+  border-radius: calc(var(--u) * 14); background: #fff; color: #3d4766; font-size: calc(var(--u) * 13);
+  box-shadow: 0 0 0 calc(var(--u) * 2.5) #ffe14a;
+}
