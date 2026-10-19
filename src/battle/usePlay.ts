@@ -27,14 +27,17 @@ function movesFor(held: Held, legal: Move[]): Map<Spot, Move> {
     if (held.kind === 'energy' && m.type === 'AttachEnergy') out.set(spotOfTarget(m.target), m);
     if (held.kind !== 'hand') continue;
     if (m.type === 'PlayBasic' && m.cardId === held.card.id) out.set(`bench-${m.slot}` as Spot, m);
+    if (m.type === 'SetupActive' && m.cardId === held.card.id) out.set('active', m);
+    if (m.type === 'SetupBench' && m.cardId === held.card.id) out.set(`bench-${m.slot}` as Spot, m);
     if (m.type === 'Evolve' && m.handCardId === held.card.id) out.set(spotOfTarget(m.target), m);
   }
   return out;
 }
 
 // The bottom line while choosing. Wording is the owner's to change (questions file).
-export function hintFor(held: Held): string {
+export function hintFor(held: Held, moves: Map<Spot, Move>): string {
   if (held.kind === 'energy') return 'Choose a Pokémon to attach energy to';
+  if (moves.get('active')?.type === 'SetupActive') return `Place ${held.card.name} as your Active`;
   if (held.card.stage === 'Basic') return `Choose a Bench spot for ${held.card.name}`;
   return `Choose a Pokémon to evolve into ${held.card.name}`;
 }

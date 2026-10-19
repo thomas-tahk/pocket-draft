@@ -79,6 +79,15 @@ type gameView struct {
 	Reason    string        `json:"reason"`  // why it ended (spec F19); "" until it does
 	Narration []string      `json:"narration"`
 	Actions   []actionView  `json:"actions"`
+	// OpeningFlip and FirstPlayer are the coin flip that decided who goes
+	// first, for the setup screen (spec S4). Neither is hidden.
+	OpeningFlip flipView `json:"openingFlip"`
+	FirstPlayer int      `json:"firstPlayer"`
+}
+
+type flipView struct {
+	Flipper int  `json:"flipper"`
+	Heads   bool `json:"heads"`
 }
 
 type spotView struct {
@@ -292,6 +301,9 @@ func toGameView(g *engine.Game, viewer int) gameView {
 		Reason:    reasonName(s.Reason),
 		Narration: g.Narration,
 		Actions:   toActionViews(g, viewer),
+
+		OpeningFlip: flipView{Flipper: s.OpeningFlip.Flipper, Heads: s.OpeningFlip.Heads},
+		FirstPlayer: s.FirstPlayer,
 	}
 	hidePromotion(g, viewer, &v)
 	return v

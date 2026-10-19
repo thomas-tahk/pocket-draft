@@ -69,3 +69,29 @@ func TestFirstTurnShowsNextAndAttachedIsNotDiscarded(t *testing.T) {
 		t.Errorf("attached energy was discarded: %v", g.S.Players[p].DiscardedEnergy)
 	}
 }
+
+// Spec S4: each side's first energy is shown from setup on, before turn 1,
+// and turn 1 keeps the energy that was shown.
+func TestFirstEnergyShownFromSetup(t *testing.T) {
+	// Arrange
+	d0, d1 := twoDecks()
+	g := NewGame(5, d0, d1)
+	var shown [2]Energy
+	for i := range shown {
+		pl := g.S.Players[i]
+		if pl.EnergyZone != NoEnergy || pl.EnergyNext == NoEnergy {
+			t.Fatalf("setup: P%d zone now=%v next=%v, want none + rolled", i+1, pl.EnergyZone, pl.EnergyNext)
+		}
+		shown[i] = pl.EnergyNext
+	}
+
+	// Act
+	doSetup(t, g)
+
+	// Assert
+	for i := range shown {
+		if got := g.S.Players[i].EnergyNext; got != shown[i] {
+			t.Errorf("turn 1: P%d next energy %v, want the %v shown at setup", i+1, got, shown[i])
+		}
+	}
+}

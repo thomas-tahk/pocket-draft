@@ -69,6 +69,8 @@ export type GameView = {
   reason: '' | 'points' | 'no_pokemon' | 'concede' | 'turn_cap'; // why it ended (spec F19)
   narration: string[];
   actions: ActionView[]; // oldest first; hidden info already removed for you
+  openingFlip: { flipper: number; heads: boolean }; // the coin flip for first (spec S4)
+  firstPlayer: number; // 0 or 1: who goes first
 };
 
 // Mirrors server toEvent(): one shape per move type. `player` is always the

@@ -267,3 +267,18 @@
   animation: bt-fade 120ms ease-out;
 }
 @keyframes bt-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* ---- setup opening: coin and first/second (S4, F11); look is a placeholder ---- */
+.bt-setup-intro { flex-direction: column; display: flex; justify-content: center; align-items: center; gap: calc(var(--u) * 14); color: #fff; font-weight: 800; font-size: calc(var(--u) * 20); text-shadow: 0 calc(var(--u) * 1) calc(var(--u) * 3) #000; }
+.bt-setup-intro p { margin: 0; }
+.bt-coin {
+  all: unset; box-sizing: border-box; cursor: pointer;
+  width: calc(var(--u) * 110); height: calc(var(--u) * 110); border-radius: 50%;
+  display: grid; place-items: center; font-size: calc(var(--u) * 18); font-weight: 900; color: #5a3d00; text-shadow: none;
+  background: radial-gradient(circle, #ffe27a 0 58%, #e0a812 60% 100%);
+  border: calc(var(--u) * 4) solid #b8860b;
+}
+.bt-coin:disabled { cursor: default; }
+.bt-coin[data-face='heads'], .bt-coin[data-face='tails'] { animation: bt-coin-land 140ms ease-out; }
+.bt-coin[data-face='tails'] { background: radial-gradient(circle, #e9ecf5 0 58%, #a3a9bd 60% 100%); border-color: #6b7290; color: #2a3050; }
+@keyframes bt-coin-land { from { transform: rotateY(90deg); } to { transform: rotateY(0deg); } }

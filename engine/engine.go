@@ -58,6 +58,7 @@ func NewGameFromDecks(seed uint64, decks [2]Deck) *Game {
 		g.dealOpeningHand(i)
 	}
 	g.flipForFirst()
+	g.rollFirstEnergy()
 	st.Pending = &Prompt{Player: 0, Kind: PromptSetup}
 	g.narrate("Game start (seed %d). %s goes first.", seed, side(st.FirstPlayer))
 	return g
@@ -77,6 +78,14 @@ func (g *Game) flipForFirst() {
 		result = "heads"
 	}
 	g.narrate("%s flips for first: %s.", side(flip.Flipper), result)
+}
+
+// rollFirstEnergy rolls each side's first energy as setup opens, so it shows
+// from setup on (spec S4); the player going first rolls first.
+func (g *Game) rollFirstEnergy() {
+	first := g.S.FirstPlayer
+	g.S.Players[first].EnergyNext = g.rollEnergy(first)
+	g.S.Players[1-first].EnergyNext = g.rollEnergy(1 - first)
 }
 
 func (g *Game) dealOpeningHand(i int) {
@@ -514,13 +523,11 @@ func (g *Game) startTurn(p int) {
 }
 
 // rollEnergyZone advances a player's Energy Zone at the start of their turn
-// (spec T4–T6). On turn 1 both players' next energy is rolled and the player
-// going first gets none now. After that, energy left unattached last turn is
+// (spec T4–T6). On turn 1 the player going first gets none now; both next
+// energies were rolled at setup (rollFirstEnergy). After that, energy left unattached last turn is
 // discarded, next moves into now, and a new next is rolled.
 func (g *Game) rollEnergyZone(p int) {
 	if g.S.Turn == 1 {
-		g.S.Players[p].EnergyNext = g.rollEnergy(p)
-		g.S.Players[1-p].EnergyNext = g.rollEnergy(1 - p)
 		g.S.Players[p].EnergyZone = NoEnergy
 		return
 	}

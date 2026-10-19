@@ -5,6 +5,7 @@ import { History } from './History';
 import { InPlayCard } from './InPlayCard';
 import { CardBack, CardFace, EmptySlot, EnergyIcon, PointPips } from './pieces';
 import { TurnBanner } from './TurnBanner';
+import { ReadyButton } from './Setup';
 import { usableCards } from './usable';
 import { CardZoom, PlayLayer } from './PlayLayer';
 import { PlayContext, usePlay, useHolding, type Spot } from './usePlay';
@@ -177,7 +178,9 @@ function YourSide({ p, choice }: { p: PlayerView; choice: Choice | null }) {
   );
 }
 
-export function Board({ view, onEndTurn, choice = null, children }: { view: GameView; onEndTurn: () => void; choice?: Choice | null; children?: ReactNode }) {
+type BoardProps = { view: GameView; onEndTurn: () => void; onReady?: () => void; choice?: Choice | null; children?: ReactNode };
+
+export function Board({ view, onEndTurn, onReady = () => {}, choice = null, children }: BoardProps) {
   const [you, opp] = view.players;
   const yourTurn = view.phase === 'main' && view.active === 0 && !view.pending;
   const boardRef = useRef<HTMLDivElement>(null);
@@ -189,7 +192,9 @@ export function Board({ view, onEndTurn, choice = null, children }: { view: Game
       {/* No Stadium is tracked by the engine yet; the slot marks where it goes. */}
       <Zone id="stadium" place={{ top: 432, left: 6, width: 66, height: 92 }}>{null}</Zone>
       <Zone id="end-turn" place={{ top: 400, right: 10 }}>
-        <button className="bt-endturn" disabled={!yourTurn} onClick={onEndTurn}>End Turn</button>
+        {view.phase === 'setup'
+          ? <ReadyButton view={view} onReady={onReady} />
+          : <button className="bt-endturn" disabled={!yourTurn} onClick={onEndTurn}>End Turn</button>}
       </Zone>
       <YourSide p={you} choice={choice} />
       </PlayContext.Provider>

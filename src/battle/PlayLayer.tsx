@@ -10,7 +10,7 @@ export function PlayLayer({ holding, flash, boardRef }: { holding: Holding | nul
     <>
       {holding && <div className="bt-play-dim" data-testid="play-dim" />}
       {holding?.mode === 'drag' && <Ghost holding={holding} boardRef={boardRef} />}
-      {holding && <div className="bt-hint" data-testid="play-hint">{hintFor(holding.held)}</div>}
+      {holding && <div className="bt-hint" data-testid="play-hint">{hintFor(holding.held, holding.moves)}</div>}
       {flash && <div className="bt-reason" data-testid="play-reason" role="status">{flash}</div>}
     </>
   );
