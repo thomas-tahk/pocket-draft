@@ -332,6 +332,8 @@ func (g *Game) checkChooseActive(e ChooseNewActive) error {
 	return nil
 }
 
+var errSlotTaken = errors.New("that bench slot is taken")
+
 func (g *Game) checkPlayBasic(e PlayBasic) error {
 	if err := g.onTurn(e.Player); err != nil {
 		return err
@@ -348,7 +350,7 @@ func (g *Game) checkPlayBasic(e PlayBasic) error {
 		return errors.New("invalid bench slot")
 	}
 	if pl.Bench[e.Slot] != nil {
-		return errors.New("that bench slot is taken")
+		return errSlotTaken
 	}
 	return nil
 }
@@ -371,19 +373,11 @@ func (g *Game) checkAttach(e AttachEnergy) error {
 }
 
 func (g *Game) checkEvolve(e Evolve) error {
-	if err := g.onTurn(e.Player); err != nil {
+	ev, err := g.evolveGate(e.Player, e.HandCardID)
+	if err != nil {
 		return err
 	}
-	pl := &g.S.Players[e.Player]
-	hidx := indexInHand(pl.Hand, e.HandCardID)
-	if hidx < 0 {
-		return errors.New("evolution card is not in hand")
-	}
-	ev := pl.Hand[hidx]
-	if ev.Stage == Basic {
-		return errors.New("that card is not an evolution")
-	}
-	mon := targetMon(pl, e.Target)
+	mon := targetMon(&g.S.Players[e.Player], e.Target)
 	if mon == nil {
 		return errors.New("invalid evolution target")
 	}
@@ -393,11 +387,28 @@ func (g *Game) checkEvolve(e Evolve) error {
 	if mon.PlacedTurn == g.S.Turn {
 		return errors.New("a Pokémon cannot evolve the turn it was played")
 	}
+	return nil
+}
+
+// evolveGate is every Evolve check that doesn't depend on the target.
+func (g *Game) evolveGate(p int, handCardID string) (Card, error) {
+	if err := g.onTurn(p); err != nil {
+		return Card{}, err
+	}
+	pl := &g.S.Players[p]
+	hidx := indexInHand(pl.Hand, handCardID)
+	if hidx < 0 {
+		return Card{}, errors.New("evolution card is not in hand")
+	}
+	ev := pl.Hand[hidx]
+	if ev.Stage == Basic {
+		return Card{}, errors.New("that card is not an evolution")
+	}
 	// T8: game turn 1 is the first player's first turn, turn 2 the second's.
 	if g.S.Turn <= 2 {
-		return errors.New("no Pokémon may evolve on the first turn")
+		return Card{}, errors.New("no Pokémon may evolve on the first turn")
 	}
-	return nil
+	return ev, nil
 }
 
 func (g *Game) checkRetreat(e Retreat) error {

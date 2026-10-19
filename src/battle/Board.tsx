@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react';
+import { useRef, type CSSProperties, type ReactNode } from 'react';
 import type { CardView, GameView, PlayerView } from '../game/types';
 import { ChoiceOverlay, type Choice } from './Choice';
 import { History } from './History';
@@ -6,6 +6,8 @@ import { InPlayCard } from './InPlayCard';
 import { CardBack, CardFace, EmptySlot, EnergyIcon, PointPips } from './pieces';
 import { TurnBanner } from './TurnBanner';
 import { usableCards } from './usable';
+import { PlayLayer } from './PlayLayer';
+import { PlayContext, usePlay, useHolding, type Spot } from './usePlay';
 
 // The battle board, laid out from the owner's Pocket screenshot (spec L1–L4).
 // Positions are in 390 × 844 grid units (see battle.css). Opponent on top,
@@ -28,17 +30,42 @@ const BENCH_W = 74;
 const ACTIVE_W = 108;
 const PILE_W = 56;
 
+// Marks a drop spot for press-and-drag play; it glows when the held card can go there (F3).
+function useSpot(spot: Spot | null) {
+  const holding = useHolding();
+  if (!spot) return {};
+  return { 'data-spot': spot, 'data-glow': holding?.moves.has(spot) ?? false };
+}
+
+type SlotProps = { i: number; mon: PlayerView['bench'][number]; mirrored: boolean; usable: boolean; choice?: Choice | null };
+
+function SpotSlot({ i, mon, mirrored, usable, choice }: SlotProps) {
+  const spot = useSpot(mirrored ? null : (`bench-${i}` as Spot));
+  const p = pulse(usable);
+  return (
+    <div data-testid="bench-slot" data-slot={SLOT_NAMES[i]} data-pos={i + 1} {...p} className={['bt-spot', p.className].filter(Boolean).join(' ')} {...spot}>
+      <Lit pos={i + 1} choice={choice}><InPlayCard mon={mon ?? null} width={BENCH_W} /></Lit>
+    </div>
+  );
+}
+
+function ActiveSpot({ mon }: { mon: PlayerView['active'] }) {
+  return <div className="bt-spot" {...useSpot('active')}><InPlayCard mon={mon} width={ACTIVE_W} /></div>;
+}
+
+function HandCard({ card, index }: { card: CardView; index: number }) {
+  const holding = useHolding();
+  const lifted = holding?.held.kind === 'hand' && holding.held.index === index;
+  return <div data-pick={`hand:${index}`} data-card-id={card.id} data-lifted={lifted}><CardFace card={card} width={80} /></div>;
+}
+
 // Bench slots in screen order. Yours read left, behind, right; the opponent
 // faces you, so their left is on your right.
 function Bench({ bench, mirrored, usable, choice }: { bench: PlayerView['bench']; mirrored: boolean; usable?: Set<number>; choice?: Choice | null }) {
   const order = mirrored ? [2, 1, 0] : [0, 1, 2];
   return (
     <div style={{ display: 'flex', gap: 'calc(var(--u) * 8)' }}>
-      {order.map((i) => (
-        <div key={i} data-testid="bench-slot" data-slot={SLOT_NAMES[i]} data-pos={i + 1} {...pulse(usable?.has(i))}>
-          <Lit pos={i + 1} choice={choice}><InPlayCard mon={bench[i] ?? null} width={BENCH_W} /></Lit>
-        </div>
-      ))}
+      {order.map((i) => <SpotSlot key={i} i={i} mon={bench[i]} mirrored={mirrored} usable={!!usable?.has(i)} choice={choice} />)}
     </div>
   );
 }
@@ -134,17 +161,17 @@ function YourSide({ p, choice }: { p: PlayerView; choice: Choice | null }) {
   return (
     <>
       <Zone id="my-active" place={{ top: 440, left: 141 }}>
-        <div data-testid="active-card" {...pulse(usable.active)}><Lit pos={0} choice={choice}><InPlayCard mon={p.active} width={ACTIVE_W} /></Lit></div>
+        <div data-testid="active-card" {...pulse(usable.active)}><Lit pos={0} choice={choice}><ActiveSpot mon={p.active} /></Lit></div>
       </Zone>
       <Zone id="my-deck" place={{ top: 446, right: 6 }}><DeckPile count={p.deckCount} /></Zone>
       <Zone id="my-discard" place={{ top: 536, right: 6 }}><DiscardPile count={p.discardCount} /></Zone>
       <Zone id="my-bench" place={{ top: 604, left: 76 }}><Bench bench={p.bench} mirrored={false} usable={usable.bench} choice={choice} /></Zone>
       <Zone id="my-hand" place={{ top: 722, left: 36, width: 274, height: 112 }}>
         <Fan count={p.hand.length} width={274} cardW={80} render={(i) => (
-          <div data-testid="hand-card" {...pulse(usable.hand.has(p.hand[i].id))}><CardFace card={p.hand[i] as CardView} width={80} /></div>
+          <div data-testid="hand-card" {...pulse(usable.hand.has(p.hand[i].id))}><HandCard card={p.hand[i] as CardView} index={i} /></div>
         )} />
       </Zone>
-      <Zone id="my-energy" place={{ top: 712, left: 318 }}><EnergyZone player={p} scale={1} /></Zone>
+      <Zone id="my-energy" place={{ top: 712, left: 318 }} extra={{ 'data-pick': 'energy' }}><EnergyZone player={p} scale={1} /></Zone>
       <Zone id="my-points" place={{ bottom: 0, left: 0 }}><Points name="You" points={p.points} /></Zone>
     </>
   );
@@ -153,8 +180,11 @@ function YourSide({ p, choice }: { p: PlayerView; choice: Choice | null }) {
 export function Board({ view, onEndTurn, choice = null, children }: { view: GameView; onEndTurn: () => void; choice?: Choice | null; children?: ReactNode }) {
   const [you, opp] = view.players;
   const yourTurn = view.phase === 'main' && view.active === 0 && !view.pending;
+  const boardRef = useRef<HTMLDivElement>(null);
+  const { holding, flash, onPointerDown } = usePlay(view);
   return (
-    <div className="bt-board" data-testid="battle-board">
+    <div className="bt-board" data-testid="battle-board" ref={boardRef} onPointerDown={onPointerDown}>
+      <PlayContext.Provider value={holding}>
       <OpponentSide p={opp} />
       {/* No Stadium is tracked by the engine yet; the slot marks where it goes. */}
       <Zone id="stadium" place={{ top: 432, left: 6, width: 66, height: 92 }}>{null}</Zone>
@@ -162,7 +192,9 @@ export function Board({ view, onEndTurn, choice = null, children }: { view: Game
         <button className="bt-endturn" disabled={!yourTurn} onClick={onEndTurn}>End Turn</button>
       </Zone>
       <YourSide p={you} choice={choice} />
+      </PlayContext.Provider>
       <History actions={view.actions} />
+      <PlayLayer holding={holding} flash={flash} boardRef={boardRef} />
       <TurnBanner view={view} />
       {choice && <ChoiceOverlay choice={choice} />}
       {children}

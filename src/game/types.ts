@@ -41,6 +41,8 @@ export type PlayerView = {
   retreated: boolean;
   discardedEnergy: string[]; // oldest first
   legalMoves: Move[]; // everything you may do right now; empty on the opponent's side
+  handBlocked: Record<string, string>; // your hand card id -> why it has nowhere to go
+  energyBlocked: string; // why this turn's energy can't be attached; '' if it can
 };
 
 // One applied move (server actionView), for the opponent-turn playback (F14)

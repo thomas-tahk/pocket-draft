@@ -54,6 +54,11 @@ type playerView struct {
 	// LegalMoves is everything the viewer may do right now, each in the exact
 	// shape POST /api/move accepts. Only filled on the viewer's own side.
 	LegalMoves []moveReq `json:"legalMoves"`
+	// HandBlocked maps each viewer hand card with no legal move to the reason;
+	// EnergyBlocked is the reason the zone's energy can't be attached, or "".
+	// The screen flashes these when such a card is picked up (spec F17).
+	HandBlocked   map[string]string `json:"handBlocked"`
+	EnergyBlocked string            `json:"energyBlocked"`
 
 	DiscardedEnergy []string `json:"discardedEnergy"` // oldest first (spec T6)
 }
@@ -274,6 +279,8 @@ func toGameView(g *engine.Game, viewer int) gameView {
 	}
 	players[viewer].LegalMoves = toMoveReqs(g.LegalMoves(viewer))
 	players[1-viewer].LegalMoves = []moveReq{}
+	players[viewer].HandBlocked, players[viewer].EnergyBlocked = blockedReasons(g, viewer)
+	players[1-viewer].HandBlocked = map[string]string{}
 	v := gameView{
 		Players:   players,
 		Active:    s.Active,
@@ -288,6 +295,22 @@ func toGameView(g *engine.Game, viewer int) gameView {
 	}
 	hidePromotion(g, viewer, &v)
 	return v
+}
+
+// blockedReasons is the engine's reason for each of p's hand cards with
+// nowhere to go, and for the zone's energy ("" when it can be attached).
+func blockedReasons(g *engine.Game, p int) (map[string]string, string) {
+	hand := map[string]string{}
+	for _, c := range g.S.Players[p].Hand {
+		if err := g.WhyCantPlay(p, c.ID); err != nil {
+			hand[c.ID] = err.Error()
+		}
+	}
+	energy := ""
+	if err := g.WhyCantAttach(p); err != nil {
+		energy = err.Error()
+	}
+	return hand, energy
 }
 
 func toMoveReqs(evs []engine.Event) []moveReq {

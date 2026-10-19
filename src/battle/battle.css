@@ -235,3 +235,28 @@
   background: #fff; color: #3d4766; font-weight: 700; font-size: calc(var(--u) * 14);
   border: calc(var(--u) * 2.5) solid #9aa0b5;
 }
+/* ---- press-and-drag play (F1, F3, F17) ---- */
+.bt-root { touch-action: none; user-select: none; -webkit-user-select: none; }
+.bt-spot { border-radius: calc(var(--u) * 6); }
+/* the rest of the board dims; glowing spots and the held card stay above it */
+.bt-play-dim { position: absolute; inset: 0; z-index: 20; background: rgba(16, 22, 48, 0.32); pointer-events: none; animation: bt-fade 120ms ease-out; }
+.bt-spot[data-glow='true'] {
+  position: relative; z-index: 21;
+  box-shadow: 0 0 0 calc(var(--u) * 2.5) #fff36b, 0 0 calc(var(--u) * 14) calc(var(--u) * 3) #ffd21f;
+}
+[data-lifted='true'] { position: relative; z-index: 21; opacity: 0.45; }
+.bt-ghost { position: absolute; z-index: 30; transform: translate(-50%, -50%) scale(1.05); pointer-events: none; filter: drop-shadow(0 calc(var(--u) * 6) calc(var(--u) * 8) rgba(0, 0, 0, 0.45)); }
+.bt-hint {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 31; pointer-events: none;
+  padding: calc(var(--u) * 8) calc(var(--u) * 12); text-align: center;
+  background: #1c2340; color: #fff; font-weight: 700; font-size: calc(var(--u) * 14);
+  animation: bt-fade 120ms ease-out;
+}
+.bt-reason {
+  position: absolute; left: 50%; top: calc(var(--u) * 380); z-index: 31; transform: translateX(-50%);
+  max-width: calc(var(--u) * 340); padding: calc(var(--u) * 8) calc(var(--u) * 14); box-sizing: border-box;
+  border-radius: calc(var(--u) * 10); background: rgba(28, 35, 64, 0.94); color: #fff; text-align: center;
+  font-weight: 700; font-size: calc(var(--u) * 14); pointer-events: none;
+  animation: bt-fade 120ms ease-out;
+}
+@keyframes bt-fade { from { opacity: 0; } to { opacity: 1; } }
