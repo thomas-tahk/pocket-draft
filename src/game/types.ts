@@ -33,10 +33,12 @@ export type PlayerView = {
   points: number;
   deckCount: number;
   discardCount: number;
-  energyZone: string;
+  energyZone: string; // this turn's energy; '' if none
+  energyNext: string; // next turn's energy; '' before it is rolled
   energyTypes: string[];
   energyUsed: boolean;
   retreated: boolean;
+  discardedEnergy: string[]; // oldest first
 };
 
 export type PromptView = { player: number; kind: 'setup' | 'new_active' };

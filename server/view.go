@@ -45,13 +45,16 @@ type playerView struct {
 	Points       int           `json:"points"`
 	DeckCount    int           `json:"deckCount"`
 	DiscardCount int           `json:"discardCount"`
-	EnergyZone   string        `json:"energyZone"`
+	EnergyZone   string        `json:"energyZone"`  // this turn's energy (spec T4)
+	EnergyNext   string        `json:"energyNext"`  // next turn's energy (spec T4)
 	EnergyTypes  []string      `json:"energyTypes"` // the deck's Energy Zone types (spec S2)
 	EnergyUsed   bool          `json:"energyUsed"`
 	Retreated    bool          `json:"retreated"`
 	// LegalMoves is everything the viewer may do right now, each in the exact
 	// shape POST /api/move accepts. Only filled on the viewer's own side.
 	LegalMoves []moveReq `json:"legalMoves"`
+
+	DiscardedEnergy []string `json:"discardedEnergy"` // oldest first (spec T6)
 }
 
 type promptView struct {
@@ -201,9 +204,12 @@ func toPlayerView(p engine.Player, isViewer bool) playerView {
 		DeckCount:    len(p.Deck),
 		DiscardCount: len(p.Discard),
 		EnergyZone:   energyLabel(p.EnergyZone),
+		EnergyNext:   energyLabel(p.EnergyNext),
 		EnergyTypes:  energyLabels(p.EnergyTypes),
 		EnergyUsed:   p.EnergyUsed,
 		Retreated:    p.Retreated,
+
+		DiscardedEnergy: energyLabels(p.DiscardedEnergy),
 	}
 }
 

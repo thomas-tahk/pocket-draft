@@ -54,8 +54,13 @@ type Player struct {
 	Points      int
 	EnergyTypes []Energy
 	EnergyZone  Energy // the energy available to attach this turn; NoEnergy if none
+	EnergyNext  Energy // next turn's energy, shown small in the zone (spec T4)
 	EnergyUsed  bool   // attached energy already this turn
 	Retreated   bool   // retreated already this turn
+
+	// DiscardedEnergy is every energy this player has discarded, oldest first,
+	// for cards that count discarded energy (spec T6).
+	DiscardedEnergy []Energy
 }
 
 type Phase uint8

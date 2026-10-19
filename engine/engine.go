@@ -54,6 +54,7 @@ func NewGameFromDecks(seed uint64, decks [2]Deck) *Game {
 		pl.Deck = append([]Card(nil), g.decks[i]...)
 		pl.EnergyTypes = decks[i].energyTypes()
 		pl.EnergyZone = NoEnergy
+		pl.EnergyNext = NoEnergy
 		g.dealOpeningHand(i)
 	}
 	g.flipForFirst()
@@ -424,8 +425,8 @@ func (g *Game) advanceTurn() {
 // stays in the deck.
 const handMax = 10
 
-// startTurn begins a player's turn: reset per-turn flags, draw, and generate
-// the Energy Zone energy (skipped on the very first turn of the game).
+// startTurn begins a player's turn: reset per-turn flags, draw, and advance
+// the Energy Zone.
 func (g *Game) startTurn(p int) {
 	pl := &g.S.Players[p]
 	pl.EnergyUsed = false
@@ -437,13 +438,32 @@ func (g *Game) startTurn(p int) {
 		pl.Hand = append(pl.Hand, c)
 	}
 
-	if g.S.Turn > 1 {
-		et := pl.EnergyTypes
-		pl.EnergyZone = et[g.rng.intn(len(et))]
-	} else {
-		pl.EnergyZone = NoEnergy
-	}
+	g.rollEnergyZone(p)
 	g.narrate("--- Turn %d: %s ---", g.S.Turn, side(p))
+}
+
+// rollEnergyZone advances a player's Energy Zone at the start of their turn
+// (spec T4–T6). On turn 1 both players' next energy is rolled and the player
+// going first gets none now. After that, energy left unattached last turn is
+// discarded, next moves into now, and a new next is rolled.
+func (g *Game) rollEnergyZone(p int) {
+	if g.S.Turn == 1 {
+		g.S.Players[p].EnergyNext = g.rollEnergy(p)
+		g.S.Players[1-p].EnergyNext = g.rollEnergy(1 - p)
+		g.S.Players[p].EnergyZone = NoEnergy
+		return
+	}
+	pl := &g.S.Players[p]
+	if pl.EnergyZone != NoEnergy {
+		pl.DiscardedEnergy = append(pl.DiscardedEnergy, pl.EnergyZone)
+	}
+	pl.EnergyZone = pl.EnergyNext
+	pl.EnergyNext = g.rollEnergy(p)
+}
+
+func (g *Game) rollEnergy(p int) Energy {
+	et := g.S.Players[p].EnergyTypes
+	return et[g.rng.intn(len(et))]
 }
 
 // applyConcede ends the game in the opponent's favor when a player forfeits.
