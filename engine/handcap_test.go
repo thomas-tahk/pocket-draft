@@ -27,3 +27,21 @@ func TestHandAt10BlocksTurnDraw(t *testing.T) {
 		t.Errorf("deck = %d cards, top %q; want %d, top %q", len(next.Deck), next.Deck[0].ID, deckLen, top.ID)
 	}
 }
+
+// T3: a draw effect (Munchlax's Hungrily Draw) at 10 cards in hand draws
+// nothing; the card stays on top of the deck.
+func TestHandAt10BlocksEffectDraw(t *testing.T) {
+	g := newEffectTestGame(1)
+	pl := &g.S.Players[0]
+	pl.Hand = make([]Card, 10)
+	pl.Deck = []Card{{ID: "X"}, {ID: "Y"}}
+
+	DrawCards{N: 1}.Apply(&EffectContext{g: g, attacker: 0})
+
+	if len(pl.Hand) != 10 {
+		t.Errorf("hand = %d cards, want 10", len(pl.Hand))
+	}
+	if len(pl.Deck) != 2 || pl.Deck[0].ID != "X" {
+		t.Errorf("deck = %d cards, want 2 with X on top", len(pl.Deck))
+	}
+}
