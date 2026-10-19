@@ -157,3 +157,30 @@
   border: calc(var(--u) * 2) solid #9aa0b5; background: #fff; color: #3d4766; font-weight: 700; font-size: calc(var(--u) * 14); text-align: center;
 }
 .bt-btn-main { border-color: #2fc6e8; box-shadow: 0 0 calc(var(--u) * 6) #2fc6e8; }
+/* ---- L5: turn banner and usable-card pulse ---- */
+/* The banner flashes across the middle at each turn start: in and out in
+   120 ms (F16), held about a second, then hidden. Colours are placeholders. */
+.bt-turn-banner {
+  position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
+  height: calc(var(--u) * 64);
+  display: grid; place-items: center;
+  font-weight: 900; font-size: calc(var(--u) * 30); letter-spacing: calc(var(--u) * 2); color: #fff;
+  text-shadow: 0 calc(var(--u) * 2) calc(var(--u) * 4) rgba(0, 0, 0, 0.45);
+  pointer-events: none; z-index: 10;
+  animation: bt-flash 1.2s linear forwards;
+}
+.bt-turn-banner[data-side='you'] { background: linear-gradient(90deg, transparent, #1f8fe0 15% 85%, transparent); }
+.bt-turn-banner[data-side='opponent'] { background: linear-gradient(90deg, transparent, #d8343a 15% 85%, transparent); }
+@keyframes bt-flash {
+  0% { opacity: 0; visibility: visible; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { opacity: 0; visibility: hidden; }
+}
+
+/* A card you can use right now glows and pulses. */
+.bt-usable { border-radius: calc(var(--u) * 5); animation: bt-pulse 1s ease-in-out infinite alternate; }
+@keyframes bt-pulse {
+  from { box-shadow: 0 0 calc(var(--u) * 4) calc(var(--u) * 2) rgba(255, 200, 0, 0.6); }
+  to { box-shadow: 0 0 calc(var(--u) * 14) calc(var(--u) * 6) rgba(255, 200, 0, 1); }
+}

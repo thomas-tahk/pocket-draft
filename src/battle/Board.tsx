@@ -2,6 +2,8 @@ import type { CSSProperties, ReactNode } from 'react';
 import type { CardView, GameView, PlayerView } from '../game/types';
 import { InPlayCard } from './InPlayCard';
 import { CardBack, CardFace, EmptySlot, EnergyIcon, PointPips } from './pieces';
+import { TurnBanner } from './TurnBanner';
+import { usableCards } from './usable';
 
 // The battle board, laid out from the owner's Pocket screenshot (spec L1–L4).
 // Positions are in 390 × 844 grid units (see battle.css). Opponent on top,
@@ -26,12 +28,12 @@ const PILE_W = 56;
 
 // Bench slots in screen order. Yours read left, behind, right; the opponent
 // faces you, so their left is on your right.
-function Bench({ bench, mirrored }: { bench: PlayerView['bench']; mirrored: boolean }) {
+function Bench({ bench, mirrored, usable }: { bench: PlayerView['bench']; mirrored: boolean; usable?: Set<number> }) {
   const order = mirrored ? [2, 1, 0] : [0, 1, 2];
   return (
     <div style={{ display: 'flex', gap: 'calc(var(--u) * 8)' }}>
       {order.map((i) => (
-        <div key={i} data-testid="bench-slot" data-slot={SLOT_NAMES[i]}>
+        <div key={i} data-testid="bench-slot" data-slot={SLOT_NAMES[i]} {...pulse(usable?.has(i))}>
           <InPlayCard mon={bench[i] ?? null} width={BENCH_W} />
         </div>
       ))}
@@ -55,6 +57,11 @@ function DiscardPile({ count }: { count: number }) {
       <span className="bt-count">{count}</span>
     </div>
   );
+}
+
+// L5: a usable card pulses (battle.css .bt-usable).
+function pulse(usable = false) {
+  return { className: usable ? 'bt-usable' : undefined, 'data-usable': String(usable) };
 }
 
 // Current energy big, next energy small. Once the current one is attached it
@@ -113,14 +120,19 @@ function OpponentSide({ p }: { p: PlayerView }) {
 }
 
 function YourSide({ p }: { p: PlayerView }) {
+  const usable = usableCards(p.legalMoves);
   return (
     <>
-      <Zone id="my-active" place={{ top: 440, left: 141 }}><InPlayCard mon={p.active} width={ACTIVE_W} /></Zone>
+      <Zone id="my-active" place={{ top: 440, left: 141 }}>
+        <div data-testid="active-card" {...pulse(usable.active)}><InPlayCard mon={p.active} width={ACTIVE_W} /></div>
+      </Zone>
       <Zone id="my-deck" place={{ top: 446, right: 6 }}><DeckPile count={p.deckCount} /></Zone>
       <Zone id="my-discard" place={{ top: 536, right: 6 }}><DiscardPile count={p.discardCount} /></Zone>
-      <Zone id="my-bench" place={{ top: 604, left: 76 }}><Bench bench={p.bench} mirrored={false} /></Zone>
+      <Zone id="my-bench" place={{ top: 604, left: 76 }}><Bench bench={p.bench} mirrored={false} usable={usable.bench} /></Zone>
       <Zone id="my-hand" place={{ top: 722, left: 36, width: 274, height: 112 }}>
-        <Fan count={p.hand.length} width={274} cardW={80} render={(i) => <CardFace card={p.hand[i] as CardView} width={80} />} />
+        <Fan count={p.hand.length} width={274} cardW={80} render={(i) => (
+          <div data-testid="hand-card" {...pulse(usable.hand.has(p.hand[i].id))}><CardFace card={p.hand[i] as CardView} width={80} /></div>
+        )} />
       </Zone>
       <Zone id="my-energy" place={{ top: 712, left: 318 }}><EnergyZone player={p} scale={1} /></Zone>
       <Zone id="my-points" place={{ bottom: 0, left: 0 }}><Points name="You" points={p.points} /></Zone>
@@ -140,6 +152,7 @@ export function Board({ view, onEndTurn, children }: { view: GameView; onEndTurn
         <button className="bt-endturn" disabled={!yourTurn} onClick={onEndTurn}>End Turn</button>
       </Zone>
       <YourSide p={you} />
+      <TurnBanner view={view} />
       {children}
     </div>
   );
