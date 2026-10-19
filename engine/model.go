@@ -69,6 +69,8 @@ type Player struct {
 	// DiscardedEnergy is every energy this player has discarded, oldest first,
 	// for cards that count discarded energy (spec T6).
 	DiscardedEnergy []Energy
+
+	nextHeads bool // the next effect coin flip this turn is heads (Will); turn.go
 }
 
 type Phase uint8

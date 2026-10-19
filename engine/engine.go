@@ -574,6 +574,7 @@ func (g *Game) advanceTurn() {
 		g.tie(ReasonTurnCap)
 		return
 	}
+	g.S.Players[g.S.Active].endTurnEffects()
 	g.S.Active = 1 - g.S.Active
 	g.S.Turn++
 	g.startTurn(g.S.Active)

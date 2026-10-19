@@ -31,7 +31,13 @@ func (ctx *EffectContext) Player() *Player { return ctx.attackerPlayer() }
 // flip of an effect waits for a tap; every later one in the same effect runs
 // on its own. One EffectContext is one effect.
 func (ctx *EffectContext) Flip() bool {
-	heads := ctx.g.flipCoin(ctx.attacker, !ctx.flipped)
+	var heads bool
+	if pl := ctx.Player(); pl.nextHeads { // Will
+		pl.nextHeads = false
+		heads = ctx.g.recordFlip(ctx.attacker, true, !ctx.flipped)
+	} else {
+		heads = ctx.g.flipCoin(ctx.attacker, !ctx.flipped)
+	}
 	ctx.flipped = true
 	return heads
 }
