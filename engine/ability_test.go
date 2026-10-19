@@ -92,9 +92,9 @@ func TestAbilitySpot(t *testing.T) {
 		where AbilitySpot
 		want  []Event
 	}{
-		{"anywhere", AnySpot, []Event{UseAbility{0, 0}, UseAbility{0, 1 + BenchLeft}}},
-		{"active only", ActiveSpot, []Event{UseAbility{0, 0}}},
-		{"bench only", BenchSpot, []Event{UseAbility{0, 1 + BenchLeft}}},
+		{"anywhere", AnySpot, []Event{UseAbility{0, 0, Spot{}}, UseAbility{0, 1 + BenchLeft, Spot{}}}},
+		{"active only", ActiveSpot, []Event{UseAbility{0, 0, Spot{}}}},
+		{"bench only", BenchSpot, []Event{UseAbility{0, 1 + BenchLeft, Spot{}}}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -125,7 +125,7 @@ func TestAbilityNeedsYourTurnAndAUse(t *testing.T) {
 
 	// Assert
 	assertMoves(t, opp, nil)
-	assertMoves(t, mine, []Event{UseAbility{0, 0}, UseAbility{0, 1 + BenchLeft}})
+	assertMoves(t, mine, []Event{UseAbility{0, 0, Spot{}}, UseAbility{0, 1 + BenchLeft, Spot{}}})
 }
 
 // An ability's condition from its text (When) is checked before it is legal.
@@ -138,7 +138,7 @@ func TestAbilityWhen(t *testing.T) {
 	got := abilityMoves(g, 0)
 
 	// Assert
-	assertMoves(t, got, []Event{UseAbility{0, 1 + BenchLeft}})
+	assertMoves(t, got, []Event{UseAbility{0, 1 + BenchLeft, Spot{}}})
 }
 
 // Using an ability is recorded and replays.
