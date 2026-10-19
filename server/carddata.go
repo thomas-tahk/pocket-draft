@@ -189,6 +189,27 @@ var trainerEffects = map[string][]engine.EffectOp{
 // only to the Pokémon it is attached to: When compares Source and Target.
 var trainerPassives = map[string][]engine.Passive{}
 
+// abilityTexts maps an Ability's printed wording (ability.effect, exactly as
+// scraped) to the engine Ability that plays it — one entry per distinct
+// wording, so every printing with that wording gets it. Name is filled from
+// the card. Text batches register their wordings from an init() in their own
+// server/texts_<plan-id>.go. A Pokémon whose Ability wording isn't here
+// loads without it and isn't offered in the draft (textWorks).
+var abilityTexts = map[string]engine.Ability{}
+
+// abilityOf is the engine Ability for a scraped card, or nil.
+func abilityOf(rc rawCard) *engine.Ability {
+	if rc.Ability == nil {
+		return nil
+	}
+	a, ok := abilityTexts[rc.Ability.Effect]
+	if !ok {
+		return nil
+	}
+	a.Name = rc.Ability.Name
+	return &a
+}
+
 // trainerKind is the engine kind of a scraped Trainer. The scrape names Items
 // and Supporters; Tools and Stadiums come through with no kind, and a Tool's
 // text always speaks of "the Pokémon this card is attached to".
@@ -258,6 +279,7 @@ func toEngineCard(rc rawCard) (engine.Card, error) {
 		RetreatCost: rc.Retreat,
 		IsEX:        rc.ExKind != "regular",
 		IsMegaEX:    rc.ExKind == "mega-ex",
+		Ability:     abilityOf(rc),
 	}, nil
 }
 
