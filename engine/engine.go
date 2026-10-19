@@ -161,6 +161,8 @@ func (g *Game) validateAndApply(ev Event) error {
 		g.applyPlayTrainer(e)
 	case DiscardFossil:
 		g.applyDiscardFossil(e)
+	case UseAbility:
+		g.applyUseAbility(e)
 	case UseAttack:
 		g.applyAttack(e)
 	case EndTurn:
@@ -245,6 +247,7 @@ func (g *Game) applyEvolve(e Evolve) {
 	pl.Hand = removeAt(pl.Hand, hidx)
 	mon.Card = ev
 	mon.PlacedTurn = g.S.Turn
+	mon.AbilityUsedTurn = 0 // an evolved Pokémon is a new card (A4)
 	g.narrate("%s evolved into %s.", side(e.Player), ev.Name)
 }
 

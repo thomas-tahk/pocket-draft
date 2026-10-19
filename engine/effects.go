@@ -14,6 +14,7 @@ type EffectOp interface {
 type EffectContext struct {
 	g        *Game
 	attacker int // the acting player: the attacker, or who played the Trainer
+	pos      int // the user's spot: 0 the Active (attacks), n bench slot n-1 (an Ability)
 	Damage   int
 	flipped  bool // this effect has flipped a coin already
 
@@ -39,10 +40,13 @@ func (ctx *EffectContext) attackerMon() *InPlay    { return ctx.g.S.Players[ctx.
 func (ctx *EffectContext) defenderMon() *InPlay    { return ctx.g.S.Players[1-ctx.attacker].Active }
 func (ctx *EffectContext) attackerPlayer() *Player { return &ctx.g.S.Players[ctx.attacker] }
 
+// self is the Pokémon using the effect: the attacker, or an Ability's holder.
+func (ctx *EffectContext) self() *InPlay { return targetMon(ctx.attackerPlayer(), ctx.pos) }
+
 // narrate prefixes the attacker's side and Pokémon name, matching the
 // existing narration style in applyAttack.
 func (ctx *EffectContext) narrate(format string, args ...any) {
-	prefix := []any{side(ctx.attacker), ctx.attackerMon().Card.Name}
+	prefix := []any{side(ctx.attacker), ctx.self().Card.Name}
 	ctx.g.narrate("%s's %s "+format, append(prefix, args...)...)
 }
 
