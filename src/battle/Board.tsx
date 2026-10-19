@@ -42,7 +42,7 @@ function useSpot(spot: Spot | null) {
 type SlotProps = { i: number; mon: PlayerView['bench'][number]; mirrored: boolean; usable: boolean; choice?: Choice | null };
 
 function SpotSlot({ i, mon, mirrored, usable, choice }: SlotProps) {
-  const spot = useSpot(mirrored ? null : (`bench-${i}` as Spot));
+  const spot = useSpot(mirrored ? `opp-bench-${i}` as Spot : (`bench-${i}` as Spot));
   const p = pulse(usable);
   return (
     <div data-testid="bench-slot" data-slot={SLOT_NAMES[i]} data-pos={i + 1} {...p} className={['bt-spot', p.className].filter(Boolean).join(' ')} {...spot}>
@@ -51,8 +51,12 @@ function SpotSlot({ i, mon, mirrored, usable, choice }: SlotProps) {
   );
 }
 
-function ActiveSpot({ mon }: { mon: PlayerView['active'] }) {
-  return <div className="bt-spot" {...useSpot('active')}><InPlayCard mon={mon} width={ACTIVE_W} /></div>;
+function ActiveSpot({ mon, spot = 'active' }: { mon: PlayerView['active']; spot?: Spot }) {
+  return <div className="bt-spot" {...useSpot(spot)}><InPlayCard mon={mon} width={ACTIVE_W} /></div>;
+}
+
+function StadiumSpot({ card }: { card: CardView | null }) {
+  return <div className="bt-spot bt-stadium" {...useSpot('stadium')}>{card && <CardFace card={card} width={66} />}</div>;
 }
 
 function HandCard({ card, index }: { card: CardView; index: number }) {
@@ -153,7 +157,7 @@ function OpponentSide({ p }: { p: PlayerView }) {
       <Zone id="opp-bench" place={{ top: 124, left: 76 }}><Bench bench={p.bench} mirrored /></Zone>
       <Zone id="opp-discard" place={{ top: 168, left: 6 }}><DiscardPile count={p.discardCount} /></Zone>
       <Zone id="opp-deck" place={{ top: 262, left: 6 }}><DeckPile count={p.deckCount} /></Zone>
-      <Zone id="opp-active" place={{ top: 240, left: 141 }}><InPlayCard mon={p.active} width={ACTIVE_W} /></Zone>
+      <Zone id="opp-active" place={{ top: 240, left: 141 }}><ActiveSpot mon={p.active} spot="opp-active" /></Zone>
     </>
   );
 }
@@ -197,8 +201,7 @@ export function Board({ view, onEndTurn, onReady = () => {}, choice = null, chil
       onPointerDownCapture={() => { heldAtPress.current = !!holding; }} onPointerDown={onPointerDown}>
       <PlayContext.Provider value={holding}>
       <OpponentSide p={opp} />
-      {/* No Stadium is tracked by the engine yet; the slot marks where it goes. */}
-      <Zone id="stadium" place={{ top: 432, left: 6, width: 66, height: 92 }}>{null}</Zone>
+      <Zone id="stadium" place={{ top: 432, left: 6, width: 66, height: 92 }}><StadiumSpot card={view.stadium ?? null} /></Zone>
       <Zone id="end-turn" place={{ top: 400, right: 10 }}>
         {view.phase === 'setup'
           ? <ReadyButton view={view} onReady={onReady} />

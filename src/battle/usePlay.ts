@@ -10,8 +10,11 @@ import { DRAG_START_PX, useZoom, zoomCardAt } from './useZoom';
 // the card stays held until the next tap plays it or cancels (tap-then-tap).
 // A press held long enough to zoom (F2) and then released lets the card go.
 
-// A spot a card can be dropped on: your Active, or Bench slot 0–2.
-export type Spot = 'active' | 'bench-0' | 'bench-1' | 'bench-2';
+// A spot a card can be dropped on: your Active or Bench slot 0–2, the
+// opponent's ('opp-' prefix), the Stadium slot, or 'board' for a Trainer with
+// no target, dropped anywhere on the board but the hands (F7).
+type Pos = 'active' | 'bench-0' | 'bench-1' | 'bench-2';
+export type Spot = Pos | `opp-${Pos}` | 'stadium' | 'board';
 type Held = { kind: 'hand'; index: number; card: CardView } | { kind: 'energy'; type: string };
 type Point = { x: number; y: number };
 export type Holding = { held: Held; moves: Map<Spot, Move>; mode: 'press' | 'drag' | 'tap'; start: Point; pos: Point };
@@ -19,7 +22,14 @@ export type Holding = { held: Held; moves: Map<Spot, Move>; mode: 'press' | 'dra
 const FLASH_MS = 1800;
 
 // In-play target numbers: 0 is the Active, n is Bench slot n-1.
-const spotOfTarget = (t: number): Spot => (t === 0 ? 'active' : (`bench-${t - 1}` as Spot));
+const spotOfTarget = (t: number): Pos => (t === 0 ? 'active' : (`bench-${t - 1}` as Pos));
+
+// Where a PlayTrainer move drops (F6, F7). Player 0 is you (humanSeat).
+function trainerSpot(spot?: { player: number; pos: number }): Spot {
+  if (!spot) return 'board';
+  if (spot.player === -1) return 'stadium';
+  return spot.player === 0 ? spotOfTarget(spot.pos) : `opp-${spotOfTarget(spot.pos)}`;
+}
 
 function movesFor(held: Held, legal: Move[]): Map<Spot, Move> {
   const out = new Map<Spot, Move>();
@@ -30,6 +40,7 @@ function movesFor(held: Held, legal: Move[]): Map<Spot, Move> {
     if (m.type === 'SetupActive' && m.cardId === held.card.id) out.set('active', m);
     if (m.type === 'SetupBench' && m.cardId === held.card.id) out.set(`bench-${m.slot}` as Spot, m);
     if (m.type === 'Evolve' && m.handCardId === held.card.id) out.set(spotOfTarget(m.target), m);
+    if (m.type === 'PlayTrainer' && m.cardId === held.card.id) out.set(trainerSpot(m.spot), m);
   }
   return out;
 }
@@ -38,6 +49,9 @@ function movesFor(held: Held, legal: Move[]): Map<Spot, Move> {
 export function hintFor(held: Held, moves: Map<Spot, Move>): string {
   if (held.kind === 'energy') return 'Choose a Pokémon to attach energy to';
   if (moves.get('active')?.type === 'SetupActive') return `Place ${held.card.name} as your Active`;
+  if (moves.has('board')) return `Drop ${held.card.name} anywhere on the board`;
+  if (moves.has('stadium')) return `Drop ${held.card.name} on the Stadium spot`;
+  if (held.card.kind !== 'pokemon') return `Choose a Pokémon for ${held.card.name}`;
   if (held.card.stage === 'Basic') return `Choose a Bench spot for ${held.card.name}`;
   return `Choose a Pokémon to evolve into ${held.card.name}`;
 }
@@ -52,6 +66,15 @@ function heldAt(el: Element | null, view: GameView): Held | null {
 }
 
 const spotAt = (el: Element | null) => (el?.closest('[data-spot]')?.getAttribute('data-spot') ?? null) as Spot | null;
+
+// The spot a drop on el lands on: a marked spot, else 'board' when the held
+// card plays anywhere and el is on the board outside both hands (F7).
+function dropAt(el: Element | null, moves: Map<Spot, Move>): Move | undefined {
+  const spot = spotAt(el);
+  if (spot && moves.has(spot)) return moves.get(spot);
+  const onBoard = el?.closest('.bt-board') && !el.closest('[data-testid="my-hand"], [data-testid="opp-hand"]');
+  return onBoard ? moves.get('board') : undefined;
+}
 
 const sameHeld = (a: Held, b: Held) => a.kind === b.kind && (a.kind === 'energy' || a.index === (b as typeof a).index);
 
@@ -91,7 +114,7 @@ export function usePlay(view: GameView) {
     const held = heldAt(target, view);
     const zoomCard = zoomCardAt(target, view);
     if (holding?.mode === 'tap') {
-      const move = holding.moves.get(spotAt(target) as Spot);
+      const move = dropAt(target, holding.moves);
       if (move) return void play(move);
       setHolding(null);
     }
@@ -122,7 +145,7 @@ function usePointerTracking({ holding, setHolding, play, zoomed }: Tracking) {
     };
     const up = (e: PointerEvent) => {
       if (holding.mode === 'press') return setHolding(zoomed.current ? null : { ...holding, mode: 'tap' });
-      const m = holding.moves.get(spotAt(document.elementFromPoint(e.clientX, e.clientY)) as Spot);
+      const m = dropAt(document.elementFromPoint(e.clientX, e.clientY), holding.moves);
       if (m) play(m);
       else setHolding(null); // dropped anywhere else: cancel (F3)
     };

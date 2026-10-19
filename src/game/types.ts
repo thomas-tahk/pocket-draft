@@ -5,7 +5,8 @@ export type CardView = {
   id: string;
   name: string;
   image?: string;
-  stage: string;
+  kind: 'pokemon' | 'item' | 'supporter' | 'tool' | 'stadium';
+  stage: string; // '' on a Trainer
   hp: number;
   type: string;
   isEx: boolean;
@@ -26,6 +27,7 @@ export type InPlayView = {
   asleep: boolean;
   paralyzed: boolean;
   confused: boolean;
+  tool?: CardView; // the attached Pokémon Tool
 };
 
 export type PlayerView = {
@@ -82,6 +84,7 @@ export type GameView = {
   actions: ActionView[]; // oldest first; hidden info already removed for you
   openingFlip: { flipper: number; heads: boolean }; // the coin flip for first (spec S4)
   firstPlayer: number; // 0 or 1: who goes first
+  stadium: CardView | null; // the Stadium in play
 };
 
 // Mirrors server toEvent(): one shape per move type. `player` is always the
@@ -99,7 +102,11 @@ export type Move =
   | { type: 'ChooseNewActive'; player: number; benchIndex: number }
   | { type: 'RetreatDiscard'; player: number; energy: string[] }
   | { type: 'ChooseOption'; player: number; index: number }
-  | { type: 'Concede'; player: number };
+  | { type: 'Concede'; player: number }
+  // spot: where the Trainer goes (pos 0 Active, n Bench slot n-1; player -1
+  // pos -2 is the Stadium slot); absent for a Trainer with no target
+  | { type: 'PlayTrainer'; player: number; cardId: string; spot?: { player: number; pos: number } }
+  | { type: 'DiscardFossil'; player: number; target: number };
 
 export type MoveResp = { ok: boolean; error?: string; state: GameView };
 export type BotResp = { acted: boolean; state: GameView };

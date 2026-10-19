@@ -39,6 +39,7 @@ type inPlayView struct {
 	Asleep      bool           `json:"asleep"`
 	Paralyzed   bool           `json:"paralyzed"`
 	Confused    bool           `json:"confused"`
+	Tool        *cardView      `json:"tool,omitempty"` // the attached Pokémon Tool
 }
 
 type playerView struct {
@@ -91,6 +92,8 @@ type gameView struct {
 	// first, for the setup screen (spec S4). Neither is hidden.
 	OpeningFlip flipView `json:"openingFlip"`
 	FirstPlayer int      `json:"firstPlayer"`
+	// Stadium is the Stadium card in play, or null.
+	Stadium *cardView `json:"stadium"`
 }
 
 type flipView struct {
@@ -267,7 +270,16 @@ func toInPlayView(p *engine.InPlay) *inPlayView {
 		Asleep:      p.Has(engine.Asleep),
 		Paralyzed:   p.Has(engine.Paralyzed),
 		Confused:    p.Has(engine.Confused),
+		Tool:        optCardView(p.Tool),
 	}
+}
+
+func optCardView(c *engine.Card) *cardView {
+	if c == nil {
+		return nil
+	}
+	v := toCardView(*c)
+	return &v
 }
 
 // toPlayerView renders one player's side. Only the viewer's own hand is shown;
@@ -350,6 +362,7 @@ func toGameView(g *engine.Game, viewer int) gameView {
 
 		OpeningFlip: flipView{Flipper: s.OpeningFlip.Flipper, Heads: s.OpeningFlip.Heads},
 		FirstPlayer: s.FirstPlayer,
+		Stadium:     optCardView(s.Stadium),
 	}
 	hidePromotion(g, viewer, &v)
 	return v

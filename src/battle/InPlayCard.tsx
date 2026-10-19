@@ -47,6 +47,7 @@ export function InPlayCard({ mon, width }: { mon: InPlayView | null; width: numb
       <HpBadge mon={mon} />
       <StatusIcons mon={mon} />
       <AttachedEnergy energy={mon.energy} size={width > 90 ? 18 : 14} />
+      {mon.tool && <div className="bt-tool" data-testid="tool" title={mon.tool.name}>{mon.tool.name}</div>}
     </div>
   );
 }
