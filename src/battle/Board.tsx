@@ -6,7 +6,7 @@ import { InPlayCard } from './InPlayCard';
 import { CardBack, CardFace, EmptySlot, EnergyIcon, PointPips } from './pieces';
 import { TurnBanner } from './TurnBanner';
 import { usableCards } from './usable';
-import { PlayLayer } from './PlayLayer';
+import { CardZoom, PlayLayer } from './PlayLayer';
 import { PlayContext, usePlay, useHolding, type Spot } from './usePlay';
 
 // The battle board, laid out from the owner's Pocket screenshot (spec L1–L4).
@@ -181,7 +181,7 @@ export function Board({ view, onEndTurn, choice = null, children }: { view: Game
   const [you, opp] = view.players;
   const yourTurn = view.phase === 'main' && view.active === 0 && !view.pending;
   const boardRef = useRef<HTMLDivElement>(null);
-  const { holding, flash, onPointerDown } = usePlay(view);
+  const { holding, flash, zoom, onPointerDown } = usePlay(view);
   return (
     <div className="bt-board" data-testid="battle-board" ref={boardRef} onPointerDown={onPointerDown}>
       <PlayContext.Provider value={holding}>
@@ -195,6 +195,7 @@ export function Board({ view, onEndTurn, choice = null, children }: { view: Game
       </PlayContext.Provider>
       <History actions={view.actions} />
       <PlayLayer holding={holding} flash={flash} boardRef={boardRef} />
+      <CardZoom card={zoom} />
       <TurnBanner view={view} />
       {choice && <ChoiceOverlay choice={choice} />}
       {children}

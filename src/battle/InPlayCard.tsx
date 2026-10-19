@@ -42,7 +42,7 @@ function StatusIcons({ mon }: { mon: InPlayView }) {
 export function InPlayCard({ mon, width }: { mon: InPlayView | null; width: number }) {
   if (!mon) return <EmptySlot width={width} />;
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative' }} data-zoom={mon.card.id}>
       <CardFace card={mon.card} width={width} />
       <HpBadge mon={mon} />
       <StatusIcons mon={mon} />

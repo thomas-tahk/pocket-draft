@@ -1,4 +1,5 @@
 import type { RefObject } from 'react';
+import type { CardView } from '../game/types';
 import { CardFace, EnergyIcon } from './pieces';
 import { hintFor, type Holding } from './usePlay';
 
@@ -13,6 +14,12 @@ export function PlayLayer({ holding, flash, boardRef }: { holding: Holding | nul
       {flash && <div className="bt-reason" data-testid="play-reason" role="status">{flash}</div>}
     </>
   );
+}
+
+// A held card blown up, centred, over everything (F2). Size is a placeholder.
+export function CardZoom({ card }: { card: CardView | null }) {
+  if (!card) return null;
+  return <div className="bt-zoom" data-testid="card-zoom"><CardFace card={card} width={320} /></div>;
 }
 
 function Ghost({ holding, boardRef }: { holding: Holding; boardRef: RefObject<HTMLDivElement | null> }) {

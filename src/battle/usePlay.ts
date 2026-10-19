@@ -1,12 +1,14 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import type { PointerEvent as ReactPointerEvent } from 'react';
+import type { PointerEvent as ReactPointerEvent, RefObject } from 'react';
 import { useGameStore } from '../game/store';
 import type { CardView, GameView, Move } from '../game/types';
+import { DRAG_START_PX, useZoom, zoomCardAt } from './useZoom';
 
 // Press-and-drag play (spec F1, F3–F5, F17). What glows and what a drop does
 // come only from the server's legalMoves; the client knows no rules. Mouse and
 // touch share one pointer-event path. A press that never moves becomes a tap:
 // the card stays held until the next tap plays it or cancels (tap-then-tap).
+// A press held long enough to zoom (F2) and then released lets the card go.
 
 // A spot a card can be dropped on: your Active, or Bench slot 0–2.
 export type Spot = 'active' | 'bench-0' | 'bench-1' | 'bench-2';
@@ -14,7 +16,6 @@ type Held = { kind: 'hand'; index: number; card: CardView } | { kind: 'energy'; 
 type Point = { x: number; y: number };
 export type Holding = { held: Held; moves: Map<Spot, Move>; mode: 'press' | 'drag' | 'tap'; start: Point; pos: Point };
 
-const DRAG_START_PX = 8;
 const FLASH_MS = 1800;
 
 // In-play target numbers: 0 is the Active, n is Bench slot n-1.
@@ -63,6 +64,7 @@ export function usePlay(view: GameView) {
   const [flash, setFlash] = useState<string | null>(null);
   const flashTimer = useRef<number | undefined>(undefined);
   const busy = useRef(false);
+  const { zoom, opened, startPress } = useZoom();
 
   const showReason = useCallback((reason: string) => {
     window.clearTimeout(flashTimer.current);
@@ -84,12 +86,14 @@ export function usePlay(view: GameView) {
     if (busy.current) return;
     const target = e.target as Element;
     const held = heldAt(target, view);
+    const zoomCard = zoomCardAt(target, view);
     if (holding?.mode === 'tap') {
       const move = holding.moves.get(spotAt(target) as Spot);
       if (move) return void play(move);
       setHolding(null);
-      if (!held || sameHeld(held, holding.held)) return;
     }
+    startPress(zoomCard && { card: zoomCard, x: e.clientX, y: e.clientY });
+    if (holding?.mode === 'tap' && (!held || sameHeld(held, holding.held))) return;
     if (!held) return;
     const moves = movesFor(held, view.players[0].legalMoves ?? []);
     if (moves.size === 0) return showReason(blockedReason(held, view));
@@ -97,12 +101,14 @@ export function usePlay(view: GameView) {
     setHolding({ held, moves, mode: 'press', start: p, pos: p });
   };
 
-  usePointerTracking(holding, setHolding, play);
-  return { holding, flash, onPointerDown };
+  usePointerTracking({ holding, setHolding, play, zoomed: opened });
+  return { holding, flash, zoom, onPointerDown };
 }
 
+type Tracking = { holding: Holding | null; setHolding: (h: Holding | null) => void; play: (m: Move) => void; zoomed: RefObject<boolean> };
+
 // While a card is pressed or dragged, follow the pointer anywhere on the page.
-function usePointerTracking(holding: Holding | null, setHolding: (h: Holding | null) => void, play: (m: Move) => void) {
+function usePointerTracking({ holding, setHolding, play, zoomed }: Tracking) {
   const active = holding && holding.mode !== 'tap';
   useEffect(() => {
     if (!active || !holding) return;
@@ -112,7 +118,7 @@ function usePointerTracking(holding: Holding | null, setHolding: (h: Holding | n
       setHolding({ ...holding, pos, mode: holding.mode === 'drag' || moved ? 'drag' : 'press' });
     };
     const up = (e: PointerEvent) => {
-      if (holding.mode === 'press') return setHolding({ ...holding, mode: 'tap' });
+      if (holding.mode === 'press') return setHolding(zoomed.current ? null : { ...holding, mode: 'tap' });
       const m = holding.moves.get(spotAt(document.elementFromPoint(e.clientX, e.clientY)) as Spot);
       if (m) play(m);
       else setHolding(null); // dropped anywhere else: cancel (F3)
@@ -126,7 +132,7 @@ function usePointerTracking(holding: Holding | null, setHolding: (h: Holding | n
       window.removeEventListener('pointerup', up);
       window.removeEventListener('pointercancel', cancel);
     };
-  }, [active, holding, setHolding, play]);
+  }, [active, holding, setHolding, play, zoomed]);
 }
 
 // Lets board pieces ask whether they glow or are the held card.

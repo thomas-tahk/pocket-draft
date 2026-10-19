@@ -246,6 +246,13 @@
 }
 [data-lifted='true'] { position: relative; z-index: 21; opacity: 0.45; }
 .bt-ghost { position: absolute; z-index: 30; transform: translate(-50%, -50%) scale(1.05); pointer-events: none; filter: drop-shadow(0 calc(var(--u) * 6) calc(var(--u) * 8) rgba(0, 0, 0, 0.45)); }
+/* hold to zoom (F2): the card grows in from its normal size in 120 ms */
+.bt-zoom {
+  position: absolute; inset: 0; z-index: 40; display: grid; place-items: center; pointer-events: none;
+  filter: drop-shadow(0 calc(var(--u) * 10) calc(var(--u) * 16) rgba(0, 0, 0, 0.55));
+}
+.bt-zoom > .bt-card { animation: bt-zoom-in 120ms ease-out; }
+@keyframes bt-zoom-in { from { transform: scale(0.3); } }
 .bt-hint {
   position: absolute; left: 0; right: 0; bottom: 0; z-index: 31; pointer-events: none;
   padding: calc(var(--u) * 8) calc(var(--u) * 12); text-align: center;
