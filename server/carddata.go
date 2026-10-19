@@ -15,6 +15,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/thomas-tahk/pocket-draft/engine"
 )
@@ -170,10 +171,47 @@ var effectsByID = map[string]map[string][]engine.EffectOp{
 	"B3b-054": {"Hungrily Draw": {engine.DrawCards{N: 1}}},                             // Munchlax
 }
 
+// trainerEffects maps a Trainer's printed wording (trainerText, exactly as
+// scraped) to the effect ops that play it — one entry per distinct wording, so
+// every printing with that wording plays it. A Trainer whose wording isn't
+// here loads but can't be played. To add a text, see the steps at the top of
+// engine/trainer.go.
+var trainerEffects = map[string][]engine.EffectOp{
+	"Draw 2 cards.": {engine.DrawCards{N: 2}}, // Professor's Research
+}
+
+// trainerKind is the engine kind of a scraped Trainer. The scrape names Items
+// and Supporters; Tools and Stadiums come through with no kind, and a Tool's
+// text always speaks of "the Pokémon this card is attached to".
+func trainerKind(rc rawCard) engine.CardKind {
+	switch {
+	case rc.TrainerKind == "Supporter":
+		return engine.KindSupporter
+	case rc.TrainerKind == "Item":
+		return engine.KindItem
+	case strings.Contains(rc.TrainerText, "this card is attached to"):
+		return engine.KindTool
+	}
+	return engine.KindStadium
+}
+
+func toTrainerCard(rc rawCard) engine.Card {
+	return engine.Card{
+		ID:       rc.ID,
+		Name:     rc.Name,
+		Kind:     trainerKind(rc),
+		Trainer:  trainerEffects[rc.TrainerText],
+		Weakness: engine.NoEnergy,
+	}
+}
+
 // toEngineCard converts a scraped card into the engine's Card. It errors only if
 // the Pokémon's type is one the engine does not model (Dragon), which keeps
 // unsupported cards out of a deck rather than silently mistyping them.
 func toEngineCard(rc rawCard) (engine.Card, error) {
+	if rc.CardType == "Trainer" {
+		return toTrainerCard(rc), nil
+	}
 	typ, ok := energyByName(rc.CardType)
 	if !ok {
 		return engine.Card{}, fmt.Errorf("card %s (%s): unsupported type %q", rc.ID, rc.Name, rc.CardType)
@@ -271,7 +309,7 @@ func deckFromIDs(ids []string) ([]engine.Card, error) {
 		if countByName[card.Name] > 2 {
 			return nil, fmt.Errorf("at most 2 copies of %q allowed", card.Name)
 		}
-		if card.Stage == engine.Basic {
+		if card.IsBasicPokemon() {
 			basics++
 		}
 		deck = append(deck, card)

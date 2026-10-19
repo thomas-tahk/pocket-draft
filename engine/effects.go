@@ -13,10 +13,18 @@ type EffectOp interface {
 // seeded coin flip so replay stays deterministic (ADR-0005).
 type EffectContext struct {
 	g        *Game
-	attacker int
+	attacker int // the acting player: the attacker, or who played the Trainer
 	Damage   int
 	flipped  bool // this effect has flipped a coin already
+
+	// Card and Target are set for a Trainer: the card being played and the
+	// spot it was dropped on (NoSpot when it has none).
+	Card   Card
+	Target Spot
 }
+
+// Player is the acting player's side.
+func (ctx *EffectContext) Player() *Player { return ctx.attackerPlayer() }
 
 // Flip flips one coin for the attacker and records it (spec F11). The first
 // flip of an effect waits for a tap; every later one in the same effect runs
@@ -105,6 +113,10 @@ func (v DamagePerEnergy) Apply(ctx *EffectContext) {
 // Munchlax's Hungrily Draw: draw a card. At handMax (T3) the card stays in
 // the deck.
 type DrawCards struct{ N int }
+
+// CanPlay: a Trainer that draws can't be played with 10 cards in hand (T3).
+// Attacks don't ask, so Hungrily Draw at 10 still hits and draws nothing.
+func (v DrawCards) CanPlay(ctx *EffectContext) error { return handFull(ctx) }
 
 func (v DrawCards) Apply(ctx *EffectContext) {
 	pl := ctx.attackerPlayer()

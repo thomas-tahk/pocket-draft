@@ -13,7 +13,7 @@ func pickSetup(hand []Card) (string, []string) {
 	var active string
 	var bench []string
 	for _, c := range hand {
-		if c.Stage != Basic {
+		if !c.IsBasicPokemon() {
 			continue
 		}
 		if active == "" {
@@ -44,7 +44,7 @@ func submitSetup(g *Game, p int, active string, bench []string) error {
 
 func firstBasicID(hand []Card) (string, bool) {
 	for _, c := range hand {
-		if c.Stage == Basic {
+		if c.IsBasicPokemon() {
 			return c.ID, true
 		}
 	}

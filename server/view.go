@@ -17,7 +17,8 @@ type cardView struct {
 	ID          string       `json:"id"`
 	Name        string       `json:"name"`
 	Image       string       `json:"image,omitempty"`
-	Stage       string       `json:"stage"`
+	Kind        string       `json:"kind"`  // "pokemon", "item", "supporter", "tool" or "stadium"
+	Stage       string       `json:"stage"` // "" on a Trainer
 	HP          int          `json:"hp"`
 	Type        string       `json:"type"`
 	IsEX        bool         `json:"isEx"`
@@ -137,6 +138,13 @@ func stageName(s engine.Stage) string {
 	return "?"
 }
 
+func cardStage(c engine.Card) string {
+	if c.IsTrainer() {
+		return ""
+	}
+	return stageName(c.Stage)
+}
+
 func phaseName(p engine.Phase) string {
 	switch p {
 	case engine.PhaseSetup:
@@ -200,6 +208,11 @@ func energyLabels(es []engine.Energy) []string {
 	return out
 }
 
+var kindNames = map[engine.CardKind]string{
+	engine.KindPokemon: "pokemon", engine.KindItem: "item", engine.KindSupporter: "supporter",
+	engine.KindTool: "tool", engine.KindStadium: "stadium",
+}
+
 func toCardView(c engine.Card) cardView {
 	atks := make([]attackView, len(c.Attacks))
 	for i, a := range c.Attacks {
@@ -213,7 +226,8 @@ func toCardView(c engine.Card) cardView {
 		ID:          c.ID,
 		Name:        c.Name,
 		Image:       cardImages[c.ID],
-		Stage:       stageName(c.Stage),
+		Kind:        kindNames[c.Kind],
+		Stage:       cardStage(c),
 		HP:          c.HP,
 		Type:        c.Type.String(),
 		IsEX:        c.IsEX,

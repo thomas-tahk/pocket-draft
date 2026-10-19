@@ -158,6 +158,8 @@ type moveReq struct {
 	BenchIndex int      `json:"benchIndex"`
 	Index      int      `json:"index"`
 	Energy     []string `json:"energy,omitempty"`
+	// Spot is where a Trainer is dropped; absent for one with no target.
+	Spot *spotView `json:"spot,omitempty"`
 }
 
 type moveResp struct {
@@ -210,6 +212,8 @@ func toEvent(r moveReq) (engine.Event, error) {
 		return engine.Evolve{Player: r.Player, HandCardID: r.HandCardID, Target: r.Target}, nil
 	case "Retreat":
 		return engine.Retreat{Player: r.Player, BenchIndex: r.BenchIndex}, nil
+	case "PlayTrainer":
+		return engine.PlayTrainer{Player: r.Player, CardID: r.CardID, Target: toSpot(r.Spot)}, nil
 	case "UseAttack":
 		return engine.UseAttack{Player: r.Player, Index: r.Index}, nil
 	case "EndTurn":
@@ -254,6 +258,8 @@ func fromEvent(ev engine.Event) moveReq {
 		return moveReq{Type: "Evolve", Player: e.Player, HandCardID: e.HandCardID, Target: e.Target}
 	case engine.Retreat:
 		return moveReq{Type: "Retreat", Player: e.Player, BenchIndex: e.BenchIndex}
+	case engine.PlayTrainer:
+		return moveReq{Type: "PlayTrainer", Player: e.Player, CardID: e.CardID, Spot: fromSpot(e.Target)}
 	case engine.UseAttack:
 		return moveReq{Type: "UseAttack", Player: e.Player, Index: e.Index}
 	case engine.EndTurn:
@@ -266,4 +272,18 @@ func fromEvent(ev engine.Event) moveReq {
 		return moveReq{Type: "Concede", Player: e.Player}
 	}
 	panic(fmt.Sprintf("fromEvent: no request shape for %T", ev))
+}
+
+func toSpot(s *spotView) engine.Spot {
+	if s == nil {
+		return engine.NoSpot
+	}
+	return engine.Spot{Player: s.Player, Pos: s.Pos}
+}
+
+func fromSpot(s engine.Spot) *spotView {
+	if s == engine.NoSpot {
+		return nil
+	}
+	return &spotView{s.Player, s.Pos}
 }

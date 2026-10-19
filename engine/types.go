@@ -87,7 +87,32 @@ type Card struct {
 
 	Ability *Ability  // a Pokémon's Ability; nil when it has none (ability.go)
 	Passive []Passive // a Tool's or Stadium's always-on text (passive.go)
+
+	// Kind is Pokémon (the zero value) or one of the Trainer kinds. Stage,
+	// HP and the rest are meaningless on a Trainer.
+	Kind CardKind
+	// Trainer is what a Trainer card does when played, run in order (see
+	// trainer.go). Nil means its text isn't built yet, so it can't be played.
+	Trainer []EffectOp
 }
+
+// CardKind is what sort of card this is: a Pokémon or a Trainer of some kind.
+type CardKind uint8
+
+const (
+	KindPokemon CardKind = iota
+	KindItem
+	KindSupporter
+	KindTool
+	KindStadium
+)
+
+// IsTrainer reports whether c is any kind of Trainer card.
+func (c Card) IsTrainer() bool { return c.Kind != KindPokemon }
+
+// IsBasicPokemon reports whether c is a Basic Pokémon: what setup, the
+// opening hand and the Bench accept (a Trainer is never one).
+func (c Card) IsBasicPokemon() bool { return c.Kind == KindPokemon && c.Stage == Basic }
 
 // canPay reports whether the energy attached to a Pokémon (have) covers an
 // attack cost. Typed costs must be matched by that exact type; Colorless costs

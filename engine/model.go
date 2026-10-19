@@ -49,17 +49,18 @@ func (p *Player) BenchCount() int {
 
 // Player is one side's full state.
 type Player struct {
-	Deck        []Card // top of deck is index 0
-	Hand        []Card
-	Active      *InPlay
-	Bench       [BenchSlots]*InPlay // indexed by slot; nil is an empty slot
-	Discard     []Card
-	Points      int
-	EnergyTypes []Energy
-	EnergyZone  Energy // the energy available to attach this turn; NoEnergy if none
-	EnergyNext  Energy // next turn's energy, shown small in the zone (spec T4)
-	EnergyUsed  bool   // attached energy already this turn
-	Retreated   bool   // retreated already this turn
+	Deck          []Card // top of deck is index 0
+	Hand          []Card
+	Active        *InPlay
+	Bench         [BenchSlots]*InPlay // indexed by slot; nil is an empty slot
+	Discard       []Card
+	Points        int
+	EnergyTypes   []Energy
+	EnergyZone    Energy // the energy available to attach this turn; NoEnergy if none
+	EnergyNext    Energy // next turn's energy, shown small in the zone (spec T4)
+	EnergyUsed    bool   // attached energy already this turn
+	Retreated     bool   // retreated already this turn
+	SupporterUsed bool   // played a Supporter already this turn (spec A1)
 
 	// DiscardedEnergy is every energy this player has discarded, oldest first,
 	// for cards that count discarded energy (spec T6).

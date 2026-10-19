@@ -51,6 +51,7 @@ var moveRules = []moveRule{
 	rule(listPlayBasic, (*Game).checkPlayBasic, nil),
 	rule(listAttach, (*Game).checkAttach, nil),
 	rule(listEvolve, (*Game).checkEvolve, nil),
+	rule(listPlayTrainer, (*Game).checkPlayTrainer, nil),
 	rule(listRetreat, (*Game).checkRetreat, nil),
 	rule(listRetreatDiscard, (*Game).checkRetreatDiscard, nil),
 	rule(listAttack, (*Game).checkAttack, nil),
@@ -283,7 +284,7 @@ func (g *Game) checkSetupCard(p int, id string) error {
 	if idx < 0 {
 		return errors.New("card is not in hand")
 	}
-	if pl.Hand[idx].Stage != Basic {
+	if !pl.Hand[idx].IsBasicPokemon() {
 		return errors.New("only Basic Pokémon may be placed at setup")
 	}
 	return nil
@@ -343,7 +344,7 @@ func (g *Game) checkPlayBasic(e PlayBasic) error {
 	if idx < 0 {
 		return errors.New("card is not in hand")
 	}
-	if pl.Hand[idx].Stage != Basic {
+	if !pl.Hand[idx].IsBasicPokemon() {
 		return errors.New("only Basic Pokémon may be played to the bench")
 	}
 	if e.Slot < 0 || e.Slot >= BenchSlots {
@@ -410,7 +411,7 @@ func (g *Game) evolveGate(p int, handCardID string) (Card, error) {
 		return Card{}, errors.New("evolution card is not in hand")
 	}
 	ev := pl.Hand[hidx]
-	if ev.Stage == Basic {
+	if ev.IsTrainer() || ev.Stage == Basic {
 		return Card{}, errors.New("that card is not an evolution")
 	}
 	return ev, nil

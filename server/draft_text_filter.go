@@ -19,10 +19,14 @@ const onlyWorkingTextInDraft = true
 const draftPoolFile = "../public/data/draft-pool.json"
 
 // textWorks reports whether the engine can play rc as printed: it converts to
-// an engine card (Trainers don't yet), it has no Ability (the engine models
+// an engine card, a Trainer's text is built, it has no Ability (the engine models
 // none), and every attack with text has an authored effect in effectsByID.
 func textWorks(rc rawCard) bool {
-	if _, err := toEngineCard(rc); err != nil {
+	c, err := toEngineCard(rc)
+	if err != nil {
+		return false
+	}
+	if c.IsTrainer() && c.Trainer == nil {
 		return false
 	}
 	if rc.Ability != nil {

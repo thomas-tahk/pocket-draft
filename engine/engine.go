@@ -98,7 +98,7 @@ func (g *Game) dealOpeningHand(i int) {
 		})
 		hasBasic := false
 		for _, c := range pl.Deck[:min(5, len(pl.Deck))] {
-			if c.Stage == Basic {
+			if c.IsBasicPokemon() {
 				hasBasic = true
 				break
 			}
@@ -157,6 +157,8 @@ func (g *Game) validateAndApply(ev Event) error {
 	case RetreatDiscard:
 		g.S.Pending = nil
 		g.finishRetreat(e)
+	case PlayTrainer:
+		g.applyPlayTrainer(e)
 	case UseAttack:
 		g.applyAttack(e)
 	case EndTurn:
@@ -538,6 +540,7 @@ func (g *Game) startTurn(p int) {
 	pl := &g.S.Players[p]
 	pl.EnergyUsed = false
 	pl.Retreated = false
+	pl.SupporterUsed = false
 	if pl.Active != nil && pl.Active.Has(Paralyzed) {
 		pl.Active.ownTurnParalyzed = true
 	}
