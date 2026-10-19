@@ -73,7 +73,9 @@ func (g *Game) passiveSources() []passiveSource {
 			if a := at.Card.Ability; a != nil {
 				out = append(out, passiveSource{at, at.Card, a.Passive})
 			}
-			// A Tool adds itself here: passiveSource{at, tool, tool.Passive}.
+			if tool := at.Tool; tool != nil {
+				out = append(out, passiveSource{at, *tool, tool.Passive})
+			}
 		}
 	}
 	if st := g.S.Stadium; st != nil {

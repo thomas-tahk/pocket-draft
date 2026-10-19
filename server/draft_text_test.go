@@ -19,7 +19,7 @@ func modelable(rc rawCard) bool {
 	if _, err := toEngineCard(rc); err != nil {
 		return false
 	}
-	if rc.CardType == "Trainer" && trainerEffects[rc.TrainerText] == nil {
+	if rc.CardType == "Trainer" && trainerEffects[rc.TrainerText] == nil && trainerPassives[rc.TrainerText] == nil {
 		return false
 	}
 	if rc.Ability != nil {

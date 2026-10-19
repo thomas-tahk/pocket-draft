@@ -8,7 +8,8 @@ type InPlay struct {
 	Energy     map[Energy]int
 	Poisoned   bool
 	Burned     bool
-	PlacedTurn int // the Turn number it entered play / last evolved
+	PlacedTurn int   // the Turn number it entered play / last evolved
+	Tool       *Card // the attached Pokémon Tool (spec A3); nil when none
 
 	special          Status // Asleep, Paralyzed or Confused; NoStatus if none (condition.go)
 	ownTurnParalyzed bool   // its owner has started a turn while it was Paralyzed (C7)

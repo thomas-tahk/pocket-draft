@@ -367,6 +367,9 @@ func (g *Game) removeIfKnockedOut(owner int) int {
 		return 0
 	}
 	pl.Discard = append(pl.Discard, mon.Card)
+	if mon.Tool != nil {
+		pl.Discard = append(pl.Discard, *mon.Tool)
+	}
 	pl.Active = nil
 	g.narrate("%s's %s was Knocked Out.", side(owner), mon.Card.Name)
 	return koPoints(mon.Card)

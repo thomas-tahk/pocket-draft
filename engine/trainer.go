@@ -22,6 +22,7 @@ import (
 //  4. Test it on a real card from public/data/cards.json.
 //
 // The played Item or Supporter is in the discard pile before its ops run.
+// A Tool is attached instead (tool.go); its text is Card.Passive.
 
 // Gated is an optional EffectOp method for Trainers: why it can't be played now.
 type Gated interface {
@@ -33,8 +34,8 @@ type Targeted interface {
 	Targets(ctx *EffectContext) []Spot
 }
 
-// PlayTrainer plays an Item or Supporter from hand. Target is the spot it is
-// dropped on, or NoSpot for a Trainer with no target.
+// PlayTrainer plays a Trainer from hand. Target is the spot it is dropped on
+// (a Tool: the Pokémon it attaches to), or NoSpot for a Trainer with no target.
 type PlayTrainer struct {
 	Player int
 	CardID string
@@ -68,6 +69,9 @@ func listPlayTrainer(g *Game, p int) []PlayTrainer {
 // trainerTargets is the union of the card's ops' targets, or just NoSpot when
 // no op takes a target.
 func trainerTargets(ctx *EffectContext) []Spot {
+	if ctx.Card.Kind == KindTool {
+		return toolTargets(ctx.g, ctx.attacker)
+	}
 	var out []Spot
 	targeted := false
 	for _, op := range ctx.Card.Trainer {
@@ -94,9 +98,9 @@ func (g *Game) trainerGate(p int, cardID string) (Card, error) {
 	}
 	c := pl.Hand[idx]
 	switch {
-	case c.Kind != KindItem && c.Kind != KindSupporter:
-		return Card{}, errors.New("only Items and Supporters can be played this way")
-	case c.Trainer == nil:
+	case !c.IsTrainer() || c.Kind == KindStadium:
+		return Card{}, errors.New("only Items, Supporters and Tools can be played this way")
+	case !c.TextBuilt():
 		return Card{}, fmt.Errorf("%s's text isn't built yet", c.Name)
 	case c.Kind == KindSupporter && pl.SupporterUsed:
 		return Card{}, errors.New("you already played a Supporter this turn")
@@ -125,12 +129,16 @@ func (g *Game) checkPlayTrainer(e PlayTrainer) error {
 	return fmt.Errorf("%s can't be played there", c.Name)
 }
 
-// applyPlayTrainer discards the card, then runs its text.
+// applyPlayTrainer attaches a Tool, or discards the card and runs its text.
 func (g *Game) applyPlayTrainer(e PlayTrainer) {
 	pl := &g.S.Players[e.Player]
 	idx := indexInHand(pl.Hand, e.CardID)
 	c := pl.Hand[idx]
 	pl.Hand = removeAt(pl.Hand, idx)
+	if c.Kind == KindTool {
+		g.attachTool(e.Player, c, e.Target)
+		return
+	}
 	pl.Discard = append(pl.Discard, c)
 	if c.Kind == KindSupporter {
 		pl.SupporterUsed = true

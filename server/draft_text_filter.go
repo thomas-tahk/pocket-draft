@@ -26,7 +26,7 @@ func textWorks(rc rawCard) bool {
 	if err != nil {
 		return false
 	}
-	if c.IsTrainer() && c.Trainer == nil {
+	if c.IsTrainer() && !c.TextBuilt() {
 		return false
 	}
 	if rc.Ability != nil {

@@ -180,6 +180,11 @@ var trainerEffects = map[string][]engine.EffectOp{
 	"Draw 2 cards.": {engine.DrawCards{N: 2}}, // Professor's Research
 }
 
+// trainerPassives maps a Tool's or Stadium's exact printed text to its
+// always-on rule changes (engine/passive.go). A Tool's passives should apply
+// only to the Pokémon it is attached to: When compares Source and Target.
+var trainerPassives = map[string][]engine.Passive{}
+
 // trainerKind is the engine kind of a scraped Trainer. The scrape names Items
 // and Supporters; Tools and Stadiums come through with no kind, and a Tool's
 // text always speaks of "the Pokémon this card is attached to".
@@ -201,6 +206,7 @@ func toTrainerCard(rc rawCard) engine.Card {
 		Name:     rc.Name,
 		Kind:     trainerKind(rc),
 		Trainer:  trainerEffects[rc.TrainerText],
+		Passive:  trainerPassives[rc.TrainerText],
 		Weakness: engine.NoEnergy,
 	}
 }

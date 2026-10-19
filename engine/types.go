@@ -110,6 +110,10 @@ const (
 // IsTrainer reports whether c is any kind of Trainer card.
 func (c Card) IsTrainer() bool { return c.Kind != KindPokemon }
 
+// TextBuilt reports whether a Trainer's text is built: ops to run when played,
+// or always-on passives (a Tool or Stadium). An unbuilt Trainer can't be played.
+func (c Card) TextBuilt() bool { return c.Trainer != nil || c.Passive != nil }
+
 // IsBasicPokemon reports whether c is a Basic Pokémon: what setup, the
 // opening hand and the Bench accept (a Trainer is never one).
 func (c Card) IsBasicPokemon() bool { return c.Kind == KindPokemon && c.Stage == Basic }
