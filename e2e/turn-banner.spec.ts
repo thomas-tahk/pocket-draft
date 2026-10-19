@@ -30,17 +30,14 @@ async function setupToYourFirstTurn(api: APIRequestContext) {
   for (let i = 0; i < 6 && (await post(api, '/api/bot')).phase === 'setup'; i++);
 }
 
-// Turn changes go through the screen's own game store, the path End Turn and
-// the bot driver use, so the banner sees a real change rather than a reload.
-async function storeCall(page: Page, call: 'endTurn' | 'runBot') {
-  return page.evaluate(async (c) => {
+// End your turn through the screen's own game store (the path the End Turn
+// button uses, minus its confirm), so the banner sees a real change rather
+// than a reload. The screen then plays the opponent's turn by itself.
+async function endTurn(page: Page) {
+  await page.evaluate(async () => {
     const { useGameStore } = await import('/src/game/store.ts');
-    const s = useGameStore.getState();
-    if (c === 'endTurn') await s.dispatch({ type: 'EndTurn', player: 0 });
-    else await s.runBot();
-    const v = useGameStore.getState().view!;
-    return { active: v.active, phase: v.phase, pending: v.pending };
-  }, call);
+    await useGameStore.getState().dispatch({ type: 'EndTurn', player: 0 });
+  });
 }
 
 // Every card of yours pulses iff a legal move names it; returns how many pulse.
@@ -91,18 +88,15 @@ test('turn banner flashes on each turn change; only legal cards pulse', async ({
   const still = await page.locator('[data-usable="false"]').first().evaluate((el) => getComputedStyle(el).animationName);
   expect(still).toBe('none');
   // End your turn: the opponent's banner, in a different colour, and nothing of yours pulses.
-  await storeCall(page, 'endTurn');
+  await endTurn(page);
   const theirColour = await expectBanner(page, 'opponent', "OPPONENT'S TURN");
   await page.screenshot({ path: 'test-results/turn-banner-opponent-390x844.png' });
   expect(theirColour).not.toBe(yourColour);
   await expect(page.locator('[data-usable="true"]')).toHaveCount(0);
-  await expect(page.getByTestId('turn-banner')).toBeHidden({ timeout: 3000 });
 
-  // The bot plays out its turn; yours starts again with a fresh YOUR TURN flash.
-  for (let i = 0; i < 40; i++) {
-    const v = await storeCall(page, 'runBot');
-    if (v.phase !== 'main' || (v.active === 0 && !v.pending)) break;
-  }
+  // The screen plays out the opponent's turn at its own pace; when the turn
+  // comes back, a fresh YOUR TURN flashes. Wait for it, however long that takes.
+  await expect(page.locator('[data-testid="turn-banner"][data-side="you"]')).toBeVisible({ timeout: 30_000 });
   await expectBanner(page, 'you', 'YOUR TURN');
   await expectPulseMatchesLegal(page, request);
 });
