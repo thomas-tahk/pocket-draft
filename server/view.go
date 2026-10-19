@@ -35,6 +35,9 @@ type inPlayView struct {
 	TotalEnergy int            `json:"totalEnergy"`
 	Poisoned    bool           `json:"poisoned"`
 	Burned      bool           `json:"burned"`
+	Asleep      bool           `json:"asleep"`
+	Paralyzed   bool           `json:"paralyzed"`
+	Confused    bool           `json:"confused"`
 }
 
 type playerView struct {
@@ -224,6 +227,9 @@ func toInPlayView(p *engine.InPlay) *inPlayView {
 		TotalEnergy: total,
 		Poisoned:    p.Poisoned,
 		Burned:      p.Burned,
+		Asleep:      p.Has(engine.Asleep),
+		Paralyzed:   p.Has(engine.Paralyzed),
+		Confused:    p.Has(engine.Confused),
 	}
 }
 

@@ -260,6 +260,10 @@ func (g *Game) finishRetreat(e RetreatDiscard) {
 }
 
 func (g *Game) applyAttack(e UseAttack) {
+	if g.confusionFails(e.Player) {
+		g.concludeTurn()
+		return
+	}
 	pl := &g.S.Players[e.Player]
 	atk := pl.Active.Card.Attacks[e.Index]
 	opp := &g.S.Players[1-e.Player]
@@ -289,6 +293,17 @@ func (g *Game) applyAttack(e UseAttack) {
 		return
 	}
 	g.concludeTurn()
+}
+
+// confusionFails flips for a Confused attacker (C8): tails, the attack fails
+// with no self-damage and the condition stays.
+func (g *Game) confusionFails(p int) bool {
+	mon := g.S.Players[p].Active
+	if !mon.Has(Confused) || g.rng.intn(2) == 0 {
+		return false
+	}
+	g.narrate("%s's %s is Confused: tails, the attack failed.", side(p), mon.Card.Name)
+	return true
 }
 
 func (g *Game) applyChooseActive(e ChooseNewActive) {
@@ -487,8 +502,20 @@ func (g *Game) resolveStatus() {
 				g.narrate("%s's %s recovered from burn.", side(i), pl.Active.Card.Name)
 			}
 		}
+		g.wearOffParalysis(i)
 	}
 	g.resolveAction() // one Checkup is one action (spec E4)
+}
+
+// wearOffParalysis cures player i's Paralyzed Active at the Checkup that ends
+// i's turn, once a whole turn of i's has passed with it Paralyzed (C7).
+func (g *Game) wearOffParalysis(i int) {
+	mon := g.S.Players[i].Active
+	if i != g.S.Active || !mon.Has(Paralyzed) || !mon.ownTurnParalyzed {
+		return
+	}
+	mon.Cure(Paralyzed)
+	g.narrate("%s's %s is no longer Paralyzed.", side(i), mon.Card.Name)
 }
 
 func (g *Game) advanceTurn() {
@@ -511,6 +538,9 @@ func (g *Game) startTurn(p int) {
 	pl := &g.S.Players[p]
 	pl.EnergyUsed = false
 	pl.Retreated = false
+	if pl.Active != nil && pl.Active.Has(Paralyzed) {
+		pl.Active.ownTurnParalyzed = true
+	}
 
 	if len(pl.Deck) > 0 && len(pl.Hand) < handMax {
 		c := pl.Deck[0]

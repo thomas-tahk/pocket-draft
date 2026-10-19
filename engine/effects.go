@@ -64,26 +64,11 @@ func (v DamagePerHeads) Apply(ctx *EffectContext) {
 	ctx.narrate("flipped %d of %d heads: +%d damage.", heads, v.Coins, bonus)
 }
 
-// Status is a status condition a verb can inflict.
-type Status uint8
-
-const (
-	Burn Status = iota
-	Poison
-)
-
-// ApplyStatus inflicts a status condition on the defending Active. E.g.
+// ApplyStatus inflicts a special condition on the defending Active. E.g.
 // Ponyta's Singe: opponent's Active is now Burned.
 type ApplyStatus struct{ Status Status }
 
-func (v ApplyStatus) Apply(ctx *EffectContext) {
-	switch v.Status {
-	case Burn:
-		ctx.defenderMon().Burned = true
-	case Poison:
-		ctx.defenderMon().Poisoned = true
-	}
-}
+func (v ApplyStatus) Apply(ctx *EffectContext) { ctx.defenderMon().Inflict(v.Status) }
 
 // EffectTarget names whose energy DamagePerEnergy reads.
 type EffectTarget uint8

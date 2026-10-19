@@ -23,6 +23,9 @@ export type InPlayView = {
   totalEnergy: number;
   poisoned: boolean;
   burned: boolean;
+  asleep: boolean;
+  paralyzed: boolean;
+  confused: boolean;
 };
 
 export type PlayerView = {

@@ -9,6 +9,9 @@ type InPlay struct {
 	Poisoned   bool
 	Burned     bool
 	PlacedTurn int // the Turn number it entered play / last evolved
+
+	special          Status // Asleep, Paralyzed or Confused; NoStatus if none (condition.go)
+	ownTurnParalyzed bool   // its owner has started a turn while it was Paralyzed (C7)
 }
 
 func (p *InPlay) remainingHP() int { return p.Card.HP - p.Damage }

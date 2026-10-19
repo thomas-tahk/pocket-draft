@@ -422,6 +422,9 @@ func (g *Game) checkRetreat(e Retreat) error {
 	if pl.Active == nil {
 		return errors.New("no Active Pokémon to retreat")
 	}
+	if pl.Active.cantAct() {
+		return fmt.Errorf("%s is %s and can't retreat", pl.Active.Card.Name, pl.Active.special)
+	}
 	if benchAt(pl, e.BenchIndex) == nil {
 		return errors.New("no Pokémon in that bench slot")
 	}
@@ -456,6 +459,9 @@ func (g *Game) checkAttack(e UseAttack) error {
 	pl := &g.S.Players[e.Player]
 	if pl.Active == nil {
 		return errors.New("no Active Pokémon to attack with")
+	}
+	if pl.Active.cantAct() {
+		return fmt.Errorf("%s is %s and can't attack", pl.Active.Card.Name, pl.Active.special)
 	}
 	if e.Index < 0 || e.Index >= len(pl.Active.Card.Attacks) {
 		return errors.New("invalid attack index")
