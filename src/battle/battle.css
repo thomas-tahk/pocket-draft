@@ -300,3 +300,10 @@
 .bt-sheet-cost { display: flex; gap: calc(var(--u) * 2); min-width: calc(var(--u) * 40); }
 .bt-sheet-name { flex: 1; }
 .bt-sheet-retreat { justify-content: flex-start; }
+
+/* 1.31: how many drafted cards the server left out (placeholder look). */
+.bt-deck-short {
+  position: absolute; top: 30%; right: calc(var(--u) * 6); z-index: 5;
+  width: calc(var(--u) * 110); box-sizing: border-box; padding: calc(var(--u) * 4) calc(var(--u) * 8); border-radius: calc(var(--u) * 8);
+  background: rgba(255, 255, 255, 0.9); color: #8a2a1c; font-size: calc(var(--u) * 11); text-align: center;
+}

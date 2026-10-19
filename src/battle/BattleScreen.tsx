@@ -8,14 +8,16 @@ import { SetupIntro, useSetupIntro } from './Setup';
 import './battle.css';
 
 // The new battle screen (plan 1.19): renders the server's current game on the
-// Pocket-style board, with End Turn, Concede and the end screen (1.27).
-export function BattleScreen() {
-  const { view, error, init, dispatch, runBot, botStuck, restart } = useGameStore();
+// Pocket-style board, with End Turn, Concede and the end screen (1.27). Given a
+// drafted deck (1.31) it starts a game with it; Rematch reuses that deck.
+export function BattleScreen({ deck, onExit }: { deck?: string[]; onExit?: () => void }) {
+  const { view, error, init, startGame, dispatch, runBot, botStuck, restart, leftOut } = useGameStore();
   const [confirm, setConfirm] = useState<Confirm | null>(null);
 
   useEffect(() => {
-    void init();
-  }, [init]);
+    if (deck) void startGame(deck);
+    else void init();
+  }, [deck, init, startGame]);
 
   // The bot (seat 1) plays whenever it is its move, one step at a time (F14).
   const { step, canSkip, skip } = useOpponentTurn(view, botStuck, runBot);
@@ -39,12 +41,18 @@ export function BattleScreen() {
     <div className="bt-root" {...flashAttrs(step)}>
       <Board view={view} onEndTurn={onEndTurn} onReady={onReady} choice={choiceFor(view, 0, (m) => void dispatch(m))}>
         {view.phase !== 'over' && <GameMenu onConcede={onConcede} />}
+        {leftOut > 0 && <DeckShort count={leftOut} />}
         {step && <PlaybackStep step={step} />}
         {canSkip && <SkipButton onSkip={skip} />}
         {intro.show && <SetupIntro view={view} onDone={intro.finish} />}
         {confirm && <ConfirmDialog confirm={confirm} onClose={() => setConfirm(null)} />}
-        {view.phase === 'over' && <EndScreen view={view} onRematch={() => void restart()} onBack={() => window.location.assign('/')} />}
+        {view.phase === 'over' && <EndScreen view={view} onRematch={() => void restart()} onBack={onExit ?? (() => window.location.assign('/'))} />}
       </Board>
     </div>
   );
+}
+
+// The server plays only the cards it can; say how many it left out (placeholder wording).
+function DeckShort({ count }: { count: number }) {
+  return <div className="bt-deck-short" data-testid="deck-short">{count} of your cards can't be played yet and were left out of this game.</div>;
 }
