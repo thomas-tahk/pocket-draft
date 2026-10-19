@@ -55,11 +55,12 @@ async function fillFrom(section: Locator) {
 const deckSent = (req: Request) => (req.postDataJSON() as { you: string[] }).you;
 const isNewGame = (req: Request) => req.url().endsWith('/api/new') && req.method() === 'POST';
 
-// The opening coin (S4): tap it if it's yours, then wait for setup's board.
+// The opening coin (S4) never waits (2.11): with no tap it lands, shows the
+// result and who goes first, then setup's board is up.
 async function passIntro(page: Page) {
-  const coin = page.getByTestId('setup-coin');
   await expect(page.getByTestId('setup-intro')).toBeVisible();
-  if (await coin.isEnabled()) await coin.click();
+  await expect(page.getByTestId('setup-coin')).toHaveAttribute('data-face', /^(heads|tails)$/);
+  await expect(page.getByTestId('setup-order')).toHaveText(/^You go (first|second)$/);
   await expect(page.getByTestId('setup-intro')).toHaveCount(0, { timeout: 5000 });
   await expect(page.getByTestId('setup-ready')).toBeVisible();
 }

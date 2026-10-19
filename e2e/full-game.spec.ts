@@ -157,8 +157,6 @@ async function setUp(ctx: Ctx) {
   const { page } = ctx;
   ctx.step = 'opening coin';
   await expect(page.getByTestId('setup-intro')).toBeVisible({ timeout: 10_000 });
-  const coin = page.getByTestId('setup-coin');
-  if (await coin.isEnabled()) await page.touchscreen.tap(...xy(await centre(page, '[data-testid="setup-coin"]')));
   await expect(page.getByTestId('setup-intro')).toHaveCount(0, { timeout: 6000 });
 
   const basics = (await state(ctx.api)).players[0].hand.filter((c) => c.stage === 'Basic');
