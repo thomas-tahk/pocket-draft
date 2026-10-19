@@ -247,3 +247,28 @@ func TestDiscardFossilRequestRoundTrips(t *testing.T) {
 		t.Errorf("round trip of %+v = %+v, %v", ev, got, err)
 	}
 }
+
+// "Put 1 random Basic Pokemon from your deck into your hand." — Poké Ball
+// (A2b-111): a Basic moves from deck to hand; blocked at 10 in hand (T3).
+func TestPokeBall(t *testing.T) {
+	useRealCards(t)
+	g, p := trainerGame(t, realCard(t, "A2b-111"))
+	pl := &g.S.Players[p]
+	hand, deck := len(pl.Hand), len(pl.Deck)
+
+	if err := g.Submit(engine.PlayTrainer{Player: p, CardID: "A2b-111", Target: engine.NoSpot}); err != nil {
+		t.Fatalf("play Poké Ball: %v", err)
+	}
+
+	if len(pl.Hand) != hand || len(pl.Deck) != deck-1 || !pl.Hand[len(pl.Hand)-1].IsBasicPokemon() {
+		t.Errorf("hand %d→%d, deck %d→%d; want a Basic from deck to hand", hand, len(pl.Hand), deck, len(pl.Deck))
+	}
+	pl.Hand = append(pl.Hand, realCard(t, "A2b-111"))
+	for len(pl.Hand) < 10 {
+		pl.Hand = append(pl.Hand, pl.Deck[0])
+		pl.Deck = pl.Deck[1:]
+	}
+	if g.Submit(engine.PlayTrainer{Player: p, CardID: "A2b-111", Target: engine.NoSpot}) == nil {
+		t.Error("Poké Ball played with 10 cards in hand")
+	}
+}
