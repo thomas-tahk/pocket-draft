@@ -178,6 +178,7 @@ var effectsByID = map[string]map[string][]engine.EffectOp{
 // engine/trainer.go.
 var trainerEffects = map[string][]engine.EffectOp{
 	"Draw 2 cards.": {engine.DrawCards{N: 2}}, // Professor's Research
+	"Discard a Pokémon Tool card from a Pokémon (yours or your opponent's), or discard a Stadium card in play.": {engine.DiscardToolOrStadium{}}, // Field Blower
 }
 
 // trainerPassives maps a Tool's or Stadium's exact printed text to its

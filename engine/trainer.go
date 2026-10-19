@@ -22,7 +22,8 @@ import (
 //  4. Test it on a real card from public/data/cards.json.
 //
 // The played Item or Supporter is in the discard pile before its ops run.
-// A Tool is attached instead (tool.go); its text is Card.Passive.
+// A Tool is attached instead (tool.go), a Stadium put in play (stadium.go);
+// their text is Card.Passive.
 
 // Gated is an optional EffectOp method for Trainers: why it can't be played now.
 type Gated interface {
@@ -98,12 +99,17 @@ func (g *Game) trainerGate(p int, cardID string) (Card, error) {
 	}
 	c := pl.Hand[idx]
 	switch {
-	case !c.IsTrainer() || c.Kind == KindStadium:
-		return Card{}, errors.New("only Items, Supporters and Tools can be played this way")
+	case !c.IsTrainer():
+		return Card{}, errors.New("only Trainers can be played this way")
 	case !c.TextBuilt():
 		return Card{}, fmt.Errorf("%s's text isn't built yet", c.Name)
 	case c.Kind == KindSupporter && pl.SupporterUsed:
 		return Card{}, errors.New("you already played a Supporter this turn")
+	}
+	if c.Kind == KindStadium {
+		if err := g.stadiumGate(p, c); err != nil {
+			return Card{}, err
+		}
 	}
 	ctx := g.trainerCtx(p, c, NoSpot)
 	for _, op := range c.Trainer {
@@ -129,14 +135,19 @@ func (g *Game) checkPlayTrainer(e PlayTrainer) error {
 	return fmt.Errorf("%s can't be played there", c.Name)
 }
 
-// applyPlayTrainer attaches a Tool, or discards the card and runs its text.
+// applyPlayTrainer attaches a Tool, puts a Stadium in play, or discards the
+// card and runs its text.
 func (g *Game) applyPlayTrainer(e PlayTrainer) {
 	pl := &g.S.Players[e.Player]
 	idx := indexInHand(pl.Hand, e.CardID)
 	c := pl.Hand[idx]
 	pl.Hand = removeAt(pl.Hand, idx)
-	if c.Kind == KindTool {
+	switch c.Kind {
+	case KindTool:
 		g.attachTool(e.Player, c, e.Target)
+		return
+	case KindStadium:
+		g.playStadium(e.Player, c)
 		return
 	}
 	pl.Discard = append(pl.Discard, c)

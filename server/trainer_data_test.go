@@ -167,3 +167,33 @@ func TestPlayTrainerRequestRoundTrips(t *testing.T) {
 		}
 	}
 }
+
+// "Discard a Pokémon Tool card from a Pokémon (yours or your opponent's), or
+// discard a Stadium card in play." — Field Blower (B3-147): either target, and
+// a new Tool is legal once the old one is gone (spec A3).
+func TestFieldBlower(t *testing.T) {
+	useRealCards(t)
+	boots := engine.Card{ID: "T1", Name: "Boots", Kind: engine.KindTool,
+		Passive: []engine.Passive{{Hook: engine.HookRetreatCost, Value: 1}}}
+	stadium := engine.Card{ID: "S1", Name: "Field", Kind: engine.KindStadium,
+		Passive: []engine.Passive{{Hook: engine.HookRetreatCost, Value: 1}}}
+	blower := realCard(t, "B3-147")
+	g, p := trainerGame(t, blower)
+	pl := &g.S.Players[p]
+	pl.Hand = append(pl.Hand, boots, stadium, blower, boots)
+	active := engine.Spot{Player: p, Pos: 0}
+	for _, ev := range []engine.PlayTrainer{
+		{Player: p, CardID: "T1", Target: active},
+		{Player: p, CardID: "S1", Target: engine.NoSpot},
+		{Player: p, CardID: "B3-147", Target: active},
+		{Player: p, CardID: "B3-147", Target: engine.StadiumSpot},
+		{Player: p, CardID: "T1", Target: active},
+	} {
+		if err := g.Submit(ev); err != nil {
+			t.Fatalf("%+v: %v", ev, err)
+		}
+	}
+	if g.S.Stadium != nil || pl.Active.Tool == nil {
+		t.Errorf("Stadium %v, Tool %v; want no Stadium and the new Tool", g.S.Stadium, pl.Active.Tool)
+	}
+}

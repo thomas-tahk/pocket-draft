@@ -544,6 +544,7 @@ func (g *Game) startTurn(p int) {
 	pl.EnergyUsed = false
 	pl.Retreated = false
 	pl.SupporterUsed = false
+	pl.StadiumUsed = false
 	if pl.Active != nil && pl.Active.Has(Paralyzed) {
 		pl.Active.ownTurnParalyzed = true
 	}

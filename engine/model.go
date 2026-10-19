@@ -62,6 +62,7 @@ type Player struct {
 	EnergyUsed    bool   // attached energy already this turn
 	Retreated     bool   // retreated already this turn
 	SupporterUsed bool   // played a Supporter already this turn (spec A1)
+	StadiumUsed   bool   // played a Stadium already this turn (spec A6)
 
 	// DiscardedEnergy is every energy this player has discarded, oldest first,
 	// for cards that count discarded energy (spec T6).
@@ -108,15 +109,16 @@ type Prompt struct {
 // State is the full game state. It is always derivable by folding the event log
 // from a seed (ADR-0005); nothing here is authoritative on its own.
 type State struct {
-	Players [2]Player
-	Active  int // whose turn it is
-	Turn    int // turn counter, starts at 1
-	Phase   Phase
-	Pending *Prompt
-	Winner  int       // -1 until the game ends, and on a tie
-	Reason  EndReason // why the game ended; NoReason until it does
-	Mode    Mode      // who the game is against; set before the first event
-	Stadium *Card     // the Stadium in play, shared by both players (spec A6); nil when none
+	Players      [2]Player
+	Active       int // whose turn it is
+	Turn         int // turn counter, starts at 1
+	Phase        Phase
+	Pending      *Prompt
+	Winner       int       // -1 until the game ends, and on a tie
+	Reason       EndReason // why the game ended; NoReason until it does
+	Mode         Mode      // who the game is against; set before the first event
+	Stadium      *Card     // the Stadium in play, shared by both players (spec A6); nil when none
+	StadiumOwner int       // who played the Stadium in play; its discard takes it when it goes
 
 	// OpeningFlip is the coin flip that decided FirstPlayer (spec S4), kept so
 	// the screen can show who flipped and how it landed.
