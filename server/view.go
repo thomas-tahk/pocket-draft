@@ -114,8 +114,11 @@ func phaseName(p engine.Phase) string {
 }
 
 func promptKindName(k engine.PromptKind) string {
-	if k == engine.PromptNewActive {
+	switch k {
+	case engine.PromptNewActive:
 		return "new_active"
+	case engine.PromptRetreatEnergy:
+		return "retreat_energy"
 	}
 	return "setup"
 }

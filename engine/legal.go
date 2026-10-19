@@ -52,6 +52,7 @@ var moveRules = []moveRule{
 	rule(listAttach, (*Game).checkAttach, nil),
 	rule(listEvolve, (*Game).checkEvolve, nil),
 	rule(listRetreat, (*Game).checkRetreat, nil),
+	rule(listRetreatDiscard, (*Game).checkRetreatDiscard, nil),
 	rule(listAttack, (*Game).checkAttack, nil),
 	rule(func(_ *Game, p int) []EndTurn { return []EndTurn{{Player: p}} }, (*Game).checkEndTurn, nil),
 	rule(func(_ *Game, p int) []Concede { return []Concede{{Player: p}} }, (*Game).checkConcede, nil),
@@ -207,6 +208,44 @@ func listEvolve(g *Game, p int) []Evolve {
 	for _, c := range g.S.Players[p].Hand {
 		for _, t := range targets() {
 			out = append(out, Evolve{Player: p, HandCardID: c.ID, Target: t})
+		}
+	}
+	return out
+}
+
+// listRetreatDiscard is every distinct set of energy on p's Active that pays
+// its retreat cost, while p owes that choice.
+func listRetreatDiscard(g *Game, p int) []RetreatDiscard {
+	pr := g.S.Pending
+	if pr == nil || pr.Kind != PromptRetreatEnergy || pr.Player != p {
+		return nil
+	}
+	mon := g.S.Players[p].Active
+	var out []RetreatDiscard
+	for _, set := range energySets(mon.Energy, energyOrder, mon.Card.RetreatCost) {
+		out = append(out, RetreatDiscard{Player: p, Energy: set})
+	}
+	return out
+}
+
+// energySets lists every multiset of n energy drawable from have, using only
+// the types in order, each set listed in that order.
+func energySets(have map[Energy]int, order []Energy, n int) [][]Energy {
+	if n == 0 {
+		return [][]Energy{{}}
+	}
+	if len(order) == 0 {
+		return nil
+	}
+	t, rest := order[0], order[1:]
+	var out [][]Energy
+	for k := min(have[t], n); k >= 0; k-- {
+		for _, tail := range energySets(have, rest, n-k) {
+			set := make([]Energy, 0, n)
+			for i := 0; i < k; i++ {
+				set = append(set, t)
+			}
+			out = append(out, append(set, tail...))
 		}
 	}
 	return out
@@ -377,6 +416,24 @@ func (g *Game) checkRetreat(e Retreat) error {
 	}
 	if pl.Active.totalEnergy() < pl.Active.Card.RetreatCost {
 		return errors.New("not enough energy to retreat")
+	}
+	return nil
+}
+
+func (g *Game) checkRetreatDiscard(e RetreatDiscard) error {
+	if err := g.onPrompt(e.Player, PromptRetreatEnergy); err != nil {
+		return err
+	}
+	mon := g.S.Players[e.Player].Active
+	if len(e.Energy) != mon.Card.RetreatCost {
+		return fmt.Errorf("retreating costs %d energy", mon.Card.RetreatCost)
+	}
+	need := map[Energy]int{}
+	for _, t := range e.Energy {
+		need[t]++
+		if need[t] > mon.Energy[t] {
+			return fmt.Errorf("not enough %s energy attached", t)
+		}
 	}
 	return nil
 }

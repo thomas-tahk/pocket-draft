@@ -42,7 +42,7 @@ export type PlayerView = {
   discardedEnergy: string[]; // oldest first
 };
 
-export type PromptView = { player: number; kind: 'setup' | 'new_active' };
+export type PromptView = { player: number; kind: 'setup' | 'new_active' | 'retreat_energy' };
 
 export type GameView = {
   players: [PlayerView, PlayerView];
@@ -67,6 +67,7 @@ export type Move =
   | { type: 'UseAttack'; player: number; index: number }
   | { type: 'EndTurn'; player: number }
   | { type: 'ChooseNewActive'; player: number; benchIndex: number }
+  | { type: 'RetreatDiscard'; player: number; energy: string[] }
   | { type: 'Concede'; player: number };
 
 export type MoveResp = { ok: boolean; error?: string; state: GameView };

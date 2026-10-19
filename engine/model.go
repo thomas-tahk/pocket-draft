@@ -87,6 +87,7 @@ type PromptKind uint8
 const (
 	PromptSetup PromptKind = iota
 	PromptNewActive
+	PromptRetreatEnergy // which energy to discard to pay a retreat cost (T9)
 )
 
 // Prompt is a pending decision the engine is blocked on: a specific player owes
@@ -118,6 +119,10 @@ type State struct {
 
 	resume resumeAction
 	setup  [2]bool // which players have pressed Ready at setup
+
+	// retreatTo is the bench slot a retreat swaps into while its
+	// PromptRetreatEnergy is pending.
+	retreatTo int
 }
 
 // Ready reports whether player p has placed their setup and pressed Ready
@@ -200,6 +205,14 @@ type ChooseNewActive struct {
 	BenchIndex int // the bench slot to promote from
 }
 
+// RetreatDiscard answers a retreat-energy prompt: the energy to discard from
+// the Active, one entry per energy, in energyOrder (attachment order doesn't
+// matter, spec T9).
+type RetreatDiscard struct {
+	Player int
+	Energy []Energy
+}
+
 // Concede forfeits the game at any time, from either player; the opponent wins.
 type Concede struct {
 	Player int
@@ -212,6 +225,7 @@ func (PlayBasic) event()       {}
 func (AttachEnergy) event()    {}
 func (Evolve) event()          {}
 func (Retreat) event()         {}
+func (RetreatDiscard) event()  {}
 func (UseAttack) event()       {}
 func (EndTurn) event()         {}
 func (ChooseNewActive) event() {}

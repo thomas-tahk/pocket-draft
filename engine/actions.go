@@ -22,6 +22,7 @@ const (
 	ActAttachEnergy ActionKind = "attach_energy"
 	ActEvolve       ActionKind = "evolve"
 	ActRetreat      ActionKind = "retreat"
+	ActRetreatPay   ActionKind = "retreat_pay"
 	ActAttack       ActionKind = "attack"
 	ActEndTurn      ActionKind = "end_turn"
 	ActPromote      ActionKind = "promote"
@@ -57,6 +58,8 @@ func (g *Game) describe(ev Event) Action {
 		return Action{e.Player, ActEvolve, g.handCard(e.Player, e.HandCardID), Spot{e.Player, e.Target}, nil}
 	case Retreat:
 		return Action{e.Player, ActRetreat, g.monCard(e.Player, 0), Spot{e.Player, e.BenchIndex + 1}, nil}
+	case RetreatDiscard:
+		return Action{e.Player, ActRetreatPay, g.monCard(e.Player, 0), Spot{e.Player, 0}, nil}
 	case UseAttack:
 		return Action{e.Player, ActAttack, g.monCard(e.Player, 0), Spot{1 - e.Player, 0}, nil}
 	case EndTurn:

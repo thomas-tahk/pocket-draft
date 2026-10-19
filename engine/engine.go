@@ -141,6 +141,9 @@ func (g *Game) validateAndApply(ev Event) error {
 		g.applyEvolve(e)
 	case Retreat:
 		g.applyRetreat(e)
+	case RetreatDiscard:
+		g.S.Pending = nil
+		g.finishRetreat(e)
 	case UseAttack:
 		g.applyAttack(e)
 	case EndTurn:
@@ -228,12 +231,22 @@ func (g *Game) applyEvolve(e Evolve) {
 	g.narrate("%s evolved into %s.", side(e.Player), ev.Name)
 }
 
+// applyRetreat asks which energy pays the retreat cost (T9); the swap happens
+// once it is chosen, in finishRetreat.
 func (g *Game) applyRetreat(e Retreat) {
+	g.S.Players[e.Player].Retreated = true
+	g.S.retreatTo = e.BenchIndex
+	g.ask(e.Player, PromptRetreatEnergy)
+}
+
+func (g *Game) finishRetreat(e RetreatDiscard) {
 	pl := &g.S.Players[e.Player]
-	cost := pl.Active.Card.RetreatCost
-	discardEnergy(pl.Active, cost)
-	pl.Active, pl.Bench[e.BenchIndex] = pl.Bench[e.BenchIndex], pl.Active
-	pl.Retreated = true
+	for _, t := range e.Energy {
+		pl.Active.Energy[t]--
+	}
+	pl.DiscardedEnergy = append(pl.DiscardedEnergy, e.Energy...)
+	slot := g.S.retreatTo
+	pl.Active, pl.Bench[slot] = pl.Bench[slot], pl.Active
 	g.narrate("%s retreated to %s.", side(e.Player), pl.Active.Card.Name)
 }
 
@@ -420,6 +433,8 @@ func (g *Game) choose(ev Event) {
 	switch e := ev.(type) {
 	case ChooseNewActive:
 		g.promote(e)
+	case RetreatDiscard:
+		g.finishRetreat(e)
 	}
 }
 
@@ -568,15 +583,6 @@ func benchAt(pl *Player, slot int) *InPlay {
 		return nil
 	}
 	return pl.Bench[slot]
-}
-
-func discardEnergy(mon *InPlay, n int) {
-	for _, t := range energyOrder {
-		for n > 0 && mon.Energy[t] > 0 {
-			mon.Energy[t]--
-			n--
-		}
-	}
 }
 
 func indexInHand(hand []Card, id string) int {

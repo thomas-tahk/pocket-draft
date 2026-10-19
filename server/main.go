@@ -149,14 +149,15 @@ type startErr struct {
 // moveReq is the superset of fields any move might carry; only the ones relevant
 // to the given type are read.
 type moveReq struct {
-	Type       string `json:"type"`
-	Player     int    `json:"player"`
-	CardID     string `json:"cardId"`
-	Slot       int    `json:"slot"`
-	HandCardID string `json:"handCardId"`
-	Target     int    `json:"target"`
-	BenchIndex int    `json:"benchIndex"`
-	Index      int    `json:"index"`
+	Type       string   `json:"type"`
+	Player     int      `json:"player"`
+	CardID     string   `json:"cardId"`
+	Slot       int      `json:"slot"`
+	HandCardID string   `json:"handCardId"`
+	Target     int      `json:"target"`
+	BenchIndex int      `json:"benchIndex"`
+	Index      int      `json:"index"`
+	Energy     []string `json:"energy,omitempty"`
 }
 
 type moveResp struct {
@@ -215,10 +216,25 @@ func toEvent(r moveReq) (engine.Event, error) {
 		return engine.EndTurn{Player: r.Player}, nil
 	case "ChooseNewActive":
 		return engine.ChooseNewActive{Player: r.Player, BenchIndex: r.BenchIndex}, nil
+	case "RetreatDiscard":
+		return retreatDiscard(r)
 	case "Concede":
 		return engine.Concede{Player: r.Player}, nil
 	}
 	return nil, fmt.Errorf("unknown move type %q", r.Type)
+}
+
+// retreatDiscard decodes the energy named in a retreat-energy answer.
+func retreatDiscard(r moveReq) (engine.Event, error) {
+	energy := make([]engine.Energy, len(r.Energy))
+	for i, n := range r.Energy {
+		e, ok := energyByName(n)
+		if !ok {
+			return nil, fmt.Errorf("unknown energy type %q", n)
+		}
+		energy[i] = e
+	}
+	return engine.RetreatDiscard{Player: r.Player, Energy: energy}, nil
 }
 
 // fromEvent is the inverse of toEvent: the request that would submit ev.
@@ -244,6 +260,8 @@ func fromEvent(ev engine.Event) moveReq {
 		return moveReq{Type: "EndTurn", Player: e.Player}
 	case engine.ChooseNewActive:
 		return moveReq{Type: "ChooseNewActive", Player: e.Player, BenchIndex: e.BenchIndex}
+	case engine.RetreatDiscard:
+		return moveReq{Type: "RetreatDiscard", Player: e.Player, Energy: energyLabels(e.Energy)}
 	case engine.Concede:
 		return moveReq{Type: "Concede", Player: e.Player}
 	}
