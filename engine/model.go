@@ -116,11 +116,12 @@ type State struct {
 	Turn         int // turn counter, starts at 1
 	Phase        Phase
 	Pending      *Prompt
-	Winner       int       // -1 until the game ends, and on a tie
-	Reason       EndReason // why the game ended; NoReason until it does
-	Mode         Mode      // who the game is against; set before the first event
-	Stadium      *Card     // the Stadium in play, shared by both players (spec A6); nil when none
-	StadiumOwner int       // who played the Stadium in play; its discard takes it when it goes
+	Winner       int            // -1 until the game ends, and on a tie
+	Reason       EndReason      // why the game ended; NoReason until it does
+	Mode         Mode           // who the game is against; set before the first event
+	Stadium      *Card          // the Stadium in play, shared by both players (spec A6); nil when none
+	StadiumOwner int            // who played the Stadium in play; its discard takes it when it goes
+	Timed        []TimedPassive // passives a played card put in effect for a while (timed.go)
 
 	// OpeningFlip is the coin flip that decided FirstPlayer (spec S4), kept so
 	// the screen can show who flipped and how it landed.

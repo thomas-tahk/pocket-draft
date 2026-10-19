@@ -20,6 +20,9 @@ const (
 	HookNoRetreatCost              // Target has no Retreat Cost
 	HookNoConditions               // Target can't be affected by Special Conditions
 	HookEvolveEarly                // Target may evolve on its owner's first turn or the turn it was played
+	HookColorlessCost              // Value (negative) is added to the [C] in Target's attack costs
+	HookSurviveKO                  // attack damage that would KO Target leaves it at 10 HP (Foe attacks)
+	hookCount
 )
 
 // Passive is one always-on rule change printed on a card.
@@ -81,7 +84,7 @@ func (g *Game) passiveSources() []passiveSource {
 	if st := g.S.Stadium; st != nil {
 		out = append(out, passiveSource{Holder{NoSpot, nil}, *st, st.Passive})
 	}
-	return out
+	return append(out, g.timedSources()...)
 }
 
 func (g *Game) holder(p, pos int) Holder {
@@ -126,7 +129,7 @@ func (g *Game) Modifiers(p, pos int) []Modifier {
 	}
 	foe := g.S.Players[1-p].Active
 	var out []Modifier
-	for h := HookDamageDealt; h <= HookEvolveEarly; h++ {
+	for h := HookDamageDealt; h < hookCount; h++ {
 		out = append(out, g.modifiers(h, target, foe)...)
 	}
 	return out

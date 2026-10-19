@@ -284,6 +284,7 @@ func (g *Game) applyAttack(e UseAttack) {
 	}
 	dmg, weakness := g.attackDamage(e.Player, ctx.Damage)
 	opp.Active.Damage += dmg
+	g.surviveKO(e.Player)
 	if weakness != "" {
 		g.narrate("%s's %s used %s for %d (%s).", side(e.Player), pl.Active.Card.Name, atk.Name, dmg, weakness)
 	} else {

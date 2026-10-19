@@ -477,7 +477,7 @@ func (g *Game) checkAttack(e UseAttack) error {
 	if e.Index < 0 || e.Index >= len(pl.Active.Card.Attacks) {
 		return errors.New("invalid attack index")
 	}
-	if !canPay(pl.Active.Energy, pl.Active.Card.Attacks[e.Index].Cost) {
+	if !canPay(pl.Active.Energy, g.attackCost(e.Player, e.Index)) {
 		return errors.New("not enough energy for that attack")
 	}
 	if g.S.Players[1-e.Player].Active == nil {
