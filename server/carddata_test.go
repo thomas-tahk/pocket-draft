@@ -125,29 +125,31 @@ func TestToEngineCardMarksMegaEX(t *testing.T) {
 	}
 }
 
-func TestDeckFromIDsSkipsTrainers(t *testing.T) {
-	// A finalized deck can include the free universal Trainers (Poké Ball,
-	// Professor's Research). The engine can't model Trainers yet (effects are
-	// deferred), so the bridge plays the Pokémon subset instead of rejecting the
-	// whole deck. 18 Pokémon + 2 Trainers -> an 18-card playable deck.
+func TestDeckFromIDsRejectsACardTheEngineCannotPlay(t *testing.T) {
+	// Arrange: 18 playable Basics plus cards whose text the engine can't play
+	// yet (owner 2026-10-19 (1): every deck is 20 working cards).
 	rawByID = map[string]rawCard{}
 	ids := make([]string, 0, 20)
-	for i := 0; i < 9; i++ {
+	for i := 0; i < 10; i++ {
 		b := fmt.Sprintf("B%d", i)
 		rawByID[b] = rawCard{ID: b, Name: "Basic" + b, CardType: "Fire", Stage: "Basic", HP: 60,
 			Attacks: []rawAttack{{Cost: "R", Name: "Hit", Damage: "20"}}}
 		ids = append(ids, b, b)
 	}
-	rawByID["PB"] = rawCard{ID: "PB", Name: "Poké Ball", CardType: "Trainer"}
-	rawByID["PR"] = rawCard{ID: "PR", Name: "Professor's Research", CardType: "Trainer"}
-	ids = append(ids, "PB", "PR")
+	rawByID["AB"] = rawCard{ID: "AB", Name: "Ability", CardType: "Fire", Stage: "Basic", HP: 60,
+		Ability: &rawAbility{Name: "Unwritten", Effect: "Something the engine can't do."}}
+	rawByID["TR"] = rawCard{ID: "TR", Name: "Unwritten Trainer", CardType: "Trainer", TrainerKind: "Item",
+		TrainerText: "Something the engine can't do."}
 
-	deck, err := deckFromIDs(ids)
-	if err != nil {
-		t.Fatalf("deck with Trainers should play its Pokémon, got error: %v", err)
+	// Act + Assert: the playable 20 plays as 20; swapping in either unplayable
+	// card is an error rather than a shorter deck.
+	if deck, err := deckFromIDs(ids); err != nil || len(deck) != 20 {
+		t.Fatalf("playable deck: got %d cards, err %v; want 20, nil", len(deck), err)
 	}
-	if len(deck) != 18 {
-		t.Fatalf("got %d cards, want 18 (Trainers skipped)", len(deck))
+	for _, bad := range []string{"AB", "TR"} {
+		if deck, err := deckFromIDs(append(ids[:19:19], bad)); err == nil {
+			t.Errorf("deck with %s: got %d cards and no error, want an error", bad, len(deck))
+		}
 	}
 }
 

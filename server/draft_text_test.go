@@ -143,7 +143,30 @@ func TestDraftPoolFileMatchesTheEngine(t *testing.T) {
 	if err := json.Unmarshal(b, &got); err != nil {
 		t.Fatal(err)
 	}
-	if got.OnlyWorkingText != want.OnlyWorkingText || !slices.Equal(got.IDs, want.IDs) {
+	if got.OnlyWorkingText != want.OnlyWorkingText || !slices.Equal(got.IDs, want.IDs) || !slices.Equal(got.Working, want.Working) {
 		t.Fatalf("%s is stale (regenerate with PD_WRITE_DRAFT_POOL=1 go test -run TestDraftPoolFile)", draftPoolFile)
+	}
+}
+
+// Deckbuild offers only cards the engine can play (owner 2026-10-19 (1)). The
+// SPA reads that set from the pool file's working list, which must be every
+// card whose text works (under-evolutions and universals included) and
+// nothing else.
+func TestDraftPoolFileListsEveryWorkingCard(t *testing.T) {
+	useRealCards(t)
+
+	working := draftPoolFileContents().Working
+
+	inList := map[string]bool{}
+	for _, id := range working {
+		inList[id] = true
+	}
+	for id, rc := range rawByID {
+		if textWorks(rc) != inList[id] {
+			t.Fatalf("%s (%s): textWorks %v, in working list %v", id, rc.Name, textWorks(rc), inList[id])
+		}
+	}
+	if !slices.IsSorted(working) {
+		t.Fatal("working list is not sorted")
 	}
 }

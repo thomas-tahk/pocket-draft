@@ -100,7 +100,9 @@ export function toDraftablePool(raw: RawCard[]): Card[] {
 // TEMPORARY until milestone 4 finishes card text (removed by 4.15): the draft
 // offers only cards whose text the engine already plays. The Go server decides
 // which (server/draft_text_filter.go) and writes the answer to draft-pool.json.
-export type DraftPoolFilter = { onlyWorkingText: boolean; ids: string[] };
+// `working` is every card the engine can play; deckbuild offers only those, so
+// every deck is 20 working cards (owner 2026-10-19 (1)).
+export type DraftPoolFilter = { onlyWorkingText: boolean; ids: string[]; working: string[] };
 
 export async function loadDraftPoolFilter(): Promise<DraftPoolFilter> {
   return fetchJson<DraftPoolFilter>(DRAFT_POOL_URL);

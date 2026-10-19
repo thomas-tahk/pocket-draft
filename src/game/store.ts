@@ -8,7 +8,6 @@ type State = {
   error: string | null;
   deck: string[] | null; // the deck this game was started from, for restart
   botStuck: boolean; // last bot attempt made no progress — stop auto-driving it
-  leftOut: number; // cards of `deck` the server left out of this game (it can't play them yet)
 };
 
 type Actions = {
@@ -19,21 +18,12 @@ type Actions = {
   runBot: () => Promise<void>;
 };
 
-// A fresh game holds your whole deck in hand and draw pile, so any shortfall is
-// cards the server skipped (e.g. Trainers, whose effects aren't built yet).
-function leftOut(deck: string[] | null, view: GameView): number {
-  if (!deck) return 0;
-  const you = view.players[0];
-  return deck.length - (you.handCount + you.deckCount);
-}
-
 export const useGameStore = create<State & Actions>((set, get) => ({
   view: null,
   status: 'idle',
   error: null,
   deck: null,
   botStuck: false,
-  leftOut: 0,
 
   init: async () => {
     set({ status: 'loading', error: null });
@@ -50,7 +40,7 @@ export const useGameStore = create<State & Actions>((set, get) => ({
     set({ status: 'loading', error: null, deck });
     try {
       const view = await newGame({ deck, seed });
-      set({ view, status: 'ready', botStuck: false, leftOut: leftOut(deck, view) });
+      set({ view, status: 'ready', botStuck: false });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       set({ status: 'idle', error: msg });
@@ -62,7 +52,7 @@ export const useGameStore = create<State & Actions>((set, get) => ({
     try {
       const deck = get().deck;
       const view = await newGame({ deck: deck ?? undefined, seed });
-      set({ view, status: 'ready', botStuck: false, leftOut: leftOut(deck, view) });
+      set({ view, status: 'ready', botStuck: false });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       set({ status: 'idle', error: msg });

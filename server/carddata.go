@@ -244,10 +244,10 @@ func buildDeck(list []deckEntry) ([]engine.Card, error) {
 
 // deckFromIDs expands a list of card IDs into engine cards. The input must be a
 // format-legal 20 (at most 2 copies of any card by name, at least one Basic
-// Pokémon) — the deckbuild UI already enforces this. Cards the engine cannot
-// model yet (Trainers, whose effects are deferred per ADR-0002) are skipped, so
-// the deck plays as its Pokémon subset rather than being rejected outright. Card
-// access is unrestricted — only the format is checked.
+// Pokémon) of working cards: a card whose text the engine can't play yet
+// (textWorks) is an error, never silently dropped, so every game is played
+// with all 20 (owner 2026-10-19 (1)). Card access is unrestricted — only the
+// format is checked.
 func deckFromIDs(ids []string) ([]engine.Card, error) {
 	if len(ids) != 20 {
 		return nil, fmt.Errorf("deck must be exactly 20 cards, got %d", len(ids))
@@ -260,11 +260,12 @@ func deckFromIDs(ids []string) ([]engine.Card, error) {
 		if !ok {
 			return nil, fmt.Errorf("unknown card id %q", id)
 		}
+		if !textWorks(rc) {
+			return nil, fmt.Errorf("%s (%s) can't be played yet", rc.Name, id)
+		}
 		card, err := toEngineCard(rc)
 		if err != nil {
-			// A card the engine can't model yet (e.g. a Trainer). Skip it so the
-			// rest of the deck is still playable; its behavior lands with effects.
-			continue
+			return nil, err
 		}
 		countByName[card.Name]++
 		if countByName[card.Name] > 2 {

@@ -17,7 +17,7 @@ async function post(api: APIRequestContext, url: string, data?: object): Promise
 // Mostly Stage 1s, so the first-turn hand mixes playable Basics with
 // Evolutions that can't be used yet. Seed 15: you go first, holding both.
 const DECK = [
-  ...['B2b-007', 'B4a-095', 'A4b-057'], // Charmander, Vulpix, Charmeleon
+  ...['B2b-007', 'A4-025', 'A4b-057'], // Charmander, Vulpix, Charmeleon
   ...['B4a-011', 'B4-021', 'B3-027', 'B3-207', 'B2a-017', 'B2-021', 'B2-025'],
 ].flatMap((id) => [id, id]);
 
