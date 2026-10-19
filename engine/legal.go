@@ -222,7 +222,7 @@ func listRetreatDiscard(g *Game, p int) []RetreatDiscard {
 	}
 	mon := g.S.Players[p].Active
 	var out []RetreatDiscard
-	for _, set := range energySets(mon.Energy, energyOrder, mon.Card.RetreatCost) {
+	for _, set := range energySets(mon.Energy, energyOrder, g.RetreatCost(p)) {
 		out = append(out, RetreatDiscard{Player: p, Energy: set})
 	}
 	return out
@@ -384,11 +384,20 @@ func (g *Game) checkEvolve(e Evolve) error {
 	if mon.Card.Name != ev.EvolvesFrom {
 		return fmt.Errorf("%s does not evolve from %s", ev.Name, mon.Card.Name)
 	}
+	if g.hasHook(HookEvolveEarly, g.holder(e.Player, e.Target), nil) {
+		return nil
+	}
+	// T8: game turn 1 is the first player's first turn, turn 2 the second's.
+	if g.S.Turn <= 2 {
+		return errFirstTurnEvolve
+	}
 	if mon.PlacedTurn == g.S.Turn {
 		return errors.New("a Pokémon cannot evolve the turn it was played")
 	}
 	return nil
 }
+
+var errFirstTurnEvolve = errors.New("no Pokémon may evolve on the first turn")
 
 // evolveGate is every Evolve check that doesn't depend on the target.
 func (g *Game) evolveGate(p int, handCardID string) (Card, error) {
@@ -403,10 +412,6 @@ func (g *Game) evolveGate(p int, handCardID string) (Card, error) {
 	ev := pl.Hand[hidx]
 	if ev.Stage == Basic {
 		return Card{}, errors.New("that card is not an evolution")
-	}
-	// T8: game turn 1 is the first player's first turn, turn 2 the second's.
-	if g.S.Turn <= 2 {
-		return Card{}, errors.New("no Pokémon may evolve on the first turn")
 	}
 	return ev, nil
 }
@@ -428,7 +433,7 @@ func (g *Game) checkRetreat(e Retreat) error {
 	if benchAt(pl, e.BenchIndex) == nil {
 		return errors.New("no Pokémon in that bench slot")
 	}
-	if pl.Active.totalEnergy() < pl.Active.Card.RetreatCost {
+	if pl.Active.totalEnergy() < g.RetreatCost(e.Player) {
 		return errors.New("not enough energy to retreat")
 	}
 	return nil
@@ -439,8 +444,8 @@ func (g *Game) checkRetreatDiscard(e RetreatDiscard) error {
 		return err
 	}
 	mon := g.S.Players[e.Player].Active
-	if len(e.Energy) != mon.Card.RetreatCost {
-		return fmt.Errorf("retreating costs %d energy", mon.Card.RetreatCost)
+	if cost := g.RetreatCost(e.Player); len(e.Energy) != cost {
+		return fmt.Errorf("retreating costs %d energy", cost)
 	}
 	need := map[Energy]int{}
 	for _, t := range e.Energy {

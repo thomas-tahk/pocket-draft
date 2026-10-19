@@ -84,6 +84,9 @@ type Card struct {
 	RetreatCost int
 	IsEX        bool
 	IsMegaEX    bool // a Mega ex; IsEX is also true
+
+	Ability *Ability  // a Pokémon's Ability; nil when it has none (ability.go)
+	Passive []Passive // a Tool's or Stadium's always-on text (passive.go)
 }
 
 // canPay reports whether the energy attached to a Pokémon (have) covers an

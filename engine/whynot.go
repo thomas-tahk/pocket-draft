@@ -63,6 +63,9 @@ func (g *Game) whyNoEvolve(p int, cardID string) error {
 			return g.checkEvolve(Evolve{Player: p, HandCardID: cardID, Target: t})
 		}
 	}
+	if g.S.Turn <= 2 {
+		return errFirstTurnEvolve
+	}
 	return fmt.Errorf("no %s in play to evolve into %s", ev.EvolvesFrom, ev.Name)
 }
 

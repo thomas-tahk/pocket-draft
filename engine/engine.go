@@ -271,14 +271,10 @@ func (g *Game) applyAttack(e UseAttack) {
 	for _, op := range atk.Effect {
 		op.Apply(ctx)
 	}
-	dmg := ctx.Damage
-	weak := opp.Active.Card.Weakness != NoEnergy && opp.Active.Card.Weakness == pl.Active.Card.Type
-	if weak {
-		dmg += 20
-	}
+	dmg, weakness := g.attackDamage(e.Player, ctx.Damage)
 	opp.Active.Damage += dmg
-	if weak {
-		g.narrate("%s's %s used %s for %d (+20 weakness).", side(e.Player), pl.Active.Card.Name, atk.Name, dmg)
+	if weakness != "" {
+		g.narrate("%s's %s used %s for %d (%s).", side(e.Player), pl.Active.Card.Name, atk.Name, dmg, weakness)
 	} else {
 		g.narrate("%s's %s used %s for %d.", side(e.Player), pl.Active.Card.Name, atk.Name, dmg)
 	}

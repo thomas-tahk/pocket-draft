@@ -68,7 +68,11 @@ func (v DamagePerHeads) Apply(ctx *EffectContext) {
 // Ponyta's Singe: opponent's Active is now Burned.
 type ApplyStatus struct{ Status Status }
 
-func (v ApplyStatus) Apply(ctx *EffectContext) { ctx.defenderMon().Inflict(v.Status) }
+func (v ApplyStatus) Apply(ctx *EffectContext) {
+	if ctx.g.canBeAffected(1-ctx.attacker, 0) {
+		ctx.defenderMon().Inflict(v.Status)
+	}
+}
 
 // EffectTarget names whose energy DamagePerEnergy reads.
 type EffectTarget uint8
