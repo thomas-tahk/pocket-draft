@@ -24,6 +24,28 @@ type Ability struct {
 	OncePerTurn bool                    // "Once during your turn"
 	Where       AbilitySpot             // where it may be used from
 	When        func(AbilityCheck) bool // nil means always
+
+	// Triggered parts, run by the engine instead of a player's move (4.4):
+	AtCheckup    []EffectOp     // at the end of a turn's Checkup, if Where and When hold
+	CheckupOf    CheckupTurn    // whose Checkup AtCheckup runs at
+	WhenDamaged  []EffectOp     // this Pokémon, in the Active Spot, was damaged by an attack; ops see the attacker as the opponent's Active
+	OnZoneAttach *AttachTrigger // an Energy from the Energy Zone is attached to this Pokémon
+}
+
+// CheckupTurn is whose turn's Checkup an Ability's AtCheckup runs at.
+type CheckupTurn uint8
+
+const (
+	EveryCheckup CheckupTurn = iota // "at the end of each turn"
+	OwnCheckup                      // "at the end of your turn"
+	OppCheckup                      // "at the end of your opponent's turn"
+)
+
+// AttachTrigger is "whenever you attach a Type Energy from your Energy Zone to
+// this Pokémon, ...".
+type AttachTrigger struct {
+	Type Energy
+	Ops  []EffectOp
 }
 
 // AbilitySpot is where an activated Ability may be used from.
@@ -38,6 +60,7 @@ const (
 // AbilityCheck is what an Ability's When is asked about: the Pokémon using it.
 type AbilityCheck struct {
 	Self Holder
+	Game *Game // the game, read only, for texts that look at the board
 }
 
 // UseAbility uses the activated Ability of player p's Pokémon at Pos (0 the
@@ -106,7 +129,7 @@ func (g *Game) checkUseAbility(e UseAbility) error {
 	if a.OncePerTurn && at.AbilityUsedTurn == g.S.Turn {
 		return fmt.Errorf("%s was already used this turn", a.Name)
 	}
-	if a.When != nil && !a.When(AbilityCheck{Self: at}) {
+	if a.When != nil && !a.When(AbilityCheck{Self: at, Game: g}) {
 		return fmt.Errorf("%s can't be used right now", a.Name)
 	}
 	return g.abilityOpsAllow(a, e)

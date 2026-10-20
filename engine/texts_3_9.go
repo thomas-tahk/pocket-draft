@@ -34,6 +34,9 @@ func named(names []string) func(*InPlay) bool {
 
 // heal removes up to n damage from mon.
 func (ctx *EffectContext) heal(mon *InPlay, n int) {
+	if ctx.g.healBlocked() {
+		n = 0
+	}
 	n = min(n, mon.Damage)
 	mon.Damage -= n
 	ctx.g.narrate("%s healed %d damage.", mon.Card.Name, n)

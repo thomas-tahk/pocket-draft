@@ -23,6 +23,7 @@ const (
 	HookColorlessCost              // Value (negative) is added to the [C] in Target's attack costs
 	HookSurviveKO                  // attack damage that would KO Target leaves it at 10 HP (Foe attacks)
 	HookKOPoints                   // Value is added to the points for knocking out Target, the Active, with an attack by Foe
+	HookNoHeal                     // no Pokémon can be healed (both players')
 	hookCount
 )
 
@@ -48,6 +49,7 @@ type PassiveCheck struct {
 	Source Holder
 	Target Holder
 	Foe    *InPlay
+	Game   *Game // the game, read only, for texts that look at the board
 }
 
 // Modifier is one passive in effect on a Pokémon, for the screen (spec L6):
@@ -100,7 +102,7 @@ func (g *Game) modifiers(h Hook, target Holder, foe *InPlay) []Modifier {
 			if ps.Hook != h {
 				continue
 			}
-			if ps.When == nil || ps.When(PassiveCheck{src.at, target, foe}) {
+			if ps.When == nil || ps.When(PassiveCheck{src.at, target, foe, g}) {
 				out = append(out, Modifier{src.card.Name, h, ps.Value})
 			}
 		}

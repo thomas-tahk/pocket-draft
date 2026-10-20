@@ -224,6 +224,8 @@ func toEvent(r moveReq) (engine.Event, error) {
 		return engine.PlayTrainer{Player: r.Player, CardID: r.CardID, Target: toSpot(r.Spot)}, nil
 	case "DiscardFossil":
 		return engine.DiscardFossil{Player: r.Player, Pos: r.Target}, nil
+	case "UseAbility":
+		return engine.UseAbility{Player: r.Player, Pos: r.Target, Target: abilitySpot(r.Spot)}, nil
 	case "UseAttack":
 		return engine.UseAttack{Player: r.Player, Index: r.Index}, nil
 	case "EndTurn":
@@ -274,6 +276,8 @@ func fromEvent(ev engine.Event) moveReq {
 		return moveReq{Type: "PlayTrainer", Player: e.Player, CardID: e.CardID, Spot: fromSpot(e.Target)}
 	case engine.DiscardFossil:
 		return moveReq{Type: "DiscardFossil", Player: e.Player, Target: e.Pos}
+	case engine.UseAbility:
+		return moveReq{Type: "UseAbility", Player: e.Player, Target: e.Pos, Spot: &spotView{e.Target.Player, e.Target.Pos}}
 	case engine.UseAttack:
 		return moveReq{Type: "UseAttack", Player: e.Player, Index: e.Index}
 	case engine.EndTurn:
@@ -288,6 +292,15 @@ func fromEvent(ev engine.Event) moveReq {
 		return moveReq{Type: "Concede", Player: e.Player}
 	}
 	panic(fmt.Sprintf("fromEvent: no request shape for %T", ev))
+}
+
+// abilitySpot is the spot an Ability is aimed at; the zero Spot when it has no
+// target (the engine's convention for abilities, unlike Trainers' NoSpot).
+func abilitySpot(s *spotView) engine.Spot {
+	if s == nil {
+		return engine.Spot{}
+	}
+	return engine.Spot{Player: s.Player, Pos: s.Pos}
 }
 
 func toSpot(s *spotView) engine.Spot {

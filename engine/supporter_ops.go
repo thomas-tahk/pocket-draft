@@ -150,6 +150,9 @@ func (v HealEach) Apply(ctx *EffectContext) {
 }
 
 func heal(g *Game, m *InPlay, amount int) {
+	if g.healBlocked() {
+		return
+	}
 	if amount == 0 || amount > m.Damage {
 		amount = m.Damage
 	}

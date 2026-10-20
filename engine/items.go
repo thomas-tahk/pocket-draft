@@ -30,6 +30,9 @@ func (g *Game) ownSpots(p int, ok func(Spot, *InPlay) bool) []Spot {
 func (ctx *EffectContext) opp() *Player { return &ctx.g.S.Players[1-ctx.attacker] }
 
 func (g *Game) heal(mon *InPlay, n int) int {
+	if g.healBlocked() {
+		return 0
+	}
 	healed := min(n, mon.Damage)
 	mon.Damage -= healed
 	return healed

@@ -14,8 +14,8 @@ import (
 const draftSeeds = 400
 
 // modelable reports, independently of the code under test, whether the engine
-// can play rc as printed: it converts to an engine card, has no Ability (the
-// engine models none), and every attack with text has an authored effect.
+// can play rc as printed: it converts to an engine card, has an Ability only if its
+// wording is authored, and every attack with text has an authored effect.
 func modelable(rc rawCard) bool {
 	if _, err := toEngineCard(rc); err != nil {
 		return false
@@ -24,7 +24,7 @@ func modelable(rc rawCard) bool {
 		!strings.HasPrefix(rc.TrainerText, "Play this card as if it were a 40-HP Basic") {
 		return false
 	}
-	if rc.Ability != nil {
+	if _, ok := abilityTexts[abilityWording(rc)]; rc.Ability != nil && !ok {
 		return false
 	}
 	for _, a := range rc.Attacks {
@@ -174,4 +174,11 @@ func TestDraftPoolFileListsEveryWorkingCard(t *testing.T) {
 	if !slices.IsSorted(working) {
 		t.Fatal("working list is not sorted")
 	}
+}
+
+func abilityWording(rc rawCard) string {
+	if rc.Ability == nil {
+		return ""
+	}
+	return rc.Ability.Effect
 }

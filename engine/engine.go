@@ -239,8 +239,10 @@ func (g *Game) applyAttach(e AttachEnergy) {
 	mon := targetMon(pl, e.Target)
 	mon.Energy[pl.EnergyZone]++
 	g.narrate("%s attached %s energy to %s.", side(e.Player), pl.EnergyZone, mon.Card.Name)
+	attached := pl.EnergyZone
 	pl.EnergyZone = NoEnergy
 	pl.EnergyUsed = true
+	g.zoneAttachTrigger(e.Player, e.Target, attached)
 }
 
 func (g *Game) applyEvolve(e Evolve) {
@@ -296,6 +298,7 @@ func (g *Game) applyAttack(e UseAttack) {
 	dmg, weakness := g.attackDamage(e.Player, ctx.Damage)
 	opp.Active.Damage += dmg
 	g.surviveKO(e.Player)
+	g.damagedTriggers(1-e.Player, dmg)
 	if weakness != "" {
 		g.narrate("%s's %s used %s for %d (%s).", side(e.Player), pl.Active.Card.Name, atk.Name, dmg, weakness)
 	} else {
@@ -522,6 +525,7 @@ func (g *Game) resolveStatus() {
 		g.checkupSleep(i)
 		g.wearOffParalysis(i)
 	}
+	g.checkupAbilities()
 	g.resolveAction() // one Checkup is one action (spec E4)
 }
 
