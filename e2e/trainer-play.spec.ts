@@ -13,6 +13,9 @@ const RESEARCH = 'A4b-373';
 // Sturdy Basics so your Active survives the hit it needs for a Potion.
 const DECK = ['A1-211', 'A1-202', 'B4-015', 'B4-112', 'A3-044', 'A2-112', 'A1-150', 'B4-036', POTION, RESEARCH].flatMap((id) => [id, id]);
 
+// Pinned so draft-pool changes can't shift the bot's deck.
+const BOT = ['A1-211', 'A1-202', 'B4-015', 'B4-112', 'A3-044', 'A2-112', 'A1-150', 'B4-036', 'P-A-001', 'A4b-373'].flatMap((id) => [id, id]);
+
 async function post(api: APIRequestContext, url: string, data?: object): Promise<View> {
   const res = await api.post(url, data ? { data } : undefined);
   const body = await res.json();
@@ -27,10 +30,10 @@ async function runBotUntilYourTurn(api: APIRequestContext): Promise<View> {
   return v;
 }
 
-// Seed 2: you go first; ends your turns until your Active has damage and both
+// Seed 5 with a pinned bot deck: ends your turns until your Active has damage and both
 // Trainers are in hand.
 async function toDamagedTurn(api: APIRequestContext): Promise<View> {
-  const start = await post(api, '/api/new', { seed: 2, you: DECK });
+  const start = await post(api, '/api/new', { seed: 5, you: DECK, bot: BOT });
   const basic = start.players[0].hand.find((c) => c.stage === 'Basic')!;
   await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: basic.id });
   await post(api, '/api/move', { type: 'SetupReady', player: 0 });

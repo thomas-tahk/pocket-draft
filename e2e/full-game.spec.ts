@@ -295,9 +295,9 @@ for (const seed of SEEDS) {
 
 // The demo deck is all Basics, so evolving needs a deck with Stage 1 lines.
 // Water lines from the draft pool, 2 of each. Both decks are pinned (the bot
-// plays the same list), so later card-text batches can't shift these games. Seeds found by replaying this
-// policy through the API: 22 and 17 evolve, bench and promote by choice; on 83
-// the bot's Munchlax draws past a 10-card hand unless the T3 cap holds.
+// plays the same list), so later card-text batches can't shift these games. Seeds
+// 1, 2 and 6 were found by replaying this policy through the API: they evolve,
+// bench and promote by choice.
 const EVOLUTION_DECK = ['A1-074', 'A1-075', 'A1a-020', 'A2-043', 'A1-062', 'A2b-015', 'B1-048', 'A1-058', 'A4-049', 'A2a-015'].flatMap((id) => [id, id]);
 
 for (const seed of [1, 2, 6]) {

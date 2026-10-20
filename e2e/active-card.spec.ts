@@ -9,6 +9,9 @@ import { test, expect, type APIRequestContext, type Locator, type Page } from '@
 
 type View = { phase: string; active: number; pending: { player: number } | null; players: { active: { remainingHp: number } }[] };
 
+// Pinned so draft-pool changes can't shift the bot's deck.
+const BOT = ['A1-211', 'A1-202', 'B4-015', 'B4-112', 'A3-044', 'A2-112', 'A1-150', 'B4-036', 'P-A-001', 'A4b-373'].flatMap((id) => [id, id]);
+
 async function post(api: APIRequestContext, url: string, data?: object): Promise<View> {
   const res = await api.post(url, data ? { data } : undefined);
   const body = await res.json();
@@ -28,7 +31,7 @@ const attachToActive = (api: APIRequestContext) => post(api, '/api/move', { type
 
 // Your first turn (game turn 2), nothing attached yet.
 async function toYourFirstTurn(api: APIRequestContext) {
-  await post(api, '/api/new', { seed: 7 });
+  await post(api, '/api/new', { seed: 7, bot: BOT });
   await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: 'B2a-126' });
   await post(api, '/api/move', { type: 'SetupBench', player: 0, cardId: 'A4b-076', slot: 0 });
   await post(api, '/api/move', { type: 'SetupReady', player: 0 });
