@@ -32,10 +32,14 @@ func (v DamageSelf) Apply(ctx *EffectContext) {
 type DamageOneOpp struct{ N int }
 
 func (v DamageOneOpp) Targets(ctx *EffectContext) []Spot {
-	return ownSpots(ctx.g, 1-ctx.attacker, func(*InPlay) bool { return true })
+	foe := 1 - ctx.attacker
+	return ctx.g.ownSpots(foe, func(s Spot, _ *InPlay) bool { return !ctx.g.BenchShielded(foe, s.Pos) })
 }
 
 func (v DamageOneOpp) Apply(ctx *EffectContext) {
+	if ctx.g.BenchShielded(ctx.Target.Player, ctx.Target.Pos) {
+		return
+	}
 	m := ctx.targetMon()
 	m.Damage += v.N
 	ctx.narrate("did %d damage to %s.", v.N, m.Card.Name)
