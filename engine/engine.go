@@ -392,8 +392,8 @@ func (g *Game) removeIfKnockedOut(owner int) int {
 	if a := g.koAttacker; a != nil && owner != g.S.Active {
 		pts += g.sumHook(HookKOPoints, g.holder(owner, 0), a)
 	}
-	pl.Active = nil
 	g.discardKnockedOut(owner, mon)
+	pl.Active = nil
 	return pts
 }
 
