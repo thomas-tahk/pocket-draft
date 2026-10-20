@@ -96,6 +96,7 @@ const (
 	PromptSetup PromptKind = iota
 	PromptNewActive
 	PromptRetreatEnergy // which energy to discard to pay a retreat cost (T9)
+	PromptChoose        // pick one of a card's labelled options (choice.go)
 )
 
 // Prompt is a pending decision the engine is blocked on: a specific player owes
@@ -106,6 +107,11 @@ type Prompt struct {
 	Player  int        // the player who chooses
 	Kind    PromptKind // what is being chosen
 	Options []Event    // every answer the chooser may give; the cards involved
+
+	// Title and Labels word a PromptChoose for its chooser only: Labels[i]
+	// is what ChooseOption{Index: i} picks. Title may name hidden cards.
+	Title  string
+	Labels []string
 }
 
 // State is the full game state. It is always derivable by folding the event log
@@ -134,6 +140,9 @@ type State struct {
 	// retreatTo is the bench slot a retreat swaps into while its
 	// PromptRetreatEnergy is pending.
 	retreatTo int
+
+	then        func(g *Game, i int) // what a PromptChoose answer does (choice.go)
+	switchedOut *InPlay              // the Active a forced switch moves to the Bench (choice.go)
 
 	hidden *HiddenPromotion // the last promotion, while it may still be hidden (spec E6)
 }

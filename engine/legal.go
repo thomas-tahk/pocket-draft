@@ -56,6 +56,7 @@ var moveRules = []moveRule{
 	rule(listRetreat, (*Game).checkRetreat, nil),
 	rule(listRetreatDiscard, (*Game).checkRetreatDiscard, nil),
 	rule(listUseAbility, (*Game).checkUseAbility, nil),
+	rule(listChooseOption, (*Game).checkChooseOption, nil),
 	rule(listAttack, (*Game).checkAttack, nil),
 	rule(func(_ *Game, p int) []EndTurn { return []EndTurn{{Player: p}} }, (*Game).checkEndTurn, nil),
 	rule(func(_ *Game, p int) []Concede { return []Concede{{Player: p}} }, (*Game).checkConcede, nil),

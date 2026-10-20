@@ -224,6 +224,8 @@ func toEvent(r moveReq) (engine.Event, error) {
 		return engine.ChooseNewActive{Player: r.Player, BenchIndex: r.BenchIndex}, nil
 	case "RetreatDiscard":
 		return retreatDiscard(r)
+	case "ChooseOption":
+		return engine.ChooseOption{Player: r.Player, Index: r.Index}, nil
 	case "Concede":
 		return engine.Concede{Player: r.Player}, nil
 	}
@@ -272,6 +274,8 @@ func fromEvent(ev engine.Event) moveReq {
 		return moveReq{Type: "ChooseNewActive", Player: e.Player, BenchIndex: e.BenchIndex}
 	case engine.RetreatDiscard:
 		return moveReq{Type: "RetreatDiscard", Player: e.Player, Energy: energyLabels(e.Energy)}
+	case engine.ChooseOption:
+		return moveReq{Type: "ChooseOption", Player: e.Player, Index: e.Index}
 	case engine.Concede:
 		return moveReq{Type: "Concede", Player: e.Player}
 	}

@@ -70,6 +70,10 @@ type playerView struct {
 type promptView struct {
 	Player int    `json:"player"`
 	Kind   string `json:"kind"`
+	// Title and Labels describe a card's choice; only the chooser sees them,
+	// since they may name hidden cards (Pokédex).
+	Title  string   `json:"title,omitempty"`
+	Labels []string `json:"labels,omitempty"`
 }
 
 type gameView struct {
@@ -189,6 +193,8 @@ func promptKindName(k engine.PromptKind) string {
 		return "new_active"
 	case engine.PromptRetreatEnergy:
 		return "retreat_energy"
+	case engine.PromptChoose:
+		return "choose"
 	}
 	return "setup"
 }
@@ -314,6 +320,9 @@ func toGameView(g *engine.Game, viewer int) gameView {
 	var pending *promptView
 	if s.Pending != nil {
 		pending = &promptView{Player: s.Pending.Player, Kind: promptKindName(s.Pending.Kind)}
+		if s.Pending.Player == viewer {
+			pending.Title, pending.Labels = s.Pending.Title, s.Pending.Labels
+		}
 	}
 	var players [2]playerView
 	for i := range players {

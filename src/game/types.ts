@@ -61,7 +61,13 @@ export type ActionView = {
   flips: { flipper: number; heads: boolean; waits: boolean }[];
 };
 
-export type PromptView = { player: number; kind: 'setup' | 'new_active' | 'retreat_energy' };
+// title and labels word a card's choice ('choose'); only the chooser gets them.
+export type PromptView = {
+  player: number;
+  kind: 'setup' | 'new_active' | 'retreat_energy' | 'choose';
+  title?: string;
+  labels?: string[];
+};
 
 export type GameView = {
   players: [PlayerView, PlayerView];
@@ -92,6 +98,7 @@ export type Move =
   | { type: 'EndTurn'; player: number }
   | { type: 'ChooseNewActive'; player: number; benchIndex: number }
   | { type: 'RetreatDiscard'; player: number; energy: string[] }
+  | { type: 'ChooseOption'; player: number; index: number }
   | { type: 'Concede'; player: number };
 
 export type MoveResp = { ok: boolean; error?: string; state: GameView };

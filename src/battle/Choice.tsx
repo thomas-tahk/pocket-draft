@@ -27,9 +27,12 @@ function energyLabel(energy: string[]): ReactNode {
   return energy.map((type, i) => <EnergyIcon key={i} type={type} size={18} />);
 }
 
-function addAnswer(choice: Choice, move: Move, pick: () => void) {
+function addAnswer(choice: Choice, move: Move, pick: () => void, labels: string[]) {
   const key = `${choice.buttons.length}`;
   switch (move.type) {
+    case 'ChooseOption': // a card's choice names each option
+      choice.buttons.push({ key, label: labels[move.index] ?? `${move.index + 1}`, pick });
+      return;
     case 'ChooseNewActive':
       choice.lit.set(move.benchIndex + 1, { pick });
       return;
@@ -45,9 +48,10 @@ function addAnswer(choice: Choice, move: Move, pick: () => void) {
 export function choiceFor(view: GameView, viewer: number, send: (m: Move) => void): Choice | null {
   const prompt = view.pending;
   if (!prompt || prompt.player !== viewer || prompt.kind === 'setup') return null;
-  const choice: Choice = { title: TITLES[prompt.kind] ?? 'Choose', lit: new Map(), buttons: [] };
+  const title = prompt.title || TITLES[prompt.kind] || 'Choose';
+  const choice: Choice = { title, lit: new Map(), buttons: [] };
   for (const move of view.players[viewer].legalMoves) {
-    if (move.type !== 'Concede') addAnswer(choice, move, () => send(move));
+    if (move.type !== 'Concede') addAnswer(choice, move, () => send(move), prompt.labels ?? []);
   }
   return choice;
 }

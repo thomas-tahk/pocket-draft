@@ -165,6 +165,8 @@ func (g *Game) validateAndApply(ev Event) error {
 		g.applyDiscardFossil(e)
 	case UseAbility:
 		g.applyUseAbility(e)
+	case ChooseOption:
+		g.applyChooseOption(e)
 	case UseAttack:
 		g.applyAttack(e)
 	case EndTurn:
@@ -247,11 +249,16 @@ func (g *Game) applyEvolve(e Evolve) {
 	ev := pl.Hand[hidx]
 	mon := targetMon(pl, e.Target)
 	pl.Hand = removeAt(pl.Hand, hidx)
+	g.evolveMon(e.Player, mon, ev)
+}
+
+// evolveMon puts evolution card ev onto player p's mon.
+func (g *Game) evolveMon(p int, mon *InPlay, ev Card) {
 	mon.Card = ev
 	mon.PlacedTurn = g.S.Turn
 	mon.AbilityUsedTurn = 0 // an evolved Pokémon is a new card (A4)
 	mon.CureAll()           // evolving clears every condition (C9)
-	g.narrate("%s evolved into %s.", side(e.Player), ev.Name)
+	g.narrate("%s evolved into %s.", side(p), ev.Name)
 }
 
 // applyRetreat asks which energy pays the retreat cost (T9); the swap happens
@@ -427,7 +434,8 @@ func (g *Game) checkNoPokemon() bool {
 func (g *Game) promote(e ChooseNewActive) {
 	pl := &g.S.Players[e.Player]
 	mon := benchAt(pl, e.BenchIndex)
-	pl.Bench[e.BenchIndex] = nil
+	pl.Bench[e.BenchIndex] = g.S.switchedOut // a forced switch's old Active takes the slot
+	g.S.switchedOut = nil
 	pl.Active = mon
 	g.S.hidden = nil
 	if g.S.Players[1-e.Player].Active == nil { // double KO: the other still picks (E6)
