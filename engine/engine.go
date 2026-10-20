@@ -248,6 +248,7 @@ func (g *Game) applyEvolve(e Evolve) {
 	mon.Card = ev
 	mon.PlacedTurn = g.S.Turn
 	mon.AbilityUsedTurn = 0 // an evolved Pokémon is a new card (A4)
+	mon.CureAll()           // evolving clears every condition (C9)
 	g.narrate("%s evolved into %s.", side(e.Player), ev.Name)
 }
 
@@ -267,6 +268,7 @@ func (g *Game) finishRetreat(e RetreatDiscard) {
 	pl.DiscardedEnergy = append(pl.DiscardedEnergy, e.Energy...)
 	slot := g.S.retreatTo
 	pl.Active, pl.Bench[slot] = pl.Bench[slot], pl.Active
+	pl.Bench[slot].CureAll() // leaving the Active spot clears every condition (C9)
 	g.narrate("%s retreated to %s.", side(e.Player), pl.Active.Card.Name)
 }
 
