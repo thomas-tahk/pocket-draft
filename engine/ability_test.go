@@ -219,3 +219,14 @@ func TestNoAbilitiesStopsPassives(t *testing.T) {
 		t.Errorf("retreat cost Basic %d, Stage 1 %d; want 2 and 0", basic, stage1)
 	}
 }
+
+// A no-Abilities passive can read the board: its When is handed the game.
+func TestNoAbilitiesPassiveSeesTheGame(t *testing.T) {
+	g := alchemyGame()
+	muk := g.S.Players[1].Bench[BenchLeft]
+	muk.Card.Ability.Passive = []Passive{{Hook: HookNoAbilities, When: func(c PassiveCheck) bool { return c.Game.S.Turn > 0 }}}
+
+	if err := g.Submit(UseAbility{Player: 0, Pos: 0}); err == nil {
+		t.Error("a Basic used its Ability while a no-Abilities passive applied")
+	}
+}

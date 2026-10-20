@@ -110,7 +110,7 @@ func abilityTargets(a *Ability, ctx *EffectContext) []Spot {
 // abilityOf is the Ability of the Pokémon at h, or nil when it has none or a
 // "no Abilities" passive (HookNoAbilities) turns it off.
 func (g *Game) abilityOf(h Holder) *Ability {
-	if h.InPlay == nil || h.Card.Ability == nil || noAbilitiesIn(g.allPassiveSources(), h) {
+	if h.InPlay == nil || h.Card.Ability == nil || g.noAbilitiesIn(g.allPassiveSources(), h) {
 		return nil
 	}
 	return h.Card.Ability

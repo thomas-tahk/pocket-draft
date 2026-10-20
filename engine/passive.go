@@ -81,7 +81,7 @@ func (g *Game) passiveSources() []passiveSource {
 	all := g.allPassiveSources()
 	var out []passiveSource
 	for _, src := range all {
-		if !src.ability || !noAbilitiesIn(all, src.at) {
+		if !src.ability || !g.noAbilitiesIn(all, src.at) {
 			out = append(out, src)
 		}
 	}
@@ -90,10 +90,10 @@ func (g *Game) passiveSources() []passiveSource {
 
 // noAbilitiesIn reports whether a HookNoAbilities passive among srcs applies
 // to h. It reads srcs unfiltered, so turning Abilities off never loops.
-func noAbilitiesIn(srcs []passiveSource, h Holder) bool {
+func (g *Game) noAbilitiesIn(srcs []passiveSource, h Holder) bool {
 	for _, src := range srcs {
 		for _, ps := range src.list {
-			if ps.Hook == HookNoAbilities && (ps.When == nil || ps.When(PassiveCheck{Source: src.at, Target: h})) {
+			if ps.Hook == HookNoAbilities && (ps.When == nil || ps.When(PassiveCheck{Source: src.at, Target: h, Game: g})) {
 				return true
 			}
 		}
