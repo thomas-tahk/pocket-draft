@@ -20,8 +20,27 @@ const draftPoolFile = "../public/data/draft-pool.json"
 
 // textWorks reports whether the engine can play rc as printed: it converts to
 // an engine card, a Trainer's text is built, its Ability (if any) has a
-// wording in abilityTexts, and every attack with text has an authored effect in effectsByID.
+// wording in abilityTexts, every attack with text has an authored effect in
+// effectsByID, and, for an evolution, some printing of its earlier stage works
+// too (else it could never be played).
 func textWorks(rc rawCard) bool {
+	return ownTextWorks(rc) && lineWorks(rc)
+}
+
+// lineWorks reports whether every earlier stage of rc has a working printing.
+func lineWorks(rc rawCard) bool {
+	if rc.EvolvesFrom == "" {
+		return true
+	}
+	for _, prev := range rawByID {
+		if prev.Name == rc.EvolvesFrom && textWorks(prev) {
+			return true
+		}
+	}
+	return false
+}
+
+func ownTextWorks(rc rawCard) bool {
 	c, err := toEngineCard(rc)
 	if err != nil {
 		return false
