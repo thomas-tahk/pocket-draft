@@ -45,7 +45,7 @@ type inPlayView struct {
 	Asleep      bool           `json:"asleep"`
 	Paralyzed   bool           `json:"paralyzed"`
 	Confused    bool           `json:"confused"`
-	Tool        *cardView      `json:"tool,omitempty"` // the attached Pokémon Tool
+	Tool        *cardView      `json:"tool,omitempty"`     // the attached Pokémon Tool
 	FaceDown    bool           `json:"faceDown,omitempty"` // an opponent's setup pick: everything else is blank
 }
 

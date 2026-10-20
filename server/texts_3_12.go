@@ -31,7 +31,9 @@ func basicOf(stage1 string) string {
 	return ""
 }
 
-func evolvesFromEevee(c engine.Card) bool { return c.Kind == engine.KindPokemon && c.EvolvesFrom == "Eevee" }
+func evolvesFromEevee(c engine.Card) bool {
+	return c.Kind == engine.KindPokemon && c.EvolvesFrom == "Eevee"
+}
 
 // ownedBy: the passive applies to the Pokémon of the player who played it.
 func ownedBy(c engine.PassiveCheck) bool { return c.Target.Player == c.Source.Player }
