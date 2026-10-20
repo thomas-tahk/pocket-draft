@@ -56,6 +56,9 @@ type newReq struct {
 	You    []string `json:"you"`
 	Seed   *uint64  `json:"seed"`
 	Energy []string `json:"energy"`
+	// Bot pins the bot's deck (card IDs) instead of drafting one, so tests don't
+	// shift when the draft pool does.
+	Bot []string `json:"bot"`
 }
 
 // energyChoice parses and validates a requested energy choice; nil when none
@@ -121,6 +124,11 @@ func startGame(req newReq) (gameView, *startErr) {
 		return gameView{}, &startErr{err, http.StatusInternalServerError}
 	}
 
+	if len(req.Bot) > 0 {
+		if bot, err = deckFromIDs(req.Bot); err != nil {
+			return gameView{}, &startErr{err, http.StatusBadRequest}
+		}
+	}
 	p0, p1 := fireDeck, bot
 	if len(req.You) > 0 {
 		d, err := deckFromIDs(req.You)
