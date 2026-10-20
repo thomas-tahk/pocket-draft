@@ -36,6 +36,7 @@ type Passive struct {
 	Hook  Hook
 	Value int                     // the amount, for the hooks that take one
 	When  func(PassiveCheck) bool // nil means always
+	Scale func(PassiveCheck) int  // nil: Value as is; else Value × Scale ("for each Energy")
 }
 
 // Holder is a Pokémon in play and its spot. A Stadium's holder is NoSpot with
@@ -136,12 +137,21 @@ func (g *Game) modifiers(h Hook, target Holder, foe *InPlay) []Modifier {
 			if ps.Hook != h {
 				continue
 			}
-			if ps.When == nil || ps.When(PassiveCheck{src.at, target, foe, g}) {
-				out = append(out, Modifier{src.card.Name, h, ps.Value})
+			c := PassiveCheck{src.at, target, foe, g}
+			if ps.When == nil || ps.When(c) {
+				out = append(out, Modifier{src.card.Name, h, passiveValue(ps, c)})
 			}
 		}
 	}
 	return out
+}
+
+// passiveValue is ps's amount for c, scaled when ps has a Scale.
+func passiveValue(ps Passive, c PassiveCheck) int {
+	if ps.Scale == nil {
+		return ps.Value
+	}
+	return ps.Value * ps.Scale(c)
 }
 
 func (g *Game) sumHook(h Hook, target Holder, foe *InPlay) int {
