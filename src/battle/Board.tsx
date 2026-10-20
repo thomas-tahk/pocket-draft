@@ -1,7 +1,7 @@
 import { useRef, type CSSProperties, type ReactNode } from 'react';
 import type { CardView, GameView, PlayerView } from '../game/types';
 import { ActiveSheet, useActiveCard } from './ActiveCard';
-import { ChoiceOverlay, type Choice } from './Choice';
+import { ChoiceOverlay, litKey, type Choice } from './Choice';
 import { History } from './History';
 import { InPlayCard } from './InPlayCard';
 import { CardBack, CardFace, EmptySlot, EnergyIcon, PointPips } from './pieces';
@@ -46,7 +46,7 @@ function SpotSlot({ i, mon, mirrored, usable, choice, onTap }: SlotProps) {
   const p = pulse(usable);
   return (
     <div data-testid="bench-slot" data-slot={SLOT_NAMES[i]} data-pos={i + 1} data-pick={mirrored ? undefined : `spot:${i + 1}`} {...p} className={['bt-spot', p.className].filter(Boolean).join(' ')} {...spot} onClick={() => onTap?.(i)}>
-      <Lit pos={i + 1} choice={choice}><InPlayCard mon={mon ?? null} width={BENCH_W} /></Lit>
+      <Lit side={mirrored ? 1 : 0} pos={i + 1} choice={choice}><InPlayCard mon={mon ?? null} width={BENCH_W} /></Lit>
     </div>
   );
 }
@@ -83,8 +83,8 @@ function Bench({ bench, mirrored, usable, choice, onTap }: { bench: PlayerView['
 
 // A card on your side involved in the current choice is drawn above the dim
 // layer; if tapping it answers the choice, it glows and takes the tap.
-function Lit({ pos, choice, children }: { pos: number; choice?: Choice | null; children: ReactNode }) {
-  const spot = choice?.lit.get(pos);
+function Lit({ side = 0, pos, choice, children }: { side?: number; pos: number; choice?: Choice | null; children: ReactNode }) {
+  const spot = choice?.lit.get(litKey(side, pos));
   if (!spot) return <>{children}</>;
   return <div className="bt-lit" data-lit="true" data-pickable={!!spot.pick} onClick={spot.pick}>{children}</div>;
 }
@@ -150,7 +150,7 @@ function Fan({ count, width, cardW, render }: { count: number; width: number; ca
   );
 }
 
-function OpponentSide({ p }: { p: PlayerView }) {
+function OpponentSide({ p, choice }: { p: PlayerView; choice: Choice | null }) {
   return (
     <>
       <Zone id="opp-points" place={{ top: 6, right: 0 }}><Points name="Opponent" points={p.points} /></Zone>
@@ -159,10 +159,10 @@ function OpponentSide({ p }: { p: PlayerView }) {
         <span className="bt-count" style={{ left: 'auto', right: 0, bottom: 0, transform: 'none' }}>{p.handCount}</span>
       </Zone>
       <Zone id="opp-energy" place={{ top: 80, left: 14 }}><EnergyZone player={p} scale={0.8} /></Zone>
-      <Zone id="opp-bench" place={{ top: 124, left: 76 }}><Bench bench={p.bench} mirrored /></Zone>
+      <Zone id="opp-bench" place={{ top: 124, left: 76 }}><Bench bench={p.bench} mirrored choice={choice} /></Zone>
       <Zone id="opp-discard" place={{ top: 168, left: 6 }}><DiscardPile count={p.discardCount} /></Zone>
       <Zone id="opp-deck" place={{ top: 262, left: 6 }}><DeckPile count={p.deckCount} /></Zone>
-      <Zone id="opp-active" place={{ top: 240, left: 141 }}><ActiveSpot mon={p.active} spot="opp-active" /></Zone>
+      <Zone id="opp-active" place={{ top: 240, left: 141 }}><Lit side={1} pos={0} choice={choice}><ActiveSpot mon={p.active} spot="opp-active" /></Lit></Zone>
     </>
   );
 }
@@ -208,7 +208,7 @@ export function Board({ view, onEndTurn, onReady = () => {}, choice = null, chil
     <div className="bt-board" data-testid="battle-board" ref={boardRef}
       onPointerDownCapture={() => { heldAtPress.current = !!holding; }} onPointerDown={onPointerDown}>
       <PlayContext.Provider value={holding}>
-      <OpponentSide p={opp} />
+      <OpponentSide p={opp} choice={shownChoice} />
       <Zone id="stadium" place={{ top: 432, left: 6, width: 66, height: 92 }}><StadiumSpot card={view.stadium ?? null} /></Zone>
       <Zone id="end-turn" place={{ top: 400, right: 10 }}>
         {view.phase === 'setup'

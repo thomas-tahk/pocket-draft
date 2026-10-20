@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useGameStore } from '../game/store';
 import type { GameView, InPlayView, Move } from '../game/types';
-import type { Choice } from './Choice';
+import { litKey, type Choice } from './Choice';
 import { CardFace, EnergyIcon } from './pieces';
 
 // Tap your Active to open its card (spec F9): its attacks, the ones no legal
@@ -19,15 +19,15 @@ export type Sheet = { mon: InPlayView; pos: number; moves: Move[]; pick: (m: Mov
 
 // The Bench lights up like a choice; Cancel backs out without retreating.
 function retreatChoice(moves: Move[], pick: (m: Move) => void, cancel: () => void): Choice {
-  const lit = new Map<number, { pick: () => void }>();
-  for (const m of moves) if (m.type === 'Retreat') lit.set(m.benchIndex + 1, { pick: () => pick(m) });
+  const lit = new Map<string, { pick: () => void }>();
+  for (const m of moves) if (m.type === 'Retreat') lit.set(litKey(0, m.benchIndex + 1), { pick: () => pick(m) });
   return { title: 'Choose a Pokémon to switch in', lit, buttons: [{ key: 'cancel', label: 'Cancel', pick: cancel }] };
 }
 
-// An Ability with several targets lights each of your Pokémon it can be aimed at.
+// An Ability with several targets lights each Pokémon, yours or the opponent's, it can be aimed at.
 function aimChoice(moves: Move[], pick: (m: Move) => void, cancel: () => void): Choice {
-  const lit = new Map<number, { pick: () => void }>();
-  for (const m of moves) if (m.type === 'UseAbility' && m.spot?.player === 0) lit.set(m.spot.pos, { pick: () => pick(m) });
+  const lit = new Map<string, { pick: () => void }>();
+  for (const m of moves) if (m.type === 'UseAbility' && m.spot) lit.set(litKey(m.spot.player, m.spot.pos), { pick: () => pick(m) });
   return { title: 'Choose a Pokémon', lit, buttons: [{ key: 'cancel', label: 'Cancel', pick: cancel }] };
 }
 
