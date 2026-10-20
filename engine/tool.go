@@ -20,6 +20,7 @@ func (g *Game) attachTool(p int, tool Card, at Spot) {
 	mon := targetMon(&g.S.Players[at.Player], at.Pos)
 	mon.Tool = &tool
 	g.narrate("%s attached %s to %s.", side(p), tool.Name, mon.Card.Name)
+	g.fireTool(OnAttached, at.Player, at.Pos)
 }
 
 // DiscardTool discards the Tool from the targeted Pokémon, yours or your

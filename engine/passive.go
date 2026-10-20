@@ -25,6 +25,9 @@ const (
 	HookKOPoints                   // Value is added to the points for knocking out Target, the Active, with an attack by Foe
 	HookNoHeal                     // no Pokémon can be healed (both players')
 	HookNoAbilities                // Target has no Abilities: its Ability neither works nor can be used
+	HookMaxHP                      // Value is added to Target's HP
+	HookBenchShield                // Target, on the Bench, takes no damage from the opponent's attacks and Abilities
+	HookEffectShield               // the effects of Foe's attack do nothing to Target, the defending Active; its damage still lands
 	hookCount
 )
 
@@ -201,4 +204,11 @@ func (g *Game) attackDamage(attacker int, base int) (dmg int, weakness string) {
 // Pokémon at pos (spec C9).
 func (g *Game) canBeAffected(p, pos int) bool {
 	return !g.hasHook(HookNoConditions, g.holder(p, pos), nil)
+}
+
+// BenchShielded reports whether player p's Benched Pokémon at pos is
+// protected from damage by the opponent's attacks and Abilities
+// (HookBenchShield). Anything that damages a Benched Pokémon asks this first.
+func (g *Game) BenchShielded(p, pos int) bool {
+	return pos != 0 && g.hasHook(HookBenchShield, g.holder(p, pos), g.S.Players[1-p].Active)
 }

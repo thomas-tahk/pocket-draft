@@ -87,6 +87,14 @@ type Card struct {
 
 	Ability *Ability  // a Pokémon's Ability; nil when it has none (ability.go)
 	Passive []Passive // a Tool's or Stadium's always-on text (passive.go)
+	// Triggers is a Tool's or Stadium's text that fires on an event, and
+	// StadiumUse a Stadium's "once during each player's turn" text
+	// (texts_3_13.go).
+	Triggers   []Trigger
+	StadiumUse []EffectOp
+	// LendAttacks is a Tool that lets its Pokémon use attacks it isn't printed
+	// with: given the Pokémon's card, the extra ones (Memory Light).
+	LendAttacks func(Card) []Attack
 
 	// Kind is Pokémon (the zero value) or one of the Trainer kinds. Stage,
 	// HP and the rest are meaningless on a Trainer.
@@ -114,7 +122,9 @@ func (c Card) IsTrainer() bool { return c.Kind != KindPokemon }
 
 // TextBuilt reports whether a Trainer's text is built: ops to run when played,
 // or always-on passives (a Tool or Stadium). An unbuilt Trainer can't be played.
-func (c Card) TextBuilt() bool { return c.Trainer != nil || c.Passive != nil || c.Fossil }
+func (c Card) TextBuilt() bool {
+	return c.Trainer != nil || c.Passive != nil || c.Triggers != nil || c.StadiumUse != nil || c.LendAttacks != nil || c.Fossil
+}
 
 // IsBasicPokemon reports whether c is a Basic Pokémon: what setup, the
 // opening hand and the Bench accept (a Trainer is never one).

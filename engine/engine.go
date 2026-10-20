@@ -167,6 +167,8 @@ func (g *Game) validateAndApply(ev Event) error {
 		g.applyUseAbility(e)
 	case ChooseOption:
 		g.applyChooseOption(e)
+	case UseStadium:
+		g.applyUseStadium(e)
 	case UseAttack:
 		g.applyAttack(e)
 	case EndTurn:
@@ -289,12 +291,10 @@ func (g *Game) applyAttack(e UseAttack) {
 		return
 	}
 	pl := &g.S.Players[e.Player]
-	atk := pl.Active.Card.Attacks[e.Index]
+	atk := pl.Active.Attacks()[e.Index]
 	opp := &g.S.Players[1-e.Player]
 	ctx := &EffectContext{g: g, attacker: e.Player, Damage: atk.Damage}
-	for _, op := range atk.Effect {
-		op.Apply(ctx)
-	}
+	g.runAttackEffects(e.Player, atk.Effect, ctx)
 	dmg, weakness := g.attackDamage(e.Player, ctx.Damage)
 	opp.Active.Damage += dmg
 	g.surviveKO(e.Player)
@@ -306,7 +306,7 @@ func (g *Game) applyAttack(e UseAttack) {
 	}
 
 	g.koAttacker = pl.Active
-	g.resolveAction()
+	g.resolveAttack(e.Player, dmg)
 	g.koAttacker = nil
 	// Attacking ends the turn — but a knockout may owe a prompt first.
 	if g.S.Phase == PhaseOver {
@@ -385,14 +385,18 @@ func (g *Game) resolveAction() {
 func (g *Game) removeIfKnockedOut(owner int) int {
 	pl := &g.S.Players[owner]
 	mon := pl.Active
-	if mon == nil || mon.remainingHP() > 0 {
+	if mon == nil || g.hpLeft(owner, 0) > 0 {
 		return 0
 	}
 	pts := koPoints(mon.Card)
 	if a := g.koAttacker; a != nil && owner != g.S.Active {
 		pts += g.sumHook(HookKOPoints, g.holder(owner, 0), a)
 	}
-	pl.Discard = append(pl.Discard, mon.Card)
+	if g.knockedOut(owner) {
+		pl.Hand = append(pl.Hand, mon.Card)
+	} else {
+		pl.Discard = append(pl.Discard, mon.Card)
+	}
 	if mon.Tool != nil {
 		pl.Discard = append(pl.Discard, *mon.Tool)
 	}
@@ -517,6 +521,7 @@ func (g *Game) concludeTurn() {
 // resolveStatus applies poison/burn to both Actives at end of turn (mode 2,
 // automatic), then resolves any knockouts as one action.
 func (g *Game) resolveStatus() {
+	g.fireTurnEnd()
 	for i := 0; i < 2; i++ {
 		if g.S.Players[i].Active == nil {
 			continue

@@ -189,6 +189,11 @@ var trainerEffects = map[string][]engine.EffectOp{
 // only to the Pokémon it is attached to: When compares Source and Target.
 var trainerPassives = map[string][]engine.Passive{}
 
+// trainerBuilt maps a Tool's or Stadium's exact printed text to a function that
+// fills in the rest of its card: triggers, Stadium use, lent attacks, or
+// passives together with them (texts_3_13.go).
+var trainerBuilt = map[string]func(*engine.Card){}
+
 // abilityTexts maps an Ability's printed wording (ability.effect, exactly as
 // scraped) to the engine Ability that plays it — one entry per distinct
 // wording, so every printing with that wording gets it. Name is filled from
@@ -234,7 +239,7 @@ func toTrainerCard(rc rawCard) engine.Card {
 		return engine.Card{ID: rc.ID, Name: rc.Name, Kind: engine.KindItem, Fossil: true,
 			HP: hp, Type: engine.Colorless, Weakness: engine.NoEnergy}
 	}
-	return engine.Card{
+	c := engine.Card{
 		ID:       rc.ID,
 		Name:     rc.Name,
 		Kind:     trainerKind(rc),
@@ -242,6 +247,10 @@ func toTrainerCard(rc rawCard) engine.Card {
 		Passive:  trainerPassives[rc.TrainerText],
 		Weakness: engine.NoEnergy,
 	}
+	if build := trainerBuilt[rc.TrainerText]; build != nil {
+		build(&c)
+	}
+	return c
 }
 
 // toEngineCard converts a scraped card into the engine's Card. It errors only if

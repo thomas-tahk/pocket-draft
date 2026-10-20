@@ -339,6 +339,7 @@ func toGameView(g *engine.Game, viewer int) gameView {
 	var players [2]playerView
 	for i := range players {
 		players[i] = toPlayerView(s.Players[i], viewer == i)
+		liveStats(g, i, &players[i])
 		players[i].Ready = s.Ready(i)
 		if s.Phase == engine.PhaseSetup && viewer != i {
 			hideSetupPicks(&players[i])
@@ -409,4 +410,24 @@ func toActionViews(g *engine.Game, viewer int) []actionView {
 		out = append(out, v)
 	}
 	return out
+}
+
+// liveStats overlays what Tools and the Stadium change on player p's
+// Pokémon: their HP and the attacks a Tool lends.
+func liveStats(g *engine.Game, p int, pv *playerView) {
+	pl := g.S.Players[p]
+	overlay := func(v *inPlayView, m *engine.InPlay, pos int) {
+		if v == nil || m == nil {
+			return
+		}
+		v.Card.HP = g.MaxHP(p, pos)
+		v.RemainingHP = v.Card.HP - m.Damage
+		c := m.Card
+		c.Attacks = m.Attacks()
+		v.Card.Attacks = toCardView(c).Attacks
+	}
+	overlay(pv.Active, pl.Active, 0)
+	for i, m := range pl.Bench {
+		overlay(pv.Bench[i], m, i+1)
+	}
 }

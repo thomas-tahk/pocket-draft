@@ -52,7 +52,7 @@ func (v ForTurn) Apply(ctx *EffectContext) {
 // each point of reduction drops one [C] (never below none).
 func (g *Game) attackCost(p, i int) []Energy {
 	at := g.holder(p, 0)
-	cost := at.Card.Attacks[i].Cost
+	cost := at.Attacks()[i].Cost
 	cut := -g.sumHook(HookColorlessCost, at, nil)
 	if cut <= 0 {
 		return cost
@@ -72,9 +72,9 @@ func (g *Game) attackCost(p, i int) []Energy {
 // knock it out and HookSurviveKO protects it (Hala).
 func (g *Game) surviveKO(attacker int) {
 	def := g.holder(1-attacker, 0)
-	if def.remainingHP() > 0 || !g.hasHook(HookSurviveKO, def, g.S.Players[attacker].Active) {
+	if g.hpLeft(1-attacker, 0) > 0 || !g.hasHook(HookSurviveKO, def, g.S.Players[attacker].Active) {
 		return
 	}
-	def.Damage = def.Card.HP - 10
+	def.Damage = g.maxHP(def) - 10
 	g.narrate("%s's %s was not Knocked Out: its HP is now 10.", side(1-attacker), def.Card.Name)
 }

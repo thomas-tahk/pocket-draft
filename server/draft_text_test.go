@@ -20,7 +20,7 @@ func modelable(rc rawCard) bool {
 	if _, err := toEngineCard(rc); err != nil {
 		return false
 	}
-	if rc.CardType == "Trainer" && trainerEffects[rc.TrainerText] == nil && trainerPassives[rc.TrainerText] == nil &&
+	if rc.CardType == "Trainer" && trainerEffects[rc.TrainerText] == nil && trainerPassives[rc.TrainerText] == nil && trainerBuilt[rc.TrainerText] == nil &&
 		!strings.HasPrefix(rc.TrainerText, "Play this card as if it were a 40-HP Basic") {
 		return false
 	}

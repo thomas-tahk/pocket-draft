@@ -57,6 +57,7 @@ var moveRules = []moveRule{
 	rule(listRetreatDiscard, (*Game).checkRetreatDiscard, nil),
 	rule(listUseAbility, (*Game).checkUseAbility, nil),
 	rule(listChooseOption, (*Game).checkChooseOption, nil),
+	rule(listUseStadium, (*Game).checkUseStadium, nil),
 	rule(listAttack, (*Game).checkAttack, nil),
 	rule(func(_ *Game, p int) []EndTurn { return []EndTurn{{Player: p}} }, (*Game).checkEndTurn, nil),
 	rule(func(_ *Game, p int) []Concede { return []Concede{{Player: p}} }, (*Game).checkConcede, nil),
@@ -269,7 +270,7 @@ func listAttack(g *Game, p int) []UseAttack {
 		return nil
 	}
 	var out []UseAttack
-	for i := range pl.Active.Card.Attacks {
+	for i := range pl.Active.Attacks() {
 		out = append(out, UseAttack{Player: p, Index: i})
 	}
 	return out
@@ -475,7 +476,7 @@ func (g *Game) checkAttack(e UseAttack) error {
 	if pl.Active.cantAct() {
 		return fmt.Errorf("%s is %s and can't attack", pl.Active.Card.Name, pl.Active.special)
 	}
-	if e.Index < 0 || e.Index >= len(pl.Active.Card.Attacks) {
+	if e.Index < 0 || e.Index >= len(pl.Active.Attacks()) {
 		return errors.New("invalid attack index")
 	}
 	if !canPay(pl.Active.Energy, g.attackCost(e.Player, e.Index)) {

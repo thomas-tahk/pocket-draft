@@ -22,6 +22,7 @@ type EffectContext struct {
 	// spot it was dropped on (NoSpot when it has none).
 	Card   Card
 	Target Spot
+	Picked string // the hand card a Stadium's use picked (UseStadium)
 }
 
 // Player is the acting player's side.

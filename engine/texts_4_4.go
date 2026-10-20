@@ -35,7 +35,7 @@ func (g *Game) checkupAbilities() {
 
 func (g *Game) checkupAbility(p, pos int) {
 	at := g.holder(p, pos)
-	if at.InPlay == nil || at.remainingHP() <= 0 {
+	if at.InPlay == nil || g.hpLeft(p, pos) <= 0 {
 		return
 	}
 	a := g.abilityOf(at)
@@ -138,7 +138,7 @@ func (v MoveDamageHere) CanPlay(ctx *EffectContext) error {
 	switch {
 	case from == nil || from == to || from.Damage == 0:
 		return errNothingMoves
-	case to.remainingHP() <= min(v.N, from.Damage):
+	case ctx.g.hpLeft(ctx.attacker, ctx.pos) <= min(v.N, from.Damage):
 		return errWouldKOSelf
 	}
 	return nil
@@ -158,9 +158,8 @@ func (v MoveDamageHere) Apply(ctx *EffectContext) {
 type MoveAllDamageHere struct{}
 
 func (MoveAllDamageHere) Targets(ctx *EffectContext) []Spot {
-	self := ctx.self()
 	return ctx.g.ownSpots(ctx.attacker, func(s Spot, m *InPlay) bool {
-		return s.Pos != ctx.pos && m.Damage > 0 && (ctx.pos == 0 || self.remainingHP() > m.Damage)
+		return s.Pos != ctx.pos && m.Damage > 0 && (ctx.pos == 0 || ctx.g.hpLeft(ctx.attacker, ctx.pos) > m.Damage)
 	})
 }
 
@@ -182,7 +181,7 @@ func (v Combust) CanPlay(ctx *EffectContext) error {
 	if indexOfEnergy(ctx.Player().DiscardedEnergy, v.Type) < 0 {
 		return errNothingMoves
 	}
-	if ctx.pos != 0 && ctx.self().remainingHP() <= v.Damage {
+	if ctx.pos != 0 && ctx.g.hpLeft(ctx.attacker, ctx.pos) <= v.Damage {
 		return errWouldKOSelf
 	}
 	return nil

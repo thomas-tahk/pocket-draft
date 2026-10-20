@@ -66,6 +66,8 @@ type Player struct {
 	SupporterUsed bool   // played a Supporter already this turn (spec A1)
 	StadiumUsed   bool   // played a Stadium already this turn (spec A6)
 
+	StadiumUseTurn int // the Turn this player last used the Stadium in play (UseStadium); 0 never
+
 	// DiscardedEnergy is every energy this player has discarded, oldest first,
 	// for cards that count discarded energy (spec T6).
 	DiscardedEnergy []Energy
