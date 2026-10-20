@@ -47,6 +47,8 @@ var moveRules = []moveRule{
 	rule(listSetupActive, (*Game).checkSetupActive, nil),
 	rule(listSetupBench, (*Game).checkSetupBench, nil),
 	rule(func(_ *Game, p int) []SetupReady { return []SetupReady{{Player: p}} }, (*Game).checkSetupReady, nil),
+	rule(listSetupReturn, (*Game).checkSetupReturn, nil),
+	rule(listSetupMove, (*Game).checkSetupMove, nil),
 	rule(listChooseActive, (*Game).checkChooseActive, nil),
 	rule(listPlayBasic, (*Game).checkPlayBasic, nil),
 	rule(listAttach, (*Game).checkAttach, nil),

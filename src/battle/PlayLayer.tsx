@@ -29,7 +29,7 @@ function Ghost({ holding, boardRef }: { holding: Holding; boardRef: RefObject<HT
   const { held, pos } = holding;
   return (
     <div className="bt-ghost" data-testid="play-ghost" style={{ left: pos.x - rect.left, top: pos.y - rect.top }}>
-      {held.kind === 'hand' ? <CardFace card={held.card} width={80} /> : <EnergyIcon type={held.type} size={34} testId="ghost-energy" />}
+      {held.kind === 'energy' ? <EnergyIcon type={held.type} size={34} testId="ghost-energy" /> : <CardFace card={held.card} width={80} />}
     </div>
   );
 }

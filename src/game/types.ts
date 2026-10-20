@@ -31,6 +31,7 @@ export type InPlayView = {
   paralyzed: boolean;
   confused: boolean;
   tool?: CardView; // the attached Pokémon Tool
+  faceDown?: boolean; // an opponent's setup pick: the card is hidden until both are Ready
 };
 
 export type PlayerView = {
@@ -96,6 +97,8 @@ export type Move =
   | { type: 'SetupActive'; player: number; cardId: string }
   | { type: 'SetupBench'; player: number; cardId: string; slot: number }
   | { type: 'SetupReady'; player: number }
+  | { type: 'SetupReturn'; player: number; target: number } // spot 0 Active, n Bench slot n-1
+  | { type: 'SetupMove'; player: number; index: number; target: number } // from index to target
   | { type: 'PlayBasic'; player: number; cardId: string; slot: number }
   | { type: 'AttachEnergy'; player: number; target: number }
   | { type: 'Evolve'; player: number; handCardId: string; target: number }

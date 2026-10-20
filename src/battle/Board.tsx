@@ -45,7 +45,7 @@ function SpotSlot({ i, mon, mirrored, usable, choice, onTap }: SlotProps) {
   const spot = useSpot(mirrored ? `opp-bench-${i}` as Spot : (`bench-${i}` as Spot));
   const p = pulse(usable);
   return (
-    <div data-testid="bench-slot" data-slot={SLOT_NAMES[i]} data-pos={i + 1} {...p} className={['bt-spot', p.className].filter(Boolean).join(' ')} {...spot} onClick={() => onTap?.(i)}>
+    <div data-testid="bench-slot" data-slot={SLOT_NAMES[i]} data-pos={i + 1} data-pick={mirrored ? undefined : `spot:${i + 1}`} {...p} className={['bt-spot', p.className].filter(Boolean).join(' ')} {...spot} onClick={() => onTap?.(i)}>
       <Lit pos={i + 1} choice={choice}><InPlayCard mon={mon ?? null} width={BENCH_W} /></Lit>
     </div>
   );
@@ -63,6 +63,11 @@ function HandCard({ card, index }: { card: CardView; index: number }) {
   const holding = useHolding();
   const lifted = holding?.held.kind === 'hand' && holding.held.index === index;
   return <div data-pick={`hand:${index}`} data-card-id={card.id} data-lifted={lifted}><CardFace card={card} width={80} /></div>;
+}
+
+// The hand is also a drop spot: a card placed at setup goes back to it.
+function HandSpot({ children }: { children: ReactNode }) {
+  return <div className="bt-spot" style={{ position: 'absolute', inset: 0 }} {...useSpot('hand')}>{children}</div>;
 }
 
 // Bench slots in screen order. Yours read left, behind, right; the opponent
@@ -167,15 +172,17 @@ function YourSide({ p, choice, onTapActive, onTapBench }: { p: PlayerView; choic
   return (
     <>
       <Zone id="my-active" place={{ top: 440, left: 141 }}>
-        <div data-testid="active-card" {...pulse(usable.active)} onClick={onTapActive}><Lit pos={0} choice={choice}><ActiveSpot mon={p.active} /></Lit></div>
+        <div data-testid="active-card" data-pick="spot:0" {...pulse(usable.active)} onClick={onTapActive}><Lit pos={0} choice={choice}><ActiveSpot mon={p.active} /></Lit></div>
       </Zone>
       <Zone id="my-deck" place={{ top: 446, right: 6 }}><DeckPile count={p.deckCount} /></Zone>
       <Zone id="my-discard" place={{ top: 536, right: 6 }}><DiscardPile count={p.discardCount} /></Zone>
       <Zone id="my-bench" place={{ top: 604, left: 76 }}><Bench bench={p.bench} mirrored={false} usable={usable.bench} choice={choice} onTap={onTapBench} /></Zone>
       <Zone id="my-hand" place={{ top: 722, left: 36, width: 274, height: 112 }}>
-        <Fan count={p.hand.length} width={274} cardW={80} render={(i) => (
-          <div data-testid="hand-card" {...pulse(usable.hand.has(p.hand[i].id))}><HandCard card={p.hand[i] as CardView} index={i} /></div>
-        )} />
+        <HandSpot>
+          <Fan count={p.hand.length} width={274} cardW={80} render={(i) => (
+            <div data-testid="hand-card" {...pulse(usable.hand.has(p.hand[i].id))}><HandCard card={p.hand[i] as CardView} index={i} /></div>
+          )} />
+        </HandSpot>
       </Zone>
       <Zone id="my-energy" place={{ top: 712, left: 318 }} extra={{ 'data-pick': 'energy' }}><EnergyZone player={p} scale={1} /></Zone>
       <Zone id="my-points" place={{ bottom: 0, left: 0 }}><Points name="You" points={p.points} /></Zone>

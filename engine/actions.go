@@ -19,6 +19,8 @@ type ActionKind string
 const (
 	ActSetup        ActionKind = "setup" // a Basic placed at setup (Active or bench)
 	ActReady        ActionKind = "ready"
+	ActSetupReturn  ActionKind = "setup_return" // a placed card taken back before Ready
+	ActSetupMove    ActionKind = "setup_move"   // a placed card moved before Ready
 	ActPlayBasic    ActionKind = "play_basic"
 	ActAttachEnergy ActionKind = "attach_energy"
 	ActEvolve       ActionKind = "evolve"
@@ -50,6 +52,10 @@ func (g *Game) describe(ev Event) Action {
 		return Action{e.Player, ActSetup, g.handCard(e.Player, e.CardID), Spot{e.Player, 0}, nil, nil}
 	case SetupBench:
 		return Action{e.Player, ActSetup, g.handCard(e.Player, e.CardID), Spot{e.Player, e.Slot + 1}, nil, nil}
+	case SetupReturn:
+		return Action{e.Player, ActSetupReturn, Card{}, Spot{e.Player, e.Pos}, nil, nil}
+	case SetupMove:
+		return Action{e.Player, ActSetupMove, Card{}, Spot{e.Player, e.To}, nil, nil}
 	case SetupReady:
 		return Action{e.Player, ActReady, Card{}, NoSpot, nil, nil}
 	case PlayBasic:

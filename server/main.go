@@ -212,6 +212,10 @@ func toEvent(r moveReq) (engine.Event, error) {
 		return engine.SetupBench{Player: r.Player, CardID: r.CardID, Slot: r.Slot}, nil
 	case "SetupReady":
 		return engine.SetupReady{Player: r.Player}, nil
+	case "SetupReturn":
+		return engine.SetupReturn{Player: r.Player, Pos: r.Target}, nil
+	case "SetupMove": // from in `index`, to in `target`
+		return engine.SetupMove{Player: r.Player, From: r.Index, To: r.Target}, nil
 	case "PlayBasic":
 		return engine.PlayBasic{Player: r.Player, CardID: r.CardID, Slot: r.Slot}, nil
 	case "AttachEnergy":
@@ -264,6 +268,10 @@ func fromEvent(ev engine.Event) moveReq {
 		return moveReq{Type: "SetupBench", Player: e.Player, CardID: e.CardID, Slot: e.Slot}
 	case engine.SetupReady:
 		return moveReq{Type: "SetupReady", Player: e.Player}
+	case engine.SetupReturn:
+		return moveReq{Type: "SetupReturn", Player: e.Player, Target: e.Pos}
+	case engine.SetupMove:
+		return moveReq{Type: "SetupMove", Player: e.Player, Index: e.From, Target: e.To}
 	case engine.PlayBasic:
 		return moveReq{Type: "PlayBasic", Player: e.Player, CardID: e.CardID, Slot: e.Slot}
 	case engine.AttachEnergy:

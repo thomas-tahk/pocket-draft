@@ -46,6 +46,7 @@ type inPlayView struct {
 	Paralyzed   bool           `json:"paralyzed"`
 	Confused    bool           `json:"confused"`
 	Tool        *cardView      `json:"tool,omitempty"` // the attached Pokémon Tool
+	FaceDown    bool           `json:"faceDown,omitempty"` // an opponent's setup pick: everything else is blank
 }
 
 type playerView struct {
@@ -334,12 +335,21 @@ func toPlayerView(p engine.Player, isViewer bool) playerView {
 	}
 }
 
-// hideSetupPicks empties an opponent's Active and Bench while setup is still
-// running: their picks stay hidden until both players are Ready (spec S5).
-// The hand count already moved, which is no more than the real game shows.
+// hideSetupPicks turns an opponent's placed Pokémon face down while setup is
+// still running: their picks stay hidden until both players are Ready (spec
+// S5), but how many are placed shows (owner 2026-10-19 (8)).
 func hideSetupPicks(p *playerView) {
-	p.Active = nil
-	p.Bench = make([]*inPlayView, len(p.Bench))
+	p.Active = faceDown(p.Active)
+	for i, m := range p.Bench {
+		p.Bench[i] = faceDown(m)
+	}
+}
+
+func faceDown(m *inPlayView) *inPlayView {
+	if m == nil {
+		return nil
+	}
+	return &inPlayView{FaceDown: true, Energy: map[string]int{}}
 }
 
 // humanSeat is the player the browser plays; the bot is the other seat.
@@ -424,12 +434,16 @@ func toActionViews(g *engine.Game, viewer int) []actionView {
 			c := toCardView(a.Card)
 			v.Card = &c
 		}
-		if a.Kind == engine.ActSetup && a.Player != viewer && g.S.Turn == 0 {
+		if isSetupKind(a.Kind) && a.Player != viewer && g.S.Turn == 0 {
 			v.Card, v.Result, v.Target = nil, []string{}, spotView{-1, -1}
 		}
 		out = append(out, v)
 	}
 	return out
+}
+
+func isSetupKind(k engine.ActionKind) bool {
+	return k == engine.ActSetup || k == engine.ActSetupReturn || k == engine.ActSetupMove
 }
 
 // liveStats overlays what Tools and the Stadium change on player p's

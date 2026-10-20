@@ -24,6 +24,9 @@ func botChoice(g *engine.Game) (engine.Event, bool) {
 	if g.S.Pending != nil {
 		first = g.S.Pending.Player
 	}
+	if g.S.Phase == engine.PhaseSetup {
+		first = 1 - humanSeat // the bot places while the human still is
+	}
 	for _, p := range []int{first, 1 - first} {
 		if ev, ok := bestMove(g.LegalMoves(p)); ok {
 			return ev, true
@@ -60,6 +63,8 @@ func moveRank(ev engine.Event) (int, bool) {
 		return 2, true
 	case engine.SetupReady:
 		return 1, true
+	case engine.SetupReturn, engine.SetupMove:
+		return 0, false
 	case engine.AttachEnergy:
 		if e.Target == 0 {
 			return 3, true

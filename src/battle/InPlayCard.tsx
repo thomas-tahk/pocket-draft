@@ -1,5 +1,5 @@
 import type { InPlayView } from '../game/types';
-import { CardFace, EmptySlot, EnergyIcon } from './pieces';
+import { CardBack, CardFace, EmptySlot, EnergyIcon } from './pieces';
 
 // A Pokémon in play (L2): real card image, HP number and bar at the top right,
 // attached energy as type icons along the bottom, status icons.
@@ -41,6 +41,7 @@ function StatusIcons({ mon }: { mon: InPlayView }) {
 
 export function InPlayCard({ mon, width }: { mon: InPlayView | null; width: number }) {
   if (!mon) return <EmptySlot width={width} />;
+  if (mon.faceDown) return <CardBack width={width} />;
   return (
     <div style={{ position: 'relative' }} data-zoom={mon.card.id}>
       <CardFace card={mon.card} width={width} />

@@ -146,6 +146,10 @@ func (g *Game) validateAndApply(ev Event) error {
 		g.applySetupBench(e)
 	case SetupReady:
 		g.applySetupReady(e)
+	case SetupReturn:
+		g.applySetupReturn(e)
+	case SetupMove:
+		g.applySetupMove(e)
 	case ChooseNewActive:
 		g.applyChooseActive(e)
 	case PlayBasic:

@@ -11,7 +11,7 @@ import './history.css';
 
 // Placeholder wording (owner's to change, see docs/questions/M1.md).
 const KIND_LABEL: Record<string, string> = {
-  setup: 'Placed', ready: 'Ready', play_basic: 'Played to Bench', attach_energy: 'Attached energy',
+  setup: 'Placed', setup_return: 'Took back', setup_move: 'Moved', ready: 'Ready', play_basic: 'Played to Bench', attach_energy: 'Attached energy',
   evolve: 'Evolved', retreat: 'Retreated', retreat_pay: 'Paid retreat', attack: 'Attacked',
   end_turn: 'Ended turn', promote: 'New Active', concede: 'Conceded',
 };
