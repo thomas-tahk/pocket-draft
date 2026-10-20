@@ -60,8 +60,12 @@ func (g *Game) damagedTriggers(p, dmg int) {
 	if def == nil || dmg <= 0 {
 		return
 	}
-	a := def.Card.Ability
+	at := g.holder(p, 0)
+	a := g.abilityOf(at)
 	if a == nil || len(a.WhenDamaged) == 0 || abilitySpotOK(a, 0) != nil {
+		return
+	}
+	if a.When != nil && !a.When(AbilityCheck{Self: at, Game: g}) {
 		return
 	}
 	g.narrate("%s's %s's %s.", side(p), def.Card.Name, a.Name)
