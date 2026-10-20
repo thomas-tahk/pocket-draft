@@ -13,6 +13,11 @@ type attackView struct {
 	Damage int      `json:"damage"`
 }
 
+type abilityView struct {
+	Name   string `json:"name"`
+	Effect string `json:"effect"` // the printed text
+}
+
 type cardView struct {
 	ID          string       `json:"id"`
 	Name        string       `json:"name"`
@@ -26,6 +31,7 @@ type cardView struct {
 	RetreatCost int          `json:"retreatCost"`
 	Weakness    string       `json:"weakness,omitempty"`
 	Attacks     []attackView `json:"attacks"`
+	Ability     *abilityView `json:"ability,omitempty"`
 }
 
 type inPlayView struct {
@@ -244,7 +250,21 @@ func toCardView(c engine.Card) cardView {
 		RetreatCost: c.RetreatCost,
 		Weakness:    energyLabel(c.Weakness),
 		Attacks:     atks,
+		Ability:     abilityViewOf(c),
 	}
+}
+
+// abilityViewOf is the Ability the card plays, with its printed text from the
+// scrape; nil when it has none.
+func abilityViewOf(c engine.Card) *abilityView {
+	if c.Ability == nil {
+		return nil
+	}
+	v := &abilityView{Name: c.Ability.Name}
+	if raw := rawByID[c.ID].Ability; raw != nil {
+		v.Effect = raw.Effect
+	}
+	return v
 }
 
 func toInPlayView(p *engine.InPlay) *inPlayView {

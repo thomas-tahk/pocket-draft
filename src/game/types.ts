@@ -1,6 +1,8 @@
 // Mirrors server/view.go. The client renders these; it does not own them.
 export type AttackView = { name: string; cost: string[]; damage: number };
 
+export type AbilityView = { name: string; effect: string }; // effect is the printed text
+
 export type CardView = {
   id: string;
   name: string;
@@ -14,6 +16,7 @@ export type CardView = {
   retreatCost: number;
   weakness?: string;
   attacks: AttackView[];
+  ability?: AbilityView;
 };
 
 export type InPlayView = {
@@ -106,7 +109,9 @@ export type Move =
   // spot: where the Trainer goes (pos 0 Active, n Bench slot n-1; player -1
   // pos -2 is the Stadium slot); absent for a Trainer with no target
   | { type: 'PlayTrainer'; player: number; cardId: string; spot?: { player: number; pos: number } }
-  | { type: 'DiscardFossil'; player: number; target: number };
+  | { type: 'DiscardFossil'; player: number; target: number }
+  // target: the Pokémon using it (0 Active, n Bench slot n-1); spot: what it is aimed at
+  | { type: 'UseAbility'; player: number; target: number; spot?: { player: number; pos: number } };
 
 export type MoveResp = { ok: boolean; error?: string; state: GameView };
 export type BotResp = { acted: boolean; state: GameView };

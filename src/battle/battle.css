@@ -315,3 +315,5 @@
 .bt-sheet-cost { display: flex; gap: calc(var(--u) * 2); min-width: calc(var(--u) * 40); }
 .bt-sheet-name { flex: 1; }
 .bt-sheet-retreat { justify-content: flex-start; }
+.bt-sheet-ability { flex-direction: column; align-items: flex-start; gap: calc(var(--u) * 4); }
+.bt-sheet-effect { font-weight: 500; font-size: calc(var(--u) * 12); }

@@ -11,6 +11,7 @@ export function usableCards(moves: Move[]): Usable {
     if ('cardId' in m && m.cardId) out.hand.add(m.cardId);
     if (m.type === 'Evolve') out.hand.add(m.handCardId);
     if (m.type === 'UseAttack' || m.type === 'Retreat') out.active = true;
+    if (m.type === 'UseAbility') { if (m.target === 0) out.active = true; else out.bench.add(m.target - 1); }
     if (m.type === 'ChooseNewActive') out.bench.add(m.benchIndex);
   }
   return out;

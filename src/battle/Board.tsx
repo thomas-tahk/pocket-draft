@@ -39,13 +39,13 @@ function useSpot(spot: Spot | null) {
   return { 'data-spot': spot, 'data-glow': holding?.moves.has(spot) ?? false };
 }
 
-type SlotProps = { i: number; mon: PlayerView['bench'][number]; mirrored: boolean; usable: boolean; choice?: Choice | null };
+type SlotProps = { i: number; mon: PlayerView['bench'][number]; mirrored: boolean; usable: boolean; choice?: Choice | null; onTap?: (slot: number) => void };
 
-function SpotSlot({ i, mon, mirrored, usable, choice }: SlotProps) {
+function SpotSlot({ i, mon, mirrored, usable, choice, onTap }: SlotProps) {
   const spot = useSpot(mirrored ? `opp-bench-${i}` as Spot : (`bench-${i}` as Spot));
   const p = pulse(usable);
   return (
-    <div data-testid="bench-slot" data-slot={SLOT_NAMES[i]} data-pos={i + 1} {...p} className={['bt-spot', p.className].filter(Boolean).join(' ')} {...spot}>
+    <div data-testid="bench-slot" data-slot={SLOT_NAMES[i]} data-pos={i + 1} {...p} className={['bt-spot', p.className].filter(Boolean).join(' ')} {...spot} onClick={() => onTap?.(i)}>
       <Lit pos={i + 1} choice={choice}><InPlayCard mon={mon ?? null} width={BENCH_W} /></Lit>
     </div>
   );
@@ -67,11 +67,11 @@ function HandCard({ card, index }: { card: CardView; index: number }) {
 
 // Bench slots in screen order. Yours read left, behind, right; the opponent
 // faces you, so their left is on your right.
-function Bench({ bench, mirrored, usable, choice }: { bench: PlayerView['bench']; mirrored: boolean; usable?: Set<number>; choice?: Choice | null }) {
+function Bench({ bench, mirrored, usable, choice, onTap }: { bench: PlayerView['bench']; mirrored: boolean; usable?: Set<number>; choice?: Choice | null; onTap?: (slot: number) => void }) {
   const order = mirrored ? [2, 1, 0] : [0, 1, 2];
   return (
     <div style={{ display: 'flex', gap: 'calc(var(--u) * 8)' }}>
-      {order.map((i) => <SpotSlot key={i} i={i} mon={bench[i]} mirrored={mirrored} usable={!!usable?.has(i)} choice={choice} />)}
+      {order.map((i) => <SpotSlot key={i} i={i} mon={bench[i]} mirrored={mirrored} usable={!!usable?.has(i)} choice={choice} onTap={onTap} />)}
     </div>
   );
 }
@@ -162,7 +162,7 @@ function OpponentSide({ p }: { p: PlayerView }) {
   );
 }
 
-function YourSide({ p, choice, onTapActive }: { p: PlayerView; choice: Choice | null; onTapActive: () => void }) {
+function YourSide({ p, choice, onTapActive, onTapBench }: { p: PlayerView; choice: Choice | null; onTapActive: () => void; onTapBench: (slot: number) => void }) {
   const usable = usableCards(p.legalMoves);
   return (
     <>
@@ -171,7 +171,7 @@ function YourSide({ p, choice, onTapActive }: { p: PlayerView; choice: Choice | 
       </Zone>
       <Zone id="my-deck" place={{ top: 446, right: 6 }}><DeckPile count={p.deckCount} /></Zone>
       <Zone id="my-discard" place={{ top: 536, right: 6 }}><DiscardPile count={p.discardCount} /></Zone>
-      <Zone id="my-bench" place={{ top: 604, left: 76 }}><Bench bench={p.bench} mirrored={false} usable={usable.bench} choice={choice} /></Zone>
+      <Zone id="my-bench" place={{ top: 604, left: 76 }}><Bench bench={p.bench} mirrored={false} usable={usable.bench} choice={choice} onTap={onTapBench} /></Zone>
       <Zone id="my-hand" place={{ top: 722, left: 36, width: 274, height: 112 }}>
         <Fan count={p.hand.length} width={274} cardW={80} render={(i) => (
           <div data-testid="hand-card" {...pulse(usable.hand.has(p.hand[i].id))}><HandCard card={p.hand[i] as CardView} index={i} /></div>
@@ -196,6 +196,7 @@ export function Board({ view, onEndTurn, onReady = () => {}, choice = null, chil
   // long press is a zoom (F2); neither opens the card (F9).
   const heldAtPress = useRef(false);
   const onTapActive = () => { if (!heldAtPress.current && !zoomOpened.current) activeCard.open(); };
+  const onTapBench = (slot: number) => { if (!heldAtPress.current && !zoomOpened.current) activeCard.openBench(slot); };
   return (
     <div className="bt-board" data-testid="battle-board" ref={boardRef}
       onPointerDownCapture={() => { heldAtPress.current = !!holding; }} onPointerDown={onPointerDown}>
@@ -207,7 +208,7 @@ export function Board({ view, onEndTurn, onReady = () => {}, choice = null, chil
           ? <ReadyButton view={view} onReady={onReady} />
           : <button className="bt-endturn" disabled={!yourTurn} onClick={onEndTurn}>End Turn</button>}
       </Zone>
-      <YourSide p={you} choice={shownChoice} onTapActive={onTapActive} />
+      <YourSide p={you} choice={shownChoice} onTapActive={onTapActive} onTapBench={onTapBench} />
       </PlayContext.Provider>
       <History actions={view.actions} />
       <PlayLayer holding={holding} flash={flash} boardRef={boardRef} />
