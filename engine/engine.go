@@ -365,7 +365,7 @@ func koPoints(c Card) int {
 func (g *Game) resolveAction() {
 	var pts [2]int
 	for owner := 0; owner < 2; owner++ {
-		pts[1-owner] += g.removeIfKnockedOut(owner)
+		pts[1-owner] += g.removeIfKnockedOut(owner) + g.removeBenchKnockouts(owner)
 	}
 	for scorer := 0; scorer < 2; scorer++ {
 		if pts[scorer] == 0 {
@@ -392,6 +392,30 @@ func (g *Game) removeIfKnockedOut(owner int) int {
 	if a := g.koAttacker; a != nil && owner != g.S.Active {
 		pts += g.sumHook(HookKOPoints, g.holder(owner, 0), a)
 	}
+	pl.Active = nil
+	g.discardKnockedOut(owner, mon)
+	return pts
+}
+
+// removeBenchKnockouts discards a player's Benched Pokémon with no HP left
+// (damage an Ability put on the Bench) and returns what they score.
+func (g *Game) removeBenchKnockouts(owner int) int {
+	pl := &g.S.Players[owner]
+	pts := 0
+	for slot, mon := range pl.Bench {
+		if mon != nil && mon.remainingHP() <= 0 {
+			pl.Bench[slot] = nil
+			g.discardKnockedOut(owner, mon)
+			pts += koPoints(mon.Card)
+		}
+	}
+	return pts
+}
+
+// discardKnockedOut sends a knocked-out Pokémon, already out of play, and its
+// Tool to its owner's discard pile.
+func (g *Game) discardKnockedOut(owner int, mon *InPlay) {
+	pl := &g.S.Players[owner]
 	if g.knockedOut(owner) {
 		pl.Hand = append(pl.Hand, mon.Card)
 	} else {
@@ -400,9 +424,7 @@ func (g *Game) removeIfKnockedOut(owner int) int {
 	if mon.Tool != nil {
 		pl.Discard = append(pl.Discard, *mon.Tool)
 	}
-	pl.Active = nil
 	g.narrate("%s's %s was Knocked Out.", side(owner), mon.Card.Name)
-	return pts
 }
 
 // checkResult ends the game if an action decided it (spec E2, E3, E5): both at
