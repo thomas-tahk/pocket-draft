@@ -407,7 +407,7 @@ func (g *Game) removeBenchKnockouts(owner int) int {
 	pl := &g.S.Players[owner]
 	pts := 0
 	for slot, mon := range pl.Bench {
-		if mon != nil && mon.remainingHP() <= 0 {
+		if mon != nil && g.hpLeft(owner, slot+1) <= 0 {
 			pl.Bench[slot] = nil
 			g.discardKnockedOut(owner, mon)
 			pts += koPoints(mon.Card)
