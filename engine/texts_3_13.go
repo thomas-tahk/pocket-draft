@@ -124,14 +124,14 @@ func (g *Game) resolveAttack(attacker, dmg int) {
 	g.resolveAction()
 }
 
-// knockedOut runs the knockout triggers for owner's Active mon, still in
+// knockedOut runs the knockout triggers for owner's Pokémon at pos, still in
 // place, and reports whether it goes to the hand instead of the discard.
-func (g *Game) knockedOut(owner int) bool {
+func (g *Game) knockedOut(owner, pos int) bool {
 	if g.koAttacker == nil || owner == g.S.Active {
 		return false
 	}
 	g.fireTool(OnKnocksOut, g.S.Active, 0)
-	return g.fireTool(OnKnockedOut, owner, 0)
+	return g.fireTool(OnKnockedOut, owner, pos)
 }
 
 // --- Trigger ops ---

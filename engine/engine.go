@@ -396,7 +396,7 @@ func (g *Game) removeIfKnockedOut(owner int) int {
 	if a := g.koAttacker; a != nil && owner != g.S.Active {
 		pts += g.sumHook(HookKOPoints, g.holder(owner, 0), a)
 	}
-	g.discardKnockedOut(owner, mon)
+	g.discardKnockedOut(owner, 0, mon)
 	pl.Active = nil
 	return pts
 }
@@ -408,19 +408,20 @@ func (g *Game) removeBenchKnockouts(owner int) int {
 	pts := 0
 	for slot, mon := range pl.Bench {
 		if mon != nil && g.hpLeft(owner, slot+1) <= 0 {
+			g.discardKnockedOut(owner, slot+1, mon)
 			pl.Bench[slot] = nil
-			g.discardKnockedOut(owner, mon)
 			pts += koPoints(mon.Card)
 		}
 	}
 	return pts
 }
 
-// discardKnockedOut sends a knocked-out Pokémon, already out of play, and its
-// Tool to its owner's discard pile.
-func (g *Game) discardKnockedOut(owner int, mon *InPlay) {
+// discardKnockedOut sends the knocked-out Pokémon at pos, still in place, and
+// its Tool to its owner's discard pile (or the Pokémon to the hand, if its own
+// Tool says so). The caller takes it off the board afterwards.
+func (g *Game) discardKnockedOut(owner, pos int, mon *InPlay) {
 	pl := &g.S.Players[owner]
-	if g.knockedOut(owner) {
+	if g.knockedOut(owner, pos) {
 		pl.Hand = append(pl.Hand, mon.Card)
 	} else {
 		pl.Discard = append(pl.Discard, mon.Card)
