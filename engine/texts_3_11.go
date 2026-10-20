@@ -144,8 +144,7 @@ func (v Heal) Targets(ctx *EffectContext) []Spot { return ownSpots(ctx.g, ctx.at
 
 func (v Heal) Apply(ctx *EffectContext) {
 	mon := ctx.targetMon()
-	healed := min(v.Amount, mon.Damage)
-	mon.Damage -= healed
+	healed := ctx.g.heal(mon, v.Amount)
 	for _, s := range v.Cures {
 		mon.Cure(s)
 	}

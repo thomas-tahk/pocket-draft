@@ -140,9 +140,10 @@ func (t *TriggerContext) owner() *Player { return &t.g.S.Players[t.Source.Player
 func (t *TriggerContext) foe() *Player   { return &t.g.S.Players[1-t.Source.Player] }
 
 func (t *TriggerContext) heal(mon *InPlay, n int) {
-	n = min(n, mon.Damage)
-	mon.Damage -= n
-	t.g.narrate("%s healed %d damage (%s).", mon.Card.Name, n, t.Card.Name)
+	n = t.g.heal(mon, n)
+	if n > 0 {
+		t.g.narrate("%s healed %d damage (%s).", mon.Card.Name, n, t.Card.Name)
+	}
 }
 
 // discardThis discards the Tool firing from its Pokémon.
