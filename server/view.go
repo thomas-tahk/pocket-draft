@@ -13,11 +13,17 @@ type attackView struct {
 	Damage int      `json:"damage"`
 }
 
+type abilityView struct {
+	Name   string `json:"name"`
+	Effect string `json:"effect"` // the printed text
+}
+
 type cardView struct {
 	ID          string       `json:"id"`
 	Name        string       `json:"name"`
 	Image       string       `json:"image,omitempty"`
-	Stage       string       `json:"stage"`
+	Kind        string       `json:"kind"`  // "pokemon", "item", "supporter", "tool" or "stadium"
+	Stage       string       `json:"stage"` // "" on a Trainer
 	HP          int          `json:"hp"`
 	Type        string       `json:"type"`
 	IsEX        bool         `json:"isEx"`
@@ -25,6 +31,7 @@ type cardView struct {
 	RetreatCost int          `json:"retreatCost"`
 	Weakness    string       `json:"weakness,omitempty"`
 	Attacks     []attackView `json:"attacks"`
+	Ability     *abilityView `json:"ability,omitempty"`
 }
 
 type inPlayView struct {
@@ -35,6 +42,11 @@ type inPlayView struct {
 	TotalEnergy int            `json:"totalEnergy"`
 	Poisoned    bool           `json:"poisoned"`
 	Burned      bool           `json:"burned"`
+	Asleep      bool           `json:"asleep"`
+	Paralyzed   bool           `json:"paralyzed"`
+	Confused    bool           `json:"confused"`
+	Tool        *cardView      `json:"tool,omitempty"`     // the attached Pokémon Tool
+	FaceDown    bool           `json:"faceDown,omitempty"` // an opponent's setup pick: everything else is blank
 }
 
 type playerView struct {
@@ -66,6 +78,10 @@ type playerView struct {
 type promptView struct {
 	Player int    `json:"player"`
 	Kind   string `json:"kind"`
+	// Title and Labels describe a card's choice; only the chooser sees them,
+	// since they may name hidden cards (Pokédex).
+	Title  string   `json:"title,omitempty"`
+	Labels []string `json:"labels,omitempty"`
 }
 
 type gameView struct {
@@ -83,6 +99,8 @@ type gameView struct {
 	// first, for the setup screen (spec S4). Neither is hidden.
 	OpeningFlip flipView `json:"openingFlip"`
 	FirstPlayer int      `json:"firstPlayer"`
+	// Stadium is the Stadium card in play, or null.
+	Stadium *cardView `json:"stadium"`
 }
 
 type flipView struct {
@@ -98,11 +116,28 @@ type spotView struct {
 // actionView is one applied move for the opponent-turn playback and the
 // history list (spec F14, F15).
 type actionView struct {
-	Player int       `json:"player"`
-	Kind   string    `json:"kind"`
-	Card   *cardView `json:"card"` // null when the move used no card, or it is hidden
-	Target spotView  `json:"target"`
-	Result []string  `json:"result"`
+	Player int        `json:"player"`
+	Kind   string     `json:"kind"`
+	Card   *cardView  `json:"card"` // null when the move used no card, or it is hidden
+	Target spotView   `json:"target"`
+	Result []string   `json:"result"`
+	Flips  []coinView `json:"flips"` // every coin the move flipped, in order (spec F11)
+}
+
+// coinView is one coin flip. Waits: the screen holds this coin until the
+// flipper taps it; the rest of the effect's coins run on their own.
+type coinView struct {
+	Flipper int  `json:"flipper"`
+	Heads   bool `json:"heads"`
+	Waits   bool `json:"waits"`
+}
+
+func toCoinViews(flips []engine.CoinFlip) []coinView {
+	out := make([]coinView, 0, len(flips))
+	for _, f := range flips {
+		out = append(out, coinView{f.Flipper, f.Heads, f.Waits})
+	}
+	return out
 }
 
 func stageName(s engine.Stage) string {
@@ -115,6 +150,13 @@ func stageName(s engine.Stage) string {
 		return "Stage 2"
 	}
 	return "?"
+}
+
+func cardStage(c engine.Card) string {
+	if c.IsTrainer() {
+		return ""
+	}
+	return stageName(c.Stage)
 }
 
 func phaseName(p engine.Phase) string {
@@ -161,6 +203,8 @@ func promptKindName(k engine.PromptKind) string {
 		return "new_active"
 	case engine.PromptRetreatEnergy:
 		return "retreat_energy"
+	case engine.PromptChoose:
+		return "choose"
 	}
 	return "setup"
 }
@@ -180,6 +224,11 @@ func energyLabels(es []engine.Energy) []string {
 	return out
 }
 
+var kindNames = map[engine.CardKind]string{
+	engine.KindPokemon: "pokemon", engine.KindItem: "item", engine.KindSupporter: "supporter",
+	engine.KindTool: "tool", engine.KindStadium: "stadium",
+}
+
 func toCardView(c engine.Card) cardView {
 	atks := make([]attackView, len(c.Attacks))
 	for i, a := range c.Attacks {
@@ -193,7 +242,8 @@ func toCardView(c engine.Card) cardView {
 		ID:          c.ID,
 		Name:        c.Name,
 		Image:       cardImages[c.ID],
-		Stage:       stageName(c.Stage),
+		Kind:        kindNames[c.Kind],
+		Stage:       cardStage(c),
 		HP:          c.HP,
 		Type:        c.Type.String(),
 		IsEX:        c.IsEX,
@@ -201,7 +251,21 @@ func toCardView(c engine.Card) cardView {
 		RetreatCost: c.RetreatCost,
 		Weakness:    energyLabel(c.Weakness),
 		Attacks:     atks,
+		Ability:     abilityViewOf(c),
 	}
+}
+
+// abilityViewOf is the Ability the card plays, with its printed text from the
+// scrape; nil when it has none.
+func abilityViewOf(c engine.Card) *abilityView {
+	if c.Ability == nil {
+		return nil
+	}
+	v := &abilityView{Name: c.Ability.Name}
+	if raw := rawByID[c.ID].Ability; raw != nil {
+		v.Effect = raw.Effect
+	}
+	return v
 }
 
 func toInPlayView(p *engine.InPlay) *inPlayView {
@@ -224,7 +288,19 @@ func toInPlayView(p *engine.InPlay) *inPlayView {
 		TotalEnergy: total,
 		Poisoned:    p.Poisoned,
 		Burned:      p.Burned,
+		Asleep:      p.Has(engine.Asleep),
+		Paralyzed:   p.Has(engine.Paralyzed),
+		Confused:    p.Has(engine.Confused),
+		Tool:        optCardView(p.Tool),
 	}
+}
+
+func optCardView(c *engine.Card) *cardView {
+	if c == nil {
+		return nil
+	}
+	v := toCardView(*c)
+	return &v
 }
 
 // toPlayerView renders one player's side. Only the viewer's own hand is shown;
@@ -259,12 +335,21 @@ func toPlayerView(p engine.Player, isViewer bool) playerView {
 	}
 }
 
-// hideSetupPicks empties an opponent's Active and Bench while setup is still
-// running: their picks stay hidden until both players are Ready (spec S5).
-// The hand count already moved, which is no more than the real game shows.
+// hideSetupPicks turns an opponent's placed Pokémon face down while setup is
+// still running: their picks stay hidden until both players are Ready (spec
+// S5), but how many are placed shows (owner 2026-10-19 (8)).
 func hideSetupPicks(p *playerView) {
-	p.Active = nil
-	p.Bench = make([]*inPlayView, len(p.Bench))
+	p.Active = faceDown(p.Active)
+	for i, m := range p.Bench {
+		p.Bench[i] = faceDown(m)
+	}
+}
+
+func faceDown(m *inPlayView) *inPlayView {
+	if m == nil {
+		return nil
+	}
+	return &inPlayView{FaceDown: true, Energy: map[string]int{}}
 }
 
 // humanSeat is the player the browser plays; the bot is the other seat.
@@ -277,10 +362,14 @@ func toGameView(g *engine.Game, viewer int) gameView {
 	var pending *promptView
 	if s.Pending != nil {
 		pending = &promptView{Player: s.Pending.Player, Kind: promptKindName(s.Pending.Kind)}
+		if s.Pending.Player == viewer {
+			pending.Title, pending.Labels = s.Pending.Title, s.Pending.Labels
+		}
 	}
 	var players [2]playerView
 	for i := range players {
 		players[i] = toPlayerView(s.Players[i], viewer == i)
+		liveStats(g, i, &players[i])
 		players[i].Ready = s.Ready(i)
 		if s.Phase == engine.PhaseSetup && viewer != i {
 			hideSetupPicks(&players[i])
@@ -304,6 +393,7 @@ func toGameView(g *engine.Game, viewer int) gameView {
 
 		OpeningFlip: flipView{Flipper: s.OpeningFlip.Flipper, Heads: s.OpeningFlip.Heads},
 		FirstPlayer: s.FirstPlayer,
+		Stadium:     optCardView(s.Stadium),
 	}
 	hidePromotion(g, viewer, &v)
 	return v
@@ -339,15 +429,39 @@ func toMoveReqs(evs []engine.Event) []moveReq {
 func toActionViews(g *engine.Game, viewer int) []actionView {
 	out := make([]actionView, 0, len(g.Actions))
 	for _, a := range g.Actions {
-		v := actionView{Player: a.Player, Kind: string(a.Kind), Target: spotView{a.Target.Player, a.Target.Pos}, Result: a.Result}
+		v := actionView{Player: a.Player, Kind: string(a.Kind), Target: spotView{a.Target.Player, a.Target.Pos}, Result: a.Result, Flips: toCoinViews(a.Flips)}
 		if a.Card.ID != "" {
 			c := toCardView(a.Card)
 			v.Card = &c
 		}
-		if a.Kind == engine.ActSetup && a.Player != viewer && g.S.Turn == 0 {
+		if isSetupKind(a.Kind) && a.Player != viewer && g.S.Turn == 0 {
 			v.Card, v.Result, v.Target = nil, []string{}, spotView{-1, -1}
 		}
 		out = append(out, v)
 	}
 	return out
+}
+
+func isSetupKind(k engine.ActionKind) bool {
+	return k == engine.ActSetup || k == engine.ActSetupReturn || k == engine.ActSetupMove
+}
+
+// liveStats overlays what Tools and the Stadium change on player p's
+// Pokémon: their HP and the attacks a Tool lends.
+func liveStats(g *engine.Game, p int, pv *playerView) {
+	pl := g.S.Players[p]
+	overlay := func(v *inPlayView, m *engine.InPlay, pos int) {
+		if v == nil || m == nil {
+			return
+		}
+		v.Card.HP = g.MaxHP(p, pos)
+		v.RemainingHP = v.Card.HP - m.Damage
+		c := m.Card
+		c.Attacks = m.Attacks()
+		v.Card.Attacks = toCardView(c).Attacks
+	}
+	overlay(pv.Active, pl.Active, 0)
+	for i, m := range pl.Bench {
+		overlay(pv.Bench[i], m, i+1)
+	}
 }

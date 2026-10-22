@@ -1,13 +1,12 @@
-import { test, expect, type Page, type Request } from '@playwright/test';
+import { test, expect, type Locator, type Page, type Request } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 
 // 1.31 at phone size: a draft finished in the real app starts its battle on the
 // new board (src/battle) with the drafted 20 as your deck, and Rematch from the
 // end screen starts again with that same deck.
 //
-// The draft picks Basics first and new names first, and deckbuild takes only
-// drafted cards: the free universals and under-evolutions don't all play yet
-// (docs/questions/M1.md [1.30]), so this path keeps every card playable.
+// The draft picks Basics first and new names first. Deckbuild offers only the
+// cards the engine can play (2.10), so any 20 built there reach the board whole.
 
 type Raw = { id: string; name: string; stage: string };
 const stageById = new Map(
@@ -15,6 +14,9 @@ const stageById = new Map(
 );
 
 const idOf = (title: string) => title.split(' · ').pop() ?? '';
+const working = new Set(
+  (JSON.parse(readFileSync('public/data/draft-pool.json', 'utf8')) as { working: string[] }).working,
+);
 
 async function draftSixteen(page: Page): Promise<Set<string>> {
   const picked = new Set<string>();
@@ -34,33 +36,31 @@ async function draftSixteen(page: Page): Promise<Set<string>> {
   return picked;
 }
 
-async function buildFromDraft(page: Page, pokeBalls = 0) {
+async function buildFromDraft(page: Page) {
   await expect(page.getByRole('heading', { name: 'Deckbuilding' })).toBeVisible();
-  const universals = page.locator('section', { has: page.getByRole('heading', { name: /^Free universals/ }) });
-  const plusButton = page.getByRole('button', { name: '+' });
-  const pokeBall = universals
-    .locator('div', { has: page.getByAltText('Poké Ball') })
-    .filter({ has: plusButton })
-    .last()
-    .locator(plusButton);
-  for (let i = 0; i < pokeBalls; i++) await pokeBall.click();
   const drafted = page.locator('section', { has: page.getByRole('heading', { name: /^Your draft/ }) });
-  const plus = drafted.getByRole('button', { name: '+' });
+  await fillFrom(drafted);
+  await expect(page.getByText('Deck: 20 / 20')).toBeVisible();
+  await page.getByRole('button', { name: 'Finalize deck' }).click();
+}
+
+// Adds up to two copies of every card in the section, in order, until 20.
+async function fillFrom(section: Locator) {
+  const plus = section.getByRole('button', { name: '+' });
   for (let i = 0; i < (await plus.count()); i++) {
     for (let copy = 0; copy < 2 && (await plus.nth(i).isEnabled()); copy++) await plus.nth(i).click();
   }
-  await expect(page.getByText('Deck: 20 / 20')).toBeVisible();
-  await page.getByRole('button', { name: 'Finalize deck' }).click();
 }
 
 const deckSent = (req: Request) => (req.postDataJSON() as { you: string[] }).you;
 const isNewGame = (req: Request) => req.url().endsWith('/api/new') && req.method() === 'POST';
 
-// The opening coin (S4): tap it if it's yours, then wait for setup's board.
+// The opening coin (S4) never waits (2.11): with no tap it lands, shows the
+// result and who goes first, then setup's board is up.
 async function passIntro(page: Page) {
-  const coin = page.getByTestId('setup-coin');
   await expect(page.getByTestId('setup-intro')).toBeVisible();
-  if (await coin.isEnabled()) await coin.click();
+  await expect(page.getByTestId('setup-coin')).toHaveAttribute('data-face', /^(heads|tails)$/);
+  await expect(page.getByTestId('setup-order')).toHaveText(/^You go (first|second)$/);
   await expect(page.getByTestId('setup-intro')).toHaveCount(0, { timeout: 5000 });
   await expect(page.getByTestId('setup-ready')).toBeVisible();
 }
@@ -87,7 +87,6 @@ test('a finished draft starts on the new board with its 20, and Rematch keeps th
   expect(deck).toHaveLength(20);
   for (const id of deck) expect(picked, `deck card ${id}`).toContain(id);
   expect(await yourCardCount(page)).toBe(20);
-  await expect(page.getByTestId('deck-short')).toBeHidden();
   await page.waitForFunction(() => [...document.images].every((i) => i.complete));
   await page.screenshot({ path: 'test-results/draft-to-battle-390x844.png' });
 
@@ -105,13 +104,25 @@ test('a finished draft starts on the new board with its 20, and Rematch keeps th
   expect(await yourCardCount(page)).toBe(20);
 });
 
-test('a drafted deck with a card the engine cannot play yet says so on the board', async ({ page }) => {
+test('deckbuild offers only cards the engine can play, so any deck built there plays all 20', async ({ page }) => {
   test.setTimeout(90_000);
   await page.goto('/');
   await page.getByRole('button', { name: 'Start draft' }).click();
   await draftSixteen(page);
   await page.getByRole('button', { name: 'Skip shop' }).click();
-  await buildFromDraft(page, 1);
+  await expect(page.getByRole('heading', { name: 'Deckbuilding' })).toBeVisible();
+
+  const offered = (await page.locator('main section [title]').evaluateAll((els) => els.map((e) => e.getAttribute('title') ?? ''))).map(idOf);
+  expect(offered.length).toBeGreaterThan(0);
+  for (const id of offered) expect(working, `deckbuild offers ${id}`).toContain(id);
+
+  // Universals and under-evolutions first, then the draft, so the deck uses
+  // every kind of card deckbuild can add.
+  for (const name of [/^Free universals/, /^Free expansions/, /^Your draft/]) {
+    await fillFrom(page.locator('section', { has: page.getByRole('heading', { name }) }));
+  }
+  await expect(page.getByText('Deck: 20 / 20')).toBeVisible();
+  await page.getByRole('button', { name: 'Finalize deck' }).click();
 
   const started = page.waitForRequest(isNewGame);
   await page.getByRole('button', { name: /Play deck/ }).click();
@@ -119,8 +130,5 @@ test('a drafted deck with a card the engine cannot play yet says so on the board
 
   await expect(page.getByTestId('battle-board')).toBeVisible();
   await passIntro(page);
-  expect(await yourCardCount(page)).toBe(19);
-  await expect(page.getByTestId('deck-short')).toContainText('1');
-  await page.waitForFunction(() => [...document.images].every((i) => i.complete));
-  await page.screenshot({ path: 'test-results/draft-to-battle-short-390x844.png' });
+  expect(await yourCardCount(page)).toBe(20);
 });

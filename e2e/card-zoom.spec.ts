@@ -7,6 +7,9 @@ import { test, expect, type APIRequestContext, type Locator, type Page } from '@
 type Card = { id: string; name: string; stage: string };
 type View = { phase: string; active: number; pending: { player: number } | null; players: { hand: Card[]; active: { card: Card } | null }[] };
 
+// Pinned so draft-pool changes can't shift the bot's deck.
+const BOT = ['A1-211', 'A1-202', 'B4-015', 'B4-112', 'A3-044', 'A2-112', 'A1-150', 'B4-036', 'P-A-001', 'A4b-373'].flatMap((id) => [id, id]);
+
 async function post(api: APIRequestContext, url: string, data?: object): Promise<View> {
   const res = await api.post(url, data ? { data } : undefined);
   const body = await res.json();
@@ -15,7 +18,7 @@ async function post(api: APIRequestContext, url: string, data?: object): Promise
 
 // Seed 7: you go first; on your second turn a Basic is still in hand and the Bench is empty.
 async function toYourSecondTurn(api: APIRequestContext): Promise<{ basic: Card; oppActive: Card }> {
-  const start = await post(api, '/api/new', { seed: 7 });
+  const start = await post(api, '/api/new', { seed: 7, bot: BOT });
   const basics = start.players[0].hand.filter((c) => c.stage === 'Basic');
   await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: basics[0].id });
   await post(api, '/api/move', { type: 'SetupReady', player: 0 });

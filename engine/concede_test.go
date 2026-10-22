@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"slices"
+	"testing"
+)
 
 func assertConcededBy(t *testing.T, g *Game, p int) {
 	t.Helper()
@@ -91,4 +94,28 @@ func TestConcedeRejectsUnknownPlayer(t *testing.T) {
 	if err := g.Submit(Concede{Player: 2}); err == nil {
 		t.Error("concede by a non-player should be refused")
 	}
+}
+
+// 2.14: concede is immediate while your own choice is pending; it is offered
+// as a legal move and ends the game without the choice being answered.
+func TestConcedeWhileYourOwnPromptIsPending(t *testing.T) {
+	// Arrange
+	g, p := retreatGame(t, map[Energy]int{Fire: 1, Water: 2})
+	if err := g.Submit(Retreat{Player: p, BenchIndex: BenchBehind}); err != nil {
+		t.Fatalf("retreat: %v", err)
+	}
+	if g.S.Pending == nil || g.S.Pending.Player != p {
+		t.Fatalf("want a pending prompt for %s, got %+v", side(p), g.S.Pending)
+	}
+	if !slices.ContainsFunc(g.LegalMoves(p), func(e Event) bool { return e == Event(Concede{Player: p}) }) {
+		t.Fatalf("concede missing from legal moves %v", g.LegalMoves(p))
+	}
+
+	// Act
+	if err := g.Submit(Concede{Player: p}); err != nil {
+		t.Fatalf("concede with a pending prompt: %v", err)
+	}
+
+	// Assert
+	assertConcededBy(t, g, p)
 }

@@ -6,7 +6,7 @@ import type { GameView } from '../game/types';
 // yours to place on, with Ready. The server already decided the flip; this
 // only shows it. Wording and timing are placeholders (questions file).
 
-const OPPONENT_FLIP_MS = 700; // the bot's flip runs on its own (F11)
+const FLIP_MS = 700; // the opening coin never waits, whoever flips (owner 2026-10-19 (5))
 const LANDED_MS = 900;
 const ORDER_MS = 1400;
 
@@ -30,24 +30,22 @@ export function SetupIntro({ view, onDone }: { view: GameView; onDone: () => voi
   const [stage, setStage] = useState<Stage>('flip');
 
   useEffect(() => {
-    const next: Partial<Record<Stage, [Stage | 'done', number]>> = {
+    const next: Record<Stage, [Stage | 'done', number]> = {
+      flip: ['landed', FLIP_MS],
       landed: ['order', LANDED_MS],
       order: ['done', ORDER_MS],
-      ...(youFlip ? {} : { flip: ['landed', OPPONENT_FLIP_MS] }),
     };
     const step = next[stage];
-    if (!step) return;
     const t = setTimeout(() => (step[0] === 'done' ? onDone() : setStage(step[0] as Stage)), step[1]);
     return () => clearTimeout(t);
-  }, [stage, youFlip, onDone]);
+  }, [stage, onDone]);
 
   const face = view.openingFlip.heads ? 'heads' : 'tails';
-  const tap = youFlip && stage === 'flip' ? () => setStage('landed') : undefined;
   return (
     <div className="bt-overlay bt-setup-intro" data-testid="setup-intro" data-stage={stage}>
       <p>{youFlip ? 'You flip the coin' : 'Opponent flips the coin'}</p>
-      <button className="bt-coin" data-testid="setup-coin" data-face={stage === 'flip' ? '' : face} disabled={!tap} onClick={tap}>
-        {stage === 'flip' ? (tap ? 'Tap' : '') : face.toUpperCase()}
+      <button className="bt-coin" data-testid="setup-coin" data-face={stage === 'flip' ? '' : face} disabled>
+        {stage === 'flip' ? '' : face.toUpperCase()}
       </button>
       {stage === 'order' && <p data-testid="setup-order">{view.firstPlayer === 0 ? 'You go first' : 'You go second'}</p>}
     </div>

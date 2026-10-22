@@ -13,22 +13,47 @@ type EffectOp interface {
 // seeded coin flip so replay stays deterministic (ADR-0005).
 type EffectContext struct {
 	g        *Game
-	attacker int
+	attacker int // the acting player: the attacker, or who played the Trainer
+	pos      int // the user's spot: 0 the Active (attacks), n bench slot n-1 (an Ability)
 	Damage   int
+	flipped  bool // this effect has flipped a coin already
+
+	// Card and Target are set for a Trainer: the card being played and the
+	// spot it was dropped on (NoSpot when it has none).
+	Card   Card
+	Target Spot
+	Picked string // the hand card a Stadium's use picked (UseStadium)
 }
 
-// Flip draws one coin from the engine's seeded RNG — never a second RNG
-// source, so folding the same log always reproduces the same flips.
-func (ctx *EffectContext) Flip() bool { return ctx.g.rng.intn(2) == 0 }
+// Player is the acting player's side.
+func (ctx *EffectContext) Player() *Player { return ctx.attackerPlayer() }
+
+// Flip flips one coin for the attacker and records it (spec F11). The first
+// flip of an effect waits for a tap; every later one in the same effect runs
+// on its own. One EffectContext is one effect.
+func (ctx *EffectContext) Flip() bool {
+	var heads bool
+	if pl := ctx.Player(); pl.nextHeads { // Will
+		pl.nextHeads = false
+		heads = ctx.g.recordFlip(ctx.attacker, true, !ctx.flipped)
+	} else {
+		heads = ctx.g.flipCoin(ctx.attacker, !ctx.flipped)
+	}
+	ctx.flipped = true
+	return heads
+}
 
 func (ctx *EffectContext) attackerMon() *InPlay    { return ctx.g.S.Players[ctx.attacker].Active }
 func (ctx *EffectContext) defenderMon() *InPlay    { return ctx.g.S.Players[1-ctx.attacker].Active }
 func (ctx *EffectContext) attackerPlayer() *Player { return &ctx.g.S.Players[ctx.attacker] }
 
+// self is the Pokémon using the effect: the attacker, or an Ability's holder.
+func (ctx *EffectContext) self() *InPlay { return targetMon(ctx.attackerPlayer(), ctx.pos) }
+
 // narrate prefixes the attacker's side and Pokémon name, matching the
 // existing narration style in applyAttack.
 func (ctx *EffectContext) narrate(format string, args ...any) {
-	prefix := []any{side(ctx.attacker), ctx.attackerMon().Card.Name}
+	prefix := []any{side(ctx.attacker), ctx.self().Card.Name}
 	ctx.g.narrate("%s's %s "+format, append(prefix, args...)...)
 }
 
@@ -64,24 +89,13 @@ func (v DamagePerHeads) Apply(ctx *EffectContext) {
 	ctx.narrate("flipped %d of %d heads: +%d damage.", heads, v.Coins, bonus)
 }
 
-// Status is a status condition a verb can inflict.
-type Status uint8
-
-const (
-	Burn Status = iota
-	Poison
-)
-
-// ApplyStatus inflicts a status condition on the defending Active. E.g.
+// ApplyStatus inflicts a special condition on the defending Active. E.g.
 // Ponyta's Singe: opponent's Active is now Burned.
 type ApplyStatus struct{ Status Status }
 
 func (v ApplyStatus) Apply(ctx *EffectContext) {
-	switch v.Status {
-	case Burn:
-		ctx.defenderMon().Burned = true
-	case Poison:
-		ctx.defenderMon().Poisoned = true
+	if ctx.g.canBeAffected(1-ctx.attacker, 0) {
+		ctx.defenderMon().Inflict(v.Status)
 	}
 }
 
@@ -110,6 +124,10 @@ func (v DamagePerEnergy) Apply(ctx *EffectContext) {
 // Munchlax's Hungrily Draw: draw a card. At handMax (T3) the card stays in
 // the deck.
 type DrawCards struct{ N int }
+
+// CanPlay: a Trainer that draws can't be played with 10 cards in hand (T3).
+// Attacks don't ask, so Hungrily Draw at 10 still hits and draws nothing.
+func (v DrawCards) CanPlay(ctx *EffectContext) error { return handFull(ctx) }
 
 func (v DrawCards) Apply(ctx *EffectContext) {
 	pl := ctx.attackerPlayer()

@@ -15,15 +15,15 @@ async function post(api: APIRequestContext, url: string, data?: object): Promise
 }
 
 // Mostly Stage 1s, so the first-turn hand mixes playable Basics with
-// Evolutions that can't be used yet. Seed 15: you go first, holding both.
+// Evolutions that can't be used yet. Seed 9 with a pinned bot deck: you go first, holding both.
 const DECK = [
-  ...['B2b-007', 'B4a-095', 'A4b-057'], // Charmander, Vulpix, Charmeleon
-  ...['B4a-011', 'B4-021', 'B3-027', 'B3-207', 'B2a-017', 'B2-021', 'B2-025'],
+  ...['B2b-007', 'A4-025', 'A4b-057'], // Charmander, Vulpix, Charmeleon
+  ...['B4a-011', 'B4-021', 'A4-028', 'B3-207', 'A3-028', 'B2-021', 'B2-025'],
 ].flatMap((id) => [id, id]);
 
 // Setup through the API, ending on your first main turn.
 async function setupToYourFirstTurn(api: APIRequestContext) {
-  const start = await post(api, '/api/new', { seed: 15, you: DECK });
+  const start = await post(api, '/api/new', { seed: 9, you: DECK, bot: DECK });
   const basics = start.players[0].hand.filter((c) => c.stage === 'Basic');
   await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: basics[0].id });
   await post(api, '/api/move', { type: 'SetupReady', player: 0 });

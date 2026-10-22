@@ -8,7 +8,7 @@ import { CardFace } from './pieces';
 
 const STEP_MS = 550; // F14 "about 0.5 s each"; the exact pace is the owner's
 const SLOT_NAMES = ['left', 'behind', 'right'];
-const SILENT_KINDS = ['setup', 'ready', 'end_turn', 'concede']; // nothing to play back
+const SILENT_KINDS = ['setup', 'setup_return', 'setup_move', 'ready', 'end_turn', 'concede']; // nothing to play back
 
 export type Step = { index: number; action: ActionView };
 
@@ -19,7 +19,9 @@ export function useOpponentTurn(view: GameView | null, botStuck: boolean, runBot
   const [skipping, setSkipping] = useState(false);
   const [step, setStep] = useState<Step | null>(null);
   const seen = useRef<number | null>(null);
-  const botToMove = !!view && view.phase !== 'over' && !botStuck && actorOf(view) === 1;
+  // Setup is simultaneous: the bot places while you do (owner 2026-10-19 (8)).
+  const botSetting = !!view && view.phase === 'setup' && !view.players[1].ready;
+  const botToMove = !!view && view.phase !== 'over' && !botStuck && (botSetting || actorOf(view) === 1);
 
   useEffect(() => {
     if (!botToMove) return;

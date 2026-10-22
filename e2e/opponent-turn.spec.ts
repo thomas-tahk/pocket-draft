@@ -7,6 +7,9 @@ import { test, expect, type APIRequestContext, type Page } from '@playwright/tes
 type Card = { id: string; stage: string };
 type View = { phase: string; active: number; turn: number; pending: { player: number } | null; players: { hand: Card[] }[] };
 
+// Pinned so draft-pool changes can't shift the bot's play.
+const BOT = ['A3-005', 'A4-101', 'A1-065', 'A3b-044', 'B1a-044', 'A2b-063', 'A1-155', 'A1-218', 'B4-031', 'A3-145', 'A3-005', 'A1-010', 'B1-123', 'P-A-006', 'B2-047', 'A4-122', 'A4-101', 'A1-010', 'A4-122', 'A1-065'];
+
 async function post(api: APIRequestContext, url: string, data?: object): Promise<View> {
   const res = await api.post(url, data ? { data } : undefined);
   const body = await res.json();
@@ -19,7 +22,7 @@ const actor = (v: View) => (v.pending ? v.pending.player : v.active);
 // Tyrogue attacks your Active (the attack ends its turn). Everything up to
 // your turn 3 is played through the API.
 async function reachTurn3(api: APIRequestContext) {
-  const start = await post(api, '/api/new', { seed: 1 });
+  const start = await post(api, '/api/new', { seed: 1, bot: BOT });
   const basic = start.players[0].hand.find((c) => c.stage === 'Basic')!;
   await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: basic.id });
   await post(api, '/api/move', { type: 'SetupReady', player: 0 });

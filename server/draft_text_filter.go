@@ -1,5 +1,7 @@
 package main
 
+import "sort"
+
 // TEMPORARY (approved plan, "Draft pool during milestones 1–3"): until
 // milestone 4 finishes card text, the draft only offers cards whose text the
 // engine already plays, so every drafted deck is a legal 20. Milestone 4's last
@@ -17,13 +19,36 @@ const onlyWorkingTextInDraft = true
 const draftPoolFile = "../public/data/draft-pool.json"
 
 // textWorks reports whether the engine can play rc as printed: it converts to
-// an engine card (Trainers don't yet), it has no Ability (the engine models
-// none), and every attack with text has an authored effect in effectsByID.
+// an engine card, a Trainer's text is built, its Ability (if any) has a
+// wording in abilityTexts, every attack with text has an authored effect in
+// effectsByID, and, for an evolution, some printing of its earlier stage works
+// too (else it could never be played).
 func textWorks(rc rawCard) bool {
-	if _, err := toEngineCard(rc); err != nil {
+	return ownTextWorks(rc) && lineWorks(rc)
+}
+
+// lineWorks reports whether every earlier stage of rc has a working printing.
+func lineWorks(rc rawCard) bool {
+	if rc.EvolvesFrom == "" {
+		return true
+	}
+	for _, prev := range rawByID {
+		if prev.Name == rc.EvolvesFrom && textWorks(prev) {
+			return true
+		}
+	}
+	return false
+}
+
+func ownTextWorks(rc rawCard) bool {
+	c, err := toEngineCard(rc)
+	if err != nil {
 		return false
 	}
-	if rc.Ability != nil {
+	if c.IsTrainer() && !c.TextBuilt() {
+		return false
+	}
+	if rc.Ability != nil && c.Ability == nil {
 		return false
 	}
 	for _, a := range rc.Attacks {
@@ -49,11 +74,25 @@ func keepWorkingText(pool []draftCard) []draftCard {
 	return out
 }
 
-// draftPoolFileJSON is what the SPA reads: the switch, and the ids the draft
-// may offer.
+// draftPoolFileJSON is what the SPA reads: the switch, the ids the draft may
+// offer, and every card id whose text works, which limits what deckbuild
+// offers (owner 2026-10-19 (1): every deck is 20 working cards).
 type draftPoolFileJSON struct {
 	OnlyWorkingText bool     `json:"onlyWorkingText"`
 	IDs             []string `json:"ids"`
+	Working         []string `json:"working"`
+}
+
+// workingIDs lists, sorted, every loaded card whose text the engine plays.
+func workingIDs() []string {
+	ids := make([]string, 0, len(rawByID))
+	for id, rc := range rawByID {
+		if textWorks(rc) {
+			ids = append(ids, id)
+		}
+	}
+	sort.Strings(ids)
+	return ids
 }
 
 func draftPoolFileContents() draftPoolFileJSON {
@@ -62,5 +101,5 @@ func draftPoolFileContents() draftPoolFileJSON {
 	for i, c := range pool {
 		ids[i] = c.ID
 	}
-	return draftPoolFileJSON{OnlyWorkingText: onlyWorkingTextInDraft, IDs: ids}
+	return draftPoolFileJSON{OnlyWorkingText: onlyWorkingTextInDraft, IDs: ids, Working: workingIDs()}
 }

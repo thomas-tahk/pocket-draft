@@ -135,7 +135,11 @@ func TestLegalMovesSetup(t *testing.T) {
 	if err := g.Submit(SetupActive{Player: 1, CardID: "C"}); err != nil {
 		t.Fatalf("P2 placing while P1 is named by the prompt: %v", err)
 	}
-	assertMoves(t, g.LegalMoves(1), []Event{SetupReady{Player: 1}, Concede{Player: 1}})
+	assertMoves(t, g.LegalMoves(1), []Event{
+		SetupReady{Player: 1}, SetupReturn{Player: 1, Pos: 0},
+		SetupMove{Player: 1, From: 0, To: 1}, SetupMove{Player: 1, From: 0, To: 2}, SetupMove{Player: 1, From: 0, To: 3},
+		Concede{Player: 1},
+	})
 
 	// After an Active and a bench card: only the free slots, and Ready.
 	if err := g.Submit(SetupActive{Player: 0, CardID: "A"}); err != nil {
@@ -144,7 +148,12 @@ func TestLegalMovesSetup(t *testing.T) {
 	if err := g.Submit(SetupBench{Player: 0, CardID: "B", Slot: BenchBehind}); err != nil {
 		t.Fatal(err)
 	}
-	assertMoves(t, g.LegalMoves(0), []Event{SetupReady{Player: 0}, Concede{Player: 0}})
+	assertMoves(t, g.LegalMoves(0), []Event{
+		SetupReady{Player: 0}, SetupReturn{Player: 0, Pos: 0}, SetupReturn{Player: 0, Pos: 2},
+		SetupMove{Player: 0, From: 0, To: 1}, SetupMove{Player: 0, From: 0, To: 2}, SetupMove{Player: 0, From: 0, To: 3},
+		SetupMove{Player: 0, From: 2, To: 0}, SetupMove{Player: 0, From: 2, To: 1}, SetupMove{Player: 0, From: 2, To: 3},
+		Concede{Player: 0},
+	})
 }
 
 func TestLegalMovesGameOver(t *testing.T) {

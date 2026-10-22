@@ -47,12 +47,19 @@ var moveRules = []moveRule{
 	rule(listSetupActive, (*Game).checkSetupActive, nil),
 	rule(listSetupBench, (*Game).checkSetupBench, nil),
 	rule(func(_ *Game, p int) []SetupReady { return []SetupReady{{Player: p}} }, (*Game).checkSetupReady, nil),
+	rule(listSetupReturn, (*Game).checkSetupReturn, nil),
+	rule(listSetupMove, (*Game).checkSetupMove, nil),
 	rule(listChooseActive, (*Game).checkChooseActive, nil),
 	rule(listPlayBasic, (*Game).checkPlayBasic, nil),
 	rule(listAttach, (*Game).checkAttach, nil),
 	rule(listEvolve, (*Game).checkEvolve, nil),
+	rule(listPlayTrainer, (*Game).checkPlayTrainer, nil),
+	rule(listDiscardFossil, (*Game).checkDiscardFossil, nil),
 	rule(listRetreat, (*Game).checkRetreat, nil),
 	rule(listRetreatDiscard, (*Game).checkRetreatDiscard, nil),
+	rule(listUseAbility, (*Game).checkUseAbility, nil),
+	rule(listChooseOption, (*Game).checkChooseOption, nil),
+	rule(listUseStadium, (*Game).checkUseStadium, nil),
 	rule(listAttack, (*Game).checkAttack, nil),
 	rule(func(_ *Game, p int) []EndTurn { return []EndTurn{{Player: p}} }, (*Game).checkEndTurn, nil),
 	rule(func(_ *Game, p int) []Concede { return []Concede{{Player: p}} }, (*Game).checkConcede, nil),
@@ -222,7 +229,7 @@ func listRetreatDiscard(g *Game, p int) []RetreatDiscard {
 	}
 	mon := g.S.Players[p].Active
 	var out []RetreatDiscard
-	for _, set := range energySets(mon.Energy, energyOrder, mon.Card.RetreatCost) {
+	for _, set := range energySets(mon.Energy, energyOrder, g.RetreatCost(p)) {
 		out = append(out, RetreatDiscard{Player: p, Energy: set})
 	}
 	return out
@@ -265,7 +272,7 @@ func listAttack(g *Game, p int) []UseAttack {
 		return nil
 	}
 	var out []UseAttack
-	for i := range pl.Active.Card.Attacks {
+	for i := range pl.Active.Attacks() {
 		out = append(out, UseAttack{Player: p, Index: i})
 	}
 	return out
@@ -283,7 +290,7 @@ func (g *Game) checkSetupCard(p int, id string) error {
 	if idx < 0 {
 		return errors.New("card is not in hand")
 	}
-	if pl.Hand[idx].Stage != Basic {
+	if !pl.Hand[idx].IsBasicPokemon() {
 		return errors.New("only Basic Pokémon may be placed at setup")
 	}
 	return nil
@@ -343,7 +350,7 @@ func (g *Game) checkPlayBasic(e PlayBasic) error {
 	if idx < 0 {
 		return errors.New("card is not in hand")
 	}
-	if pl.Hand[idx].Stage != Basic {
+	if !pl.Hand[idx].IsBasicPokemon() {
 		return errors.New("only Basic Pokémon may be played to the bench")
 	}
 	if e.Slot < 0 || e.Slot >= BenchSlots {
@@ -384,11 +391,20 @@ func (g *Game) checkEvolve(e Evolve) error {
 	if mon.Card.Name != ev.EvolvesFrom {
 		return fmt.Errorf("%s does not evolve from %s", ev.Name, mon.Card.Name)
 	}
+	if g.hasHook(HookEvolveEarly, g.holder(e.Player, e.Target), nil) {
+		return nil
+	}
+	// T8: game turn 1 is the first player's first turn, turn 2 the second's.
+	if g.S.Turn <= 2 {
+		return errFirstTurnEvolve
+	}
 	if mon.PlacedTurn == g.S.Turn {
 		return errors.New("a Pokémon cannot evolve the turn it was played")
 	}
 	return nil
 }
+
+var errFirstTurnEvolve = errors.New("no Pokémon may evolve on the first turn")
 
 // evolveGate is every Evolve check that doesn't depend on the target.
 func (g *Game) evolveGate(p int, handCardID string) (Card, error) {
@@ -401,12 +417,8 @@ func (g *Game) evolveGate(p int, handCardID string) (Card, error) {
 		return Card{}, errors.New("evolution card is not in hand")
 	}
 	ev := pl.Hand[hidx]
-	if ev.Stage == Basic {
+	if ev.IsTrainer() || ev.Stage == Basic {
 		return Card{}, errors.New("that card is not an evolution")
-	}
-	// T8: game turn 1 is the first player's first turn, turn 2 the second's.
-	if g.S.Turn <= 2 {
-		return Card{}, errors.New("no Pokémon may evolve on the first turn")
 	}
 	return ev, nil
 }
@@ -422,10 +434,16 @@ func (g *Game) checkRetreat(e Retreat) error {
 	if pl.Active == nil {
 		return errors.New("no Active Pokémon to retreat")
 	}
+	if pl.Active.Card.Fossil {
+		return fmt.Errorf("%s can't retreat", pl.Active.Card.Name)
+	}
+	if pl.Active.cantAct() {
+		return fmt.Errorf("%s is %s and can't retreat", pl.Active.Card.Name, pl.Active.special)
+	}
 	if benchAt(pl, e.BenchIndex) == nil {
 		return errors.New("no Pokémon in that bench slot")
 	}
-	if pl.Active.totalEnergy() < pl.Active.Card.RetreatCost {
+	if pl.Active.totalEnergy() < g.RetreatCost(e.Player) {
 		return errors.New("not enough energy to retreat")
 	}
 	return nil
@@ -436,8 +454,8 @@ func (g *Game) checkRetreatDiscard(e RetreatDiscard) error {
 		return err
 	}
 	mon := g.S.Players[e.Player].Active
-	if len(e.Energy) != mon.Card.RetreatCost {
-		return fmt.Errorf("retreating costs %d energy", mon.Card.RetreatCost)
+	if cost := g.RetreatCost(e.Player); len(e.Energy) != cost {
+		return fmt.Errorf("retreating costs %d energy", cost)
 	}
 	need := map[Energy]int{}
 	for _, t := range e.Energy {
@@ -457,10 +475,13 @@ func (g *Game) checkAttack(e UseAttack) error {
 	if pl.Active == nil {
 		return errors.New("no Active Pokémon to attack with")
 	}
-	if e.Index < 0 || e.Index >= len(pl.Active.Card.Attacks) {
+	if pl.Active.cantAct() {
+		return fmt.Errorf("%s is %s and can't attack", pl.Active.Card.Name, pl.Active.special)
+	}
+	if e.Index < 0 || e.Index >= len(pl.Active.Attacks()) {
 		return errors.New("invalid attack index")
 	}
-	if !canPay(pl.Active.Energy, pl.Active.Card.Attacks[e.Index].Cost) {
+	if !canPay(pl.Active.Energy, g.attackCost(e.Player, e.Index)) {
 		return errors.New("not enough energy for that attack")
 	}
 	if g.S.Players[1-e.Player].Active == nil {

@@ -83,6 +83,12 @@ export function App() {
     [shopPurchasedIds, fullById],
   );
 
+  // The shop offers only cards the engine can play (owner 2026-10-19 (1)).
+  const shopPool = useMemo(
+    () => (pool ? pool.fullCards.filter((c) => pool.working.has(c.id)) : []),
+    [pool],
+  );
+
   // Stable across renders, so the battle screen starts its game once.
   const drafted = useMemo(() => expandDeck(deck), [deck]);
 
@@ -162,7 +168,7 @@ export function App() {
     return (
       <ShopView
         picks={picks}
-        fullPool={pool.fullCards}
+        fullPool={shopPool}
         purchasedIds={shopPurchasedIds}
         onPurchase={purchase}
         onUnpurchase={unpurchase}
@@ -179,6 +185,7 @@ export function App() {
         purchases={purchases}
         fullPool={pool.fullCards}
         universals={pool.universals}
+        working={pool.working}
         deck={deck}
         onAdd={addToDeck}
         onRemove={removeFromDeck}
