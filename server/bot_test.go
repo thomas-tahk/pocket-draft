@@ -44,6 +44,7 @@ func playBotGame(t *testing.T, seed uint64) {
 			t.Errorf("seed %d: engine refused bot move %#v: %v", seed, ev, err)
 			return
 		}
+		toGameView(game, humanSeat) // the screen must be able to show whatever the bot did
 	}
 	t.Errorf("seed %d: game stalled after %d bot moves", seed, botGameSteps)
 }

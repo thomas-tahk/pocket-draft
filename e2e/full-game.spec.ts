@@ -137,7 +137,7 @@ async function checkInvariants(ctx: Ctx) {
   expect(opp.handCount, `${where} opponent hand ≤ 10`).toBeLessThanOrEqual(10);
   await expect(page.getByTestId('hand-card'), `${where} hand on screen`).toHaveCount(you.hand.length);
   for (const [zone, p] of [['my-points', you], ['opp-points', opp]] as const) {
-    await expect(page.getByTestId(zone).locator('[data-filled="true"]'), `${where} ${zone}`).toHaveCount(p.points);
+    await expect(page.getByTestId(zone).locator('[data-filled="true"]'), `${where} ${zone}`).toHaveCount(Math.min(p.points, 3)); // three pips; a 2-point ex can end the game at 4
   }
   for (const [zone, p] of [['my-bench', you], ['opp-bench', opp]] as const) {
     const occupied = p.bench.filter(Boolean).length;
