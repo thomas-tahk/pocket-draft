@@ -1,6 +1,7 @@
 import { test, expect, type APIRequestContext, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import type { GameView, Move } from '../src/game/types';
+import { animationsSoFar, logAnimations, settled } from './fx-log';
 
 // The M1 done-gate at phone size: a whole game against the bot, played only
 // with gestures on the board. Setup by dragging Basics and pressing Ready;
@@ -76,6 +77,7 @@ const handIndex = (v: GameView, id: string) => v.players[0].hand.findIndex((c) =
 // Do one gesture and wait for the server to record it as a new action.
 async function act(ctx: Ctx, step: string, gesture: () => Promise<void>) {
   ctx.step = step;
+  await settled(ctx.page); // cards may still be sliding after the last move
   const before = (await state(ctx.api)).actions.length;
   await gesture();
   try {
@@ -313,6 +315,32 @@ for (const seed of [1, 2, 6]) {
     if (seed !== 83) expect(yours).toContain('promote');
   });
 }
+
+// The same game with the board's motion on: every kind of move animates, and
+// the game still reaches the end screen with nothing in the console.
+test('a whole game with motion on: cards move, no console errors, reaches the end', async ({ page, request }) => {
+  test.setTimeout(600_000);
+  const errors: string[] = [];
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await logAnimations(page);
+  expect((await request.post('/api/new', { data: { seed: 2, you: EVOLUTION_DECK, bot: EVOLUTION_DECK } })).ok()).toBe(true);
+  await page.goto('/?battle');
+  const ctx: Ctx = { page, api: request, label: 'motion-seed-2', step: 'open' };
+  await playToEnd(ctx);
+  await checkEnd(ctx);
+  expect(errors).toEqual([]);
+  const log = await animationsSoFar(page);
+  const has = (what: string, ok: (a: (typeof log)[number]) => boolean) => expect(log.some(ok), what).toBe(true);
+  has('a drawn card flies to your hand', (a) => a.zone === 'my-hand' && a.key.startsWith('p0:'));
+  has("the opponent's hand moves", (a) => a.zone === 'opp-hand');
+  has('a card goes from hand to your Bench', (a) => a.zone === 'my-bench' && a.key.startsWith('p0:'));
+  has('the opponent plays onto their board', (a) => a.zone.startsWith('opp-') && a.zone !== 'opp-hand' && a.key.startsWith('p1:'));
+  has('an evolution lands over the Pokémon it evolves', (a) => a.copy && !a.fades && a.stops === 2);
+  has('a knocked-out Pokémon fades out', (a) => a.copy && a.fades);
+  has('a points pip pops', (a) => a.zone.endsWith('-points'));
+});
 
 // --- from a draft ---------------------------------------------------------------
 

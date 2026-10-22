@@ -10,7 +10,7 @@ import { ReadyButton } from './Setup';
 import { usableCards } from './usable';
 import { CardZoom, PlayLayer } from './PlayLayer';
 import { PlayContext, usePlay, useHolding, type Spot } from './usePlay';
-import { useBoardMotion, viewKeys, type SideKeys } from './motion';
+import { stadiumKey, useBoardMotion, viewKeys, type SideKeys } from './motion';
 
 // The battle board, laid out from the owner's Pocket screenshot (spec L1–L4).
 // Positions are in 390 × 844 grid units (see battle.css). Opponent on top,
@@ -56,8 +56,8 @@ function ActiveSpot({ mon, fx, toolFx, spot = 'active' }: { mon: PlayerView['act
   return <div className="bt-spot" {...useSpot(spot)}><InPlayCard mon={mon} width={ACTIVE_W} fx={fx} toolFx={toolFx} /></div>;
 }
 
-function StadiumSpot({ card }: { card: CardView | null }) {
-  return <div className="bt-spot bt-stadium" {...useSpot('stadium')}>{card && <CardFace card={card} width={66} />}</div>;
+function StadiumSpot({ card, fx }: { card: CardView | null; fx: string }) {
+  return <div className="bt-spot bt-stadium" {...useSpot('stadium')}>{card && <div data-fx={fx} style={{ position: 'relative' }}><CardFace card={card} width={66} /></div>}</div>;
 }
 
 function HandCard({ card, index, fx }: { card: CardView; index: number; fx: string }) {
@@ -212,7 +212,7 @@ export function Board({ view, instant = false, onEndTurn, onReady = () => {}, ch
       onPointerDownCapture={() => { heldAtPress.current = !!holding; }} onPointerDown={onPointerDown}>
       <PlayContext.Provider value={holding}>
       <OpponentSide p={opp} keys={keys[1]} choice={shownChoice} />
-      <Zone id="stadium" place={{ top: 432, left: 6, width: 66, height: 92 }}><StadiumSpot card={view.stadium ?? null} /></Zone>
+      <Zone id="stadium" place={{ top: 432, left: 6, width: 66, height: 92 }}><StadiumSpot card={view.stadium ?? null} fx={stadiumKey(view)} /></Zone>
       <Zone id="end-turn" place={{ top: 400, right: 10 }}>
         {view.phase === 'setup'
           ? <ReadyButton view={view} onReady={onReady} />
