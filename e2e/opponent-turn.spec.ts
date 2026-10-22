@@ -20,7 +20,7 @@ const actor = (v: View) => (v.pending ? v.pending.player : v.active);
 
 // Seed 1: you go first; on turn 4 the bot attaches energy, then its
 // Tyrogue attacks your Active (the attack ends its turn). Everything up to
-// your turn 3 is played through the API.
+// your turn 3 is played through the API. On that turn it benches a Basic first.
 async function reachTurn3(api: APIRequestContext) {
   const start = await post(api, '/api/new', { seed: 1, bot: BOT });
   const basic = start.players[0].hand.find((c) => c.stage === 'Basic')!;
@@ -63,17 +63,17 @@ test('the bot turn plays one action about every half second', async ({ page, req
 
   const t0 = await endTurn3(page);
   const playback = page.getByTestId('playback');
-  await expect(playback).toHaveAttribute('data-kind', 'attach_energy');
-  await expect(page.locator('.bt-root')).toHaveAttribute('data-flash-zone', 'opp-active');
   await expect(playback).toHaveAttribute('data-kind', 'attack');
   await expect(playback.getByTitle('Tyrogue')).toBeVisible();
   await expect(page.locator('.bt-root')).toHaveAttribute('data-flash-zone', 'my-active');
   await expect(myHp).toHaveText(String(hpBefore - 20));
   await page.screenshot({ path: 'test-results/opponent-turn-390x844.png' });
 
-  const log = await page.evaluate(() => (window as unknown as { pbLog: { t: number; kind: string }[] }).pbLog);
-  expect(log.map((e) => e.kind)).toEqual(['attach_energy', 'attack']);
-  const gaps = [log[0].t - t0, log[1].t - log[0].t];
+  // The bot benches a Basic, attaches Energy to its Active, then attacks.
+  const log = await page.evaluate(() => (window as unknown as { pbLog: { t: number; kind: string; zone: string }[] }).pbLog);
+  expect(log.map((e) => e.kind)).toEqual(['play_basic', 'attach_energy', 'attack']);
+  expect(log[1].zone).toBe('opp-active');
+  const gaps = [log[0].t - t0, log[1].t - log[0].t, log[2].t - log[1].t];
   for (const gap of gaps) {
     expect(gap).toBeGreaterThan(400);
     expect(gap).toBeLessThan(1500);

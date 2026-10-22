@@ -21,6 +21,9 @@ async function post(api: APIRequestContext, url: string, data?: object): Promise
 }
 
 async function runBotUntilYourTurn(api: APIRequestContext) {
+  // /api/bot moves for whoever is to act; it no longer just ends your turn.
+  const now = (await (await api.get('/api/state')).json()) as View;
+  if ((now.pending ? now.pending.player : now.active) === 0) await post(api, '/api/move', { type: 'EndTurn', player: 0 });
   for (let i = 0; i < 40; i++) {
     const v = await post(api, '/api/bot');
     if (v.phase !== 'main' || (v.pending ? v.pending.player : v.active) === 0) return;
