@@ -82,16 +82,6 @@
   border-radius: calc(var(--u) * 3); line-height: 1.5;
 }
 
-.bt-energy {
-  --s: 14;
-  width: calc(var(--u) * var(--s)); height: calc(var(--u) * var(--s)); border-radius: 50%;
-  display: grid; place-items: center; box-sizing: border-box;
-  border: calc(var(--u) * 1.2) solid #fff;
-  color: #fff; font-weight: 900; font-size: calc(var(--u) * var(--s) * 0.5); line-height: 1;
-  box-shadow: 0 0 0 calc(var(--u) * 0.6) rgba(0, 0, 0, 0.35);
-}
-.bt-energy[data-spent='true'] { background: #b9bcc8 !important; color: transparent; border-color: #d7d9e2; }
-
 /* ---- points: 3 Poké Ball pips (L3) ---- */
 .bt-points {
   display: flex; align-items: center; gap: calc(var(--u) * 8);

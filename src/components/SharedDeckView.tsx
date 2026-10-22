@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { TypeTally } from '../battle/energy';
 import type { Card, EnergyType } from '../types/card';
 import type { CardPool } from '../data';
 import type { Decklist } from '../share/deckCode';
@@ -82,7 +83,7 @@ export function SharedDeckView({ pool, deck, onExit }: Props) {
       ) : (
         <>
           <div style={{ fontSize: 13, opacity: 0.75, marginBottom: 16 }}>
-            {total} cards · {sortedTally.map(([t, n]) => `${t} ×${n}`).join('  ')}
+            {total} cards · <TypeTally entries={sortedTally} />
             {unknownCount > 0 && ` · ${unknownCount} unrecognized card(s) hidden`}
           </div>
 

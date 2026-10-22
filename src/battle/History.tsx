@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { ActionView } from '../game/types';
+import { EnergyText } from './energy';
 import './history.css';
 
 // History (spec F15): a small Poké Ball notebook icon on the board opens a
@@ -26,7 +27,7 @@ function Entry({ action }: { action: ActionView }) {
           <span className={`hx-who hx-p${action.player}`}>{who}</span> {KIND_LABEL[action.kind] ?? action.kind}
           {action.card && <> · <b>{action.card.name}</b></>}
         </div>
-        {action.result.map((line, i) => <div key={i} className="hx-line">{line}</div>)}
+        {action.result.map((line, i) => <div key={i} className="hx-line"><EnergyText text={line} /></div>)}
       </div>
     </li>
   );
