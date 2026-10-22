@@ -1,4 +1,3 @@
-import { useLayoutEffect, useRef, type RefObject } from 'react';
 import type { ActionView, GameView, InPlayView, PlayerView } from '../game/types';
 
 // Board motion (M3-2, M3-3): when the board view changes, every card that
@@ -45,10 +44,11 @@ export const viewKeys = (v: GameView): [SideKeys, SideKeys] => [sideKeys(0, v.pl
 // The Stadium slot is shared, so its key has no owner.
 export const stadiumKey = (v: GameView) => (v.stadium ? `st:${v.stadium.id}` : '');
 
-type Pt = { x: number; y: number };
-type Box = Pt & { w: number; h: number };
+export type Pt = { x: number; y: number };
+export type Box = Pt & { w: number; h: number };
 // Where a keyed element was: its centre and size, a copy of it to leave behind, and what it was.
-type Snap = Box & { clone: HTMLElement; owner: 'my' | 'opp'; zone: 'hand' | 'mon' | 'other' };
+export type Icon = Box & { type: string; clone: HTMLElement };
+export type Snap = Box & { clone: HTMLElement; owner: 'my' | 'opp'; zone: 'hand' | 'mon' | 'other'; energy: Icon[] };
 
 const ownerOf = (el: Element): 'my' | 'opp' => (el.closest('[data-testid^="opp-"]') ? 'opp' : 'my');
 const zoneOf = (el: Element): Snap['zone'] => {
@@ -56,28 +56,36 @@ const zoneOf = (el: Element): Snap['zone'] => {
   return el.closest('[data-testid$="-active"], [data-testid$="-bench"]') && !el.classList.contains('bt-tool') ? 'mon' : 'other';
 };
 
-function boxOf(el: HTMLElement): Box {
+export function boxOf(el: HTMLElement): Box {
   const r = el.getBoundingClientRect();
   return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: el.offsetWidth, h: el.offsetHeight };
 }
 
 const STRIPPED = ['data-testid', 'data-fx', 'data-pick', 'data-zoom'];
 
+// A copy with nothing a test or a tap could find it by.
+function copyOf(el: HTMLElement): HTMLElement {
+  const clone = el.cloneNode(true) as HTMLElement;
+  for (const n of [clone, ...clone.querySelectorAll<HTMLElement>(STRIPPED.map((a) => `[${a}]`).join(','))]) {
+    for (const a of STRIPPED) n.removeAttribute(a);
+  }
+  return clone;
+}
+
+export const energyIcons = (mon: HTMLElement) => [...mon.querySelectorAll<HTMLElement>('[data-energy]')];
+
 export function snapshot(root: HTMLElement): Map<string, Snap> {
   const out = new Map<string, Snap>();
   root.querySelectorAll<HTMLElement>('[data-fx]').forEach((el) => {
-    const clone = el.cloneNode(true) as HTMLElement;
-    for (const n of [clone, ...clone.querySelectorAll<HTMLElement>(STRIPPED.map((a) => `[${a}]`).join(','))]) {
-      for (const a of STRIPPED) n.removeAttribute(a);
-    }
-    out.set(el.dataset.fx!, { ...boxOf(el), clone, owner: ownerOf(el), zone: zoneOf(el) });
+    const energy = energyIcons(el).map((i) => ({ ...boxOf(i), type: i.dataset.energy!, clone: copyOf(i) }));
+    out.set(el.dataset.fx!, { ...boxOf(el), clone: copyOf(el), owner: ownerOf(el), zone: zoneOf(el), energy });
   });
   return out;
 }
 
 export const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-function run(el: HTMLElement, frames: Keyframe[], ms: number): Animation {
+export function run(el: HTMLElement, frames: Keyframe[], ms: number): Animation {
   const a = el.animate(frames, { duration: ms, easing: 'ease-out' });
   a.id = FX;
   return a;
@@ -98,7 +106,7 @@ export function settle(root: HTMLElement) {
   root.getAnimations({ subtree: true }).filter((a) => a.id === FX).forEach((a) => a.finish());
 }
 
-const zoneBox = (root: HTMLElement, id: string, inner?: string): Box | null => {
+export const zoneBox = (root: HTMLElement, id: string, inner?: string): Box | null => {
   const z = root.querySelector<HTMLElement>(`[data-testid="${id}"]`);
   const el = inner ? z?.querySelector<HTMLElement>(inner) : z;
   return el ? boxOf(el) : null;
@@ -113,10 +121,10 @@ function originOf(root: HTMLElement, el: HTMLElement): Box | null {
   return null;
 }
 
-type Ghost = { node: HTMLElement; at: Box };
+export type Ghost = { node: HTMLElement; at: Box };
 
 // A copy of a card that lives on the board only while it flies, then is removed.
-function launch(root: HTMLElement, g: Ghost, frames: Keyframe[], ms: number, z = 45) {
+export function launch(root: HTMLElement, g: Ghost, frames: Keyframe[], ms: number, z = 45) {
   const r = root.getBoundingClientRect();
   Object.assign(g.node.style, {
     position: 'absolute', left: `${g.at.x - r.left - g.at.w / 2}px`, top: `${g.at.y - r.top - g.at.h / 2}px`,
@@ -128,7 +136,7 @@ function launch(root: HTMLElement, g: Ghost, frames: Keyframe[], ms: number, z =
   a.oncancel = () => g.node.remove();
 }
 
-const frame = (from: Pt, to: Pt, scale: number, extra: Keyframe = {}): Keyframe => ({
+export const frame = (from: Pt, to: Pt, scale: number, extra: Keyframe = {}): Keyframe => ({
   translate: `${to.x - from.x}px ${to.y - from.y}px`, scale: String(scale), ...extra,
 });
 
@@ -174,7 +182,7 @@ function showTrainer(root: HTMLElement, action: ActionView, from: Box | null) {
   ], TRAINER_MS);
 }
 
-function popNewPips(root: HTMLElement, before: GameView, now: GameView) {
+export function popNewPips(root: HTMLElement, before: GameView, now: GameView) {
   (['my', 'opp'] as const).forEach((side, p) => {
     const pips = root.querySelectorAll<HTMLElement>(`[data-testid="${side}-points"] [data-testid="pip"]`);
     for (let i = before.players[p].points; i < now.players[p].points; i++) {
@@ -183,7 +191,7 @@ function popNewPips(root: HTMLElement, before: GameView, now: GameView) {
   });
 }
 
-type Change = { root: HTMLElement; was: Map<string, Snap>; after: Map<string, Snap>; before: GameView; now: GameView };
+export type Change = { root: HTMLElement; was: Map<string, Snap>; after: Map<string, Snap>; before: GameView; now: GameView };
 
 // A Stadium comes from the hand of whoever played it.
 function stadiumOrigin(root: HTMLElement, { was, after, now, before }: Change, key: string): Box | null {
@@ -195,7 +203,7 @@ function stadiumOrigin(root: HTMLElement, { was, after, now, before }: Change, k
 }
 
 // Every keyed element that is still there slides; one that is new comes from its origin.
-function moveCards(change: Change) {
+export function moveCards(change: Change) {
   const { root, was, before } = change;
   root.querySelectorAll<HTMLElement>('[data-fx]').forEach((node) => {
     const key = node.dataset.fx!;
@@ -207,7 +215,7 @@ function moveCards(change: Change) {
 }
 
 // Cards that left the board: a played Trainer, a knocked-out Pokémon, the Pokémon an evolution covers.
-function removedCards({ root, was, after, before, now }: Change) {
+export function removedCards({ root, was, after, before, now }: Change) {
   const fresh = now.actions.slice(before.actions.length);
   const evolved = fresh.some((a) => a.kind === 'evolve');
   const played = fresh.filter((a) => a.kind === 'play_trainer' && (a.card?.kind === 'item' || a.card?.kind === 'supporter'));
@@ -222,28 +230,4 @@ function removedCards({ root, was, after, before, now }: Change) {
     if (now.players[p].discardCount > before.players[p].discardCount) knockOut(root, snap);
     else if (evolved) stayUnder(root, snap);
   }
-}
-
-export function useBoardMotion(root: RefObject<HTMLElement | null>, view: GameView, instant: boolean) {
-  const last = useRef<{ snaps: Map<string, Snap>; view: GameView } | null>(null);
-  const skip = useRef(instant);
-  skip.current = instant;
-  // Skip finishes whatever is still moving.
-  useLayoutEffect(() => {
-    if (instant && root.current) settle(root.current);
-  }, [root, instant]);
-  useLayoutEffect(() => {
-    const el = root.current;
-    if (!el) return;
-    settle(el);
-    const prev = last.current;
-    const after = snapshot(el);
-    last.current = { snaps: after, view };
-    const newGame = !prev || view.actions.length < prev.view.actions.length;
-    if (newGame || prev.view === view || skip.current || reducedMotion()) return;
-    const change = { root: el, was: prev.snaps, after, before: prev.view, now: view };
-    moveCards(change);
-    removedCards(change);
-    popNewPips(el, prev.view, view);
-  }, [root, view]);
 }

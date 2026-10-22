@@ -66,7 +66,16 @@
   text-shadow: 0 0 calc(var(--u) * 2) #fff, 0 0 calc(var(--u) * 2) #fff, 0 0 calc(var(--u) * 2) #fff;
 }
 .bt-hp-bar { width: calc(var(--u) * 40); height: calc(var(--u) * 5); border-radius: 99px; background: #4a5068; overflow: hidden; }
-.bt-hp-bar > span { display: block; height: 100%; }
+.bt-hp-bar > span { display: block; height: 100%; transition: width 250ms ease-out, background-color 250ms; }
+/* no drain while Skip is running the bot's turn, or with reduced motion */
+.bt-board[data-instant='true'] .bt-hp-bar > span { transition: none; }
+@media (prefers-reduced-motion: reduce) { .bt-hp-bar > span { transition: none; } }
+/* a number that rises where HP changed (motion: results.ts) */
+.bt-pop {
+  display: grid; place-items: center; font-weight: 900; font-size: calc(var(--u) * 22); line-height: 1;
+  color: #e33a2a; text-shadow: 0 0 calc(var(--u) * 2) #fff, 0 0 calc(var(--u) * 2) #fff, 0 0 calc(var(--u) * 2) #fff;
+}
+.bt-pop[data-kind='heal'] { color: #1fa83a; }
 
 /* attached energy: type icons along the bottom (L2) */
 .bt-attached { position: absolute; left: calc(var(--u) * 2); bottom: calc(var(--u) * 2); display: flex; flex-wrap: wrap; gap: calc(var(--u) * 1); max-width: 95%; }

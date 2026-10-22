@@ -87,4 +87,5 @@ test('retreat swaps the two Pokémon', async ({ page, request }) => {
   const log = await animationsSoFar(page);
   expect(log.some((a) => a.zone === 'my-active' && a.key.startsWith('p0:A4b-076#')), 'Heatran moves up to the Active').toBe(true);
   expect(log.some((a) => a.zone === 'my-bench' && a.key.startsWith('p0:B2a-126#')), 'Entei ex moves down to the Bench').toBe(true);
+  expect(log.filter((a) => a.copy && a.fades).length, 'the two paid Energy fade off').toBe(2);
 });

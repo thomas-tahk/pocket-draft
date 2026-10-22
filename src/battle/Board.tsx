@@ -10,7 +10,8 @@ import { ReadyButton } from './Setup';
 import { usableCards } from './usable';
 import { CardZoom, PlayLayer } from './PlayLayer';
 import { PlayContext, usePlay, useHolding, type Spot } from './usePlay';
-import { stadiumKey, useBoardMotion, viewKeys, type SideKeys } from './motion';
+import { stadiumKey, viewKeys, type SideKeys } from './motion';
+import { useBoardMotion } from './useBoardMotion';
 
 // The battle board, laid out from the owner's Pocket screenshot (spec L1–L4).
 // Positions are in 390 × 844 grid units (see battle.css). Opponent on top,
@@ -208,7 +209,7 @@ export function Board({ view, instant = false, onEndTurn, onReady = () => {}, ch
   const onTapActive = () => { if (!heldAtPress.current && !zoomOpened.current) activeCard.open(); };
   const onTapBench = (slot: number) => { if (!heldAtPress.current && !zoomOpened.current) activeCard.openBench(slot); };
   return (
-    <div className="bt-board" data-testid="battle-board" ref={boardRef}
+    <div className="bt-board" data-testid="battle-board" data-instant={instant} ref={boardRef}
       onPointerDownCapture={() => { heldAtPress.current = !!holding; }} onPointerDown={onPointerDown}>
       <PlayContext.Provider value={holding}>
       <OpponentSide p={opp} keys={keys[1]} choice={shownChoice} />

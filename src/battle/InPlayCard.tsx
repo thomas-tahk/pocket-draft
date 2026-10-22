@@ -24,7 +24,7 @@ function AttachedEnergy({ energy, size }: { energy: Record<string, number>; size
   const icons = Object.entries(energy).flatMap(([type, n]) => Array.from({ length: n }, () => type));
   return (
     <div className="bt-attached">
-      {icons.map((type, i) => <EnergyIcon key={i} type={type} size={size} />)}
+      {icons.map((type, i) => <span key={i} data-energy={type} style={{ display: 'inline-flex' }}><EnergyIcon type={type} size={size} /></span>)}
     </div>
   );
 }
