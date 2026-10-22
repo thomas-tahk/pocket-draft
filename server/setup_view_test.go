@@ -12,7 +12,7 @@ import (
 func readyUp(t *testing.T, g *engine.Game, p int) {
 	t.Helper()
 	for !g.S.Ready(p) {
-		ev, ok := bestMove(g.LegalMoves(p))
+		ev, ok := bestMove(g, g.LegalMoves(p))
 		if !ok {
 			t.Fatalf("P%d setup: bot found no move", p+1)
 		}

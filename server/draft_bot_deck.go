@@ -59,8 +59,9 @@ func (have typeSet) add(rc rawCard) {
 // that would add a third type scores 0 and is dropped when the deck is built.
 // Ties go to the earliest card in the offer.
 func botPick(offer, picks []draftCard, byName map[string][]rawCard) draftCard {
-	have, trainers := typeSet{}, 0
+	have, trainers, copies := typeSet{}, 0, map[string]int{}
 	for _, p := range picks {
+		copies[p.Name]++
 		if p.CardType == "Trainer" {
 			trainers++
 		} else {
@@ -69,7 +70,7 @@ func botPick(offer, picks []draftCard, byName map[string][]rawCard) draftCard {
 	}
 	best, bestScore := offer[0], -1
 	for _, c := range offer {
-		if s := botPickScore(c, have, trainers, byName); s > bestScore {
+		if s := botPickScore(c, have, trainers, byName) - copies[c.Name]; copies[c.Name] < 2 && s > bestScore {
 			best, bestScore = c, s
 		}
 	}
