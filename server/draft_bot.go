@@ -24,17 +24,17 @@ func newDraftRng(seed uint64) *rand.Rand {
 
 // draftBotDeck runs the actual pick-1-of-5×16 draft over the same draftable
 // pool and tier-weighted offer algorithm the client's draft uses
-// (src/stores/draftStore.ts, src/draft/offer.ts), auto-picking (botPick) in place of a
-// human tap. It then tops the 16 picks up to a
-// legal 20-card deck (the Shop Phase that normally does this is deferred past
-// this slice — issue #9) and hands the result to deckFromIDs for the same
-// legality/engine-modeling a human's finalized deck gets.
+// (src/stores/draftStore.ts, src/draft/offer.ts), choosing with botPick in place
+// of a human tap. It then builds a legal 20-card deck from the 16 picks plus
+// their free under-evolutions (botDeckIDs) and hands the result to deckFromIDs
+// for the same legality/engine-modeling a human's finalized deck gets.
 func draftBotDeck(seed uint64) ([]engine.Card, error) {
 	pool := toDraftablePool()
 	if len(pool) == 0 {
 		return nil, fmt.Errorf("draft bot deck: empty draftable pool")
 	}
 	byTier := indexByTier(pool)
+	byName := nameIndex()
 	rng := newDraftRng(seed)
 
 	picks := make([]draftCard, 0, totalDraftPacks)
@@ -43,27 +43,10 @@ func draftBotDeck(seed uint64) ([]engine.Card, error) {
 		if err != nil {
 			return nil, fmt.Errorf("draft bot deck: round %d: %w", round, err)
 		}
-		picks = append(picks, botPick(offer, picks))
+		picks = append(picks, botPick(offer, picks, byName))
 	}
 
-	return deckFromIDs(topUpToDeckSize(picks))
-}
-
-// botPick takes the offer's first card, except that while the bot holds no
-// Basic Pokémon it takes the first Basic offered: the bot has no deckbuild to
-// add under-evolutions, and a deck with no Basic can't start a game.
-func botPick(offer, picks []draftCard) draftCard {
-	for _, c := range picks {
-		if c.Stage == "Basic" {
-			return offer[0]
-		}
-	}
-	for _, c := range offer {
-		if c.Stage == "Basic" {
-			return c
-		}
-	}
-	return offer[0]
+	return deckFromIDs(botDeckIDs(picks, byName))
 }
 
 // topUpToDeckSize expands 16 draft picks into a legal 20-card id list by
