@@ -39,16 +39,17 @@ function StatusIcons({ mon }: { mon: InPlayView }) {
   );
 }
 
-export function InPlayCard({ mon, width }: { mon: InPlayView | null; width: number }) {
+// fx / toolFx: the keys motion.ts follows this card and its Tool by.
+export function InPlayCard({ mon, width, fx, toolFx }: { mon: InPlayView | null; width: number; fx?: string; toolFx?: string }) {
   if (!mon) return <EmptySlot width={width} />;
-  if (mon.faceDown) return <CardBack width={width} />;
+  if (mon.faceDown) return <div data-fx={fx}><CardBack width={width} /></div>;
   return (
-    <div style={{ position: 'relative' }} data-zoom={mon.card.id}>
+    <div style={{ position: 'relative' }} data-zoom={mon.card.id} data-fx={fx}>
       <CardFace card={mon.card} width={width} />
       <HpBadge mon={mon} />
       <StatusIcons mon={mon} />
       <AttachedEnergy energy={mon.energy} size={width > 90 ? 18 : 14} />
-      {mon.tool && <div className="bt-tool" data-testid="tool" title={mon.tool.name}>{mon.tool.name}</div>}
+      {mon.tool && <div className="bt-tool" data-testid="tool" data-fx={toolFx} title={mon.tool.name}>{mon.tool.name}</div>}
     </div>
   );
 }

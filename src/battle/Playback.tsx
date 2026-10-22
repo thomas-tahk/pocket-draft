@@ -56,7 +56,7 @@ export function useOpponentTurn(view: GameView | null, botStuck: boolean, runBot
     setStep(null);
   };
   const canSkip = botToMove && view.phase === 'main' && !skipping;
-  return { step, canSkip, skip };
+  return { step, canSkip, skip, skipping };
 }
 
 // Data attributes for the board root that light the step's target (battle.css).

@@ -20,7 +20,7 @@ export function BattleScreen({ deck, onExit }: { deck?: string[]; onExit?: () =>
   }, [deck, init, startGame]);
 
   // The bot (seat 1) plays whenever it is its move, one step at a time (F14).
-  const { step, canSkip, skip } = useOpponentTurn(view, botStuck, runBot);
+  const { step, canSkip, skip, skipping } = useOpponentTurn(view, botStuck, runBot);
   const intro = useSetupIntro(view);
 
   if (!view) {
@@ -39,7 +39,7 @@ export function BattleScreen({ deck, onExit }: { deck?: string[]; onExit?: () =>
 
   return (
     <div className="bt-root" {...flashAttrs(step)}>
-      <Board view={view} onEndTurn={onEndTurn} onReady={onReady} choice={choiceFor(view, 0, (m) => void dispatch(m))}>
+      <Board view={view} instant={skipping} onEndTurn={onEndTurn} onReady={onReady} choice={choiceFor(view, 0, (m) => void dispatch(m))}>
         {view.phase !== 'over' && <GameMenu onConcede={onConcede} />}
         {step && <PlaybackStep step={step} />}
         {canSkip && <SkipButton onSkip={skip} />}
