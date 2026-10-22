@@ -119,8 +119,16 @@ export const zoneBox = (root: HTMLElement, id: string, inner?: string): Box | nu
 function originOf(root: HTMLElement, el: HTMLElement): Box | null {
   if (el.closest('[data-testid="my-hand"]')) return zoneBox(root, 'my-deck', '.bt-back');
   if (el.closest('[data-testid="opp-hand"]')) return zoneBox(root, 'opp-deck', '.bt-back');
-  if (el.closest('[data-testid^="opp-"]')) return zoneBox(root, 'opp-hand');
+  if (el.closest('[data-testid^="opp-"]')) return handOrigin(root, 'opp');
   return null;
+}
+
+// The middle of a hand, the size of one card in it (0 when it is empty: no
+// resize), so a card leaving it never starts stretched to the whole zone.
+function handOrigin(root: HTMLElement, owner: 'my' | 'opp'): Box | null {
+  const zone = zoneBox(root, `${owner}-hand`);
+  const card = zoneBox(root, `${owner}-hand`, '[data-fx]');
+  return zone && { ...zone, w: card?.w ?? 0, h: card?.h ?? 0 };
 }
 
 export type Ghost = { node: HTMLElement; at: Box };
@@ -173,7 +181,7 @@ function cardGhost(root: HTMLElement, action: ActionView): Ghost | null {
 function showTrainer(root: HTMLElement, action: ActionView, from: Box | null) {
   const ghost = cardGhost(root, action);
   const pile = zoneBox(root, `${action.player === 0 ? 'my' : 'opp'}-discard`, '.bt-discard');
-  const start = from ?? zoneBox(root, action.player === 0 ? 'my-hand' : 'opp-hand');
+  const start = from ?? handOrigin(root, action.player === 0 ? 'my' : 'opp');
   if (!ghost || !pile || !start) return;
   const c = ghost.at;
   launch(root, ghost, [
@@ -201,7 +209,7 @@ function stadiumOrigin(root: HTMLElement, { was, after, now, before }: Change, k
   const owner = player === 0 ? 'my' : 'opp';
   const id = key.slice(3);
   const gone = [...was].find(([k, s]) => !after.has(k) && s.zone === 'hand' && s.owner === owner && k.includes(`:${id}#`));
-  return gone?.[1] ?? zoneBox(root, `${owner}-hand`);
+  return gone?.[1] ?? handOrigin(root, owner);
 }
 
 // Every keyed element that is still there slides; one that is new comes from its origin.
