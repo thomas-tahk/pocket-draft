@@ -28,15 +28,17 @@ function counter(side: number) {
 }
 
 // Face-down cards (an opponent's hand, a hidden setup pick) have no identity; they are keyed by place.
+// Cards in play are counted before the hand, so a copy drawn or played never shifts the key of one in play.
 export function sideKeys(side: number, p: PlayerView): SideKeys {
   const next = counter(side);
   const mon = (m: InPlayView | null, at: string) => (!m ? '' : m.faceDown ? `p${side}:down:${at}` : next(m.card.id));
   const tool = (m: InPlayView | null) => (m?.tool ? next(m.tool.id) : '');
-  const hand = side === 0 ? p.hand.map((c) => next(c.id)) : Array.from({ length: p.handCount }, (_, i) => `p${side}:hand#${i}`);
   const active = mon(p.active, 'a');
   const activeTool = tool(p.active);
   const bench = p.bench.map((m, i) => mon(m, `b${i}`));
-  return { hand, active, activeTool, bench, benchTool: p.bench.map(tool) };
+  const benchTool = p.bench.map(tool);
+  const hand = side === 0 ? p.hand.map((c) => next(c.id)) : Array.from({ length: p.handCount }, (_, i) => `p${side}:hand#${i}`);
+  return { hand, active, activeTool, bench, benchTool };
 }
 
 export const viewKeys = (v: GameView): [SideKeys, SideKeys] => [sideKeys(0, v.players[0]), sideKeys(1, v.players[1])];
