@@ -1,5 +1,4 @@
 import { test, expect, type APIRequestContext, type Page } from '@playwright/test';
-import { FIRE } from './decks';
 
 // F15: a small notebook icon opens a scrollable list of the moves so far,
 // newest first, each with the card used and what it did. No text log shows
@@ -20,7 +19,7 @@ async function post(api: APIRequestContext, url: string, data?: object): Promise
 
 // Setup, end your first turn, let the bot take its turn, attach an energy.
 async function playAFewMoves(api: APIRequestContext): Promise<View> {
-  const start = await post(api, '/api/new', { seed: 7, bot: BOT, you: FIRE });
+  const start = await post(api, '/api/new', { seed: 7, bot: BOT, preset: 'fire' });
   const basics = start.players[0].hand.filter((c) => c.stage === 'Basic');
   await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: basics[0].id });
   await post(api, '/api/move', { type: 'SetupBench', player: 0, cardId: basics[1].id, slot: 0 });

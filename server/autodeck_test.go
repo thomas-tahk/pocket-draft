@@ -66,3 +66,21 @@ func TestAutoDeckIsPlayable(t *testing.T) {
 		t.Fatalf("auto deck rejected: %v", err)
 	}
 }
+
+// The test-only fire preset still deals the old fixed deck.
+func TestFirePresetDealsTheFixedDeck(t *testing.T) {
+	useRealCards(t)
+	seed := uint64(7)
+	if _, err := startGame(newReq{Seed: &seed, Preset: "fire"}); err != nil {
+		t.Fatal(err)
+	}
+	fire := map[string]bool{}
+	for _, c := range fireDeck {
+		fire[c.Name] = true
+	}
+	for n := range names(game.S.Players[0]) {
+		if !fire[n] {
+			t.Errorf("%s is not in the fire deck", n)
+		}
+	}
+}

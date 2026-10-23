@@ -1,5 +1,4 @@
 import { test, expect, type APIRequestContext, type Locator, type Page } from '@playwright/test';
-import { FIRE } from './decks';
 
 // F2 at phone size: holding a hand card ~350 ms without moving opens it large
 // and centred; starting to drag shrinks it back to the normal-size dragged
@@ -19,7 +18,7 @@ async function post(api: APIRequestContext, url: string, data?: object): Promise
 
 // Seed 7: you go first; on your second turn a Basic is still in hand and the Bench is empty.
 async function toYourSecondTurn(api: APIRequestContext): Promise<{ basic: Card; oppActive: Card }> {
-  const start = await post(api, '/api/new', { seed: 7, bot: BOT, you: FIRE });
+  const start = await post(api, '/api/new', { seed: 7, bot: BOT, preset: 'fire' });
   const basics = start.players[0].hand.filter((c) => c.stage === 'Basic');
   await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: basics[0].id });
   await post(api, '/api/move', { type: 'SetupReady', player: 0 });

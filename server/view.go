@@ -11,6 +11,9 @@ type attackView struct {
 	Name   string   `json:"name"`
 	Cost   []string `json:"cost"`
 	Damage int      `json:"damage"`
+	Effect string   `json:"effect,omitempty"` // the printed text
+	// Printed is the damage as printed, "40+" or "30×"; "" for none.
+	Printed string `json:"printed,omitempty"`
 }
 
 type abilityView struct {
@@ -224,6 +227,16 @@ func energyLabels(es []engine.Energy) []string {
 	return out
 }
 
+// printedAttack is the card's attack with that name as printed.
+func printedAttack(id, name string) rawAttack {
+	for _, a := range rawByID[id].Attacks {
+		if a.Name == name {
+			return a
+		}
+	}
+	return rawAttack{}
+}
+
 var kindNames = map[engine.CardKind]string{
 	engine.KindPokemon: "pokemon", engine.KindItem: "item", engine.KindSupporter: "supporter",
 	engine.KindTool: "tool", engine.KindStadium: "stadium",
@@ -236,7 +249,8 @@ func toCardView(c engine.Card) cardView {
 		for j, e := range a.Cost {
 			cost[j] = e.String()
 		}
-		atks[i] = attackView{Name: a.Name, Cost: cost, Damage: a.Damage}
+		raw := printedAttack(c.ID, a.Name)
+		atks[i] = attackView{Name: a.Name, Cost: cost, Damage: a.Damage, Effect: raw.Effect, Printed: raw.Damage}
 	}
 	return cardView{
 		ID:          c.ID,

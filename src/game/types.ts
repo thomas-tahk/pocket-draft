@@ -1,5 +1,6 @@
 // Mirrors server/view.go. The client renders these; it does not own them.
-export type AttackView = { name: string; cost: string[]; damage: number };
+// effect is the printed text; printed is the damage as printed ("40+")
+export type AttackView = { name: string; cost: string[]; damage: number; effect?: string; printed?: string };
 
 export type AbilityView = { name: string; effect: string }; // effect is the printed text
 

@@ -47,6 +47,10 @@ type newReq struct {
 	// Bot pins the bot's deck (card IDs) instead of drafting one, so tests don't
 	// shift when the draft pool does.
 	Bot []string `json:"bot"`
+	// Preset "fire" deals you the old fixed test deck (fireDeckList), which
+	// breaks the 2-copy rule, so browser tests written against its hands keep
+	// them. Test-only; the app never sends it.
+	Preset string `json:"preset"`
 }
 
 // energyChoice parses and validates a requested energy choice; nil when none
@@ -117,7 +121,7 @@ func startGame(req newReq) (gameView, *startErr) {
 			return gameView{}, &startErr{err, http.StatusBadRequest}
 		}
 	}
-	p0, err := yourDeck(req.You, seed)
+	p0, err := yourDeck(req, seed)
 	if err != nil {
 		return gameView{}, &startErr{err, http.StatusBadRequest}
 	}
@@ -135,9 +139,12 @@ func startGame(req newReq) (gameView, *startErr) {
 
 // yourDeck is the deck you asked for, or a drafted one when you named none.
 // The draft seed is offset so you and the bot never draft the same deck.
-func yourDeck(ids []string, seed uint64) ([]engine.Card, error) {
-	if len(ids) > 0 {
-		return deckFromIDs(ids)
+func yourDeck(req newReq, seed uint64) ([]engine.Card, error) {
+	if len(req.You) > 0 {
+		return deckFromIDs(req.You)
+	}
+	if req.Preset == "fire" {
+		return fireDeckPreset()
 	}
 	return draftBotDeck(seed ^ yourDraftSalt)
 }

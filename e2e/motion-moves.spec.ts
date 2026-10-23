@@ -1,6 +1,5 @@
 import { test, expect, type APIRequestContext } from '@playwright/test';
 import { animationsSoFar, logAnimations, settled } from './fx-log';
-import { FIRE } from './decks';
 
 // M3-3: the moves that are not a plain hand-to-Bench drop. Draws and plays of a
 // whole game, evolution and knock-outs are covered in full-game.spec.ts (motion on).
@@ -65,7 +64,7 @@ test('a Trainer shows in the middle and goes to the discard; the cards it draws 
 
 // Seed 7 as in active-card.spec.ts: Entei ex Active, Heatran on the Bench, Fire on the Active.
 test('retreat swaps the two Pokémon', async ({ page, request }) => {
-  await post(request, '/api/new', { seed: 7, bot: BOT, you: FIRE });
+  await post(request, '/api/new', { seed: 7, bot: BOT, preset: 'fire' });
   await post(request, '/api/move', { type: 'SetupActive', player: 0, cardId: 'B2a-126' });
   await post(request, '/api/move', { type: 'SetupBench', player: 0, cardId: 'A4b-076', slot: 0 });
   await post(request, '/api/move', { type: 'SetupReady', player: 0 });

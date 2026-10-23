@@ -212,15 +212,6 @@
 }
 
 /* ---- opponent-turn playback (F14) ---- */
-.bt-playback {
-  position: absolute; left: calc(var(--u) * 8); top: calc(var(--u) * 346); z-index: 4;
-  width: calc(var(--u) * 124); box-sizing: border-box; padding: calc(var(--u) * 6);
-  display: flex; flex-direction: column; align-items: center; gap: calc(var(--u) * 4);
-  border-radius: calc(var(--u) * 10); background: rgba(28, 35, 64, 0.88); color: #fff;
-  font-size: calc(var(--u) * 11); font-weight: 700; text-align: center; pointer-events: none;
-  animation: bt-fade-in 120ms ease-out;
-}
-.bt-playback p { margin: 0; }
 @keyframes bt-fade-in { from { opacity: 0; } }
 /* the spot the step touched glows */
 .bt-root[data-flash-zone='opp-active'] [data-testid='opp-active'],
@@ -316,3 +307,6 @@
 .bt-sheet-retreat { justify-content: flex-start; }
 .bt-sheet-ability { flex-direction: column; align-items: flex-start; gap: calc(var(--u) * 4); }
 .bt-sheet-effect { font-weight: 500; font-size: calc(var(--u) * 12); }
+.bt-sheet-attack { flex-direction: column; align-items: stretch; gap: calc(var(--u) * 4); }
+.bt-sheet-attack-head { display: flex; align-items: center; gap: calc(var(--u) * 8); }
+.bt-sheet-attack .bt-sheet-effect { text-align: left; }

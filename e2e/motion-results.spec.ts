@@ -1,6 +1,5 @@
 import { test, expect, type APIRequestContext, type Page } from '@playwright/test';
 import { animationsSoFar, logAnimations, settled, transitionsSoFar } from './fx-log';
-import { FIRE } from './decks';
 
 // M3-4: results land where they happen. Attached Energy flies from the Energy
 // Zone, an attacker nudges toward its target, a number pops on the Pokémon
@@ -30,7 +29,7 @@ async function botPlaysUntilYou(api: APIRequestContext) {
 
 // Seed 7 (active-card.spec.ts): Entei ex Active, Heatran on the Bench; Fire on the Active each turn.
 async function toEnteiTurn(api: APIRequestContext, fireAttached: number) {
-  await post(api, '/api/new', { seed: 7, bot: BOT, you: FIRE });
+  await post(api, '/api/new', { seed: 7, bot: BOT, preset: 'fire' });
   await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: 'B2a-126' });
   await post(api, '/api/move', { type: 'SetupBench', player: 0, cardId: 'A4b-076', slot: 0 });
   await post(api, '/api/move', { type: 'SetupReady', player: 0 });

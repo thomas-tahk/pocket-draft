@@ -1,5 +1,4 @@
 import { test, expect, type APIRequestContext, type Locator, type Page } from '@playwright/test';
-import { FIRE } from './decks';
 
 // Owner 2026-10-19 (8) at phone size: before Ready a placed card goes back to
 // the hand or moves to another spot, and the opponent's placements show face
@@ -12,7 +11,7 @@ const basicsOf = (v: View) => v.players[0].hand.filter((c) => c.stage === 'Basic
 
 async function startWithTwoBasics(api: APIRequestContext): Promise<View> {
   for (let seed = 1; seed < 60; seed++) {
-    const v = (await (await api.post('/api/new', { data: { seed, you: FIRE } })).json()) as View;
+    const v = (await (await api.post('/api/new', { data: { seed, preset: 'fire' } })).json()) as View;
     if (basicsOf(v).length >= 2) return v;
   }
   throw new Error('no seed deals two Basics');

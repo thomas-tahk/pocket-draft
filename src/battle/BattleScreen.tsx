@@ -3,7 +3,7 @@ import { useGameStore } from '../game/store';
 import { Board } from './Board';
 import { ConfirmDialog, EndScreen, GameMenu, endTurnWarning, type Confirm } from './EndControls';
 import { choiceFor } from './Choice';
-import { PlaybackStep, SkipButton, flashAttrs, useOpponentTurn } from './Playback';
+import { SkipButton, flashAttrs, useOpponentTurn } from './Playback';
 import { SetupIntro, useSetupIntro } from './Setup';
 import './battle.css';
 
@@ -41,7 +41,6 @@ export function BattleScreen({ deck, onExit }: { deck?: string[]; onExit?: () =>
     <div className="bt-root" {...flashAttrs(step)}>
       <Board view={view} instant={skipping} onEndTurn={onEndTurn} onReady={onReady} choice={choiceFor(view, 0, (m) => void dispatch(m))}>
         {view.phase !== 'over' && <GameMenu onConcede={onConcede} />}
-        {step && <PlaybackStep step={step} />}
         {canSkip && <SkipButton onSkip={skip} />}
         {intro.show && <SetupIntro view={view} onDone={intro.finish} />}
         {confirm && <ConfirmDialog confirm={confirm} onClose={() => setConfirm(null)} />}
