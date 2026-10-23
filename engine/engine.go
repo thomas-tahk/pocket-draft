@@ -19,6 +19,7 @@ type Game struct {
 	Actions   []Action // one per applied event, for replay and history (actions.go)
 
 	flips []CoinFlip // coins flipped by the move being applied (coin.go)
+	dealt int        // the attack damage dealt by the move being applied
 
 	koAttacker *InPlay // the attacking Pokémon while its attack's knockouts resolve; nil otherwise
 }
@@ -122,12 +123,12 @@ func (g *Game) Submit(ev Event) error {
 		return errors.New("game is over")
 	}
 	act, before := g.describe(ev), len(g.Narration)
-	g.flips = nil
+	g.flips, g.dealt = nil, 0
 	if err := g.validateAndApply(ev); err != nil {
 		return err
 	}
 	act.Result = append([]string(nil), g.Narration[before:]...)
-	act.Flips = g.flips
+	act.Flips, act.Damage = g.flips, g.dealt
 	g.Events = append(g.Events, ev)
 	g.Actions = append(g.Actions, act)
 	return nil
@@ -301,6 +302,7 @@ func (g *Game) applyAttack(e UseAttack) {
 	g.runAttackEffects(e.Player, atk.Effect, ctx)
 	dmg, weakness := g.attackDamage(e.Player, ctx.Damage)
 	opp.Active.Damage += dmg
+	g.dealt = dmg
 	g.surviveKO(e.Player)
 	g.damagedTriggers(1-e.Player, dmg)
 	if weakness != "" {

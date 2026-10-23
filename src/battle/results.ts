@@ -96,11 +96,15 @@ export function resultsLand(change: Change) {
     energyChange(change, key, el, old, mon);
     conditionFlash(el, old, mon);
   }
-  for (const a of now.actions.slice(before.actions.length)) if (a.kind === 'attack') nudge(root, a.player);
+  const attacks = now.actions.slice(before.actions.length).filter((a) => a.kind === 'attack');
+  for (const a of attacks) nudge(root, a.player);
   for (const [key, snap] of was) {
     const p = snap.owner === 'my' ? 0 : 1;
     const knockedOut = !after.has(key) && snap.zone === 'mon' && now.players[p].discardCount > before.players[p].discardCount;
     const old = olds.get(key);
-    if (knockedOut && old && old.remainingHp > 0) showNumber(root, snap, `-${old.remainingHp}`, 'damage');
+    if (!knockedOut || !old || old.remainingHp <= 0) continue;
+    // A knocked-out Pokémon shows the hit it took, not just the HP it had left.
+    const hit = key === viewKeys(before)[p].active ? attacks.find((a) => a.player !== p)?.damage : undefined;
+    showNumber(root, snap, `-${hit ?? old.remainingHp}`, 'damage');
   }
 }

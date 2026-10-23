@@ -66,6 +66,7 @@ export type ActionView = {
   result: string[];
   // every coin the move flipped, in order (spec F11); waits: hold for the flipper's tap
   flips: { flipper: number; heads: boolean; waits: boolean }[];
+  damage?: number; // an attack's damage after Weakness
 };
 
 // title and labels word a card's choice ('choose'); only the chooser gets them.

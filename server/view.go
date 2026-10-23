@@ -124,7 +124,8 @@ type actionView struct {
 	Card   *cardView  `json:"card"` // null when the move used no card, or it is hidden
 	Target spotView   `json:"target"`
 	Result []string   `json:"result"`
-	Flips  []coinView `json:"flips"` // every coin the move flipped, in order (spec F11)
+	Flips  []coinView `json:"flips"`            // every coin the move flipped, in order (spec F11)
+	Damage int        `json:"damage,omitempty"` // an attack's damage after Weakness
 }
 
 // coinView is one coin flip. Waits: the screen holds this coin until the
@@ -443,7 +444,7 @@ func toMoveReqs(evs []engine.Event) []moveReq {
 func toActionViews(g *engine.Game, viewer int) []actionView {
 	out := make([]actionView, 0, len(g.Actions))
 	for _, a := range g.Actions {
-		v := actionView{Player: a.Player, Kind: string(a.Kind), Target: spotView{a.Target.Player, a.Target.Pos}, Result: a.Result, Flips: toCoinViews(a.Flips)}
+		v := actionView{Player: a.Player, Kind: string(a.Kind), Target: spotView{a.Target.Player, a.Target.Pos}, Result: a.Result, Flips: toCoinViews(a.Flips), Damage: a.Damage}
 		if a.Card.ID != "" {
 			c := toCardView(a.Card)
 			v.Card = &c
