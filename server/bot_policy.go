@@ -46,7 +46,7 @@ func moveRank(g *engine.Game, ev engine.Event) (int, bool) {
 	case engine.PlayBasic:
 		return rankBench, true
 	case engine.PlayTrainer:
-		return rankTrainer, true
+		return trainerRank(g, e)
 	case engine.UseStadium:
 		return rankStadium, true
 	case engine.UseAbility:
