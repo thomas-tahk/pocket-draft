@@ -1,4 +1,5 @@
 import { test, expect, type APIRequestContext, type Page } from '@playwright/test';
+import { FIRE } from './decks';
 
 // L1–L4 at phone size: every zone of the new battle screen sits where the
 // owner's Pocket screenshot puts it. The game is driven through the API to
@@ -23,7 +24,7 @@ async function runBotUntilYourTurn(api: APIRequestContext) {
 }
 
 async function playToSecondTurn(api: APIRequestContext) {
-  const start = await post(api, '/api/new', { seed: 7 });
+  const start = await post(api, '/api/new', { seed: 7, you: FIRE });
   const basics = start.players[0].hand.filter((c) => c.stage === 'Basic');
   await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: basics[0].id });
   await post(api, '/api/move', { type: 'SetupBench', player: 0, cardId: basics[1].id, slot: 0 });

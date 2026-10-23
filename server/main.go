@@ -17,23 +17,12 @@ import (
 )
 
 // One game, guarded by a mutex so overlapping HTTP requests can't corrupt it.
-// Player 1's curated stand-in deck is built once at startup and reused; player
-// 2's (the bot's) deck is drafted fresh for every new game so it varies by seed
-// (issue #9).
+// The one in-memory game. Both decks are drafted fresh for every new game unless
+// the request supplies them, so they vary by seed (issue #9).
 var (
-	mu       sync.Mutex
-	game     *engine.Game
-	fireDeck []engine.Card
+	mu   sync.Mutex
+	game *engine.Game
 )
-
-func newGame(seed uint64) error {
-	bot, err := draftBotDeck(seed)
-	if err != nil {
-		return err
-	}
-	game = engine.NewGame(seed, fireDeck, bot)
-	return nil
-}
 
 func writeJSON(w http.ResponseWriter, v any) {
 	w.Header().Set("Content-Type", "application/json")
@@ -49,8 +38,7 @@ func handleState(w http.ResponseWriter, r *http.Request) {
 
 // newReq is the optional JSON body for POST /api/new. `you` is your deck as a
 // list of card IDs; when present you play it (player 0) against the drafted bot
-// deck (player 1). An empty body falls back to the demo matchup (player 1's
-// curated stand-in vs the bot). `energy` is your deck's chosen Energy Zone
+// deck (player 1). Without it you get a drafted deck too. `energy` is your deck's chosen Energy Zone
 // types by name (1–3, spec S2); omitted means the default from its attack costs.
 type newReq struct {
 	You    []string `json:"you"`
@@ -129,14 +117,11 @@ func startGame(req newReq) (gameView, *startErr) {
 			return gameView{}, &startErr{err, http.StatusBadRequest}
 		}
 	}
-	p0, p1 := fireDeck, bot
-	if len(req.You) > 0 {
-		d, err := deckFromIDs(req.You)
-		if err != nil {
-			return gameView{}, &startErr{err, http.StatusBadRequest}
-		}
-		p0 = d
+	p0, err := yourDeck(req.You, seed)
+	if err != nil {
+		return gameView{}, &startErr{err, http.StatusBadRequest}
 	}
+	p1 := bot
 	energy, err := energyChoice(req.Energy)
 	if err != nil {
 		return gameView{}, &startErr{err, http.StatusBadRequest}
@@ -147,6 +132,17 @@ func startGame(req newReq) (gameView, *startErr) {
 	game = engine.NewGameFromDecks(seed, [2]engine.Deck{{Cards: p0, Energy: energy}, {Cards: p1}})
 	return toGameView(game, humanSeat), nil
 }
+
+// yourDeck is the deck you asked for, or a drafted one when you named none.
+// The draft seed is offset so you and the bot never draft the same deck.
+func yourDeck(ids []string, seed uint64) ([]engine.Card, error) {
+	if len(ids) > 0 {
+		return deckFromIDs(ids)
+	}
+	return draftBotDeck(seed ^ yourDraftSalt)
+}
+
+const yourDraftSalt = 0x5eed_0f_ea_7e_d0_0d
 
 // startErr carries the status code a failed start should report over HTTP.
 type startErr struct {

@@ -29,24 +29,36 @@ func newDraftRng(seed uint64) *rand.Rand {
 // their free under-evolutions (botDeckIDs) and hands the result to deckFromIDs
 // for the same legality/engine-modeling a human's finalized deck gets.
 func draftBotDeck(seed uint64) ([]engine.Card, error) {
+	_, ids, err := draftBotIDs(seed)
+	if err != nil {
+		return nil, err
+	}
+	return deckFromIDs(ids)
+}
+
+// draftBotIDs is draftBotDeck's draft as card ids: the 16 picks and the 20-card
+// deck built from them.
+func draftBotIDs(seed uint64) (picks, deck []string, err error) {
 	pool := toDraftablePool()
 	if len(pool) == 0 {
-		return nil, fmt.Errorf("draft bot deck: empty draftable pool")
+		return nil, nil, fmt.Errorf("draft bot deck: empty draftable pool")
 	}
 	byTier := indexByTier(pool)
 	byName := nameIndex()
 	rng := newDraftRng(seed)
 
-	picks := make([]draftCard, 0, totalDraftPacks)
+	drafted := make([]draftCard, 0, totalDraftPacks)
 	for round := 0; round < totalDraftPacks; round++ {
-		offer, err := generateOffer(byTier, picks, rng.Float64)
+		offer, err := generateOffer(byTier, drafted, rng.Float64)
 		if err != nil {
-			return nil, fmt.Errorf("draft bot deck: round %d: %w", round, err)
+			return nil, nil, fmt.Errorf("draft bot deck: round %d: %w", round, err)
 		}
-		picks = append(picks, botPick(offer, picks, byName))
+		drafted = append(drafted, botPick(offer, drafted, byName))
 	}
-
-	return deckFromIDs(botDeckIDs(picks, byName))
+	for _, c := range drafted {
+		picks = append(picks, c.ID)
+	}
+	return picks, botDeckIDs(drafted, byName), nil
 }
 
 // topUpToDeckSize expands 16 draft picks into a legal 20-card id list by

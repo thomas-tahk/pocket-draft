@@ -1,4 +1,5 @@
 import { test, expect, type APIRequestContext } from '@playwright/test';
+import { FIRE } from './decks';
 
 // A card the opponent plays flies from their face-down hand. It must start at
 // the size of a card in that hand, not stretched to the whole hand zone (it
@@ -7,7 +8,7 @@ import { test, expect, type APIRequestContext } from '@playwright/test';
 const BOT = ['A1-211', 'A1-202', 'B4-015', 'B4-112', 'A3-044', 'A2-112', 'A1-150', 'B4-036', 'P-A-001', 'A4b-373'].flatMap((id) => [id, id]);
 
 async function toYourFirstTurn(api: APIRequestContext) {
-  const start = (await (await api.post('/api/new', { data: { seed: 7, bot: BOT } })).json()) as { players: { hand: { id: string; stage: string }[] }[] };
+  const start = (await (await api.post('/api/new', { data: { seed: 7, bot: BOT, you: FIRE } })).json()) as { players: { hand: { id: string; stage: string }[] }[] };
   const basic = start.players[0].hand.find((c) => c.stage === 'Basic')!;
   await api.post('/api/move', { data: { type: 'SetupActive', player: 0, cardId: basic.id } });
   await api.post('/api/move', { data: { type: 'SetupReady', player: 0 } });

@@ -117,6 +117,9 @@ func listed(ev engine.Event) bool {
 	return false
 }
 
+// fireDeck is the old curated stand-in deck, kept as a fixed test deck.
+var fireDeck []engine.Card
+
 // useRealCards loads the scraped card data and the demo deck, as the server
 // does at startup, and restores the globals afterwards.
 func useRealCards(t *testing.T) {

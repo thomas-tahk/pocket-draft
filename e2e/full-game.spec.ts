@@ -2,6 +2,7 @@ import { test, expect, type APIRequestContext, type Page } from '@playwright/tes
 import { readFileSync } from 'node:fs';
 import type { GameView, Move } from '../src/game/types';
 import { animationsSoFar, logAnimations, settled } from './fx-log';
+import { FIRE } from './decks';
 
 // The M1 done-gate at phone size: a whole game against the bot, played only
 // with gestures on the board. Setup by dragging Basics and pressing Ready;
@@ -287,7 +288,7 @@ async function checkEnd(ctx: Ctx) {
 for (const seed of SEEDS) {
   test(`a whole game by gestures only, seed ${seed}`, async ({ page, request }) => {
     test.setTimeout(600_000);
-    await request.post('/api/new', { data: { seed } });
+    await request.post('/api/new', { data: { seed, you: FIRE } });
     await page.goto('/?battle');
     const ctx: Ctx = { page, api: request, label: `seed-${seed}`, step: 'open' };
     await playToEnd(ctx);

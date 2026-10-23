@@ -1,4 +1,5 @@
 import { test, expect, type APIRequestContext, type Locator, type Page } from '@playwright/test';
+import { FIRE } from './decks';
 
 // S4, S5, F11 at phone size: a new game opens on the coin flip (it lands by
 // itself whoever flips, 2.11), then "You go first / second",
@@ -14,7 +15,7 @@ const basicsOf = (v: View) => v.players[0].hand.filter((c) => c.stage === 'Basic
 // The first seed whose opening flip is made by `flipper` and deals you two Basics.
 async function newGameFlippedBy(api: APIRequestContext, flipper: number): Promise<View> {
   for (let seed = 1; seed < 60; seed++) {
-    const v = (await (await api.post('/api/new', { data: { seed } })).json()) as View;
+    const v = (await (await api.post('/api/new', { data: { seed, you: FIRE } })).json()) as View;
     if (v.openingFlip.flipper === flipper && basicsOf(v).length >= 2) return v;
   }
   throw new Error(`no seed where player ${flipper} flips with two Basics`);

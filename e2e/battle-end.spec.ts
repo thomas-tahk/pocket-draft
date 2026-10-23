@@ -1,4 +1,5 @@
 import { test, expect, type APIRequestContext } from '@playwright/test';
+import { FIRE } from './decks';
 
 // F12, F18, F19 at phone size: End Turn asks before throwing away an energy
 // attach or an attack, Concede sits in a menu behind a confirm, and the game
@@ -23,7 +24,7 @@ async function post(api: APIRequestContext, url: string, data?: object): Promise
 // Seed 8: you go first. Setup is placed through the API; the screen has no
 // setup input yet.
 async function setUpGame(api: APIRequestContext) {
-  const start = await post(api, '/api/new', { seed: 1 });
+  const start = await post(api, '/api/new', { seed: 1, you: FIRE });
   const basics = start.players[0].hand.filter((c) => c.stage === 'Basic');
   await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: basics[0].id });
   await post(api, '/api/move', { type: 'SetupReady', player: 0 });

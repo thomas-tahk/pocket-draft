@@ -1,4 +1,5 @@
 import { test, expect, type APIRequestContext, type Locator, type Page } from '@playwright/test';
+import { FIRE } from './decks';
 
 // F1, F3–F5, F17 at phone size: press-and-drag a card onto the board. Legal
 // spots glow, the rest dims, a line at the bottom says what to do; dropping
@@ -28,7 +29,7 @@ async function runBotUntilYourTurn(api: APIRequestContext) {
 
 // Seed 7: you go first. Active only, so the Bench is empty and a Basic stays in hand.
 async function toYourSecondTurn(api: APIRequestContext): Promise<Card> {
-  const start = await post(api, '/api/new', { seed: 7, bot: BOT });
+  const start = await post(api, '/api/new', { seed: 7, bot: BOT, you: FIRE });
   const basics = start.players[0].hand.filter((c) => c.stage === 'Basic');
   await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: basics[0].id });
   await post(api, '/api/move', { type: 'SetupReady', player: 0 });

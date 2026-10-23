@@ -1,4 +1,5 @@
 import { test, expect, type APIRequestContext, type Page } from '@playwright/test';
+import { FIRE } from './decks';
 
 // F14 at phone size: the bot's turn plays out one action at a time, about
 // 0.5 s each (its card shows, the target glows, numbers change), and Skip
@@ -22,7 +23,7 @@ const actor = (v: View) => (v.pending ? v.pending.player : v.active);
 // Tyrogue attacks your Active (the attack ends its turn). Everything up to
 // your turn 3 is played through the API. On that turn it benches a Basic first.
 async function reachTurn3(api: APIRequestContext) {
-  const start = await post(api, '/api/new', { seed: 1, bot: BOT });
+  const start = await post(api, '/api/new', { seed: 1, bot: BOT, you: FIRE });
   const basic = start.players[0].hand.find((c) => c.stage === 'Basic')!;
   await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: basic.id });
   await post(api, '/api/move', { type: 'SetupReady', player: 0 });

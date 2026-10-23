@@ -1,4 +1,5 @@
 import { test, expect, type APIRequestContext, type Page } from '@playwright/test';
+import { FIRE } from './decks';
 
 // M3-2: when the board changes, the cards that moved slide from their old
 // place (an Animation on the card, at most 400 ms); reduced motion turns it
@@ -17,7 +18,7 @@ async function post(api: APIRequestContext, url: string, data?: object): Promise
 
 // Seed 7: you go first; your second turn has a Basic in hand and an empty Bench.
 async function toYourSecondTurn(api: APIRequestContext): Promise<Card> {
-  const start = await post(api, '/api/new', { seed: 7, bot: BOT });
+  const start = await post(api, '/api/new', { seed: 7, bot: BOT, you: FIRE });
   const basics = start.players[0].hand.filter((c) => c.stage === 'Basic');
   await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: basics[0].id });
   await post(api, '/api/move', { type: 'SetupReady', player: 0 });

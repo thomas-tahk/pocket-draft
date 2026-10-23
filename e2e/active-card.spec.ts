@@ -1,4 +1,5 @@
 import { test, expect, type APIRequestContext, type Locator, type Page } from '@playwright/test';
+import { FIRE } from './decks';
 
 // F9 / T9 / T10 at phone size: tap your Active to open its card. Its attacks
 // are listed, the ones you can't use greyed; tapping a usable one attacks.
@@ -31,7 +32,7 @@ const attachToActive = (api: APIRequestContext) => post(api, '/api/move', { type
 
 // Your first turn (game turn 2), nothing attached yet.
 async function toYourFirstTurn(api: APIRequestContext) {
-  await post(api, '/api/new', { seed: 7, bot: BOT });
+  await post(api, '/api/new', { seed: 7, bot: BOT, you: FIRE });
   await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: 'B2a-126' });
   await post(api, '/api/move', { type: 'SetupBench', player: 0, cardId: 'A4b-076', slot: 0 });
   await post(api, '/api/move', { type: 'SetupReady', player: 0 });
