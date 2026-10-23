@@ -25,7 +25,7 @@ async function post(api: APIRequestContext, url: string, data?: object): Promise
 }
 
 async function setUp(api: APIRequestContext) {
-  const start = await post(api, '/api/new', { seed: 1, bot: BOT });
+  const start = await post(api, '/api/new', { seed: 1, bot: BOT, preset: 'fire' });
   const basics = start.players[0].hand.filter((c) => c.stage === 'Basic');
   await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: basics[0].id });
   for (let i = 1; i < basics.length && i <= 3; i++) await post(api, '/api/move', { type: 'SetupBench', player: 0, cardId: basics[i].id, slot: i - 1 });

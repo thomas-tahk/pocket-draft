@@ -17,23 +17,12 @@ import (
 )
 
 // One game, guarded by a mutex so overlapping HTTP requests can't corrupt it.
-// Player 1's curated stand-in deck is built once at startup and reused; player
-// 2's (the bot's) deck is drafted fresh for every new game so it varies by seed
-// (issue #9).
+// The one in-memory game. Both decks are drafted fresh for every new game unless
+// the request supplies them, so they vary by seed (issue #9).
 var (
-	mu       sync.Mutex
-	game     *engine.Game
-	fireDeck []engine.Card
+	mu   sync.Mutex
+	game *engine.Game
 )
-
-func newGame(seed uint64) error {
-	bot, err := draftBotDeck(seed)
-	if err != nil {
-		return err
-	}
-	game = engine.NewGame(seed, fireDeck, bot)
-	return nil
-}
 
 func writeJSON(w http.ResponseWriter, v any) {
 	w.Header().Set("Content-Type", "application/json")
@@ -49,8 +38,7 @@ func handleState(w http.ResponseWriter, r *http.Request) {
 
 // newReq is the optional JSON body for POST /api/new. `you` is your deck as a
 // list of card IDs; when present you play it (player 0) against the drafted bot
-// deck (player 1). An empty body falls back to the demo matchup (player 1's
-// curated stand-in vs the bot). `energy` is your deck's chosen Energy Zone
+// deck (player 1). Without it you get a drafted deck too. `energy` is your deck's chosen Energy Zone
 // types by name (1–3, spec S2); omitted means the default from its attack costs.
 type newReq struct {
 	You    []string `json:"you"`
@@ -59,6 +47,10 @@ type newReq struct {
 	// Bot pins the bot's deck (card IDs) instead of drafting one, so tests don't
 	// shift when the draft pool does.
 	Bot []string `json:"bot"`
+	// Preset "fire" deals you the old fixed test deck (fireDeckList), which
+	// breaks the 2-copy rule, so browser tests written against its hands keep
+	// them. Test-only; the app never sends it.
+	Preset string `json:"preset"`
 }
 
 // energyChoice parses and validates a requested energy choice; nil when none
@@ -129,14 +121,11 @@ func startGame(req newReq) (gameView, *startErr) {
 			return gameView{}, &startErr{err, http.StatusBadRequest}
 		}
 	}
-	p0, p1 := fireDeck, bot
-	if len(req.You) > 0 {
-		d, err := deckFromIDs(req.You)
-		if err != nil {
-			return gameView{}, &startErr{err, http.StatusBadRequest}
-		}
-		p0 = d
+	p0, err := yourDeck(req, seed)
+	if err != nil {
+		return gameView{}, &startErr{err, http.StatusBadRequest}
 	}
+	p1 := bot
 	energy, err := energyChoice(req.Energy)
 	if err != nil {
 		return gameView{}, &startErr{err, http.StatusBadRequest}
@@ -147,6 +136,20 @@ func startGame(req newReq) (gameView, *startErr) {
 	game = engine.NewGameFromDecks(seed, [2]engine.Deck{{Cards: p0, Energy: energy}, {Cards: p1}})
 	return toGameView(game, humanSeat), nil
 }
+
+// yourDeck is the deck you asked for, or a drafted one when you named none.
+// The draft seed is offset so you and the bot never draft the same deck.
+func yourDeck(req newReq, seed uint64) ([]engine.Card, error) {
+	if len(req.You) > 0 {
+		return deckFromIDs(req.You)
+	}
+	if req.Preset == "fire" {
+		return fireDeckPreset()
+	}
+	return draftBotDeck(seed ^ yourDraftSalt)
+}
+
+const yourDraftSalt = 0x5eed_0f_ea_7e_d0_0d
 
 // startErr carries the status code a failed start should report over HTTP.
 type startErr struct {
@@ -230,6 +233,8 @@ func toEvent(r moveReq) (engine.Event, error) {
 		return engine.DiscardFossil{Player: r.Player, Pos: r.Target}, nil
 	case "UseAbility":
 		return engine.UseAbility{Player: r.Player, Pos: r.Target, Target: abilitySpot(r.Spot)}, nil
+	case "UseStadium":
+		return engine.UseStadium{Player: r.Player, CardID: r.CardID}, nil
 	case "UseAttack":
 		return engine.UseAttack{Player: r.Player, Index: r.Index}, nil
 	case "EndTurn":
@@ -286,6 +291,8 @@ func fromEvent(ev engine.Event) moveReq {
 		return moveReq{Type: "DiscardFossil", Player: e.Player, Target: e.Pos}
 	case engine.UseAbility:
 		return moveReq{Type: "UseAbility", Player: e.Player, Target: e.Pos, Spot: &spotView{e.Target.Player, e.Target.Pos}}
+	case engine.UseStadium:
+		return moveReq{Type: "UseStadium", Player: e.Player, CardID: e.CardID}
 	case engine.UseAttack:
 		return moveReq{Type: "UseAttack", Player: e.Player, Index: e.Index}
 	case engine.EndTurn:

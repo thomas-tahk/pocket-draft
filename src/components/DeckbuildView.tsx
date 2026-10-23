@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { TypeTally } from '../battle/energy';
 import type { Card, EnergyType } from '../types/card';
 import { DECK_SIZE } from '../stores/draftStore';
 import {
@@ -215,7 +216,7 @@ export function DeckbuildView({
               Deck: {size} / {DECK_SIZE}
               {sortedTally.length > 0 && (
                 <span style={{ marginLeft: 16 }}>
-                  {sortedTally.map(([t, n]) => `${t} ×${n}`).join('  ')}
+                  <TypeTally entries={sortedTally} />
                 </span>
               )}
             </div>

@@ -11,6 +11,9 @@ type attackView struct {
 	Name   string   `json:"name"`
 	Cost   []string `json:"cost"`
 	Damage int      `json:"damage"`
+	Effect string   `json:"effect,omitempty"` // the printed text
+	// Printed is the damage as printed, "40+" or "30×"; "" for none.
+	Printed string `json:"printed,omitempty"`
 }
 
 type abilityView struct {
@@ -121,7 +124,8 @@ type actionView struct {
 	Card   *cardView  `json:"card"` // null when the move used no card, or it is hidden
 	Target spotView   `json:"target"`
 	Result []string   `json:"result"`
-	Flips  []coinView `json:"flips"` // every coin the move flipped, in order (spec F11)
+	Flips  []coinView `json:"flips"`            // every coin the move flipped, in order (spec F11)
+	Damage int        `json:"damage,omitempty"` // an attack's damage after Weakness
 }
 
 // coinView is one coin flip. Waits: the screen holds this coin until the
@@ -224,6 +228,16 @@ func energyLabels(es []engine.Energy) []string {
 	return out
 }
 
+// printedAttack is the card's attack with that name as printed.
+func printedAttack(id, name string) rawAttack {
+	for _, a := range rawByID[id].Attacks {
+		if a.Name == name {
+			return a
+		}
+	}
+	return rawAttack{}
+}
+
 var kindNames = map[engine.CardKind]string{
 	engine.KindPokemon: "pokemon", engine.KindItem: "item", engine.KindSupporter: "supporter",
 	engine.KindTool: "tool", engine.KindStadium: "stadium",
@@ -236,7 +250,8 @@ func toCardView(c engine.Card) cardView {
 		for j, e := range a.Cost {
 			cost[j] = e.String()
 		}
-		atks[i] = attackView{Name: a.Name, Cost: cost, Damage: a.Damage}
+		raw := printedAttack(c.ID, a.Name)
+		atks[i] = attackView{Name: a.Name, Cost: cost, Damage: a.Damage, Effect: raw.Effect, Printed: raw.Damage}
 	}
 	return cardView{
 		ID:          c.ID,
@@ -429,7 +444,7 @@ func toMoveReqs(evs []engine.Event) []moveReq {
 func toActionViews(g *engine.Game, viewer int) []actionView {
 	out := make([]actionView, 0, len(g.Actions))
 	for _, a := range g.Actions {
-		v := actionView{Player: a.Player, Kind: string(a.Kind), Target: spotView{a.Target.Player, a.Target.Pos}, Result: a.Result, Flips: toCoinViews(a.Flips)}
+		v := actionView{Player: a.Player, Kind: string(a.Kind), Target: spotView{a.Target.Player, a.Target.Pos}, Result: a.Result, Flips: toCoinViews(a.Flips), Damage: a.Damage}
 		if a.Card.ID != "" {
 			c := toCardView(a.Card)
 			v.Card = &c

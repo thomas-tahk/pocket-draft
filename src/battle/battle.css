@@ -66,7 +66,16 @@
   text-shadow: 0 0 calc(var(--u) * 2) #fff, 0 0 calc(var(--u) * 2) #fff, 0 0 calc(var(--u) * 2) #fff;
 }
 .bt-hp-bar { width: calc(var(--u) * 40); height: calc(var(--u) * 5); border-radius: 99px; background: #4a5068; overflow: hidden; }
-.bt-hp-bar > span { display: block; height: 100%; }
+.bt-hp-bar > span { display: block; height: 100%; transition: width 250ms ease-out, background-color 250ms; }
+/* no drain while Skip is running the bot's turn, or with reduced motion */
+.bt-board[data-instant='true'] .bt-hp-bar > span { transition: none; }
+@media (prefers-reduced-motion: reduce) { .bt-hp-bar > span { transition: none; } }
+/* a number that rises where HP changed (motion: results.ts) */
+.bt-pop {
+  display: grid; place-items: center; font-weight: 900; font-size: calc(var(--u) * 22); line-height: 1;
+  color: #e33a2a; text-shadow: 0 0 calc(var(--u) * 2) #fff, 0 0 calc(var(--u) * 2) #fff, 0 0 calc(var(--u) * 2) #fff;
+}
+.bt-pop[data-kind='heal'] { color: #1fa83a; }
 
 /* attached energy: type icons along the bottom (L2) */
 .bt-attached { position: absolute; left: calc(var(--u) * 2); bottom: calc(var(--u) * 2); display: flex; flex-wrap: wrap; gap: calc(var(--u) * 1); max-width: 95%; }
@@ -81,16 +90,6 @@
   font-size: calc(var(--u) * 9); font-weight: 800; color: #fff; padding: 0 calc(var(--u) * 3);
   border-radius: calc(var(--u) * 3); line-height: 1.5;
 }
-
-.bt-energy {
-  --s: 14;
-  width: calc(var(--u) * var(--s)); height: calc(var(--u) * var(--s)); border-radius: 50%;
-  display: grid; place-items: center; box-sizing: border-box;
-  border: calc(var(--u) * 1.2) solid #fff;
-  color: #fff; font-weight: 900; font-size: calc(var(--u) * var(--s) * 0.5); line-height: 1;
-  box-shadow: 0 0 0 calc(var(--u) * 0.6) rgba(0, 0, 0, 0.35);
-}
-.bt-energy[data-spent='true'] { background: #b9bcc8 !important; color: transparent; border-color: #d7d9e2; }
 
 /* ---- points: 3 Poké Ball pips (L3) ---- */
 .bt-points {
@@ -213,15 +212,6 @@
 }
 
 /* ---- opponent-turn playback (F14) ---- */
-.bt-playback {
-  position: absolute; left: calc(var(--u) * 8); top: calc(var(--u) * 346); z-index: 4;
-  width: calc(var(--u) * 124); box-sizing: border-box; padding: calc(var(--u) * 6);
-  display: flex; flex-direction: column; align-items: center; gap: calc(var(--u) * 4);
-  border-radius: calc(var(--u) * 10); background: rgba(28, 35, 64, 0.88); color: #fff;
-  font-size: calc(var(--u) * 11); font-weight: 700; text-align: center; pointer-events: none;
-  animation: bt-fade-in 120ms ease-out;
-}
-.bt-playback p { margin: 0; }
 @keyframes bt-fade-in { from { opacity: 0; } }
 /* the spot the step touched glows */
 .bt-root[data-flash-zone='opp-active'] [data-testid='opp-active'],
@@ -317,3 +307,6 @@
 .bt-sheet-retreat { justify-content: flex-start; }
 .bt-sheet-ability { flex-direction: column; align-items: flex-start; gap: calc(var(--u) * 4); }
 .bt-sheet-effect { font-weight: 500; font-size: calc(var(--u) * 12); }
+.bt-sheet-attack { flex-direction: column; align-items: stretch; gap: calc(var(--u) * 4); }
+.bt-sheet-attack-head { display: flex; align-items: center; gap: calc(var(--u) * 8); }
+.bt-sheet-attack .bt-sheet-effect { text-align: left; }

@@ -31,7 +31,7 @@ const attachToActive = (api: APIRequestContext) => post(api, '/api/move', { type
 
 // Your first turn (game turn 2), nothing attached yet.
 async function toYourFirstTurn(api: APIRequestContext) {
-  await post(api, '/api/new', { seed: 7, bot: BOT });
+  await post(api, '/api/new', { seed: 7, bot: BOT, preset: 'fire' });
   await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: 'B2a-126' });
   await post(api, '/api/move', { type: 'SetupBench', player: 0, cardId: 'A4b-076', slot: 0 });
   await post(api, '/api/move', { type: 'SetupReady', player: 0 });

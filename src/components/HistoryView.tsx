@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { TypeTally } from '../battle/energy';
 import type { Card, EnergyType } from '../types/card';
 import type { CardPool } from '../data';
 import type { DraftHistoryEntry } from '../stores/draftStore';
@@ -73,7 +74,7 @@ export function HistoryView({ history, pool, onClose, onUpdate, onDelete }: Prop
           <div style={{ fontSize: 13 }}>
             <div style={{ fontWeight: 600 }}>{formatDate(entry.completedAt)}</div>
             <div style={{ opacity: 0.75, fontSize: 12, marginTop: 2 }}>
-              {total} cards · {sortedTally.map(([t, n]) => `${t} ×${n}`).join('  ')}
+              {total} cards · <TypeTally entries={sortedTally} />
               {' '}·{' '}
               <span style={{ color: '#4c8' }}>{entry.wins}W</span>
               {' / '}

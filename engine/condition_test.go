@@ -150,3 +150,19 @@ func TestParalysisWearsOffAfterOwnersNextTurn(t *testing.T) {
 		t.Error("Paralysis should wear off after its owner's turn")
 	}
 }
+
+// The attack's action records the damage it dealt, for the screen's hit number.
+func TestAttackActionRecordsDamage(t *testing.T) {
+	// Arrange
+	g, _ := conditionGame()
+
+	// Act
+	if err := g.Submit(UseAttack{Player: 0, Index: 0}); err != nil {
+		t.Fatalf("attack: %v", err)
+	}
+
+	// Assert
+	if got := g.Actions[len(g.Actions)-1].Damage; got != freeHit.Damage {
+		t.Errorf("action damage %d, want %d", got, freeHit.Damage)
+	}
+}
