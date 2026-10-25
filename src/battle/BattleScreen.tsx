@@ -11,7 +11,7 @@ import './battle.css';
 // The new battle screen (plan 1.19): renders the server's current game on the
 // Pocket-style board, with End Turn, Concede and the end screen (1.27). Given a
 // drafted deck (1.31) it starts a game with it; Rematch reuses that deck.
-export function BattleScreen({ deck, onExit }: { deck?: string[]; onExit?: () => void }) {
+export function BattleScreen({ deck, onExit, practice }: { deck?: string[]; onExit?: () => void; practice?: boolean }) {
   const { view, status, error, init, startGame, dispatch, runBot, botStuck, restart } = useGameStore();
   const [confirm, setConfirm] = useState<Confirm | null>(null);
 
@@ -27,10 +27,10 @@ export function BattleScreen({ deck, onExit }: { deck?: string[]; onExit?: () =>
   // the render's stale values, so read the store's current game here.
   useEffect(() => {
     const { view: current, status: now } = useGameStore.getState();
-    if (!deck || now !== 'ready' || current?.phase !== 'over' || !current.outcome) return;
+    if (!deck || practice || now !== 'ready' || current?.phase !== 'over' || !current.outcome) return;
     const { seed, you, bot, actions } = current.record;
     recordBattle({ result: current.outcome, seed, yourDeck: you, botDeck: bot, actions, endedAt: new Date().toISOString() });
-  }, [deck, status, view, recordBattle]);
+  }, [deck, practice, status, view, recordBattle]);
 
   // The bot (seat 1) plays whenever it is its move, one step at a time (F14).
   const { step, canSkip, skip, skipping } = useOpponentTurn(view, botStuck, runBot);
