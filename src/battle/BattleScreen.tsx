@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../game/store';
+import { useDraftStore } from '../stores/draftStore';
 import { Board } from './Board';
 import { ConfirmDialog, EndScreen, GameMenu, endTurnWarning, type Confirm } from './EndControls';
 import { choiceFor } from './Choice';
@@ -11,13 +12,25 @@ import './battle.css';
 // Pocket-style board, with End Turn, Concede and the end screen (1.27). Given a
 // drafted deck (1.31) it starts a game with it; Rematch reuses that deck.
 export function BattleScreen({ deck, onExit }: { deck?: string[]; onExit?: () => void }) {
-  const { view, error, init, startGame, dispatch, runBot, botStuck, restart } = useGameStore();
+  const { view, status, error, init, startGame, dispatch, runBot, botStuck, restart } = useGameStore();
   const [confirm, setConfirm] = useState<Confirm | null>(null);
 
   useEffect(() => {
     if (deck) void startGame(deck);
     else void init();
   }, [deck, init, startGame]);
+
+  // A run's game ends once: save its result and replayable record. The store
+  // ignores a seed it already holds, so a re-render cannot record it twice.
+  const recordBattle = useDraftStore((s) => s.recordBattle);
+  // On mount this runs after startGame's effect has cleared the store, but with
+  // the render's stale values, so read the store's current game here.
+  useEffect(() => {
+    const { view: current, status: now } = useGameStore.getState();
+    if (!deck || now !== 'ready' || current?.phase !== 'over' || !current.outcome) return;
+    const { seed, you, bot, actions } = current.record;
+    recordBattle({ result: current.outcome, seed, yourDeck: you, botDeck: bot, actions, endedAt: new Date().toISOString() });
+  }, [deck, status, view, recordBattle]);
 
   // The bot (seat 1) plays whenever it is its move, one step at a time (F14).
   const { step, canSkip, skip, skipping } = useOpponentTurn(view, botStuck, runBot);

@@ -44,6 +44,7 @@ export function App() {
     deck,
     deckFinalized,
     history,
+    run,
     start,
     pick,
     purchase,
@@ -210,6 +211,7 @@ export function App() {
     <ReviewView
       pool={pool}
       deck={deck}
+      run={run}
       onPlay={() => setPlaying(true)}
       onNewDraft={() => start(pool.draftableCards)}
       onHome={reset}

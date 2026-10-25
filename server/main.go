@@ -22,6 +22,8 @@ import (
 var (
 	mu   sync.Mutex
 	game *engine.Game
+	// gameDecks are the card ids the in-memory game was dealt, for its record.
+	gameDecks struct{ you, bot []string }
 )
 
 func writeJSON(w http.ResponseWriter, v any) {
@@ -111,15 +113,16 @@ func seedFor(req newReq) uint64 {
 func startGame(req newReq) (gameView, *startErr) {
 	seed := seedFor(req)
 
-	bot, err := draftBotDeck(seed)
+	_, botIDs, err := draftBotIDs(seed)
 	if err != nil {
 		return gameView{}, &startErr{err, http.StatusInternalServerError}
 	}
-
 	if len(req.Bot) > 0 {
-		if bot, err = deckFromIDs(req.Bot); err != nil {
-			return gameView{}, &startErr{err, http.StatusBadRequest}
-		}
+		botIDs = req.Bot
+	}
+	bot, err := deckFromIDs(botIDs)
+	if err != nil {
+		return gameView{}, &startErr{err, http.StatusBadRequest}
 	}
 	p0, err := yourDeck(req, seed)
 	if err != nil {
@@ -134,6 +137,7 @@ func startGame(req newReq) (gameView, *startErr) {
 	mu.Lock()
 	defer mu.Unlock()
 	game = engine.NewGameFromDecks(seed, [2]engine.Deck{{Cards: p0, Energy: energy}, {Cards: p1}})
+	gameDecks.you, gameDecks.bot = req.You, botIDs
 	return toGameView(game, humanSeat), nil
 }
 

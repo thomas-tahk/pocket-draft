@@ -18,6 +18,10 @@ type Actions = {
   runBot: () => Promise<void>;
 };
 
+// The app picks each game's seed (below 2^53, so it survives JSON) so the record it
+// saves replays exactly; the engine's own random seed is a full 64 bits.
+const freshSeed = () => Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
+
 export const useGameStore = create<State & Actions>((set, get) => ({
   view: null,
   status: 'idle',
@@ -36,8 +40,8 @@ export const useGameStore = create<State & Actions>((set, get) => ({
     }
   },
 
-  startGame: async (deck, seed) => {
-    set({ status: 'loading', error: null, deck });
+  startGame: async (deck, seed = freshSeed()) => {
+    set({ status: 'loading', error: null, deck, view: null });
     try {
       const view = await newGame({ deck, seed });
       set({ view, status: 'ready', botStuck: false });
@@ -47,7 +51,7 @@ export const useGameStore = create<State & Actions>((set, get) => ({
     }
   },
 
-  restart: async (seed) => {
+  restart: async (seed = freshSeed()) => {
     set({ status: 'loading', error: null });
     try {
       const deck = get().deck;
