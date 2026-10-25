@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { HISTORY_CAP } from '../stores/draftStore';
 
 type Props = {
   cardCount: number;
   hasActiveRun: boolean;
+  runScore: { wins: number; losses: number } | null;
   canPractice: boolean;
   historyCount: number;
   onDraft: () => void;
@@ -13,6 +15,7 @@ type Props = {
 };
 
 export function HomeView(p: Props) {
+  const [confirming, setConfirming] = useState(false);
   return (
     <main className="home">
       <h1>Pocket Draft</h1>
@@ -33,8 +36,15 @@ export function HomeView(p: Props) {
           Past runs{p.historyCount > 0 ? ` (${p.historyCount} / ${HISTORY_CAP})` : ''}
         </button>
       </div>
-      {p.hasActiveRun && (
-        <button className="home-link" onClick={p.onDraft}>Start a new draft instead</button>
+      {p.hasActiveRun && !confirming && (
+        <button className="home-link" onClick={() => setConfirming(true)}>Start a new draft instead</button>
+      )}
+      {p.hasActiveRun && confirming && p.runScore && (
+        <div role="alertdialog" aria-label="End current run" className="home-secondary">
+          <p className="home-note">This ends your current run ({p.runScore.wins}–{p.runScore.losses}).</p>
+          <button onClick={p.onDraft}>End run and draft</button>
+          <button onClick={() => setConfirming(false)}>Keep run</button>
+        </div>
       )}
       <button className="home-link" onClick={p.onAutoDraft}>Auto-draft (test)</button>
     </main>

@@ -11,6 +11,7 @@ import { BattleScreen } from './battle/BattleScreen';
 import { expandDeck } from './game/deck';
 import { autoDeck } from './game/api';
 import { derivePhase, useDraftStore } from './stores/draftStore';
+import { runScore } from './stores/run';
 import { decodeDeck, type Decklist } from './share/deckCode';
 import type { Card } from './types/card';
 
@@ -32,6 +33,7 @@ export function App() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [homeOpen, setHomeOpen] = useState(true);
   const [playing, setPlaying] = useState(false);
+  const [practicing, setPracticing] = useState(false);
   const [sharedDeck, setSharedDeck] = useState<Decklist | null>(readSharedDeck);
 
   useEffect(() => {
@@ -103,7 +105,14 @@ export function App() {
   if (new URLSearchParams(window.location.search).has('battle')) return <BattleScreen />;
 
   // In-app deck play (1.31), launched from the review screen with the finalized deck.
-  if (playing) return <BattleScreen deck={drafted} onExit={() => setPlaying(false)} />;
+  if (playing) return <BattleScreen
+        deck={drafted}
+        practice={practicing}
+        onExit={() => {
+          setPlaying(false);
+          setPracticing(false);
+        }}
+      />;
 
   if (error) return <main style={{ padding: 24 }}>Error: {error}</main>;
   if (!pool) return <main style={{ padding: 24 }}>Loading card data…</main>;
@@ -133,11 +142,12 @@ export function App() {
     );
   }
 
-  if (phase === 'unstarted' || (homeOpen && phase === 'review' && run?.status === 'active')) {
+  if (phase === 'unstarted' || (homeOpen && phase === 'review')) {
     return (
       <HomeView
         cardCount={pool.draftableCards.length}
         hasActiveRun={run?.status === 'active'}
+        runScore={run ? runScore(run) : null}
         canPractice={deckFinalized}
         historyCount={history.length}
         onDraft={() => {
@@ -147,6 +157,7 @@ export function App() {
         onContinue={() => setHomeOpen(false)}
         onPractice={() => {
           setHomeOpen(false);
+          setPracticing(true);
           setPlaying(true);
         }}
         onPastRuns={() => setHistoryOpen(true)}
