@@ -8,6 +8,9 @@ export type RunStatus = 'active' | 'won' | 'lost' | 'quit';
 
 // One finished game, with what it takes to replay it (ADR-0005): the seed, both
 // decks as card ids in dealt order, and every applied move, bot's included.
+export const RESULT_LABEL = { win: 'Win', loss: 'Loss', tie: 'Tie' } as const;
+export const STATUS_LABEL = { active: 'In progress', won: 'Run won', lost: 'Run lost', quit: 'Run quit' } as const;
+
 export type RunBattle = {
   result: 'win' | 'loss' | 'tie';
   seed: number;

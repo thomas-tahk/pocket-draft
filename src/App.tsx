@@ -180,6 +180,7 @@ export function App() {
     return (
       <HistoryView
         history={history}
+        run={run}
         pool={pool}
         onClose={() => setHistoryOpen(false)}
         onUpdate={updateHistoryEntry}
