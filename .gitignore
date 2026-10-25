@@ -49,3 +49,7 @@ scratch/
 test-results/
 playwright-report/
 .pd-e2e-server
+
+# Claude Code: only skills/ and agents/ are shared
+.claude/worktrees/
+.claude/settings.local.json
