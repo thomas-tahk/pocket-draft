@@ -8,7 +8,7 @@ An online tool for conducting/simulating a drafting format for Pokemon TCG Pocke
 
 ### Phase 1 — Draft Tool
 - **Arena-style format:** players draft a single deck by repeatedly picking 1 card from a set of offered options
-- No pre-existing collection required — any card in the game is draftable; basic universals (Pokeball, Prof's Research, etc.) are always freely available without drafting
+- No pre-existing collection required — any card in the game is draftable; there are no free universal Trainers
 - Solitary, asynchronous draft — each player picks at their own pace, no timer, no inter-player dependency
 - Matchmaking happens post-draft (after both players complete their picks)
 - After drafting, each player builds one 20-card deck and plays a run (win/loss threshold TBD)

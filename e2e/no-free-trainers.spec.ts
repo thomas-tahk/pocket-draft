@@ -16,8 +16,12 @@ test('deckbuild offers no Trainer that was not drafted', async ({ page }) => {
   await page.getByRole('button', { name: 'Start draft' }).click();
 
   const picked = new Set<string>();
-  for (let pack = 1; pack <= 16; pack++) {
-    await expect(page.getByText(`Pack ${pack} / 16`)).toBeVisible();
+  // The run length comes from the "Pack n / N" header, not a hardcoded count.
+  const header = page.getByText(/^Pack \d+ \/ \d+$/);
+  await expect(header).toBeVisible();
+  const total = Number((await header.textContent())!.match(/\/ (\d+)/)![1]);
+  for (let pack = 1; pack <= total; pack++) {
+    await expect(page.getByText(`Pack ${pack} / ${total}`)).toBeVisible();
     const offer = page.locator('main button[title]');
     await expect(offer).toHaveCount(5);
     const ids = (await offer.evaluateAll((els) => els.map((e) => e.getAttribute('title') ?? ''))).map(idOf);

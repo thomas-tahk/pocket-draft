@@ -13,7 +13,7 @@ Inspired by the **SWUCUBE** cube draft format (see `swucube-rules.md`) — origi
 ```
 1. Draft Phase       (20 rounds of pick 1-of-5)
 2. Shop Phase        (spend flat tickets on staples + undrafted picks)
-3. Deckbuilding      (finalize 20-card deck, slot in free universals, cut)
+3. Deckbuilding      (finalize 20-card deck, cut)
 4. Run               (play games until win/loss threshold)
 ```
 
@@ -84,14 +84,8 @@ After the shop, players build their final **20-card deck** from:
 ### Copy limits
 Pokemon TCG Pocket's standard deck-construction rule applies: **maximum 2 copies of any card**, matched by card name. There is no separate restriction on EX or Mega-EX cards — they follow the same 2-copy cap as everything else. Cosmetic art variants of the same card do not stack beyond 2 (they're filtered out of the draft pool anyway).
 
-### Free universals
-The following cards are freely available in any quantity during deckbuilding and do not require a draft pick or ticket (subject to the 2-copy cap above):
-- **Pokeball**
-- **Professor's Research**
-
-These count toward the 20-card deck limit and replace drafted/shopped cards as the player sees fit.
-
-> Note: Whether additional free cards (X Speed, Potion, Red Card) are included is TBD through playtesting. A seasonal-rotation model for the free-universal set is captured in `docs/backlog.md`.
+### No free Trainers
+There are no free universal Trainers. Trainers (Pokeball and Professor's Research included) come only from draft picks and the shop. Lower evolutions of a drafted Pokemon stay free at deckbuild. A ruleset with a few open cards may come later (`docs/backlog.md`).
 
 ### Cut
 If the player has more than 20 cards after shop purchases, they cut down to exactly 20 during this phase.
@@ -117,6 +111,5 @@ Players play games with their drafted deck until a win/loss threshold is reached
 ## Future / Deferred
 
 - **Conquest format:** Players build 3 distinct decks and must win at least 1 game with each (see `swucube-rules.md`). Deferred — potential tournament mode after Arena is implemented.
-- **Additional free universals:** X Speed, Potion, Red Card — whether these are free TBD.
 - **Ticket count:** Starting at 4, to be tuned through playtesting.
 - **Win/loss threshold:** Starting at 7W/3L, to be tuned through playtesting.

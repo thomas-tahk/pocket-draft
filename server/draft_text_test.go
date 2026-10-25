@@ -155,7 +155,7 @@ func TestDraftPoolFileMatchesTheEngine(t *testing.T) {
 
 // Deckbuild offers only cards the engine can play (owner 2026-10-19 (1)). The
 // SPA reads that set from the pool file's working list, which must be every
-// card whose text works (under-evolutions and universals included) and
+// card whose text works (under-evolutions included) and
 // nothing else.
 func TestDraftPoolFileListsEveryWorkingCard(t *testing.T) {
 	useRealCards(t)
