@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TypeTally } from '../battle/energy';
 import type { Card, EnergyType } from '../types/card';
 import { TOTAL_PACKS } from '../stores/draftStore';
@@ -18,6 +18,8 @@ type Props = {
 export function DraftView({ packIndex, offer, picks, onPick, onCancel }: Props) {
   const [hover, setHover] = useState<HoverState>(null);
   const handleHover = (p: HoverPayload | null) => setHover(p);
+  // A new pack replaces the tiles; drop any preview or zoom left from the old ones.
+  useEffect(() => setHover(null), [offer]);
 
   const tally = tallyTypes(picks);
   const sortedTally = (Object.entries(tally) as [EnergyType, number][]).sort(
@@ -25,24 +27,11 @@ export function DraftView({ packIndex, offer, picks, onPick, onCancel }: Props) 
   );
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <main style={{ flex: 1, padding: '0 24px 24px' }}>
-        <header
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'baseline',
-            padding: '16px 0',
-            marginBottom: 8,
-            position: 'sticky',
-            top: 0,
-            background: 'var(--surface)',
-            zIndex: 5,
-            borderBottom: '1px solid #8882',
-          }}
-        >
+    <div className="screen">
+      <main className="screen-main">
+        <header className="screen-header" style={{ zIndex: 5 }}>
           <h1 style={{ fontSize: 20, margin: 0 }}>Pocket Draft</h1>
-          <div style={{ display: 'flex', gap: 16, alignItems: 'baseline', flexWrap: 'wrap' }}>
+          <div className="screen-header-actions">
             <div style={{ fontSize: 14, opacity: 0.75 }}>
               Pack {packIndex + 1} / {TOTAL_PACKS}
               {sortedTally.length > 0 && (
@@ -69,30 +58,11 @@ export function DraftView({ packIndex, offer, picks, onPick, onCancel }: Props) 
         </section>
       </main>
 
-      <aside
-        style={{
-          width: 300,
-          borderLeft: '1px solid #8884',
-          padding: 16,
-          height: '100vh',
-          overflowY: 'auto',
-          position: 'sticky',
-          top: 0,
-          boxSizing: 'border-box',
-        }}
-      >
+      <aside className="screen-aside">
         <div style={{ fontSize: 12, opacity: 0.6, marginBottom: 8 }}>
           Drafted ({picks.length})
         </div>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 84px)',
-            justifyContent: 'center',
-            gap: 4,
-            alignItems: 'start',
-          }}
-        >
+        <div className="tile-grid-sm">
           {picks.map((c, i) => (
             <CardTile key={`${c.id}-${i}`} card={c} size="sm" onHover={handleHover} />
           ))}

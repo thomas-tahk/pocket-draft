@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { bootWasmEngine } from './game/wasmBoot';
 import './index.css';
+import './screens.css';
 
 const root = createRoot(document.getElementById('root')!);
 

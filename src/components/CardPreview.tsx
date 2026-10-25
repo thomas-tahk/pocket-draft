@@ -1,10 +1,7 @@
 import { useEffect, useState } from 'react';
-import type { Card } from '../types/card';
+import type { HoverPayload } from './CardTile';
 
-export type HoverState = {
-  card: Card;
-  position: { x: number; y: number };
-} | null;
+export type HoverState = HoverPayload | null;
 
 type Props = {
   hover: HoverState;
@@ -35,11 +32,19 @@ export function CardPreview({ hover }: Props) {
   }, []);
 
   if (!hover) return null;
-  const { card, position } = hover;
+  const { card } = hover;
   const src = card.imageFull || card.imageThumb;
-  const { left, top } = placeNearCursor(position.x, position.y, vp.w, vp.h);
+  if ('zoom' in hover) {
+    return (
+      <div className="card-zoom" data-testid="card-zoom">
+        <img src={src} alt={card.name} />
+      </div>
+    );
+  }
+  const { left, top } = placeNearCursor(hover.position.x, hover.position.y, vp.w, vp.h);
   return (
     <div
+      data-testid="card-preview"
       style={{
         position: 'fixed',
         left,

@@ -126,6 +126,7 @@ export function DeckbuildView({
     return (
       <div
         key={`${entry.source}-${entry.card.id}`}
+        className="shelf-cell"
         style={{
           display: 'flex',
           flexDirection: 'column',
@@ -135,8 +136,6 @@ export function DeckbuildView({
           borderRadius: 8,
           background: inDeck > 0 ? '#4c81' : 'transparent',
           outline: inDeck > 0 ? '2px solid #4c8' : 'none',
-          width: 180,
-          boxSizing: 'border-box',
         }}
       >
         <CardTile card={entry.card} size="lg" onHover={handleHover} />
@@ -171,15 +170,7 @@ export function DeckbuildView({
         <h2 style={{ fontSize: 14, opacity: 0.75, margin: '0 0 8px' }}>
           {SOURCE_LABEL[source]} ({entries.length})
         </h2>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, 180px)',
-            justifyContent: 'start',
-            gap: 8,
-            alignItems: 'start',
-          }}
-        >
+        <div className="shelf-grid">
           {entries.map(renderEntry)}
         </div>
       </section>
@@ -187,26 +178,11 @@ export function DeckbuildView({
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <main style={{ flex: 1, padding: '0 24px 24px', maxWidth: 1300 }}>
-        <header
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'baseline',
-            padding: '16px 0',
-            marginBottom: 8,
-            gap: 12,
-            flexWrap: 'wrap',
-            position: 'sticky',
-            top: 0,
-            background: 'var(--surface)',
-            zIndex: 20,
-            borderBottom: '1px solid #8882',
-          }}
-        >
+    <div className="screen">
+      <main className="screen-main wide">
+        <header className="screen-header">
           <h1 style={{ fontSize: 20, margin: 0 }}>Deckbuilding</h1>
-          <div style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}>
+          <div className="screen-header-actions">
             <div style={{ fontSize: 14, opacity: 0.75 }}>
               Deck: {size} / {DECK_SIZE}
               {sortedTally.length > 0 && (
@@ -243,34 +219,14 @@ export function DeckbuildView({
         {SOURCE_ORDER.map(renderSection)}
       </main>
 
-      <aside
-        style={{
-          width: 280,
-          borderLeft: '1px solid #8884',
-          padding: 16,
-          height: '100vh',
-          overflowY: 'auto',
-          position: 'sticky',
-          top: 0,
-          boxSizing: 'border-box',
-          background: 'var(--surface)',
-          zIndex: 10,
-        }}
-      >
+      <aside className="screen-aside" style={{ ['--aside-w' as string]: '280px' }}>
         <div style={{ fontSize: 12, opacity: 0.6, marginBottom: 8 }}>
           Deck ({size} / {DECK_SIZE})
         </div>
         {deckCards.length === 0 ? (
           <p style={{ fontSize: 12, opacity: 0.5 }}>No cards yet.</p>
         ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 84px)',
-              justifyContent: 'center',
-              gap: 4,
-            }}
-          >
+          <div className="tile-grid-sm">
             {deckCards.map(({ card, count }) =>
               Array.from({ length: count }).map((_, i) => (
                 <CardTile

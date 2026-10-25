@@ -1,0 +1,131 @@
+/* Layout shared by the draft, shop and deckbuild screens: main column + side panel on a
+   desktop, one centred column with the panel below on a phone. */
+
+.screen {
+  display: flex;
+  min-height: 100vh;
+}
+
+.screen-main {
+  flex: 1;
+  min-width: 0;
+  padding: 0 24px 24px;
+  box-sizing: border-box;
+}
+
+.screen-main.wide {
+  max-width: 1300px;
+}
+
+.screen-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px 0;
+  margin-bottom: 8px;
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  z-index: 20;
+  border-bottom: 1px solid #8882;
+}
+
+.screen-header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.screen-aside {
+  width: var(--aside-w, 300px);
+  border-left: 1px solid #8884;
+  padding: 16px;
+  height: 100vh;
+  overflow-y: auto;
+  position: sticky;
+  top: 0;
+  box-sizing: border-box;
+  background: var(--surface);
+  z-index: 10;
+}
+
+/* Cards: width comes from --tile-w so the inline `all: unset` on the tile cannot beat it. */
+.tile-lg { --tile-w: 180px; }
+.tile-sm { --tile-w: 84px; }
+
+.offer-grid {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.shelf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 180px);
+  justify-content: start;
+  gap: 12px;
+  align-items: start;
+}
+
+.shelf-cell {
+  width: 180px;
+  box-sizing: border-box;
+}
+
+.tile-grid-sm {
+  display: grid;
+  grid-template-columns: repeat(3, 84px);
+  justify-content: center;
+  gap: 4px;
+  align-items: start;
+}
+
+/* Long-press zoom on touch: centred, large, until the press ends. */
+.card-zoom {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  z-index: 100;
+  background: #0006;
+}
+
+.card-zoom img {
+  width: min(300px, 80vw);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+@media (max-width: 700px) {
+  .screen { flex-direction: column; }
+  .screen-main { padding: 0 16px 16px; }
+  .screen-header { position: static; padding: 12px 0; }
+  .screen-aside {
+    width: auto;
+    height: auto;
+    position: static;
+    border-left: none;
+    border-top: 1px solid #8884;
+    padding: 16px;
+    overflow: visible;
+  }
+  /* Only inside the three screens; History, Review and Shared keep their fixed tile sizes. */
+  .screen .tile-lg, .screen .tile-sm { --tile-w: 100%; }
+  .offer-grid,
+  .shelf-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    justify-content: stretch;
+  }
+  .shelf-cell { width: auto; }
+  .tile-grid-sm {
+    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+    justify-content: stretch;
+  }
+}
