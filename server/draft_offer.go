@@ -34,7 +34,7 @@ func rollTier(rng func() float64) tier {
 
 // pickFromTier mirrors offer.ts's pickFromTier. ok is false when every card in
 // the tier is already excluded (used up in this offer).
-func pickFromTier(pool []draftCard, tally typeTally, exclude map[string]bool, rng func() float64) (draftCard, bool) {
+func pickFromTier(pool []draftCard, tally typeTally, syn synergy, exclude map[string]bool, rng func() float64) (draftCard, bool) {
 	eligible := make([]draftCard, 0, len(pool))
 	for _, c := range pool {
 		if !exclude[c.ID] {
@@ -46,7 +46,7 @@ func pickFromTier(pool []draftCard, tally typeTally, exclude map[string]bool, rn
 	}
 	weights := make([]float64, len(eligible))
 	for i, c := range eligible {
-		weights[i] = weightOf(c, tally)
+		weights[i] = weightOf(c, tally, syn)
 	}
 	return pickWeighted(eligible, weights, rng), true
 }
@@ -56,7 +56,7 @@ func pickFromTier(pool []draftCard, tally typeTally, exclude map[string]bool, rn
 // means pack 1, whose last slot is always tier 1 (ex / mega-ex); if tier 1 has
 // nothing eligible the usual fall-through applies.
 func generateOffer(byTier map[tier][]draftCard, picks []draftCard, rng func() float64) ([]draftCard, error) {
-	tally := tallyTypes(picks)
+	tally, syn := tallyTypes(picks), newSynergy(picks)
 	isPack1 := len(picks) == 0
 	offer := make([]draftCard, 0, slotsPerPack)
 	used := map[string]bool{}
@@ -67,7 +67,7 @@ func generateOffer(byTier map[tier][]draftCard, picks []draftCard, rng func() fl
 			targetTier = tier1 // pack 1 always offers an ex
 		}
 
-		card, ok := pickFromTier(byTier[targetTier], tally, used, rng)
+		card, ok := pickFromTier(byTier[targetTier], tally, syn, used, rng)
 		if !ok {
 			// Tier ran out (e.g. tier 1 has no eligible cards left). Step through
 			// other tiers.
@@ -75,7 +75,7 @@ func generateOffer(byTier map[tier][]draftCard, picks []draftCard, rng func() fl
 				if t == targetTier {
 					continue
 				}
-				card, ok = pickFromTier(byTier[t], tally, used, rng)
+				card, ok = pickFromTier(byTier[t], tally, syn, used, rng)
 				if ok {
 					break
 				}
