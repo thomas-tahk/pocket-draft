@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { AbandonDraft } from './AbandonDraft';
 import { TypeTally } from '../battle/energy';
 import type { Card, EnergyType } from '../types/card';
 import { DECK_SIZE } from '../stores/draftStore';
@@ -198,16 +199,7 @@ export function DeckbuildView({
             >
               Finalize deck
             </button>
-            <button
-              onClick={() => {
-                if (window.confirm('Cancel this draft? You will lose all picks and deck choices.')) {
-                  onCancel();
-                }
-              }}
-              style={{ fontSize: 12 }}
-            >
-              Cancel draft
-            </button>
+            <AbandonDraft loses="all picks and deck choices" onAbandon={onCancel} />
           </div>
         </header>
         <p style={{ fontSize: 13, opacity: 0.6, marginTop: 0 }}>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { AbandonDraft } from './AbandonDraft';
 import { TypeTally } from '../battle/energy';
 import type { Card, EnergyType } from '../types/card';
 import { TOTAL_PACKS } from '../stores/draftStore';
@@ -40,16 +41,7 @@ export function DraftView({ packIndex, offer, picks, onPick, onCancel }: Props) 
                 </span>
               )}
             </div>
-            <button
-              onClick={() => {
-                if (window.confirm('Cancel this draft? You will lose all picks so far.')) {
-                  onCancel();
-                }
-              }}
-              style={{ fontSize: 12 }}
-            >
-              Cancel draft
-            </button>
+            <AbandonDraft loses="all picks so far" onAbandon={onCancel} />
           </div>
         </header>
 

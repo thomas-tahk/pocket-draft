@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../game/store';
 import { useDraftStore } from '../stores/draftStore';
+import type { InProgressBattle } from '../stores/run';
 import { Board } from './Board';
 import { ConfirmDialog, EndScreen, GameMenu, endTurnWarning, type Confirm } from './EndControls';
 import { choiceFor } from './Choice';
@@ -11,14 +12,25 @@ import './battle.css';
 // The new battle screen (plan 1.19): renders the server's current game on the
 // Pocket-style board, with End Turn, Concede and the end screen (1.27). Given a
 // drafted deck (1.31) it starts a game with it; Rematch reuses that deck.
-export function BattleScreen({ deck, onExit, practice }: { deck?: string[]; onExit?: () => void; practice?: boolean }) {
-  const { view, status, error, init, startGame, dispatch, runBot, botStuck, restart } = useGameStore();
+type Props = { deck?: string[]; onExit?: () => void; practice?: boolean; resume?: InProgressBattle };
+
+export function BattleScreen({ deck, onExit, practice, resume }: Props) {
+  const { view, status, error, log, init, startGame, resumeGame, dispatch, runBot, botStuck, restart } = useGameStore();
+  const setInProgress = useDraftStore((s) => s.setInProgress);
   const [confirm, setConfirm] = useState<Confirm | null>(null);
 
   useEffect(() => {
-    if (deck) void startGame(deck);
+    if (resume) void resumeGame(resume);
+    else if (deck) void startGame(deck);
     else void init();
-  }, [deck, init, startGame]);
+  }, [deck, resume, init, startGame, resumeGame]);
+
+  // A run's battle is saved as it is played, so a reload or a closed tab can pick it up again.
+  useEffect(() => {
+    const g = useGameStore.getState();
+    if (!deck || practice || g.status !== 'ready' || g.view?.phase === 'over' || g.seed === null) return;
+    setInProgress({ seed: g.seed, yourDeck: deck, log: g.log, leftAt: null });
+  }, [deck, practice, status, log, setInProgress]);
 
   // A run's game ends once: save its result and replayable record. The store
   // ignores a seed it already holds, so a re-render cannot record it twice.
@@ -37,9 +49,19 @@ export function BattleScreen({ deck, onExit, practice }: { deck?: string[]; onEx
   const { step, canSkip, skip, skipping } = useOpponentTurn(view, botStuck, runBot);
   const intro = useSetupIntro(view);
 
+  if (!view && resume && error) {
+    return <ResumeFailed onStartOver={() => { setInProgress(undefined); void startGame(deck ?? resume.yourDeck); }} />;
+  }
   if (!view) {
     return <div className="bt-root"><div style={{ color: '#fff' }}>{error ? `Couldn't reach the game server: ${error}` : 'Loading game…'}</div></div>;
   }
+
+  // Leaving a run's battle keeps it for 90 s on the run screen; a practice game just ends.
+  const onLeave = () => {
+    const g = useGameStore.getState();
+    if (!practice && deck && g.seed !== null) setInProgress({ seed: g.seed, yourDeck: deck, log: g.log, leftAt: new Date().toISOString() });
+    onExit?.();
+  };
 
   const endTurn = () => void dispatch({ type: 'EndTurn', player: 0 });
   const onEndTurn = () => {
@@ -55,12 +77,23 @@ export function BattleScreen({ deck, onExit, practice }: { deck?: string[]; onEx
     // A long press zooms a card; never the browser's image menu (iOS callout in battle.css).
     <div className="bt-root" {...flashAttrs(step)} onContextMenu={(e) => e.preventDefault()}>
       <Board view={view} instant={skipping} onEndTurn={onEndTurn} onReady={onReady} choice={choiceFor(view, 0, (m) => void dispatch(m))}>
-        {view.phase !== 'over' && <GameMenu onConcede={onConcede} />}
+        {view.phase !== 'over' && <GameMenu onConcede={onConcede} onLeave={onExit && onLeave} />}
         {canSkip && <SkipButton onSkip={skip} />}
         {intro.show && <SetupIntro view={view} onDone={intro.finish} />}
         {confirm && <ConfirmDialog confirm={confirm} onClose={() => setConfirm(null)} />}
         {view.phase === 'over' && <EndScreen view={view} canRematch={!deck || !runStatus || runStatus === 'active'} onRematch={() => void restart()} onBack={onExit ?? (() => window.location.assign('/'))} />}
       </Board>
+    </div>
+  );
+}
+
+function ResumeFailed({ onStartOver }: { onStartOver: () => void }) {
+  return (
+    <div className="bt-root">
+      <div className="bt-dialog" role="alert" style={{ margin: 'auto' }}>
+        <p>This battle could not be resumed.</p>
+        <button className="bt-btn bt-btn-main" onClick={onStartOver}>Start a new battle</button>
+      </div>
     </div>
   );
 }
