@@ -4,6 +4,7 @@ import { functionalDedupe } from './signature';
 
 const CARDS_URL = '/data/cards.json';
 const SETS_URL = '/data/sets.json';
+const DRAFT_POOL_URL = '/data/draft-pool.json';
 
 // Free universals: excluded from the draft pool (Decision 1.A) but freely
 // available at deckbuild via getFreeUniversals(), subject to the 2x copy cap.
@@ -94,6 +95,23 @@ export function toDraftablePool(raw: RawCard[]): Card[] {
   // a different attack) stay as separate entries.
   const funcDeduped = functionalDedupe(finalsOnly);
   return funcDeduped.sort((a, b) => (a.id < b.id ? -1 : 1));
+}
+
+// TEMPORARY until milestone 4 finishes card text (removed by 4.15): the draft
+// offers only cards whose text the engine already plays. The Go server decides
+// which (server/draft_text_filter.go) and writes the answer to draft-pool.json.
+// `working` is every card the engine can play; deckbuild offers only those, so
+// every deck is 20 working cards (owner 2026-10-19 (1)).
+export type DraftPoolFilter = { onlyWorkingText: boolean; ids: string[]; working: string[] };
+
+export async function loadDraftPoolFilter(): Promise<DraftPoolFilter> {
+  return fetchJson<DraftPoolFilter>(DRAFT_POOL_URL);
+}
+
+export function keepWorkingText(pool: Card[], filter: DraftPoolFilter): Card[] {
+  if (!filter.onlyWorkingText) return pool;
+  const ids = new Set(filter.ids);
+  return pool.filter((c) => ids.has(c.id));
 }
 
 // The full enriched-but-unfiltered pool — used at deckbuild to grant free access

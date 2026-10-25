@@ -43,6 +43,7 @@ type Actions = {
   addToDeck: (cardId: string) => void;
   removeFromDeck: (cardId: string) => void;
   finalizeDeck: () => void;
+  autoDraft: (picks: string[], deck: string[]) => void;
   updateHistoryEntry: (id: string, updates: Partial<Pick<DraftHistoryEntry, 'notes' | 'wins' | 'losses'>>) => void;
   deleteHistoryEntry: (id: string) => void;
   reset: () => void;
@@ -159,6 +160,15 @@ export const useDraftStore = create<State & Actions>()(
         // FIFO cap: newest first, drop oldest beyond HISTORY_CAP.
         const nextHistory = [entry, ...history].slice(0, HISTORY_CAP);
         set({ deckFinalized: true, history: nextHistory });
+      },
+
+      // Jumps straight to review with a finished draft, for testing battles.
+      // Not saved to history: nobody drafted it.
+      autoDraft: (picks, deck) => {
+        const counts: Record<string, number> = {};
+        for (const id of deck) counts[id] = (counts[id] ?? 0) + 1;
+        const { history } = get();
+        set({ ...activeStateInitial, history, pickIds: picks, shopFinalized: true, deck: counts, deckFinalized: true });
       },
 
       updateHistoryEntry: (id, updates) => {

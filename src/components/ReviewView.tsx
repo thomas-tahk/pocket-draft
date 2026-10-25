@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { TypeTally } from '../battle/energy';
 import type { Card, EnergyType } from '../types/card';
 import type { CardPool } from '../data';
 import { tallyTypes } from '../draft/weights';
@@ -121,7 +122,7 @@ export function ReviewView({ pool, deck, onPlay, onNewDraft, onHome }: Props) {
       </header>
 
       <div style={{ fontSize: 13, opacity: 0.75, marginBottom: 16 }}>
-        {total} cards · {sortedTally.map(([t, n]) => `${t} ×${n}`).join('  ')}
+        {total} cards · <TypeTally entries={sortedTally} />
       </div>
 
       <div

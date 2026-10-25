@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { TypeTally } from '../battle/energy';
 import type { Card, EnergyType } from '../types/card';
 import { TOTAL_PACKS } from '../stores/draftStore';
 import { tallyTypes } from '../draft/weights';
@@ -46,7 +47,7 @@ export function DraftView({ packIndex, offer, picks, onPick, onCancel }: Props) 
               Pack {packIndex + 1} / {TOTAL_PACKS}
               {sortedTally.length > 0 && (
                 <span style={{ marginLeft: 16 }}>
-                  {sortedTally.map(([t, n]) => `${t} ×${n}`).join('  ')}
+                  <TypeTally entries={sortedTally} />
                 </span>
               )}
             </div>

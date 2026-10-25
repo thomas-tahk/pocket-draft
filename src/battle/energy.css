@@ -1,0 +1,12 @@
+/* Energy symbol: colored disc, white ring, white glyph. Outside the board
+   --u is undefined, so it falls back to 1px (size 14 = 14px). */
+.bt-energy {
+  --s: 14;
+  width: calc(var(--u, 1px) * var(--s)); height: calc(var(--u, 1px) * var(--s)); border-radius: 50%;
+  display: inline-grid; place-items: center; box-sizing: border-box; vertical-align: middle; flex: none;
+  border: calc(var(--u, 1px) * var(--s) * 0.08) solid #fff;
+  box-shadow: 0 0 0 calc(var(--u, 1px) * 0.6) rgba(0, 0, 0, 0.45);
+}
+.bt-energy svg { width: 70%; height: 70%; display: block; }
+.bt-energy[data-spent='true'] { background: #b9bcc8 !important; border-color: #d7d9e2; }
+.bt-tally { display: inline-flex; align-items: center; gap: 3px; margin-right: 10px; }

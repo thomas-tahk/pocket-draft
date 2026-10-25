@@ -6,8 +6,9 @@ import { DeckbuildView } from './components/DeckbuildView';
 import { ReviewView } from './components/ReviewView';
 import { SharedDeckView } from './components/SharedDeckView';
 import { HistoryView } from './components/HistoryView';
-import { GameView } from './game/GameView';
+import { BattleScreen } from './battle/BattleScreen';
 import { expandDeck } from './game/deck';
+import { autoDeck } from './game/api';
 import { derivePhase, HISTORY_CAP, TOTAL_PACKS, useDraftStore } from './stores/draftStore';
 import { decodeDeck, type Decklist } from './share/deckCode';
 import type { Card } from './types/card';
@@ -51,6 +52,7 @@ export function App() {
     addToDeck,
     removeFromDeck,
     finalizeDeck,
+    autoDraft,
     updateHistoryEntry,
     deleteHistoryEntry,
     reset,
@@ -83,14 +85,22 @@ export function App() {
     [shopPurchasedIds, fullById],
   );
 
+  // The shop offers only cards the engine can play (owner 2026-10-19 (1)).
+  const shopPool = useMemo(
+    () => (pool ? pool.fullCards.filter((c) => pool.working.has(c.id)) : []),
+    [pool],
+  );
+
+  // Stable across renders, so the battle screen starts its game once.
+  const drafted = useMemo(() => expandDeck(deck), [deck]);
+
   const phase = derivePhase({ pickIds, offerIds, shopFinalized, deckFinalized });
 
-  // Legacy quick-test entry: ?play plays the server's current curated game.
-  const isPlayParam = new URLSearchParams(window.location.search).has('play');
-  if (isPlayParam) return <GameView />;
+  // The new battle screen (plan 1.19), on the server's current game.
+  if (new URLSearchParams(window.location.search).has('battle')) return <BattleScreen />;
 
-  // In-app deck play, launched from the review screen with the finalized deck.
-  if (playing) return <GameView deck={expandDeck(deck)} onExit={() => setPlaying(false)} />;
+  // In-app deck play (1.31), launched from the review screen with the finalized deck.
+  if (playing) return <BattleScreen deck={drafted} onExit={() => setPlaying(false)} />;
 
   if (error) return <main style={{ padding: 24 }}>Error: {error}</main>;
   if (!pool) return <main style={{ padding: 24 }}>Loading card data…</main>;
@@ -132,6 +142,16 @@ export function App() {
         </p>
         <button style={{ fontSize: 16, padding: '8px 20px' }} onClick={() => start(pool.draftableCards)}>
           Start draft
+        </button>{' '}
+        <button
+          style={{ fontSize: 16, padding: '8px 20px' }}
+          onClick={() =>
+            autoDeck()
+              .then((d) => autoDraft(d.picks, d.deck))
+              .catch((e) => setError(String(e)))
+          }
+        >
+          Auto-draft (test)
         </button>
         {history.length > 0 && (
           <div style={{ marginTop: 24 }}>
@@ -160,7 +180,7 @@ export function App() {
     return (
       <ShopView
         picks={picks}
-        fullPool={pool.fullCards}
+        fullPool={shopPool}
         purchasedIds={shopPurchasedIds}
         onPurchase={purchase}
         onUnpurchase={unpurchase}
@@ -177,6 +197,7 @@ export function App() {
         purchases={purchases}
         fullPool={pool.fullCards}
         universals={pool.universals}
+        working={pool.working}
         deck={deck}
         onAdd={addToDeck}
         onRemove={removeFromDeck}

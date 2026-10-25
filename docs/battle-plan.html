@@ -1,0 +1,164 @@
+<title>Battle Build Plan</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+:root {
+  --bg: #f3f5fa; --surface: #ffffff; --ink: #121a2e; --muted: #4b5675; --line: #d5dbea;
+  --accent: #1d5fe0; --lit: #ffbf00; --eng: #0c6b8a; --ui: #8a2fc2; --cards: #b25e00;
+  --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --body: "Atkinson Hyperlegible", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0d1222; --surface: #161d33; --ink: #eef1fa; --muted: #a3acc8; --line: #2a3352;
+  --accent: #6c9dff; --lit: #ffcc33; --eng: #4cc3e8; --ui: #c98bff; --cards: #ffa53d; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0d1222; --surface: #161d33; --ink: #eef1fa; --muted: #a3acc8; --line: #2a3352;
+  --accent: #6c9dff; --lit: #ffcc33; --eng: #4cc3e8; --ui: #c98bff; --cards: #ffa53d; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--body); }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 28px 80px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.1; }
+h1 { font-size: 2.6rem; }
+h2 { font-size: 1.6rem; margin-top: 40px; padding-bottom: 6px; border-bottom: 3px solid var(--ink); display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+h2 small { font: 700 .8rem var(--body); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+p { max-width: 70ch; } .lede { color: var(--muted); }
+.box { background: var(--surface); border: 1px solid var(--line); border-left: 5px solid var(--lit); padding: 12px 16px; margin-top: 18px; max-width: 74ch; }
+.box h3 { font-family: var(--display); text-transform: uppercase; letter-spacing: .06em; margin: 0 0 6px; font-size: 1.05rem; }
+.box ol, .box ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+.play { margin: 8px 0 0; padding: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; max-width: 74ch; }
+.play b { font-family: var(--display); text-transform: uppercase; letter-spacing: .06em; }
+table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: .92rem; }
+.tw { overflow-x: auto; }
+th { text-align: left; font: 700 .72rem var(--body); text-transform: uppercase; letter-spacing: .07em; color: var(--muted); padding: 6px 8px; border-bottom: 1.5px solid var(--line); }
+td { padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+td.id { font-family: var(--mono); color: var(--accent); white-space: nowrap; }
+td.dep, td.rows { font-family: var(--mono); font-size: .8rem; color: var(--muted); }
+td.test { font-size: .85rem; color: var(--muted); min-width: 14em; }
+.k { display: inline-block; font: 700 .66rem/1 var(--body); text-transform: uppercase; letter-spacing: .07em; padding: 3px 5px; border-radius: 3px; border: 1.5px solid currentColor; margin-right: 6px; }
+.k-engine { color: var(--eng); } .k-screen { color: var(--ui); } .k-cards { color: var(--cards); }
+.tally { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 14px; color: var(--muted); font-size: .9rem; }
+.tally b { color: var(--ink); font: 700 1.4rem var(--display); margin-right: 4px; }
+@media (max-width: 640px) { td.test { min-width: 10em; } }
+</style>
+
+<div class="wrap">
+  <h1>Battle Build Plan</h1>
+  <p class="lede">The final battle spec cut into 4 milestones, each ending in a game you can play and judge. Nothing is created on GitHub until you approve this list. Row ids (S4, T9…) point into the <a href="https://claude.ai/artifact/EuZyEGus58L1hyxjzcgoGL">battle spec</a>; each GitHub issue will quote its rows in full.</p>
+  <div class="tally" id="tally"></div>
+
+  <div class="box">
+    <h3>Four things to OK with the list</h3>
+    <ol>
+      <li><b>Screen issues can't be checked by a Go test.</b> Everything the screen decides (what glows, prompts, banners, modifier breakdowns) comes from the Go engine and gets a Go test. Drag, drop and layout get a browser test on a phone-sized screen. That needs <b>Playwright</b> as a new dev-only dependency. Without it, screen issues have no automatic done check and I'd have to check them by hand at milestone end.</li>
+      <li><b>Draft pool during milestones 1–3.</b> Until milestone 4 finishes card text, the draft only offers cards whose text already works, so every test game plays correctly. Milestone 4 ends with every card in the pool.</li>
+      <li><b>What the card-text tests prove, and what they don't.</b> Each batch passes when every text in it is mapped to an effect and each distinct wording has a test on a real card checking it does what it says. That catches "this card does nothing" and "this wording is read wrong". It does not catch odd interactions between cards. Those come from your play-testing, so each milestone ends with a list of specific cards to try, and bugs you find become issues handled like any other. Expect a long tail.</li>
+      <li><b>How it runs.</b> Each milestone gets its own branch. Agents take the next unblocked issue, write the failing test, make it pass, and merge into the milestone branch when all tests pass. Questions go to <code>docs/questions/M#.md</code> and the agent moves on. <code>pd.wasm</code> is rebuilt once per milestone, not per issue, because agents would otherwise collide on that one binary file. At milestone end I stop and hand you a summary, the questions, and play steps. Merging the milestone into main, and deploying, stay your call.</li>
+    </ol>
+  </div>
+
+  <div id="ms"></div>
+</div>
+
+<script>
+// [id, kind, title, spec rows, depends on, done check]
+const M = [
+ { n: 1, name: "Plain battle on the new board",
+   play: "A full game against the bot on the new screen, with Pokémon whose cards have no extra text: coin flip, simultaneous setup, drag to play, attack from the card, retreat, knockouts, points, ties, end screen.",
+   issues: [
+  ["1.1","engine","LegalMoves(player): every legal action with its targets; Submit rejects anything not in it","F3, F17","—","Fixed states return exactly the expected move list; an illegal move gets a reason string"],
+  ["1.2","engine","Player view hides the opponent's hand, deck order and unrevealed setup","S5, L4","—","View for player 0 never contains player 1's hand card ids"],
+  ["1.3","engine","Choice prompts: one prompt type with options and the player who chooses; a single option resolves itself","F8, T9","1.1","A prompt with one option never reaches the player; two options do"],
+  ["1.4","engine","First-player coin flip: random flipper, heads goes first","S4","—","Seeded games: flipper and order follow the flip"],
+  ["1.5","engine","Simultaneous setup with Ready; picks revealed when both are Ready","S5","1.2, 1.4","Neither view shows the other's picks until both Ready"],
+  ["1.6","engine","Deck energy types chosen at final build (default = attack needs, max 3)","S2","—","Default types for sample decks; Zone only rolls chosen types"],
+  ["1.7","engine","Energy Zone now + next; unattached energy discarded at the start of your next turn, counted as discarded","T4, T5, T6","1.6","Unattached energy is in view during opponent turn, in discard after"],
+  ["1.8","engine","Positional Bench: slots behind / left / right, one Pokémon each","T7","—","Placing into a slot keeps that slot; full slot is not a legal target"],
+  ["1.9","engine","Evolution timing per player's own first turn and per Pokémon played or evolved this turn","T8","1.1","Second player can't evolve on their first turn; fresh Basic can't evolve"],
+  ["1.10","engine","Retreat with the player choosing which energy to discard","T9","1.3","Mixed energy produces a prompt; mono energy doesn't"],
+  ["1.11","engine","Mega ex scores 3; effect removals score nothing","E1","—","KO of a Mega ex gives 3 points"],
+  ["1.12","engine","One action resolves fully, then KOs, then points, then the win check; both ≥3 = tie; no-Pokémon rule","E2, E3, E4, E5","1.11","Recoil + Rocky Helmet double KO at 3/3 is a tie; Checkup KO after a winning attack isn't"],
+  ["1.13","engine","Double knockout: player whose turn is next promotes first; pick hidden until placed","E6","1.3, 1.12","Promote order and view hiding follow E6"],
+  ["1.14","engine","Concede at any time, counted as a loss","E7","—","Concede during opponent's turn ends the game"],
+  ["1.15","engine","Turn counting per player turn; tie when turn 30 (50 vs bot) ends","M3, M4","—","Game reaching the cap ends in a tie at 2–0"],
+  ["1.16","engine","Hand cap 10 blocks the turn draw","T3","—","Hand at 10: no draw, card stays in deck"],
+  ["1.17","engine","Action events for replay: each action recorded with card, target and result","F14, F15","—","Every applied move emits one event with those fields"],
+  ["1.18","engine","Bot chooses only from LegalMoves and answers every prompt","—","1.1, 1.3","200 seeded bot-vs-bot games all end with a result; none stall"],
+  ["1.19","screen","New battle screen layout from your screenshot, real card images, HP, energy icons, Poké Ball pips, piles, hand backs","L1, L2, L3, L4, L7, L8","1.2","Phone-size browser test: every zone present where L1 puts it"],
+  ["1.20","screen","Press-and-drag play with desktop tap-tap; legal spots glow, rest dims, bottom hint, illegal reason flash","F1, F3, F4, F5, F17","1.1, 1.19","Browser test drags a Basic to a Bench slot and energy to the Active"],
+  ["1.21","screen","Hold to zoom a card, shrinking back when the drag starts","F2","1.19","Hold 350 ms opens it; drag closes it"],
+  ["1.22","screen","Setup screen: coin, first/second banner, simultaneous placement, Ready","S4, S5, F11","1.5, 1.20","Browser test plays setup to turn 1"],
+  ["1.23","screen","Tap Active: card opens with attacks (unaffordable greyed) and Retreat","F9, T9, T10","1.10, 1.20","Tapping an attack applies it; Retreat makes Bench glow"],
+  ["1.24","screen","Choice overlay and knockout promotion","F8, F13","1.3, 1.19","Overlay dims everything except the options"],
+  ["1.25","screen","Turn banners and pulsing usable cards","L5","1.19","Banner shows on each turn change; pulse only on cards in LegalMoves"],
+  ["1.26","screen","Opponent turn played back step by step with Skip","F14","1.17, 1.19","Bot turn shows one event per ~0.5 s; Skip jumps to its end"],
+  ["1.27","screen","End Turn confirm, concede menu, end screen with reason and Rematch","F12, F18, F19","1.12, 1.19","Browser test concedes and sees Loss with reason"],
+  ["1.28","screen","History notebook icon with scrollable recent cards","F15","1.17, 1.19","Opening it lists the last moves in order"],
+  ["1.29","screen","Remove the old battle screen once the new one is reachable from the draft","—","1.19–1.28","Build has no imports from the old screen"]
+ ]},
+ { n: 2, name: "Special conditions and coin flips",
+   play: "Games where Pokémon get Poisoned, Burned, Asleep, Paralyzed or Confused, with Checkups, cures, and coin flips shown in the 3-wide grid.",
+   issues: [
+  ["2.1","engine","Asleep, Paralyzed, Confused; mutual exclusion; max 3 conditions","C3, C4, C5, C7, C8","—","Each condition blocks exactly what C5/C8 say; a fourth can't stack"],
+  ["2.2","engine","Checkup on both Actives in Poison → Burn → Asleep → Paralyzed order","C1, C2, C6","2.1","A Checkup with all three resolves in that order"],
+  ["2.3","engine","Leaving the Active spot clears every condition and effect; evolving cures","C9","2.1","Retreat, switch and evolve all clear"],
+  ["2.4","engine","Coin flips as events: each flip recorded, first one waits for the flipping player's tap","F11","1.17","Effect with 3 flips emits 3 results; only the first waits"],
+  ["2.5","screen","Coin grid 3 wide, first flip tapped, rest automatic","F11","2.4","Browser test sees the grid for a multi-flip attack"],
+  ["2.6","screen","Status icons on Pokémon","L2","2.1","Each condition shows its icon"],
+  ["2.7","cards","Attack texts: flip for bonus damage / per heads / until tails","X1","2.4","Every text mapped; each wording tested on a real card"],
+  ["2.8","cards","Attack texts: flip to fail, flip for an effect","X1","2.4","Every text mapped; each wording tested on a real card"],
+  ["2.9","cards","Attack texts that inflict conditions, with or without a flip","X1","2.1, 2.4","Every text mapped; each wording tested on a real card"]
+ ]},
+ { n: 3, name: "Trainers, Tools, Stadiums, Fossils",
+   play: "Decks with Items, Supporters, Tools, Stadiums and Fossils, including damage-modifier arrows you can tap.",
+   issues: [
+  ["3.1","engine","Trainer cards loaded instead of dropped; Supporter once per turn; Items unlimited; played cards go to discard","A1, A2, A3","1.1","263 Trainer cards load; second Supporter isn't legal"],
+  ["3.2","engine","Tools: attach one per Pokémon, removal by cards, reattach after","A3","3.1","Field Blower then a new Tool is legal"],
+  ["3.3","engine","Stadiums: one in play, replace, one per turn, not the same name","A6","3.1","Same-name Stadium isn't legal"],
+  ["3.4","engine","Fossils: Item in hand, 40 HP Basic in play, can't retreat, discard from play with no point; not a Basic for opening hand or setup","A5, S1, S3, S5","3.1","Hand with only a Fossil as Basic is redrawn; discard gives 0 points"],
+  ["3.5","engine","Rule hooks: passive effects that change damage, Weakness, retreat cost, conditions, evolving; each one listed with its source and value","T11, C9, L6","—","Stadium + Benched Lucario show as two modifiers with values"],
+  ["3.6","engine","Card \"search\" draws a random matching card; hand at 10 blocks draw effects","A7, T3","3.1","Search result is random among matches; blocked at 10"],
+  ["3.7","screen","Trainer play: targets glow, or whole board glows for no-target cards; Stadium spot; Tool on card","F6, F7, L2","3.1, 1.20","Browser test plays a Potion on a target and a Supporter on the board"],
+  ["3.8","screen","Orange modifier badges; tap shows each source and value","L6","3.5","Tapping a badge lists the modifiers"],
+  ["3.9","cards","Supporter texts, part 1 of 3","X1","3.1","Every text mapped; each wording tested on a real card"],
+  ["3.10","cards","Supporter texts, part 2 of 3","X1","3.1","Every text mapped; each wording tested on a real card"],
+  ["3.11","cards","Supporter texts, part 3 of 3","X1","3.1","Every text mapped; each wording tested on a real card"],
+  ["3.12","cards","Item texts","X1","3.1","Every text mapped; each wording tested on a real card"],
+  ["3.13","cards","Tool and Stadium texts","X1","3.2, 3.3, 3.5","Every text mapped; each wording tested on a real card"]
+ ]},
+ { n: 4, name: "Abilities and every remaining card",
+   play: "The done-gate: a full game against the bot, on your phone, with any drafted deck, where every card's text works.",
+   issues: [
+  ["4.1","engine","Activated abilities: once-per-turn when the text says so, from the Bench when the text allows; passive ones through rule hooks","A4","1.1, 3.5","Once-per-turn ability isn't legal twice"],
+  ["4.2","engine","Abilities that override rules (the Eevee that evolves the turn it is played, \"no Abilities\" effects)","T8, A4","4.1","That Eevee can evolve on the turn it is played"],
+  ["4.3","screen","Use an ability from the card, Active or Bench","F9, F10","4.1, 1.23","Browser test uses a Bench ability"],
+  ["4.4","cards","Ability texts, part 1 of 3","X1","4.1","Every text mapped; each wording tested on a real card"],
+  ["4.5","cards","Ability texts, part 2 of 3","X1","4.1","Every text mapped; each wording tested on a real card"],
+  ["4.6","cards","Ability texts, part 3 of 3","X1","4.1, 4.2","Every text mapped; each wording tested on a real card"],
+  ["4.7","cards","Attack texts about energy, part 1 of 2","X1","—","Every text mapped; each wording tested on a real card"],
+  ["4.8","cards","Attack texts about energy, part 2 of 2","X1","—","Every text mapped; each wording tested on a real card"],
+  ["4.9","cards","Attack texts that change damage, part 1 of 2","X1","3.5","Every text mapped; each wording tested on a real card"],
+  ["4.10","cards","Attack texts that change damage, part 2 of 2","X1","3.5","Every text mapped; each wording tested on a real card"],
+  ["4.11","cards","Attack texts: switching, Bench damage","X1","1.3","Every text mapped; each wording tested on a real card"],
+  ["4.12","cards","Attack texts: draw, search, heal","X1","3.6","Every text mapped; each wording tested on a real card"],
+  ["4.13","cards","Attack texts: can't attack / can't retreat / other locks","X1","3.5","Every text mapped; each wording tested on a real card"],
+  ["4.14","cards","Remaining attack texts that fit no family","X1","4.7–4.13","Every text mapped; each wording tested on a real card"],
+  ["4.15","cards","Coverage gate: every card text has a working effect; draft pool back to every card","X1","all 4.x cards","No card text unmapped; then your play-test list"]
+ ]}
+];
+const kindLabel = { engine: "Engine", screen: "Screen", cards: "Card text" };
+const all = M.flatMap(m => m.issues);
+const cnt = k => all.filter(i => i[1] === k).length;
+document.getElementById("tally").innerHTML =
+  `<span><b>${M.length}</b>milestones</span><span><b>${all.length}</b>issues</span><span><b>${cnt("engine")}</b>engine</span><span><b>${cnt("screen")}</b>screen</span><span><b>${cnt("cards")}</b>card text</span>`;
+const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+document.getElementById("ms").innerHTML = M.map(m => `
+  <h2>Milestone ${m.n} · ${m.name} <small>${m.issues.length} issues</small></h2>
+  <div class="play"><b>You play:</b> ${m.play}</div>
+  <div class="tw"><table>
+    <thead><tr><th>#</th><th>Issue</th><th>Spec</th><th>After</th><th>Done when (test)</th></tr></thead>
+    <tbody>${m.issues.map(([id, k, t, rows, dep, test]) => `<tr>
+      <td class="id">${id}</td><td><span class="k k-${k}">${kindLabel[k]}</span>${esc(t)}</td>
+      <td class="rows">${rows}</td><td class="dep">${dep}</td><td class="test">${esc(test)}</td></tr>`).join("")}</tbody>
+  </table></div>`).join("");
+</script>

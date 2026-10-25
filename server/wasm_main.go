@@ -32,11 +32,7 @@ func pdInit(_ js.Value, args []js.Value) any {
 	if err := loadCardsFromJSON([]byte(args[0].String())); err != nil {
 		return err.Error()
 	}
-	var err error
-	if fireDeck, err = fireDeckPreset(); err != nil {
-		return err.Error()
-	}
-	if err := newGame(1); err != nil {
+	if _, err := startGame(newReq{}); err != nil {
 		return err.Error()
 	}
 	return ""
@@ -58,7 +54,7 @@ func pdCall(_ js.Value, args []js.Value) any {
 	case "/api/state":
 		mu.Lock()
 		defer mu.Unlock()
-		return marshal(toGameView(game))
+		return marshal(toGameView(game, humanSeat))
 
 	case "/api/new":
 		var req newReq
@@ -70,6 +66,13 @@ func pdCall(_ js.Value, args []js.Value) any {
 			return errJSON(err)
 		}
 		return marshal(view)
+
+	case "/api/autodeck":
+		deck, err := autoDeckFor(body)
+		if err != nil {
+			return errJSON(err)
+		}
+		return marshal(deck)
 
 	case "/api/move":
 		var req moveReq

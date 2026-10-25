@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { TypeTally } from '../battle/energy';
 import type { Card, EnergyType } from '../types/card';
 import { DECK_SIZE } from '../stores/draftStore';
 import {
@@ -18,6 +19,7 @@ type Props = {
   purchases: Card[];
   fullPool: Card[];
   universals: Card[];
+  working: ReadonlySet<string>; // ids the engine can play; only these are offered
   deck: Record<string, number>;
   onAdd: (cardId: string) => void;
   onRemove: (cardId: string) => void;
@@ -39,6 +41,7 @@ export function DeckbuildView({
   purchases,
   fullPool,
   universals,
+  working,
   deck,
   onAdd,
   onRemove,
@@ -49,8 +52,9 @@ export function DeckbuildView({
   const handleHover = (p: HoverPayload | null) => setHover(p);
 
   const collection = useMemo(
-    () => buildCollection(picks, purchases, fullPool, universals),
-    [picks, purchases, fullPool, universals],
+    () =>
+      buildCollection(picks, purchases, fullPool, universals).filter((e) => working.has(e.card.id)),
+    [picks, purchases, fullPool, universals, working],
   );
 
   const idToCard = useMemo(() => {
@@ -73,6 +77,9 @@ export function DeckbuildView({
 
   const size = deckSize(deck);
   const remaining = DECK_SIZE - size;
+  const hasBasic = Object.keys(deck).some((id) => idToCard.get(id)?.stage === 'Basic');
+  const finalizeBlocker =
+    size !== DECK_SIZE ? `Add ${remaining} more cards to finalize` : !hasBasic ? 'Add a Basic Pokémon to finalize' : '';
 
   const deckCards: { card: Card; count: number }[] = useMemo(() => {
     const out: { card: Card; count: number }[] = [];
@@ -209,14 +216,14 @@ export function DeckbuildView({
               Deck: {size} / {DECK_SIZE}
               {sortedTally.length > 0 && (
                 <span style={{ marginLeft: 16 }}>
-                  {sortedTally.map(([t, n]) => `${t} ×${n}`).join('  ')}
+                  <TypeTally entries={sortedTally} />
                 </span>
               )}
             </div>
             <button
               onClick={onFinalize}
-              disabled={size !== DECK_SIZE}
-              title={size !== DECK_SIZE ? `Add ${remaining} more cards to finalize` : ''}
+              disabled={finalizeBlocker !== ''}
+              title={finalizeBlocker}
             >
               Finalize deck
             </button>
