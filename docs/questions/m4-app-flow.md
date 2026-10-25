@@ -10,3 +10,9 @@
 - #115 · Auto-draft (test) creates no History entry, so leaving an auto-draft run drops it instead of archiving · it's a test shortcut; revisit if Auto-draft stays player-facing
 - #116 · mid-run "Start new draft"/"Home" confirm: "This quits your run at W–L." / "Quit run and leave" / "Keep playing" · DECISION for owner (wording); confirm renders in the run panel, not beside the header buttons
 - #116 · Rematch hidden once the run is over; while active, Rematch = next battle of the run
+- #118 · summary replaces the whole deck-review screen once a run is not active (RunView renders RunSummary); no deck shown on it · keeps one clear next step
+- #118 · summary copy invented: "Run won / Run lost / Run quit", "N wins, N losses", "No battles were played.", "Draft again", "Home" · wording for owner
+- #118 · a quit run with 0 battles still shows the summary · same screen for every ended run
+- #118 · Past runs rows with a `run` show W/L from runScore plus "Run won/lost/quit" label; expanded view shows "Record W–L, from the run." instead of inputs; notes stay editable · only W/L is read-only per the issue
+- #118 · heading stays "Draft history" (existing test pins it) though the button says Past runs · not renaming
+- #118 · done check seeds a finalized deck + history entry via localStorage, since Auto-draft makes no history entry · so the run can archive to Past runs

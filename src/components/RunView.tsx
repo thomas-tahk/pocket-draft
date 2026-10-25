@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { CardPool } from '../data';
 import { RUN_LOSSES_TO_LOSE, RUN_WINS_TO_WIN, runLine, runScore, type Run } from '../stores/run';
 import { ReviewView } from './ReviewView';
+import { RunSummary } from './RunSummary';
 
 type Props = {
   pool: CardPool;
@@ -38,6 +39,7 @@ export function RunView({ pool, deck, run, onNextBattle, onReplay, onQuit, onNew
   const [confirmingQuit, setConfirmingQuit] = useState(false);
   const [leaving, setLeaving] = useState<(() => void) | null>(null);
   if (!run) return <ReviewView pool={pool} deck={deck} run={run} onNewDraft={onNewDraft} onHome={onHome} />;
+  if (run.status !== 'active') return <RunSummary run={run} onDraftAgain={onNewDraft} onHome={onHome} onReplay={onReplay} />;
   const { wins, losses, ties } = runScore(run);
   const active = run.status === 'active';
   // Leaving mid-run quits it first, so no button ends a run silently.
