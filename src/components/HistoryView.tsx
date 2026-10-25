@@ -4,11 +4,13 @@ import type { Card, EnergyType } from '../types/card';
 import type { CardPool } from '../data';
 import type { DraftHistoryEntry } from '../stores/draftStore';
 import { tallyTypes } from '../draft/weights';
+import { runScore, STATUS_LABEL, type Run } from '../stores/run';
 import { CardTile, type HoverPayload } from './CardTile';
 import { CardPreview, type HoverState } from './CardPreview';
 
 type Props = {
   history: DraftHistoryEntry[];
+  run: Run | null; // the live run: its entry shows it before it is archived
   pool: CardPool;
   onClose: () => void;
   onUpdate: (
@@ -18,7 +20,7 @@ type Props = {
   onDelete: (id: string) => void;
 };
 
-export function HistoryView({ history, pool, onClose, onUpdate, onDelete }: Props) {
+export function HistoryView({ history, run, pool, onClose, onUpdate, onDelete }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [hover, setHover] = useState<HoverState>(null);
   const handleHover = (p: HoverPayload | null) => setHover(p);
@@ -50,6 +52,9 @@ export function HistoryView({ history, pool, onClose, onUpdate, onDelete }: Prop
     const total = deckCards.reduce((s, { count }) => s + count, 0);
 
     const expanded = expandedId === entry.id;
+    // A played run fills its own record; older entries keep the typed one.
+    const played = entry.run ?? (run?.historyId === entry.id ? run : undefined);
+    const record = played ? runScore(played) : { wins: entry.wins, losses: entry.losses };
 
     return (
       <div
@@ -75,9 +80,10 @@ export function HistoryView({ history, pool, onClose, onUpdate, onDelete }: Prop
             <div style={{ opacity: 0.75, fontSize: 12, marginTop: 2 }}>
               {total} cards · <TypeTally entries={sortedTally} />
               {' '}·{' '}
-              <span style={{ color: '#4c8' }}>{entry.wins}W</span>
+              <span style={{ color: '#4c8' }}>{record.wins}W</span>
               {' / '}
-              <span style={{ color: '#c66' }}>{entry.losses}L</span>
+              <span style={{ color: '#c66' }}>{record.losses}L</span>
+              {played && <> · <span data-testid="history-run-status">{STATUS_LABEL[played.status]}</span></>}
             </div>
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
@@ -97,30 +103,36 @@ export function HistoryView({ history, pool, onClose, onUpdate, onDelete }: Prop
 
         {expanded && (
           <div style={{ marginTop: 12 }}>
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 8 }}>
-              <label style={{ fontSize: 12 }}>
-                Wins:{' '}
-                <input
-                  type="number"
-                  min={0}
-                  value={entry.wins}
-                  onChange={(e) => onUpdate(entry.id, { wins: Math.max(0, Number(e.target.value)) })}
-                  style={{ width: 50 }}
-                />
-              </label>
-              <label style={{ fontSize: 12 }}>
-                Losses:{' '}
-                <input
-                  type="number"
-                  min={0}
-                  value={entry.losses}
-                  onChange={(e) =>
-                    onUpdate(entry.id, { losses: Math.max(0, Number(e.target.value)) })
-                  }
-                  style={{ width: 50 }}
-                />
-              </label>
-            </div>
+            {played ? (
+              <p style={{ fontSize: 12, margin: '0 0 8px' }}>
+                Record {record.wins}–{record.losses}, from the run.
+              </p>
+            ) : (
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 8 }}>
+                <label style={{ fontSize: 12 }}>
+                  Wins:{' '}
+                  <input
+                    type="number"
+                    min={0}
+                    value={entry.wins}
+                    onChange={(e) => onUpdate(entry.id, { wins: Math.max(0, Number(e.target.value)) })}
+                    style={{ width: 50 }}
+                  />
+                </label>
+                <label style={{ fontSize: 12 }}>
+                  Losses:{' '}
+                  <input
+                    type="number"
+                    min={0}
+                    value={entry.losses}
+                    onChange={(e) =>
+                      onUpdate(entry.id, { losses: Math.max(0, Number(e.target.value)) })
+                    }
+                    style={{ width: 50 }}
+                  />
+                </label>
+              </div>
+            )}
 
             <textarea
               placeholder="Notes on how this deck fared…"

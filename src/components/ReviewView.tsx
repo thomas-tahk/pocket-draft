@@ -3,8 +3,8 @@ import { TypeTally } from '../battle/energy';
 import type { Card, EnergyType } from '../types/card';
 import type { CardPool } from '../data';
 import { tallyTypes } from '../draft/weights';
-import { encodeDeck } from '../share/deckCode';
 import { runLine, type Run } from '../stores/run';
+import { DeckShare } from './DeckShare';
 import { CardTile, type HoverPayload } from './CardTile';
 import { CardPreview, type HoverState } from './CardPreview';
 
@@ -18,30 +18,9 @@ type Props = {
   onHome: () => void;
 };
 
-function download(filename: string, content: string) {
-  const blob = new Blob([content], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
 export function ReviewView({ pool, deck, run, onPlay, children, onNewDraft, onHome }: Props) {
   const [hover, setHover] = useState<HoverState>(null);
-  const [copied, setCopied] = useState<string | null>(null);
   const handleHover = (p: HoverPayload | null) => setHover(p);
-
-  const deckCode = useMemo(() => encodeDeck(deck), [deck]);
-  const shareLink = `${location.origin}${location.pathname}?deck=${encodeURIComponent(deckCode)}`;
-
-  const copy = (text: string, label: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(label);
-      setTimeout(() => setCopied((c) => (c === label ? null : c)), 1500);
-    });
-  };
 
   const idToCard = useMemo(() => {
     const m = new Map<string, Card>();
@@ -76,12 +55,6 @@ export function ReviewView({ pool, deck, run, onPlay, children, onNewDraft, onHo
     .sort((a, b) => b[1] - a[1]);
   const total = deckCards.reduce((s, { count }) => s + count, 0);
 
-  const exportPayload = {
-    version: 'v0.4',
-    timestamp: new Date().toISOString(),
-    deck: deckCards.map(({ card, count }) => ({ id: card.id, name: card.name, count })),
-  };
-
   return (
     <main style={{ padding: '0 24px 24px', maxWidth: 1100, margin: '0 auto' }}>
       <header
@@ -108,19 +81,7 @@ export function ReviewView({ pool, deck, run, onPlay, children, onNewDraft, onHo
         )}
         <div style={{ display: 'flex', gap: 8 }}>
           {onPlay && <button onClick={onPlay} style={{ fontWeight: 600 }}>▶ Play deck</button>}
-          <button onClick={() => copy(deckCode, 'code')}>
-            {copied === 'code' ? 'Copied!' : 'Copy code'}
-          </button>
-          <button onClick={() => copy(shareLink, 'link')}>
-            {copied === 'link' ? 'Copied!' : 'Copy link'}
-          </button>
-          <button
-            onClick={() =>
-              download(`pocket-draft-${Date.now()}.json`, JSON.stringify(exportPayload, null, 2))
-            }
-          >
-            Export JSON
-          </button>
+          <DeckShare deck={deck} pool={pool} />
           <button onClick={onNewDraft}>Start new draft</button>
           <button onClick={onHome} style={{ fontSize: 12 }}>
             Home
