@@ -51,8 +51,8 @@ test('two concessions end the run on a summary; Draft again keeps it in Past run
   await expect(page.getByTestId('run-status')).toHaveText('Run lost');
 
   await page.getByRole('button', { name: 'Draft again' }).click();
-  page.once('dialog', (d) => d.accept());
-  await page.getByRole('button', { name: 'Cancel draft' }).click();
+  await page.getByRole('button', { name: 'Abandon draft' }).click();
+  await page.getByTestId('abandon-ok').click();
   await expectLostRowReadOnly(page);
 });
 
