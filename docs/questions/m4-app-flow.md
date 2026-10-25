@@ -1,6 +1,6 @@
 - #113 · added from owner feedback 2026-10-24 (phone: too tall, left-skewed margins) · measured 228 px column, 162 px right gap, 1562 px page
 - plan · m4-app-flow branches off draft-rework (unmerged PR #112) · merge order: #112 first
 - #113 · phone = ≤700 px; offers 2-wide; drafted list below offers (not collapsible); header not sticky on phone · long-press (350 ms) = zoom on touch, hover only for mouse
-- #114 · a tied game isn't recorded (result is win/loss only) · DECISION for owner: count ties as loss / ignore / replay
+- #114 · ties (both hit 3 points / both out of Pokémon / turn cap) are recorded as "tie": count toward neither 5W nor 2L, run continues · DECISION for owner (alt: tie = loss)
 - #114 · client picks the seed (≤2^53, JSON-safe); game record exposed only after game over (no mid-game info leak)
 - #114 · rematch after a battle counts as the next battle of the run
