@@ -44,15 +44,7 @@ export function ShopView({
       return <p style={{ fontSize: 13, opacity: 0.5 }}>No candidates.</p>;
     }
     return (
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, 180px)',
-          justifyContent: 'start',
-          gap: 12,
-          alignItems: 'start',
-        }}
-      >
+      <div className="shelf-grid">
         {cards.map((c) => {
           const count = countById.get(c.id) ?? 0;
           const atPerCardCap = count >= COPY_CAP_BY_NAME;
@@ -61,14 +53,13 @@ export function ShopView({
           return (
             <div
               key={c.id}
+              className="shelf-cell"
               style={{
                 opacity: addDisabled && count === 0 ? 0.4 : 1,
                 outline: count > 0 ? '2px solid #4c8' : 'none',
                 outlineOffset: 2,
                 borderRadius: 10,
                 padding: 2,
-                width: 180,
-                boxSizing: 'border-box',
               }}
             >
               <CardTile card={c} size="lg" onHover={handleHover} />
@@ -117,26 +108,11 @@ export function ShopView({
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <main style={{ flex: 1, padding: '0 24px 24px', maxWidth: 1300 }}>
-        <header
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'baseline',
-            padding: '16px 0',
-            marginBottom: 8,
-            gap: 12,
-            flexWrap: 'wrap',
-            position: 'sticky',
-            top: 0,
-            background: 'var(--surface)',
-            zIndex: 20,
-            borderBottom: '1px solid #8882',
-          }}
-        >
+    <div className="screen">
+      <main className="screen-main wide">
+        <header className="screen-header">
           <h1 style={{ fontSize: 20, margin: 0 }}>Shop</h1>
-          <div style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}>
+          <div className="screen-header-actions">
             <div style={{ fontSize: 14, opacity: 0.75 }}>
               Tickets: {ticketsLeft} / {SHOP_TICKETS}
             </div>
@@ -176,33 +152,11 @@ export function ShopView({
         </section>
       </main>
 
-      <aside
-        style={{
-          width: 260,
-          borderLeft: '1px solid #8884',
-          padding: 16,
-          height: '100vh',
-          overflowY: 'auto',
-          position: 'sticky',
-          top: 0,
-          boxSizing: 'border-box',
-          background: 'var(--surface)',
-          zIndex: 10,
-        }}
-      >
+      <aside className="screen-aside" style={{ ['--aside-w' as string]: '260px' }}>
         <div style={{ fontSize: 12, opacity: 0.6, marginBottom: 6 }}>
           Drafted ({picks.length})
         </div>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 84px)',
-            justifyContent: 'center',
-            gap: 4,
-            alignItems: 'start',
-            marginBottom: 16,
-          }}
-        >
+        <div className="tile-grid-sm" style={{ marginBottom: 16 }}>
           {picks.map((c, i) => (
             <CardTile key={`d-${c.id}-${i}`} card={c} size="sm" onHover={handleHover} />
           ))}
@@ -213,15 +167,7 @@ export function ShopView({
             <div style={{ fontSize: 12, opacity: 0.6, marginBottom: 6 }}>
               Purchased ({purchased.length})
             </div>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 84px)',
-                justifyContent: 'center',
-                gap: 4,
-                alignItems: 'start',
-              }}
-            >
+            <div className="tile-grid-sm">
               {purchased.map((c, i) => (
                 <CardTile key={`p-${c.id}-${i}`} card={c} size="sm" onHover={handleHover} />
               ))}

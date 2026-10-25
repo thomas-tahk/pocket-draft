@@ -4,6 +4,7 @@ import type { Card } from '../types/card';
 export type HoverState = {
   card: Card;
   position: { x: number; y: number };
+  zoom?: boolean;
 } | null;
 
 type Props = {
@@ -37,6 +38,13 @@ export function CardPreview({ hover }: Props) {
   if (!hover) return null;
   const { card, position } = hover;
   const src = card.imageFull || card.imageThumb;
+  if (hover.zoom) {
+    return (
+      <div className="card-zoom">
+        <img src={src} alt={card.name} />
+      </div>
+    );
+  }
   const { left, top } = placeNearCursor(position.x, position.y, vp.w, vp.h);
   return (
     <div
