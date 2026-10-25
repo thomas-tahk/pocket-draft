@@ -52,14 +52,20 @@ func pickFromTier(pool []draftCard, tally typeTally, exclude map[string]bool, rn
 }
 
 // generateOffer mirrors offer.ts's generateOffer: one 5-card offer. Within an
-// offer, no duplicate ids; duplicates across packs are allowed.
+// offer, no duplicate ids; duplicates across packs are allowed. No picks yet
+// means pack 1, whose last slot is always tier 1 (ex / mega-ex); if tier 1 has
+// nothing eligible the usual fall-through applies.
 func generateOffer(byTier map[tier][]draftCard, picks []draftCard, rng func() float64) ([]draftCard, error) {
 	tally := tallyTypes(picks)
+	isPack1 := len(picks) == 0
 	offer := make([]draftCard, 0, slotsPerPack)
 	used := map[string]bool{}
 
 	for slot := 0; slot < slotsPerPack; slot++ {
 		targetTier := rollTier(rng)
+		if isPack1 && slot == slotsPerPack-1 {
+			targetTier = tier1 // pack 1 always offers an ex
+		}
 
 		card, ok := pickFromTier(byTier[targetTier], tally, used, rng)
 		if !ok {

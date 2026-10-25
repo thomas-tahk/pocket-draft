@@ -37,9 +37,8 @@ func TestWeightOf(t *testing.T) {
 	if w := weightOf(colorless, tally); w != 1 {
 		t.Errorf("weightOf(Colorless) = %v, want 1", w)
 	}
-	// TYPE_WEIGHT_COEF is 0 (a dead no-op term, ported as-is) so even a heavy
-	// tally must not move the weight off 1.
-	if w := weightOf(fire, tally); w != 1 {
-		t.Errorf("weightOf(Fire, heavy tally) = %v, want 1 (TYPE_WEIGHT_COEF=0)", w)
+	// weight = 1 + coef × picks of that type; coef is 1.
+	if w := weightOf(fire, tally); w != 6 {
+		t.Errorf("weightOf(Fire, 5 Fire picks) = %v, want 6", w)
 	}
 }

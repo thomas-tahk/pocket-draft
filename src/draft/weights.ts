@@ -6,12 +6,9 @@ export type TypeTally = Partial<Record<EnergyType, number>>;
 // weight = 1 + COEF × typeCount[type] for energy Pokémon; flat 1 for Trainers
 // and Colorless.
 //
-// 0 means true random draft — no type bias. This was the deliberate choice
-// 2026-05-27 once the model moved to "pool-then-pick": picks accumulate into a
-// collection rather than locking into a deck, so the random pool plus free
-// SWUCUBE-style expansions at deckbuild give players enough material to assemble
-// a coherent deck without needing mid-draft type pressure.
-export const TYPE_WEIGHT_COEF = 0;
+// Back on (1) per the 2026-10-15 rework answers: offers lean toward the types
+// you've picked. Mirrored by typeWeightCoef in server/draft_weights.go.
+export const TYPE_WEIGHT_COEF = 1;
 
 export function tallyTypes(picks: Card[]): TypeTally {
   const t: TypeTally = {};

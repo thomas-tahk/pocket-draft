@@ -2,11 +2,11 @@ package main
 
 // Go port of src/draft/weights.ts.
 
-// typeWeightCoef mirrors weights.ts:14's TYPE_WEIGHT_COEF. 0 means true random
-// draft — no type bias; this is currently a dead no-op term client-side too, so
-// it's ported as-is rather than spent time on (see issue #9's implementation
-// notes).
-const typeWeightCoef = 0.0
+// typeWeightCoef mirrors weights.ts's TYPE_WEIGHT_COEF: each drafted on-type
+// Pokémon adds this much to that type's weight (weight = 1 + coef × count).
+// Back on (1.0) since the 2026-10-15 rework answers: offers lean toward the
+// types you've picked.
+const typeWeightCoef = 1.0
 
 type typeTally map[string]int
 
@@ -23,8 +23,7 @@ func tallyTypes(picks []draftCard) typeTally {
 }
 
 // weightOf mirrors weights.ts's weightOf: Trainers and Colorless Pokémon are
-// flat 1 (always equally eligible); other types get the (currently inert)
-// type-nudge term.
+// flat 1 (always equally eligible); other types get the type-nudge term.
 func weightOf(c draftCard, tally typeTally) float64 {
 	if c.CardType == "Trainer" || c.CardType == "Colorless" {
 		return 1
