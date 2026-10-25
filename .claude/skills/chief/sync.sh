@@ -14,7 +14,7 @@ git -C "$repo" rev-parse --show-toplevel >/dev/null
 mkdir -p "$repo/.claude/skills/chief" "$repo/.claude/agents"
 rsync -a --delete "$src_skill/" "$repo/.claude/skills/chief/"
 for f in "$src_agents"/*.md; do
-  [ "$(basename "$f")" = "README.md" ] && continue
+  case "$(basename "$f")" in README.md|servicenow.md) continue ;; esac  # servicenow: PDI repos only
   cp "$f" "$repo/.claude/agents/"
 done
 
