@@ -4,3 +4,6 @@
 - #114 · ties (both hit 3 points / both out of Pokémon / turn cap) are recorded as "tie": count toward neither 5W nor 2L, run continues · DECISION for owner (alt: tie = loss)
 - #114 · client picks the seed (≤2^53, JSON-safe); game record exposed only after game over (no mid-game info leak)
 - #114 · rematch after a battle counts as the next battle of the run
+- #115 · any action that starts over (new draft, Auto-draft, Home/reset) archives the current run first: active → quit, saved on its deck's History entry (`run` field) · nothing is silently wiped; end-of-run screen reads it from there
+- #115 · Home is always the first screen on reload, finished runs included · Practice never records into the run
+- #115 · confirm copy "This ends your current run (W–L)." / "End run and draft" / "Keep run" · DECISION for owner (wording)
