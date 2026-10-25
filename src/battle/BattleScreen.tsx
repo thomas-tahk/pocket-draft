@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../game/store';
+import { useDraftStore } from '../stores/draftStore';
 import { Board } from './Board';
 import { ConfirmDialog, EndScreen, GameMenu, endTurnWarning, type Confirm } from './EndControls';
 import { choiceFor } from './Choice';
@@ -18,6 +19,15 @@ export function BattleScreen({ deck, onExit }: { deck?: string[]; onExit?: () =>
     if (deck) void startGame(deck);
     else void init();
   }, [deck, init, startGame]);
+
+  // A run's game ends once: save its result and replayable record. The store
+  // ignores a seed it already holds, so a re-render cannot record it twice.
+  const recordBattle = useDraftStore((s) => s.recordBattle);
+  useEffect(() => {
+    if (!deck || view?.phase !== 'over' || (view.outcome !== 'win' && view.outcome !== 'loss')) return;
+    const { seed, you, bot, actions } = view.record;
+    recordBattle({ result: view.outcome, seed, yourDeck: you, botDeck: bot, actions, endedAt: new Date().toISOString() });
+  }, [deck, view, recordBattle]);
 
   // The bot (seat 1) plays whenever it is its move, one step at a time (F14).
   const { step, canSkip, skip, skipping } = useOpponentTurn(view, botStuck, runBot);

@@ -27,3 +27,19 @@ test('a saved 16-pick review state resets to the start screen and keeps history'
   await expect(page.getByRole('button', { name: 'Start draft' })).toBeVisible();
   await expect(page.getByText('View past drafts (1 /')).toBeVisible();
 });
+
+// A v1 save (before the run record) with a finalized deck keeps its deck, its
+// history, and gains an empty active run.
+test('a saved v1 review state gains an empty run and keeps deck and history', async ({ page }) => {
+  const v1 = { ...v0State, pickIds: Array.from({ length: 20 }, (_, i) => `p${i}`) };
+  await page.addInitScript((state) => {
+    localStorage.setItem('pocket-draft-v0.4', JSON.stringify({ state, version: 1 }));
+  }, v1);
+  await page.goto('/');
+
+  await expect(page.getByTestId('run-record')).toHaveText('Run: 0–0 (active)');
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('pocket-draft-v0.4')!));
+  expect(saved.version).toBe(2);
+  expect(saved.state.history).toHaveLength(1);
+  expect(saved.state.deck).toEqual({ 'old-pick-0': 2 });
+});
