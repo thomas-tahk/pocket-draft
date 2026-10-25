@@ -4,3 +4,5 @@
 - #108 · type weight coefficient = 1.0 (pre-May value; 8 Fire picks ≈ 6× baseline Fire share) · strong; tune after play-test
 - #108 · pack-1 ex = forced last slot, mega-ex counts · matches the pre-removal anchor
 - noticed · hovering a draft card opens a full zoom overlay over the offers (his card-zoom complaint, 10-15 answers) · not in any issue yet
+- #107 · Poké Ball + Professor's Research no longer excluded from the draft pool — draftable/buyable like any Trainer · otherwise unobtainable · DECISION for owner (revert = restore isDraftCandidate exclusion)
+- #107 · bot-play test relaxed (no "held a Trainer, played none" check; benched ≥90% of seats) · bot now holds conditional Trainers correctly · #110 must restore strict checks
