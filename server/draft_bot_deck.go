@@ -8,15 +8,13 @@ import (
 
 // The bot's deck is built to be playable, not strong: it keeps to two attack
 // types, drafts lines it can finish, and fills in the free under-evolutions
-// and universal Trainers the way a human does at deckbuild. The bot is only a
+// the way a human does at deckbuild. The bot is only a
 // practice opponent (docs/VISION.md), so these are simple rules, no lookahead.
 
 const (
 	botMaxAttackTypes = 2
 	botTrainerPicks   = 4 // Trainers the draft takes before preferring Pokémon again
 )
-
-var botUniversals = []string{"Professor's Research", "Poké Ball"}
 
 type typeSet map[engine.Energy]bool
 
@@ -171,17 +169,6 @@ func (b *botDeckBuilder) addCopies(line []rawCard, target int) {
 	}
 }
 
-func (b *botDeckBuilder) addUniversals() {
-	for _, name := range botUniversals {
-		for _, rc := range b.byName[name] {
-			if rc.CardType == "Trainer" && textWorks(rc) {
-				b.addCopies([]rawCard{rc}, 2)
-				break
-			}
-		}
-	}
-}
-
 func (b *botDeckBuilder) addPicks(picks []draftCard, trainers bool, target int) {
 	for _, p := range picks {
 		if (p.CardType == "Trainer") != trainers {
@@ -202,12 +189,10 @@ func (b *botDeckBuilder) fillFrom(picks []draftCard) {
 	b.addPicks(picks, true, 2)
 }
 
-// botDeckIDs turns the bot's draft picks into 20 card ids: the universal
-// Trainers, then each Pokémon pick with its under-evolutions, then Trainers,
+// botDeckIDs turns the bot's draft picks into 20 card ids: each Pokémon pick with its under-evolutions, then Trainers,
 // then second copies. The always-legal fallback is the plain top-up.
 func botDeckIDs(picks []draftCard, byName map[string][]rawCard) []string {
 	b := &botDeckBuilder{count: map[string]int{}, types: typeSet{}, byName: byName, limit: botMaxAttackTypes}
-	b.addUniversals()
 	b.fillFrom(picks)
 	if len(b.ids) < draftDeckSize {
 		b.limit = int(engine.Metal) + 1

@@ -43,7 +43,6 @@ export function ReviewView({ pool, deck, onPlay, onNewDraft, onHome }: Props) {
   const idToCard = useMemo(() => {
     const m = new Map<string, Card>();
     for (const c of pool.fullCards) m.set(c.id, c);
-    for (const c of pool.universals) m.set(c.id, c);
     return m;
   }, [pool]);
 

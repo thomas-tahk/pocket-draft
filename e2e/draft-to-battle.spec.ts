@@ -116,9 +116,9 @@ test('deckbuild offers only cards the engine can play, so any deck built there p
   expect(offered.length).toBeGreaterThan(0);
   for (const id of offered) expect(working, `deckbuild offers ${id}`).toContain(id);
 
-  // Universals and under-evolutions first, then the draft, so the deck uses
-  // every kind of card deckbuild can add.
-  for (const name of [/^Free universals/, /^Free expansions/, /^Your draft/]) {
+  // Under-evolutions first, then the draft, so the deck uses every kind of
+  // card deckbuild can add.
+  for (const name of [/^Free expansions/, /^Your draft/]) {
     await fillFrom(page.locator('section', { has: page.getByRole('heading', { name }) }));
   }
   await expect(page.getByText('Deck: 20 / 20')).toBeVisible();

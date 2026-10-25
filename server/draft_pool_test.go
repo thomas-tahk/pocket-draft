@@ -15,8 +15,7 @@ func TestIsDraftCandidate(t *testing.T) {
 		{"excluded set A4b", rawCard{SetID: "A4b", Rarity: "◊"}, false},
 		{"cosmetic rarity", rawCard{SetID: "A1", Rarity: "☆"}, false},
 		{"empty rarity", rawCard{SetID: "A1", Rarity: ""}, false},
-		{"free universal Trainer", rawCard{SetID: "A1", Rarity: "◊", CardType: "Trainer", Name: "Poké Ball"}, false},
-		{"non-universal Trainer", rawCard{SetID: "A1", Rarity: "◊", CardType: "Trainer", Name: "Potion"}, true},
+		{"Poké Ball is an ordinary draftable Trainer", rawCard{SetID: "A1", Rarity: "◊", CardType: "Trainer", Name: "Poké Ball"}, true},
 	}
 	for _, c := range cases {
 		if got := isDraftCandidate(c.rc); got != c.want {
@@ -96,7 +95,6 @@ func TestToDraftablePool(t *testing.T) {
 		"cosmetic":  {ID: "cosmetic", SetID: "A1", Name: "Shiny", Rarity: "☆", CardType: "Fire"},
 		"under-evo": {ID: "under-evo", SetID: "A1", Name: "Baby", Rarity: "◊", CardType: "Fire", Stage: "Basic"},
 		"evolved":   {ID: "evolved", SetID: "A1", Name: "Grown Up", Rarity: "◊◊", CardType: "Fire", Stage: "Stage 1", EvolvesFrom: "Baby"},
-		"universal": {ID: "universal", SetID: "A1", Name: "Poké Ball", Rarity: "◊", CardType: "Trainer"},
 	}
 
 	pool := toDraftablePool()
@@ -110,7 +108,7 @@ func TestToDraftablePool(t *testing.T) {
 			t.Errorf("toDraftablePool() missing %s, got %+v", want, ids)
 		}
 	}
-	for _, unwanted := range []string{"excl-set", "cosmetic", "under-evo", "universal"} {
+	for _, unwanted := range []string{"excl-set", "cosmetic", "under-evo"} {
 		if ids[unwanted] {
 			t.Errorf("toDraftablePool() unexpectedly kept %s", unwanted)
 		}

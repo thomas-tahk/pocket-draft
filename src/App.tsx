@@ -196,7 +196,6 @@ export function App() {
         picks={picks}
         purchases={purchases}
         fullPool={pool.fullCards}
-        universals={pool.universals}
         working={pool.working}
         deck={deck}
         onAdd={addToDeck}

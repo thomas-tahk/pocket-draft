@@ -18,7 +18,6 @@ type Props = {
   picks: Card[];
   purchases: Card[];
   fullPool: Card[];
-  universals: Card[];
   working: ReadonlySet<string>; // ids the engine can play; only these are offered
   deck: Record<string, number>;
   onAdd: (cardId: string) => void;
@@ -31,16 +30,14 @@ const SOURCE_LABEL: Record<CollectionSource, string> = {
   drafted: 'Your draft',
   shop: 'Shop purchases',
   'under-evo': 'Free expansions (under-evolutions)',
-  universal: 'Free universals',
 };
 
-const SOURCE_ORDER: CollectionSource[] = ['drafted', 'shop', 'under-evo', 'universal'];
+const SOURCE_ORDER: CollectionSource[] = ['drafted', 'shop', 'under-evo'];
 
 export function DeckbuildView({
   picks,
   purchases,
   fullPool,
-  universals,
   working,
   deck,
   onAdd,
@@ -53,23 +50,21 @@ export function DeckbuildView({
 
   const collection = useMemo(
     () =>
-      buildCollection(picks, purchases, fullPool, universals).filter((e) => working.has(e.card.id)),
-    [picks, purchases, fullPool, universals, working],
+      buildCollection(picks, purchases, fullPool).filter((e) => working.has(e.card.id)),
+    [picks, purchases, fullPool, working],
   );
 
   const idToCard = useMemo(() => {
     const m = new Map<string, Card>();
     for (const c of fullPool) m.set(c.id, c);
-    for (const c of universals) m.set(c.id, c);
     return m;
-  }, [fullPool, universals]);
+  }, [fullPool]);
 
   const grouped = useMemo(() => {
     const g: Record<CollectionSource, CollectionEntry[]> = {
       drafted: [],
       shop: [],
       'under-evo': [],
-      universal: [],
     };
     for (const e of collection) g[e.source].push(e);
     return g;
@@ -241,8 +236,8 @@ export function DeckbuildView({
         </header>
         <p style={{ fontSize: 13, opacity: 0.6, marginTop: 0 }}>
           Build a deck of exactly {DECK_SIZE} cards. Max 2 of any card by name. Drafted Pokémon
-          unlock their under-evolutions (all functional variants) for free; the 2 free universals
-          (Poké Ball, Professor's Research) are always available.
+          unlock their under-evolutions (all functional variants) for free. Trainers come only from
+          your draft and the shop.
         </p>
 
         {SOURCE_ORDER.map(renderSection)}
