@@ -5,7 +5,7 @@
 - #114 · client picks the seed (≤2^53, JSON-safe); game record exposed only after game over (no mid-game info leak)
 - #114 · rematch after a battle counts as the next battle of the run
 - #115 · any action that starts over (new draft, Auto-draft, Home/reset) archives the current run first: active → quit, saved on its deck's History entry (`run` field) · nothing is silently wiped; end-of-run screen reads it from there
-- #115 · Home is always the first screen on reload, finished runs included · Practice never records into the run
+- #115 · (superseded by #117: Home first on reload, except a battle in progress (→ battle) or a leave countdown (→ run screen)) Home is always the first screen on reload, finished runs included · Practice never records into the run
 - #115 · confirm copy "This ends your current run (W–L)." / "End run and draft" / "Keep run" · DECISION for owner (wording)
 - #115 · Auto-draft (test) creates no History entry, so leaving an auto-draft run drops it instead of archiving · it's a test shortcut; revisit if Auto-draft stays player-facing
 - #116 · mid-run "Start new draft"/"Home" confirm: "This quits your run at W–L." / "Quit run and leave" / "Keep playing" · DECISION for owner (wording); confirm renders in the run panel, not beside the header buttons
@@ -34,3 +34,7 @@
 - #117 · practice battles: "Leave battle" just exits, no save, no countdown · per the issue brief
 - #118 · Past runs reads the live run for the entry whose id matches run.historyId (no copy kept in history until archived) · one source of truth, no per-battle writes
 - #118 · summary keeps Copy code / Copy link / Export JSON (shared DeckShare component, same handlers as the review screen) · finished runs must not lose features
+- #117 · Home first on reload, except a battle in progress (→ battle) or a leave countdown (→ run screen) · supersedes the #115 line above
+- #117 · closed-tab rule: hiding or closing the page mid-battle (pagehide, or the tab going hidden, since iOS often skips pagehide) stamps closedAt, separate from the menu's leftAt. Back or reloaded within 90 s: straight into the battle. Past 90 s: the battle is a loss, recorded on return · so closing the tab cannot keep a battle alive forever; no countdown is shown for this
+- #117 · copy "Try again" added before "Start a new battle" on the could-not-resume screen
+- #117 · each saved bot step carries the action count after it; a rebuild that disagrees counts as could-not-resume · catches a bot that changed between versions

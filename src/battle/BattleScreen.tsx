@@ -15,7 +15,7 @@ import './battle.css';
 type Props = { deck?: string[]; onExit?: () => void; practice?: boolean; resume?: InProgressBattle };
 
 export function BattleScreen({ deck, onExit, practice, resume }: Props) {
-  const { view, status, error, log, init, startGame, resumeGame, dispatch, runBot, botStuck, restart } = useGameStore();
+  const { view, status, error, log, init, startGame, resumeGame, idle, dispatch, runBot, botStuck, restart } = useGameStore();
   const setInProgress = useDraftStore((s) => s.setInProgress);
   const [confirm, setConfirm] = useState<Confirm | null>(null);
 
@@ -29,7 +29,7 @@ export function BattleScreen({ deck, onExit, practice, resume }: Props) {
   useEffect(() => {
     const g = useGameStore.getState();
     if (!deck || practice || g.status !== 'ready' || g.view?.phase === 'over' || g.seed === null) return;
-    setInProgress({ seed: g.seed, yourDeck: deck, log: g.log, leftAt: null });
+    setInProgress({ seed: g.seed, yourDeck: deck, log: g.log, leftAt: null, closedAt: null });
   }, [deck, practice, status, log, setInProgress]);
 
   // A run's game ends once: save its result and replayable record. The store
@@ -50,16 +50,17 @@ export function BattleScreen({ deck, onExit, practice, resume }: Props) {
   const intro = useSetupIntro(view);
 
   if (!view && resume && error) {
-    return <ResumeFailed onStartOver={() => { setInProgress(undefined); void startGame(deck ?? resume.yourDeck); }} />;
+    return <ResumeFailed onRetry={() => void resumeGame(resume)} onStartOver={() => { setInProgress(undefined); void startGame(deck ?? resume.yourDeck); }} />;
   }
   if (!view) {
     return <div className="bt-root"><div style={{ color: '#fff' }}>{error ? `Couldn't reach the game server: ${error}` : 'Loading game…'}</div></div>;
   }
 
   // Leaving a run's battle keeps it for 90 s on the run screen; a practice game just ends.
-  const onLeave = () => {
+  const onLeave = async () => {
+    await idle(); // a move still on its way to the server must be in the saved log
     const g = useGameStore.getState();
-    if (!practice && deck && g.seed !== null) setInProgress({ seed: g.seed, yourDeck: deck, log: g.log, leftAt: new Date().toISOString() });
+    if (!practice && deck && g.seed !== null) setInProgress({ seed: g.seed, yourDeck: deck, log: g.log, leftAt: new Date().toISOString(), closedAt: null });
     onExit?.();
   };
 
@@ -77,7 +78,7 @@ export function BattleScreen({ deck, onExit, practice, resume }: Props) {
     // A long press zooms a card; never the browser's image menu (iOS callout in battle.css).
     <div className="bt-root" {...flashAttrs(step)} onContextMenu={(e) => e.preventDefault()}>
       <Board view={view} instant={skipping} onEndTurn={onEndTurn} onReady={onReady} choice={choiceFor(view, 0, (m) => void dispatch(m))}>
-        {view.phase !== 'over' && <GameMenu onConcede={onConcede} onLeave={onExit && onLeave} />}
+        {view.phase !== 'over' && <GameMenu onConcede={onConcede} onLeave={onExit && (() => void onLeave())} />}
         {canSkip && <SkipButton onSkip={skip} />}
         {intro.show && <SetupIntro view={view} onDone={intro.finish} />}
         {confirm && <ConfirmDialog confirm={confirm} onClose={() => setConfirm(null)} />}
@@ -87,12 +88,13 @@ export function BattleScreen({ deck, onExit, practice, resume }: Props) {
   );
 }
 
-function ResumeFailed({ onStartOver }: { onStartOver: () => void }) {
+function ResumeFailed({ onRetry, onStartOver }: { onRetry: () => void; onStartOver: () => void }) {
   return (
     <div className="bt-root">
       <div className="bt-dialog" role="alert" style={{ margin: 'auto' }}>
         <p>This battle could not be resumed.</p>
-        <button className="bt-btn bt-btn-main" onClick={onStartOver}>Start a new battle</button>
+        <button className="bt-btn bt-btn-main" onClick={onRetry}>Try again</button>
+        <button className="bt-btn" onClick={onStartOver}>Start a new battle</button>
       </div>
     </div>
   );

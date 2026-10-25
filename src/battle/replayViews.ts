@@ -41,9 +41,10 @@ export async function applySteps(start: Start, steps: LogStep[], signal: AbortSi
 }
 
 async function applyStep(step: LogStep): Promise<GameView> {
-  if (step === 'bot') {
+  if ('bot' in step) {
     const res = await post<BotResp>('/api/bot', {});
     if (!res.acted) throw new Error('replay diverged: the bot had no move');
+    if (res.state.actions.length !== step.bot) throw new Error('replay diverged: the bot played differently');
     return res.state;
   }
   const res = await post<MoveResp>('/api/move', step);

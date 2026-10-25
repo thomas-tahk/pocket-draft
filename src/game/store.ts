@@ -21,6 +21,7 @@ type Actions = {
   restart: (seed?: number) => Promise<void>;
   dispatch: (move: Move) => Promise<void>;
   runBot: () => Promise<void>;
+  idle: () => Promise<void>; // resolves once every move and bot step sent so far has been applied
 };
 
 // The app picks each game's seed (below 2^53, so it survives JSON) so the record it
@@ -57,8 +58,10 @@ export const useGameStore = create<State & Actions>((set, get) => ({
   },
 
   startGame: async (deck, seed = freshSeed()) => {
-    set({ status: 'loading', error: null, deck, view: null, seed, log: [] });
+    set({ status: 'loading', error: null, deck, view: null });
     return serially(async () => {
+      // Inside the job: a bot step queued for the old game can no longer append to this log.
+      set({ seed, log: [] });
       try {
         const view = await newGame({ deck, seed });
         set({ view, status: 'ready', botStuck: false });
@@ -70,8 +73,9 @@ export const useGameStore = create<State & Actions>((set, get) => ({
   },
 
   resumeGame: async (saved) => {
-    set({ status: 'loading', error: null, deck: saved.yourDeck, view: null, seed: saved.seed, log: saved.log });
+    set({ status: 'loading', error: null, deck: saved.yourDeck, view: null });
     return serially(async () => {
+      set({ seed: saved.seed, log: saved.log });
       try {
         const view = await resumeView(saved);
         set({ view, status: 'ready', botStuck: false });
@@ -95,6 +99,8 @@ export const useGameStore = create<State & Actions>((set, get) => ({
     });
   },
 
+  idle: () => serially(async () => {}),
+
   dispatch: (move) => serially(async () => {
     try {
       const res = await sendMove(move);
@@ -117,7 +123,7 @@ export const useGameStore = create<State & Actions>((set, get) => ({
       // A concede may have ended the game while this bot move was in flight.
       if (get().view?.phase === 'over') return;
       // If the bot couldn't act, flag it so the auto-driver stops instead of spinning.
-      set({ view: res.state, error: null, botStuck: !res.acted, log: res.acted ? [...get().log, 'bot'] : get().log });
+      set({ view: res.state, error: null, botStuck: !res.acted, log: res.acted ? [...get().log, { bot: res.state.actions.length }] : get().log });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       set({ error: msg });

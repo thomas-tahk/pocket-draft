@@ -105,7 +105,8 @@ test('a battle played to a real finish replays to its exact final state; read-on
   expect(withoutRecord(await state(request))).toEqual(withoutRecord(final));
   await page.screenshot({ path: 'test-results/replay-390-final.png' });
   const facts = await boardFacts(page);
-  expect(facts.points).toEqual([final.players[1].points, final.players[0].points]);
+  // the board shows at most 3 pips; a 4-point ex finish still wins with 3 showing
+  expect(facts.points).toEqual([Math.min(3, final.players[1].points), Math.min(3, final.players[0].points)]);
 
   await page.getByTestId('replay-back').click();
   await expect(page.getByTestId('replay-step')).toHaveText(`Step ${total - 1} / ${total}`);

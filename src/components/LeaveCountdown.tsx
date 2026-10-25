@@ -11,7 +11,7 @@ export function LeaveCountdown({ battle, onReturn }: { battle: InProgressBattle;
   }, []);
   const seconds = Math.ceil((leaveMsLeft(battle, now) ?? 0) / 1000);
   return (
-    <div className="run-confirm run-leave" data-testid="leave-countdown">
+    <div className="run-confirm" data-testid="leave-countdown">
       <p>You left your battle. It counts as a loss in <strong data-testid="leave-seconds">{seconds}</strong> s.</p>
       <button className="run-btn run-btn-primary" onClick={onReturn}>Return to battle</button>
     </div>

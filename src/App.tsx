@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { loadCardPool, type CardPool } from './data';
 import { DraftView } from './components/DraftView';
 import { ShopView } from './components/ShopView';
@@ -12,8 +12,8 @@ import { ReplayView } from './battle/ReplayView';
 import { expandDeck } from './game/deck';
 import { autoDeck } from './game/api';
 import { derivePhase, useDraftStore } from './stores/draftStore';
-import { runScore, type InProgressBattle } from './stores/run';
-import { useLeaveExpiry } from './battle/useLeaveExpiry';
+import { leaveMsLeft, runScore, type InProgressBattle } from './stores/run';
+import { useCloseStamp, useLeaveExpiry } from './battle/useLeaveExpiry';
 import { decodeDeck, type Decklist } from './share/deckCode';
 import type { Card } from './types/card';
 
@@ -37,10 +37,12 @@ function readReplayIndex(): number | null {
   return raw !== null && Number.isInteger(n) && n >= 0 ? n : null;
 }
 
-// A battle still being played when the page loaded (a reload) goes straight back to it.
+// A battle still being played when the page loaded (a reload) goes straight back to it,
+// unless it was closed for 90 s or more: that one is a loss, recorded on load.
 function readInterrupted(): InProgressBattle | null {
   const saved = useDraftStore.getState().run?.inProgress;
-  return saved && !saved.leftAt ? saved : null;
+  if (!saved || saved.leftAt) return null;
+  return (leaveMsLeft(saved, Date.now()) ?? 1) > 0 ? saved : null;
 }
 
 export function App() {
@@ -90,7 +92,13 @@ export function App() {
     quitRun,
     setInProgress,
   } = useDraftStore();
-  useLeaveExpiry();
+  // Past 90 s the battle on screen is lost: back to the run screen.
+  const onExpired = useCallback(() => {
+    setPlaying(false);
+    setResuming(null);
+  }, []);
+  useLeaveExpiry(onExpired);
+  useCloseStamp();
 
   // A ?replay index with no battle behind it goes to the run screen, param dropped.
   const replayMissing = replaying !== null && !run?.battles[replaying];

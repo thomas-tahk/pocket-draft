@@ -22,7 +22,9 @@ export type RunBattle = {
 
 // What the app did to the server's game, in order: a move the player made, or one bot step.
 // The bot is deterministic, so replaying these from the seed rebuilds the same game.
-export type LogStep = Move | 'bot';
+// A bot step remembers how many actions the game had after it, to catch a rebuild that drifts.
+export type BotStep = { bot: number };
+export type LogStep = Move | BotStep;
 
 // The battle being played right now, saved so a reload or a closed tab can resume it.
 // The bot's deck is not here: it comes from the seed, and is only revealed at game over.
@@ -31,14 +33,16 @@ export type InProgressBattle = {
   yourDeck: string[];
   log: LogStep[];
   leftAt: string | null; // ISO time the player left to the run screen; null while playing
+  closedAt?: string | null; // ISO time the page was hidden or closed mid-battle, without Leave battle
 };
 
 // A left battle is lost this long after leaving (the owner's "about one full turn").
 export const LEAVE_GRACE_MS = 90_000;
 
 export function leaveMsLeft(battle: InProgressBattle, now: number): number | null {
-  if (!battle.leftAt) return null;
-  return Math.max(0, Date.parse(battle.leftAt) + LEAVE_GRACE_MS - now);
+  const since = battle.leftAt ?? battle.closedAt;
+  if (!since) return null;
+  return Math.max(0, Date.parse(since) + LEAVE_GRACE_MS - now);
 }
 
 export type Run = {
