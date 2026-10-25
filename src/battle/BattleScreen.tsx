@@ -38,7 +38,8 @@ export function BattleScreen({ deck, onExit }: { deck?: string[]; onExit?: () =>
     setConfirm({ text: 'Concede this game? It counts as a loss.', okLabel: 'Concede', onOk: () => void dispatch({ type: 'Concede', player: 0 }) });
 
   return (
-    <div className="bt-root" {...flashAttrs(step)}>
+    // A long press zooms a card; never the browser's image menu (iOS callout in battle.css).
+    <div className="bt-root" {...flashAttrs(step)} onContextMenu={(e) => e.preventDefault()}>
       <Board view={view} instant={skipping} onEndTurn={onEndTurn} onReady={onReady} choice={choiceFor(view, 0, (m) => void dispatch(m))}>
         {view.phase !== 'over' && <GameMenu onConcede={onConcede} />}
         {canSkip && <SkipButton onSkip={skip} />}
