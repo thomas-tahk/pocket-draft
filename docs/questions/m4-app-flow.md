@@ -1,0 +1,2 @@
+- #113 · added from owner feedback 2026-10-24 (phone: too tall, left-skewed margins) · measured 228 px column, 162 px right gap, 1562 px page
+- plan · m4-app-flow branches off draft-rework (unmerged PR #112) · merge order: #112 first
