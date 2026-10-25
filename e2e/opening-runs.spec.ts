@@ -8,7 +8,7 @@ test('a lost run is reachable after reload via View last run', async ({ page }) 
   await page.goto('/');
   await page.getByRole('button', { name: 'Auto-draft (test)' }).click();
   for (let i = 0; i < 2; i++) {
-    await page.getByRole('button', { name: '▶ Play deck' }).click();
+    await page.getByRole('button', { name: 'Next battle' }).click();
     await expect(page.getByTestId('battle-board')).toBeVisible();
     await page.getByTestId('menu').click();
     await page.getByTestId('menu-concede').click();

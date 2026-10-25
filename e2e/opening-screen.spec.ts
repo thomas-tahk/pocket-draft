@@ -11,14 +11,14 @@ test('fresh app shows Draft, no Continue run; Practice disabled', async ({ page 
 test('active run: reload shows Continue run, leads to deck view', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Auto-draft (test)' }).click();
-  await expect(page.getByRole('button', { name: '▶ Play deck' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Next battle' })).toBeVisible();
   await page.reload();
   const cont = page.getByRole('button', { name: 'Continue run' });
   await expect(cont).toBeVisible();
   await expect(page.getByRole('button', { name: 'Practice' })).toBeEnabled();
   await page.screenshot({ path: 'test-results/opening-active.png' });
   await cont.click();
-  await expect(page.getByRole('button', { name: '▶ Play deck' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Next battle' })).toBeVisible();
 });
 
 test('Past runs opens history', async ({ page }) => {
@@ -34,7 +34,7 @@ const saved = (page: import('@playwright/test').Page) =>
 test('Practice does not record into the run', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Auto-draft (test)' }).click();
-  await page.getByRole('button', { name: '▶ Play deck' }).waitFor();
+  await page.getByRole('button', { name: 'Next battle' }).waitFor();
   await page.reload();
   await page.getByRole('button', { name: 'Practice' }).click();
   await page.getByTestId('menu').click();

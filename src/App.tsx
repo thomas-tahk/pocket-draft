@@ -3,7 +3,7 @@ import { loadCardPool, type CardPool } from './data';
 import { DraftView } from './components/DraftView';
 import { ShopView } from './components/ShopView';
 import { DeckbuildView } from './components/DeckbuildView';
-import { ReviewView } from './components/ReviewView';
+import { RunView } from './components/RunView';
 import { SharedDeckView } from './components/SharedDeckView';
 import { HomeView } from './components/HomeView';
 import { HistoryView } from './components/HistoryView';
@@ -61,6 +61,7 @@ export function App() {
     updateHistoryEntry,
     deleteHistoryEntry,
     reset,
+    quitRun,
   } = useDraftStore();
 
   const draftableById = useMemo(() => {
@@ -219,11 +220,12 @@ export function App() {
   }
 
   return (
-    <ReviewView
+    <RunView
       pool={pool}
       deck={deck}
       run={run}
-      onPlay={() => setPlaying(true)}
+      onNextBattle={() => setPlaying(true)}
+      onQuit={quitRun}
       onNewDraft={() => start(pool.draftableCards)}
       onHome={reset}
     />

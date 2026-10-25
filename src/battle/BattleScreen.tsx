@@ -23,6 +23,7 @@ export function BattleScreen({ deck, onExit, practice }: { deck?: string[]; onEx
   // A run's game ends once: save its result and replayable record. The store
   // ignores a seed it already holds, so a re-render cannot record it twice.
   const recordBattle = useDraftStore((s) => s.recordBattle);
+  const runStatus = useDraftStore((s) => s.run?.status);
   // On mount this runs after startGame's effect has cleared the store, but with
   // the render's stale values, so read the store's current game here.
   useEffect(() => {
@@ -58,7 +59,7 @@ export function BattleScreen({ deck, onExit, practice }: { deck?: string[]; onEx
         {canSkip && <SkipButton onSkip={skip} />}
         {intro.show && <SetupIntro view={view} onDone={intro.finish} />}
         {confirm && <ConfirmDialog confirm={confirm} onClose={() => setConfirm(null)} />}
-        {view.phase === 'over' && <EndScreen view={view} onRematch={() => void restart()} onBack={onExit ?? (() => window.location.assign('/'))} />}
+        {view.phase === 'over' && <EndScreen view={view} canRematch={!deck || !runStatus || runStatus === 'active'} onRematch={() => void restart()} onBack={onExit ?? (() => window.location.assign('/'))} />}
       </Board>
     </div>
   );

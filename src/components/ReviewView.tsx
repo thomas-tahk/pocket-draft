@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { TypeTally } from '../battle/energy';
 import type { Card, EnergyType } from '../types/card';
 import type { CardPool } from '../data';
@@ -12,7 +12,8 @@ type Props = {
   pool: CardPool;
   deck: Record<string, number>;
   run: Run | null;
-  onPlay: () => void;
+  onPlay?: () => void;
+  children?: ReactNode; // the run panel, shown above the deck
   onNewDraft: () => void;
   onHome: () => void;
 };
@@ -27,7 +28,7 @@ function download(filename: string, content: string) {
   URL.revokeObjectURL(url);
 }
 
-export function ReviewView({ pool, deck, run, onPlay, onNewDraft, onHome }: Props) {
+export function ReviewView({ pool, deck, run, onPlay, children, onNewDraft, onHome }: Props) {
   const [hover, setHover] = useState<HoverState>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const handleHover = (p: HoverPayload | null) => setHover(p);
@@ -106,7 +107,7 @@ export function ReviewView({ pool, deck, run, onPlay, onNewDraft, onHome }: Prop
           </span>
         )}
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={onPlay} style={{ fontWeight: 600 }}>▶ Play deck</button>
+          {onPlay && <button onClick={onPlay} style={{ fontWeight: 600 }}>▶ Play deck</button>}
           <button onClick={() => copy(deckCode, 'code')}>
             {copied === 'code' ? 'Copied!' : 'Copy code'}
           </button>
@@ -126,6 +127,8 @@ export function ReviewView({ pool, deck, run, onPlay, onNewDraft, onHome }: Prop
           </button>
         </div>
       </header>
+
+      {children}
 
       <div style={{ fontSize: 13, opacity: 0.75, marginBottom: 16 }}>
         {total} cards · <TypeTally entries={sortedTally} />

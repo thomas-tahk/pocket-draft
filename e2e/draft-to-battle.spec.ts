@@ -79,7 +79,7 @@ test('a finished draft starts on the new board with its 20, and Rematch keeps th
   await buildFromDraft(page);
 
   const started = page.waitForRequest(isNewGame);
-  await page.getByRole('button', { name: /Play deck/ }).click();
+  await page.getByRole('button', { name: /Next battle/ }).click();
   const deck = deckSent(await started);
 
   await expect(page.getByTestId('battle-board')).toBeVisible();
@@ -125,7 +125,7 @@ test('deckbuild offers only cards the engine can play, so any deck built there p
   await page.getByRole('button', { name: 'Finalize deck' }).click();
 
   const started = page.waitForRequest(isNewGame);
-  await page.getByRole('button', { name: /Play deck/ }).click();
+  await page.getByRole('button', { name: /Next battle/ }).click();
   expect(deckSent(await started)).toHaveLength(20);
 
   await expect(page.getByTestId('battle-board')).toBeVisible();

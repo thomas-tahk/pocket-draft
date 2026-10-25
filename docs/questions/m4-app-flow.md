@@ -8,3 +8,5 @@
 - #115 · Home is always the first screen on reload, finished runs included · Practice never records into the run
 - #115 · confirm copy "This ends your current run (W–L)." / "End run and draft" / "Keep run" · DECISION for owner (wording)
 - #115 · Auto-draft (test) creates no History entry, so leaving an auto-draft run drops it instead of archiving · it's a test shortcut; revisit if Auto-draft stays player-facing
+- #116 · mid-run "Start new draft"/"Home" confirm: "This quits your run at W–L." / "Quit run and leave" / "Keep playing" · DECISION for owner (wording); confirm renders in the run panel, not beside the header buttons
+- #116 · Rematch hidden once the run is over; while active, Rematch = next battle of the run
