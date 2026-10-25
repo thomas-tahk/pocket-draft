@@ -105,14 +105,18 @@ export function App() {
   if (new URLSearchParams(window.location.search).has('battle')) return <BattleScreen />;
 
   // In-app deck play (1.31), launched from the review screen with the finalized deck.
-  if (playing) return <BattleScreen
+  if (playing) {
+    return (
+      <BattleScreen
         deck={drafted}
         practice={practicing}
         onExit={() => {
           setPlaying(false);
           setPracticing(false);
         }}
-      />;
+      />
+    );
+  }
 
   if (error) return <main style={{ padding: 24 }}>Error: {error}</main>;
   if (!pool) return <main style={{ padding: 24 }}>Loading card data…</main>;
@@ -147,6 +151,7 @@ export function App() {
       <HomeView
         cardCount={pool.draftableCards.length}
         hasActiveRun={run?.status === 'active'}
+        hasFinishedRun={run !== null && run.status !== 'active'}
         runScore={run ? runScore(run) : null}
         canPractice={deckFinalized}
         historyCount={history.length}

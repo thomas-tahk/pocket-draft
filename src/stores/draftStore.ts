@@ -86,12 +86,15 @@ export const useDraftStore = create<State & Actions>()(
       ...initialState,
 
       // Leaving a run never wipes it: an active run is quit, then saved on the
-      // history entry made for its deck (an auto-draft has none, so it is dropped).
+      // history entry made for its deck (an auto-draft, or an entry that is gone, drops it).
       archiveRun: () => {
         const { run, history } = get();
         if (!run) return;
         const ended = quit(run);
-        const target = history.find((e) => !e.run && sameDeck(e.deck, ended.deck));
+        // Old saves have no historyId: fall back to the entry with the same deck.
+        const target = history.find((e) =>
+          ended.historyId ? e.id === ended.historyId : !e.run && sameDeck(e.deck, ended.deck),
+        );
         set({
           run: null,
           history: history.map((e) => (e === target ? { ...e, run: ended } : e)),
@@ -185,7 +188,7 @@ export const useDraftStore = create<State & Actions>()(
         };
         // FIFO cap: newest first, drop oldest beyond HISTORY_CAP.
         const nextHistory = [entry, ...history].slice(0, HISTORY_CAP);
-        set({ deckFinalized: true, history: nextHistory, run: newRun(deck) });
+        set({ deckFinalized: true, history: nextHistory, run: { ...newRun(deck), historyId: entry.id } });
       },
 
       // Jumps straight to review with a finished draft, for testing battles.

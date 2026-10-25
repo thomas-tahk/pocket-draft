@@ -4,6 +4,7 @@ import { HISTORY_CAP } from '../stores/draftStore';
 type Props = {
   cardCount: number;
   hasActiveRun: boolean;
+  hasFinishedRun: boolean;
   runScore: { wins: number; losses: number } | null;
   canPractice: boolean;
   historyCount: number;
@@ -26,6 +27,7 @@ export function HomeView(p: Props) {
         <button className="home-primary" onClick={p.onDraft}>Start draft</button>
       )}
       <div className="home-secondary">
+        {p.hasFinishedRun && <button onClick={p.onContinue}>View last run</button>}
         <button onClick={p.onPractice} disabled={!p.canPractice} aria-describedby="practice-reason">
           Practice
         </button>
