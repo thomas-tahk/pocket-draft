@@ -50,6 +50,6 @@ Watch for:
 2. **Rule for offers that fit.** Built: Trainers naming your Pokémon, and cards whose text names another type you're drafting, are 3× as likely. A card naming its own type doesn't count. An "evolution line" rule was dropped, because the draft only offers final evolutions. Keep it, tune it, or change what counts?
 3. **Type lean strength.** After 8 Fire picks, Fire shows up about 6× as often as with no lean. That's the strength from before it was switched off in May. Keep it or soften it after you play?
 4. **Poké Ball and Professor's Research** are now normal draftable cards. Without that, nobody could ever get them. Keep, or pull them from the game?
-5. **Merge:** the [PR](#) from `draft-rework` into `main` deploys it. Your call.
+5. **Merge:** the [PR #112](https://github.com/thomas-tahk/pocket-draft/pull/112) from `draft-rework` into `main` deploys it. Your call.
 
 Every other interpretation is in [`docs/questions/draft-rework.md`](../questions/draft-rework.md).
