@@ -7,3 +7,4 @@
 - #115 · any action that starts over (new draft, Auto-draft, Home/reset) archives the current run first: active → quit, saved on its deck's History entry (`run` field) · nothing is silently wiped; end-of-run screen reads it from there
 - #115 · Home is always the first screen on reload, finished runs included · Practice never records into the run
 - #115 · confirm copy "This ends your current run (W–L)." / "End run and draft" / "Keep run" · DECISION for owner (wording)
+- #115 · Auto-draft (test) creates no History entry, so leaving an auto-draft run drops it instead of archiving · it's a test shortcut; revisit if Auto-draft stays player-facing
