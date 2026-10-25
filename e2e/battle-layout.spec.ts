@@ -23,7 +23,7 @@ async function runBotUntilYourTurn(api: APIRequestContext) {
 }
 
 async function playToSecondTurn(api: APIRequestContext) {
-  const start = await post(api, '/api/new', { seed: 7 });
+  const start = await post(api, '/api/new', { seed: 7, preset: 'fire' });
   const basics = start.players[0].hand.filter((c) => c.stage === 'Basic');
   await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: basics[0].id });
   await post(api, '/api/move', { type: 'SetupBench', player: 0, cardId: basics[1].id, slot: 0 });

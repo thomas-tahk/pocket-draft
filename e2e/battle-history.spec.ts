@@ -8,6 +8,9 @@ type Card = { id: string; name: string; stage: string };
 type Action = { player: number; kind: string; card: Card | null; result: string[] };
 type View = { phase: string; active: number; pending: { player: number } | null; players: { hand: Card[] }[]; actions: Action[] };
 
+// Pinned so draft-pool changes can't shift the bot's deck.
+const BOT = ['A1-211', 'A1-202', 'B4-015', 'B4-112', 'A3-044', 'A2-112', 'A1-150', 'B4-036', 'P-A-001', 'A4b-373'].flatMap((id) => [id, id]);
+
 async function post(api: APIRequestContext, url: string, data?: object): Promise<View> {
   const res = await api.post(url, data ? { data } : undefined);
   const body = await res.json();
@@ -16,7 +19,7 @@ async function post(api: APIRequestContext, url: string, data?: object): Promise
 
 // Setup, end your first turn, let the bot take its turn, attach an energy.
 async function playAFewMoves(api: APIRequestContext): Promise<View> {
-  const start = await post(api, '/api/new', { seed: 7 });
+  const start = await post(api, '/api/new', { seed: 7, bot: BOT, preset: 'fire' });
   const basics = start.players[0].hand.filter((c) => c.stage === 'Basic');
   await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: basics[0].id });
   await post(api, '/api/move', { type: 'SetupBench', player: 0, cardId: basics[1].id, slot: 0 });
@@ -53,7 +56,8 @@ async function expectEntriesInOrder(page: Page, view: View) {
     await expect(entry).toHaveAttribute('data-kind', a.kind);
     await expect(entry).toContainText(a.player === 0 ? 'You' : 'Opponent');
     if (a.card) await expect(entry).toContainText(a.card.name);
-    for (const line of a.result) await expect(entry).toContainText(line);
+    // The Energy type in "attached Fire energy" is drawn as an icon, not text.
+    for (const line of a.result) await expect(entry).toContainText(line.replace(/(Grass|Fire|Water|Lightning|Psychic|Fighting|Darkness|Metal|Dragon|Colorless) (?=energy)/, ''));
   }
 }
 

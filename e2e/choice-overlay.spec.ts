@@ -15,6 +15,9 @@ type View = {
   players: { hand: { id: string; stage: string }[]; bench: Mon[]; active: Mon; legalMoves: Move[] }[];
 };
 
+// Pinned so draft-pool changes can't shift the bot's play.
+const BOT = ['A3-005', 'A4-101', 'A1-065', 'A3b-044', 'B1a-044', 'A2b-063', 'A1-155', 'A1-218', 'B4-031', 'A3-145', 'A3-005', 'A1-010', 'B1-123', 'P-A-006', 'B2-047', 'A4-122', 'A4-101', 'A1-010', 'A4-122', 'A1-065'];
+
 async function post(api: APIRequestContext, url: string, data?: object): Promise<View> {
   const res = await api.post(url, data ? { data } : undefined);
   const body = await res.json();
@@ -22,7 +25,7 @@ async function post(api: APIRequestContext, url: string, data?: object): Promise
 }
 
 async function setUp(api: APIRequestContext) {
-  const start = await post(api, '/api/new', { seed: 1 });
+  const start = await post(api, '/api/new', { seed: 1, bot: BOT, preset: 'fire' });
   const basics = start.players[0].hand.filter((c) => c.stage === 'Basic');
   await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: basics[0].id });
   for (let i = 1; i < basics.length && i <= 3; i++) await post(api, '/api/move', { type: 'SetupBench', player: 0, cardId: basics[i].id, slot: i - 1 });
@@ -79,4 +82,21 @@ test('knockout promotion: overlay dims everything except your Bench', async ({ p
   await page.getByTestId('my-bench').locator(`[data-pos="${pick + 1}"]`).click();
   await expect(page.getByTestId('choice-dim')).toHaveCount(0);
   await expect(page.getByTestId('my-active').locator('[title]').first()).toHaveAttribute('title', chosen);
+});
+
+// 2.14: concede is immediate from any state, including while a choice is up.
+test('concede from the menu while the choice dim is up ends the game', async ({ page, request }) => {
+  await setUp(request);
+  await stepUntilYouPromote(request);
+
+  await page.goto('/?battle');
+  await expect(page.getByTestId('choice-dim')).toBeVisible();
+  expect(await topAt(page, 'menu')).toBe('menu');
+  await page.getByTestId('menu').click();
+  await page.getByTestId('menu-concede').click();
+  await page.getByTestId('confirm-ok').click();
+
+  await expect(page.getByTestId('end-screen')).toBeVisible();
+  await expect(page.getByTestId('end-reason')).toHaveText('Concede');
+  await expect(page.getByTestId('choice-dim')).toHaveCount(0);
 });

@@ -7,9 +7,11 @@ package engine
 type Action struct {
 	Player int
 	Kind   ActionKind
-	Card   Card     // the card played or acting; zero (ID "") when none
-	Target Spot     // the spot it touched; NoSpot when none
-	Result []string // the narration lines this move produced
+	Card   Card       // the card played or acting; zero (ID "") when none
+	Target Spot       // the spot it touched; NoSpot when none
+	Result []string   // the narration lines this move produced
+	Flips  []CoinFlip // every coin this move flipped, in order (spec F11)
+	Damage int        // an attack's damage to the Defending Pokémon, after Weakness; 0 otherwise
 }
 
 // ActionKind names the move an Action records.
@@ -18,11 +20,14 @@ type ActionKind string
 const (
 	ActSetup        ActionKind = "setup" // a Basic placed at setup (Active or bench)
 	ActReady        ActionKind = "ready"
+	ActSetupReturn  ActionKind = "setup_return" // a placed card taken back before Ready
+	ActSetupMove    ActionKind = "setup_move"   // a placed card moved before Ready
 	ActPlayBasic    ActionKind = "play_basic"
 	ActAttachEnergy ActionKind = "attach_energy"
 	ActEvolve       ActionKind = "evolve"
 	ActRetreat      ActionKind = "retreat"
 	ActRetreatPay   ActionKind = "retreat_pay"
+	ActAbility      ActionKind = "ability"
 	ActAttack       ActionKind = "attack"
 	ActEndTurn      ActionKind = "end_turn"
 	ActPromote      ActionKind = "promote"
@@ -45,29 +50,43 @@ var NoSpot = Spot{Player: -1, Pos: -1}
 func (g *Game) describe(ev Event) Action {
 	switch e := ev.(type) {
 	case SetupActive:
-		return Action{e.Player, ActSetup, g.handCard(e.Player, e.CardID), Spot{e.Player, 0}, nil}
+		return Action{e.Player, ActSetup, g.handCard(e.Player, e.CardID), Spot{e.Player, 0}, nil, nil, 0}
 	case SetupBench:
-		return Action{e.Player, ActSetup, g.handCard(e.Player, e.CardID), Spot{e.Player, e.Slot + 1}, nil}
+		return Action{e.Player, ActSetup, g.handCard(e.Player, e.CardID), Spot{e.Player, e.Slot + 1}, nil, nil, 0}
+	case SetupReturn:
+		return Action{e.Player, ActSetupReturn, Card{}, Spot{e.Player, e.Pos}, nil, nil, 0}
+	case SetupMove:
+		return Action{e.Player, ActSetupMove, Card{}, Spot{e.Player, e.To}, nil, nil, 0}
 	case SetupReady:
-		return Action{e.Player, ActReady, Card{}, NoSpot, nil}
+		return Action{e.Player, ActReady, Card{}, NoSpot, nil, nil, 0}
 	case PlayBasic:
-		return Action{e.Player, ActPlayBasic, g.handCard(e.Player, e.CardID), Spot{e.Player, e.Slot + 1}, nil}
+		return Action{e.Player, ActPlayBasic, g.handCard(e.Player, e.CardID), Spot{e.Player, e.Slot + 1}, nil, nil, 0}
 	case AttachEnergy:
-		return Action{e.Player, ActAttachEnergy, Card{}, Spot{e.Player, e.Target}, nil}
+		return Action{e.Player, ActAttachEnergy, Card{}, Spot{e.Player, e.Target}, nil, nil, 0}
 	case Evolve:
-		return Action{e.Player, ActEvolve, g.handCard(e.Player, e.HandCardID), Spot{e.Player, e.Target}, nil}
+		return Action{e.Player, ActEvolve, g.handCard(e.Player, e.HandCardID), Spot{e.Player, e.Target}, nil, nil, 0}
 	case Retreat:
-		return Action{e.Player, ActRetreat, g.monCard(e.Player, 0), Spot{e.Player, e.BenchIndex + 1}, nil}
+		return Action{e.Player, ActRetreat, g.monCard(e.Player, 0), Spot{e.Player, e.BenchIndex + 1}, nil, nil, 0}
 	case RetreatDiscard:
-		return Action{e.Player, ActRetreatPay, g.monCard(e.Player, 0), Spot{e.Player, 0}, nil}
+		return Action{e.Player, ActRetreatPay, g.monCard(e.Player, 0), Spot{e.Player, 0}, nil, nil, 0}
+	case PlayTrainer:
+		return Action{e.Player, ActPlayTrainer, g.handCard(e.Player, e.CardID), e.Target, nil, nil, 0}
+	case DiscardFossil:
+		return Action{e.Player, ActDiscardFossil, g.monCard(e.Player, e.Pos), Spot{e.Player, e.Pos}, nil, nil, 0}
+	case UseAbility:
+		return Action{e.Player, ActAbility, g.monCard(e.Player, e.Pos), Spot{e.Player, e.Pos}, nil, nil, 0}
+	case ChooseOption:
+		return Action{e.Player, ActChoose, Card{}, NoSpot, nil, nil, 0}
+	case UseStadium:
+		return Action{e.Player, ActUseStadium, g.stadiumCard(), StadiumSpot, nil, nil, 0}
 	case UseAttack:
-		return Action{e.Player, ActAttack, g.monCard(e.Player, 0), Spot{1 - e.Player, 0}, nil}
+		return Action{e.Player, ActAttack, g.monCard(e.Player, 0), Spot{1 - e.Player, 0}, nil, nil, 0}
 	case EndTurn:
-		return Action{e.Player, ActEndTurn, Card{}, NoSpot, nil}
+		return Action{e.Player, ActEndTurn, Card{}, NoSpot, nil, nil, 0}
 	case ChooseNewActive:
-		return Action{e.Player, ActPromote, g.monCard(e.Player, e.BenchIndex+1), Spot{e.Player, e.BenchIndex + 1}, nil}
+		return Action{e.Player, ActPromote, g.monCard(e.Player, e.BenchIndex+1), Spot{e.Player, e.BenchIndex + 1}, nil, nil, 0}
 	case Concede:
-		return Action{e.Player, ActConcede, Card{}, NoSpot, nil}
+		return Action{e.Player, ActConcede, Card{}, NoSpot, nil, nil, 0}
 	}
 	return Action{Target: NoSpot}
 }

@@ -84,7 +84,51 @@ type Card struct {
 	RetreatCost int
 	IsEX        bool
 	IsMegaEX    bool // a Mega ex; IsEX is also true
+
+	Ability *Ability  // a Pokémon's Ability; nil when it has none (ability.go)
+	Passive []Passive // a Tool's or Stadium's always-on text (passive.go)
+	// Triggers is a Tool's or Stadium's text that fires on an event, and
+	// StadiumUse a Stadium's "once during each player's turn" text
+	// (texts_3_13.go).
+	Triggers   []Trigger
+	StadiumUse []EffectOp
+	// LendAttacks is a Tool that lets its Pokémon use attacks it isn't printed
+	// with: given the Pokémon's card, the extra ones (Memory Light).
+	LendAttacks func(Card) []Attack
+
+	// Kind is Pokémon (the zero value) or one of the Trainer kinds. Stage,
+	// HP and the rest are meaningless on a Trainer.
+	Kind CardKind
+	// Trainer is what a Trainer card does when played, run in order (see
+	// trainer.go). Nil means its text isn't built yet, so it can't be played.
+	Trainer []EffectOp
+	// Fossil marks an Item played as a Basic with this card's HP (fossil.go).
+	Fossil bool
 }
+
+// CardKind is what sort of card this is: a Pokémon or a Trainer of some kind.
+type CardKind uint8
+
+const (
+	KindPokemon CardKind = iota
+	KindItem
+	KindSupporter
+	KindTool
+	KindStadium
+)
+
+// IsTrainer reports whether c is any kind of Trainer card.
+func (c Card) IsTrainer() bool { return c.Kind != KindPokemon }
+
+// TextBuilt reports whether a Trainer's text is built: ops to run when played,
+// or always-on passives (a Tool or Stadium). An unbuilt Trainer can't be played.
+func (c Card) TextBuilt() bool {
+	return c.Trainer != nil || c.Passive != nil || c.Triggers != nil || c.StadiumUse != nil || c.LendAttacks != nil || c.Fossil
+}
+
+// IsBasicPokemon reports whether c is a Basic Pokémon: what setup, the
+// opening hand and the Bench accept (a Trainer is never one).
+func (c Card) IsBasicPokemon() bool { return c.Kind == KindPokemon && c.Stage == Basic }
 
 // canPay reports whether the energy attached to a Pokémon (have) covers an
 // attack cost. Typed costs must be matched by that exact type; Colorless costs

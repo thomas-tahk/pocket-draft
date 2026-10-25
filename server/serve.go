@@ -16,16 +16,12 @@ func main() {
 	if err := loadCards(cardsPath); err != nil {
 		log.Fatal(err)
 	}
-	var err error
-	if fireDeck, err = fireDeckPreset(); err != nil {
-		log.Fatal(err)
-	}
-
-	if err := newGame(1); err != nil {
+	if _, err := startGame(newReq{}); err != nil {
 		log.Fatal(err)
 	}
 
 	http.HandleFunc("/api/new", handleNew)
+	http.HandleFunc("/api/autodeck", handleAutoDeck)
 	http.HandleFunc("/api/state", handleState)
 	http.HandleFunc("/api/move", handleMove)
 	http.HandleFunc("/api/bot", handleBot)

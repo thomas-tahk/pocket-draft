@@ -33,6 +33,16 @@ export function newGame(opts: { deck?: string[]; seed?: number } = {}): Promise<
   }).then((r) => asJson<GameView>(r));
 }
 
+// A whole draft done by the engine: the picks and a legal 20-card deck. The
+// "Auto-draft" test shortcut.
+export async function autoDeck(): Promise<{ picks: string[]; deck: string[] }> {
+  const got = await fetch('/api/autodeck', { method: 'POST' }).then((r) =>
+    asJson<{ picks?: string[]; deck?: string[]; error?: string }>(r),
+  );
+  if (!got.picks || !got.deck) throw new Error(got.error ?? 'auto-draft failed');
+  return { picks: got.picks, deck: got.deck };
+}
+
 export function getState(): Promise<GameView> {
   return fetch('/api/state').then((r) => asJson<GameView>(r));
 }

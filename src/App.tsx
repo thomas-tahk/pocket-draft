@@ -8,6 +8,7 @@ import { SharedDeckView } from './components/SharedDeckView';
 import { HistoryView } from './components/HistoryView';
 import { BattleScreen } from './battle/BattleScreen';
 import { expandDeck } from './game/deck';
+import { autoDeck } from './game/api';
 import { derivePhase, HISTORY_CAP, TOTAL_PACKS, useDraftStore } from './stores/draftStore';
 import { decodeDeck, type Decklist } from './share/deckCode';
 import type { Card } from './types/card';
@@ -51,6 +52,7 @@ export function App() {
     addToDeck,
     removeFromDeck,
     finalizeDeck,
+    autoDraft,
     updateHistoryEntry,
     deleteHistoryEntry,
     reset,
@@ -81,6 +83,12 @@ export function App() {
   const purchases = useMemo(
     () => shopPurchasedIds.map((id) => fullById.get(id)).filter((c): c is Card => Boolean(c)),
     [shopPurchasedIds, fullById],
+  );
+
+  // The shop offers only cards the engine can play (owner 2026-10-19 (1)).
+  const shopPool = useMemo(
+    () => (pool ? pool.fullCards.filter((c) => pool.working.has(c.id)) : []),
+    [pool],
   );
 
   // Stable across renders, so the battle screen starts its game once.
@@ -134,6 +142,16 @@ export function App() {
         </p>
         <button style={{ fontSize: 16, padding: '8px 20px' }} onClick={() => start(pool.draftableCards)}>
           Start draft
+        </button>{' '}
+        <button
+          style={{ fontSize: 16, padding: '8px 20px' }}
+          onClick={() =>
+            autoDeck()
+              .then((d) => autoDraft(d.picks, d.deck))
+              .catch((e) => setError(String(e)))
+          }
+        >
+          Auto-draft (test)
         </button>
         {history.length > 0 && (
           <div style={{ marginTop: 24 }}>
@@ -162,7 +180,7 @@ export function App() {
     return (
       <ShopView
         picks={picks}
-        fullPool={pool.fullCards}
+        fullPool={shopPool}
         purchasedIds={shopPurchasedIds}
         onPurchase={purchase}
         onUnpurchase={unpurchase}
@@ -179,6 +197,7 @@ export function App() {
         purchases={purchases}
         fullPool={pool.fullCards}
         universals={pool.universals}
+        working={pool.working}
         deck={deck}
         onAdd={addToDeck}
         onRemove={removeFromDeck}

@@ -15,6 +15,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
+	"strconv"
+	"strings"
 
 	"github.com/thomas-tahk/pocket-draft/engine"
 )
@@ -170,10 +173,93 @@ var effectsByID = map[string]map[string][]engine.EffectOp{
 	"B3b-054": {"Hungrily Draw": {engine.DrawCards{N: 1}}},                             // Munchlax
 }
 
+// trainerEffects maps a Trainer's printed wording (trainerText, exactly as
+// scraped) to the effect ops that play it — one entry per distinct wording, so
+// every printing with that wording plays it. A Trainer whose wording isn't
+// here loads but can't be played. To add a text, see the steps at the top of
+// engine/trainer.go.
+var trainerEffects = map[string][]engine.EffectOp{
+	"Draw 2 cards.": {engine.DrawCards{N: 2}}, // Professor's Research
+	"Put 1 random Basic Pokemon from your deck into your hand.":                                                 {engine.SearchDeck{Match: engine.Card.IsBasicPokemon}}, // Poké Ball
+	"Discard a Pokémon Tool card from a Pokémon (yours or your opponent's), or discard a Stadium card in play.": {engine.DiscardToolOrStadium{}},                        // Field Blower
+}
+
+// trainerPassives maps a Tool's or Stadium's exact printed text to its
+// always-on rule changes (engine/passive.go). A Tool's passives should apply
+// only to the Pokémon it is attached to: When compares Source and Target.
+var trainerPassives = map[string][]engine.Passive{}
+
+// trainerBuilt maps a Tool's or Stadium's exact printed text to a function that
+// fills in the rest of its card: triggers, Stadium use, lent attacks, or
+// passives together with them (texts_3_13.go).
+var trainerBuilt = map[string]func(*engine.Card){}
+
+// abilityTexts maps an Ability's printed wording (ability.effect, exactly as
+// scraped) to the engine Ability that plays it — one entry per distinct
+// wording, so every printing with that wording gets it. Name is filled from
+// the card. Text batches register their wordings from an init() in their own
+// server/texts_<plan-id>.go. A Pokémon whose Ability wording isn't here
+// loads without it and isn't offered in the draft (textWorks).
+var abilityTexts = map[string]engine.Ability{}
+
+// abilityOf is the engine Ability for a scraped card, or nil.
+func abilityOf(rc rawCard) *engine.Ability {
+	if rc.Ability == nil {
+		return nil
+	}
+	a, ok := abilityTexts[rc.Ability.Effect]
+	if !ok {
+		return nil
+	}
+	a.Name = rc.Ability.Name
+	return &a
+}
+
+// trainerKind is the engine kind of a scraped Trainer. The scrape names Items
+// and Supporters; Tools and Stadiums come through with no kind, and a Tool's
+// text always speaks of "the Pokémon this card is attached to".
+func trainerKind(rc rawCard) engine.CardKind {
+	switch {
+	case rc.TrainerKind == "Supporter":
+		return engine.KindSupporter
+	case rc.TrainerKind == "Item":
+		return engine.KindItem
+	case strings.Contains(rc.TrainerText, "this card is attached to"):
+		return engine.KindTool
+	}
+	return engine.KindStadium
+}
+
+// fossilText is how every Fossil's text begins; the number is its HP.
+var fossilText = regexp.MustCompile(`^Play this card as if it were a (\d+)-HP Basic \[C\] Pokémon\.`)
+
+func toTrainerCard(rc rawCard) engine.Card {
+	if m := fossilText.FindStringSubmatch(rc.TrainerText); m != nil {
+		hp, _ := strconv.Atoi(m[1])
+		return engine.Card{ID: rc.ID, Name: rc.Name, Kind: engine.KindItem, Fossil: true,
+			HP: hp, Type: engine.Colorless, Weakness: engine.NoEnergy}
+	}
+	c := engine.Card{
+		ID:       rc.ID,
+		Name:     rc.Name,
+		Kind:     trainerKind(rc),
+		Trainer:  trainerEffects[rc.TrainerText],
+		Passive:  trainerPassives[rc.TrainerText],
+		Weakness: engine.NoEnergy,
+	}
+	if build := trainerBuilt[rc.TrainerText]; build != nil {
+		build(&c)
+	}
+	return c
+}
+
 // toEngineCard converts a scraped card into the engine's Card. It errors only if
 // the Pokémon's type is one the engine does not model (Dragon), which keeps
 // unsupported cards out of a deck rather than silently mistyping them.
 func toEngineCard(rc rawCard) (engine.Card, error) {
+	if rc.CardType == "Trainer" {
+		return toTrainerCard(rc), nil
+	}
 	typ, ok := energyByName(rc.CardType)
 	if !ok {
 		return engine.Card{}, fmt.Errorf("card %s (%s): unsupported type %q", rc.ID, rc.Name, rc.CardType)
@@ -202,6 +288,7 @@ func toEngineCard(rc rawCard) (engine.Card, error) {
 		RetreatCost: rc.Retreat,
 		IsEX:        rc.ExKind != "regular",
 		IsMegaEX:    rc.ExKind == "mega-ex",
+		Ability:     abilityOf(rc),
 	}, nil
 }
 
@@ -244,10 +331,10 @@ func buildDeck(list []deckEntry) ([]engine.Card, error) {
 
 // deckFromIDs expands a list of card IDs into engine cards. The input must be a
 // format-legal 20 (at most 2 copies of any card by name, at least one Basic
-// Pokémon) — the deckbuild UI already enforces this. Cards the engine cannot
-// model yet (Trainers, whose effects are deferred per ADR-0002) are skipped, so
-// the deck plays as its Pokémon subset rather than being rejected outright. Card
-// access is unrestricted — only the format is checked.
+// Pokémon) of working cards: a card whose text the engine can't play yet
+// (textWorks) is an error, never silently dropped, so every game is played
+// with all 20 (owner 2026-10-19 (1)). Card access is unrestricted — only the
+// format is checked.
 func deckFromIDs(ids []string) ([]engine.Card, error) {
 	if len(ids) != 20 {
 		return nil, fmt.Errorf("deck must be exactly 20 cards, got %d", len(ids))
@@ -260,17 +347,18 @@ func deckFromIDs(ids []string) ([]engine.Card, error) {
 		if !ok {
 			return nil, fmt.Errorf("unknown card id %q", id)
 		}
+		if !textWorks(rc) {
+			return nil, fmt.Errorf("%s (%s) can't be played yet", rc.Name, id)
+		}
 		card, err := toEngineCard(rc)
 		if err != nil {
-			// A card the engine can't model yet (e.g. a Trainer). Skip it so the
-			// rest of the deck is still playable; its behavior lands with effects.
-			continue
+			return nil, err
 		}
 		countByName[card.Name]++
 		if countByName[card.Name] > 2 {
 			return nil, fmt.Errorf("at most 2 copies of %q allowed", card.Name)
 		}
-		if card.Stage == engine.Basic {
+		if card.IsBasicPokemon() {
 			basics++
 		}
 		deck = append(deck, card)

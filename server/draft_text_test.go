@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/thomas-tahk/pocket-draft/engine"
@@ -13,13 +14,17 @@ import (
 const draftSeeds = 400
 
 // modelable reports, independently of the code under test, whether the engine
-// can play rc as printed: it converts to an engine card, has no Ability (the
-// engine models none), and every attack with text has an authored effect.
+// can play rc as printed: it converts to an engine card, has an Ability only if its
+// wording is authored, and every attack with text has an authored effect.
 func modelable(rc rawCard) bool {
 	if _, err := toEngineCard(rc); err != nil {
 		return false
 	}
-	if rc.Ability != nil {
+	if rc.CardType == "Trainer" && trainerEffects[rc.TrainerText] == nil && trainerPassives[rc.TrainerText] == nil && trainerBuilt[rc.TrainerText] == nil &&
+		!strings.HasPrefix(rc.TrainerText, "Play this card as if it were a 40-HP Basic") {
+		return false
+	}
+	if _, ok := abilityTexts[abilityWording(rc)]; rc.Ability != nil && !ok {
 		return false
 	}
 	for _, a := range rc.Attacks {
@@ -143,7 +148,37 @@ func TestDraftPoolFileMatchesTheEngine(t *testing.T) {
 	if err := json.Unmarshal(b, &got); err != nil {
 		t.Fatal(err)
 	}
-	if got.OnlyWorkingText != want.OnlyWorkingText || !slices.Equal(got.IDs, want.IDs) {
+	if got.OnlyWorkingText != want.OnlyWorkingText || !slices.Equal(got.IDs, want.IDs) || !slices.Equal(got.Working, want.Working) {
 		t.Fatalf("%s is stale (regenerate with PD_WRITE_DRAFT_POOL=1 go test -run TestDraftPoolFile)", draftPoolFile)
 	}
+}
+
+// Deckbuild offers only cards the engine can play (owner 2026-10-19 (1)). The
+// SPA reads that set from the pool file's working list, which must be every
+// card whose text works (under-evolutions and universals included) and
+// nothing else.
+func TestDraftPoolFileListsEveryWorkingCard(t *testing.T) {
+	useRealCards(t)
+
+	working := draftPoolFileContents().Working
+
+	inList := map[string]bool{}
+	for _, id := range working {
+		inList[id] = true
+	}
+	for id, rc := range rawByID {
+		if textWorks(rc) != inList[id] {
+			t.Fatalf("%s (%s): textWorks %v, in working list %v", id, rc.Name, textWorks(rc), inList[id])
+		}
+	}
+	if !slices.IsSorted(working) {
+		t.Fatal("working list is not sorted")
+	}
+}
+
+func abilityWording(rc rawCard) string {
+	if rc.Ability == nil {
+		return ""
+	}
+	return rc.Ability.Effect
 }

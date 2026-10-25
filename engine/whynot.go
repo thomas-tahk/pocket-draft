@@ -27,12 +27,19 @@ func (g *Game) WhyCantPlay(p int, cardID string) error {
 			if m.HandCardID == cardID {
 				return nil
 			}
+		case PlayTrainer:
+			if m.CardID == cardID {
+				return nil
+			}
 		}
 	}
 	pl := &g.S.Players[p]
 	idx := indexInHand(pl.Hand, cardID)
 	if idx < 0 {
 		return errors.New("card is not in hand")
+	}
+	if pl.Hand[idx].IsTrainer() {
+		return g.whyNoTrainer(p, cardID)
 	}
 	if pl.Hand[idx].Stage == Basic {
 		return g.whyNoBench(p, cardID)
@@ -62,6 +69,9 @@ func (g *Game) whyNoEvolve(p int, cardID string) error {
 		if mon := targetMon(pl, t); mon != nil && mon.Card.Name == ev.EvolvesFrom {
 			return g.checkEvolve(Evolve{Player: p, HandCardID: cardID, Target: t})
 		}
+	}
+	if g.S.Turn <= 2 {
+		return errFirstTurnEvolve
 	}
 	return fmt.Errorf("no %s in play to evolve into %s", ev.EvolvesFrom, ev.Name)
 }

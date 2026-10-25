@@ -66,25 +66,30 @@
   text-shadow: 0 0 calc(var(--u) * 2) #fff, 0 0 calc(var(--u) * 2) #fff, 0 0 calc(var(--u) * 2) #fff;
 }
 .bt-hp-bar { width: calc(var(--u) * 40); height: calc(var(--u) * 5); border-radius: 99px; background: #4a5068; overflow: hidden; }
-.bt-hp-bar > span { display: block; height: 100%; }
+.bt-hp-bar > span { display: block; height: 100%; transition: width 250ms ease-out, background-color 250ms; }
+/* no drain while Skip is running the bot's turn, or with reduced motion */
+.bt-board[data-instant='true'] .bt-hp-bar > span { transition: none; }
+@media (prefers-reduced-motion: reduce) { .bt-hp-bar > span { transition: none; } }
+/* a number that rises where HP changed (motion: results.ts) */
+.bt-pop {
+  display: grid; place-items: center; font-weight: 900; font-size: calc(var(--u) * 22); line-height: 1;
+  color: #e33a2a; text-shadow: 0 0 calc(var(--u) * 2) #fff, 0 0 calc(var(--u) * 2) #fff, 0 0 calc(var(--u) * 2) #fff;
+}
+.bt-pop[data-kind='heal'] { color: #1fa83a; }
 
 /* attached energy: type icons along the bottom (L2) */
 .bt-attached { position: absolute; left: calc(var(--u) * 2); bottom: calc(var(--u) * 2); display: flex; flex-wrap: wrap; gap: calc(var(--u) * 1); max-width: 95%; }
 .bt-status { position: absolute; left: calc(var(--u) * 2); top: calc(var(--u) * 2); display: flex; gap: calc(var(--u) * 2); }
+.bt-tool {
+  position: absolute; left: 50%; bottom: calc(var(--u) * -8); transform: translateX(-50%); max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: calc(var(--u) * 9); font-weight: 800; color: #fff; background: #3d4766;
+  padding: 0 calc(var(--u) * 4); border-radius: calc(var(--u) * 3); line-height: 1.5;
+}
 .bt-status span {
   font-size: calc(var(--u) * 9); font-weight: 800; color: #fff; padding: 0 calc(var(--u) * 3);
   border-radius: calc(var(--u) * 3); line-height: 1.5;
 }
-
-.bt-energy {
-  --s: 14;
-  width: calc(var(--u) * var(--s)); height: calc(var(--u) * var(--s)); border-radius: 50%;
-  display: grid; place-items: center; box-sizing: border-box;
-  border: calc(var(--u) * 1.2) solid #fff;
-  color: #fff; font-weight: 900; font-size: calc(var(--u) * var(--s) * 0.5); line-height: 1;
-  box-shadow: 0 0 0 calc(var(--u) * 0.6) rgba(0, 0, 0, 0.35);
-}
-.bt-energy[data-spent='true'] { background: #b9bcc8 !important; color: transparent; border-color: #d7d9e2; }
 
 /* ---- points: 3 Poké Ball pips (L3) ---- */
 .bt-points {
@@ -137,13 +142,15 @@
 .bt-hand-card { position: absolute; transform-origin: 50% 120%; }
 
 /* ---- menu, confirm and end screen (F12, F18, F19) ---- */
-.bt-menu { position: absolute; top: calc(var(--u) * 6); left: calc(var(--u) * 6); z-index: 5; display: flex; flex-direction: column; gap: calc(var(--u) * 4); align-items: flex-start; }
+.bt-menu { position: absolute; top: calc(var(--u) * 6); left: calc(var(--u) * 6); z-index: 35; display: flex; flex-direction: column; gap: calc(var(--u) * 4); align-items: flex-start; }
 .bt-menu-button {
   all: unset; cursor: pointer;
   width: calc(var(--u) * 30); height: calc(var(--u) * 30); border-radius: 50%;
   display: grid; place-items: center; background: rgba(255, 255, 255, 0.85); color: #3d4766; font-size: calc(var(--u) * 16);
 }
 .bt-overlay { position: absolute; inset: 0; z-index: 10; display: grid; place-items: center; background: rgba(20, 26, 50, 0.55); }
+/* 2.14: the menu and its confirm sit above a choice's dim, so Concede is always reachable */
+.bt-overlay-top { z-index: 45; }
 .bt-dialog {
   width: calc(var(--u) * 300); box-sizing: border-box; padding: calc(var(--u) * 18);
   border-radius: calc(var(--u) * 14); background: #fff; color: #1c2340; text-align: center; font-size: calc(var(--u) * 15);
@@ -205,15 +212,6 @@
 }
 
 /* ---- opponent-turn playback (F14) ---- */
-.bt-playback {
-  position: absolute; left: calc(var(--u) * 8); top: calc(var(--u) * 346); z-index: 4;
-  width: calc(var(--u) * 124); box-sizing: border-box; padding: calc(var(--u) * 6);
-  display: flex; flex-direction: column; align-items: center; gap: calc(var(--u) * 4);
-  border-radius: calc(var(--u) * 10); background: rgba(28, 35, 64, 0.88); color: #fff;
-  font-size: calc(var(--u) * 11); font-weight: 700; text-align: center; pointer-events: none;
-  animation: bt-fade-in 120ms ease-out;
-}
-.bt-playback p { margin: 0; }
 @keyframes bt-fade-in { from { opacity: 0; } }
 /* the spot the step touched glows */
 .bt-root[data-flash-zone='opp-active'] [data-testid='opp-active'],
@@ -236,7 +234,7 @@
   border: calc(var(--u) * 2.5) solid #9aa0b5;
 }
 /* ---- press-and-drag play (F1, F3, F17) ---- */
-.bt-root { touch-action: none; user-select: none; -webkit-user-select: none; }
+.bt-root { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .bt-spot { border-radius: calc(var(--u) * 6); }
 /* the rest of the board dims; glowing spots and the held card stay above it */
 .bt-play-dim { position: absolute; inset: 0; z-index: 20; background: rgba(16, 22, 48, 0.32); pointer-events: none; animation: bt-fade 120ms ease-out; }
@@ -244,6 +242,13 @@
   position: relative; z-index: 21;
   box-shadow: 0 0 0 calc(var(--u) * 2.5) #fff36b, 0 0 calc(var(--u) * 14) calc(var(--u) * 3) #ffd21f;
 }
+/* a Trainer with no target: the board between the hands glows (F7) */
+.bt-board-glow {
+  position: absolute; left: 0; right: 0; top: calc(var(--u) * 116); height: calc(var(--u) * 600);
+  z-index: 21; pointer-events: none; border-radius: calc(var(--u) * 8);
+  box-shadow: inset 0 0 0 calc(var(--u) * 2.5) #fff36b, inset 0 0 calc(var(--u) * 18) calc(var(--u) * 4) #ffd21f;
+}
+.bt-stadium { width: 100%; height: 100%; }
 [data-lifted='true'] { position: relative; z-index: 21; opacity: 0.45; }
 .bt-ghost { position: absolute; z-index: 30; transform: translate(-50%, -50%) scale(1.05); pointer-events: none; filter: drop-shadow(0 calc(var(--u) * 6) calc(var(--u) * 8) rgba(0, 0, 0, 0.45)); }
 /* hold to zoom (F2): the card grows in from its normal size in 120 ms */
@@ -300,10 +305,8 @@
 .bt-sheet-cost { display: flex; gap: calc(var(--u) * 2); min-width: calc(var(--u) * 40); }
 .bt-sheet-name { flex: 1; }
 .bt-sheet-retreat { justify-content: flex-start; }
-
-/* 1.31: how many drafted cards the server left out (placeholder look). */
-.bt-deck-short {
-  position: absolute; top: 30%; right: calc(var(--u) * 6); z-index: 5;
-  width: calc(var(--u) * 110); box-sizing: border-box; padding: calc(var(--u) * 4) calc(var(--u) * 8); border-radius: calc(var(--u) * 8);
-  background: rgba(255, 255, 255, 0.9); color: #8a2a1c; font-size: calc(var(--u) * 11); text-align: center;
-}
+.bt-sheet-ability { flex-direction: column; align-items: flex-start; gap: calc(var(--u) * 4); }
+.bt-sheet-effect { font-weight: 500; font-size: calc(var(--u) * 12); }
+.bt-sheet-attack { flex-direction: column; align-items: stretch; gap: calc(var(--u) * 4); }
+.bt-sheet-attack-head { display: flex; align-items: center; gap: calc(var(--u) * 8); }
+.bt-sheet-attack .bt-sheet-effect { text-align: left; }

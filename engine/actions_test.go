@@ -20,6 +20,8 @@ func kindOf(ev Event) ActionKind {
 		return ActEvolve
 	case Retreat:
 		return ActRetreat
+	case UseAbility:
+		return ActAbility
 	case UseAttack:
 		return ActAttack
 	case EndTurn:

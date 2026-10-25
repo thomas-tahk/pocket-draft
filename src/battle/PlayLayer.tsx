@@ -9,6 +9,7 @@ export function PlayLayer({ holding, flash, boardRef }: { holding: Holding | nul
   return (
     <>
       {holding && <div className="bt-play-dim" data-testid="play-dim" />}
+      {holding?.moves.has('board') && <div className="bt-board-glow" data-testid="board-glow" />}
       {holding?.mode === 'drag' && <Ghost holding={holding} boardRef={boardRef} />}
       {holding && <div className="bt-hint" data-testid="play-hint">{hintFor(holding.held, holding.moves)}</div>}
       {flash && <div className="bt-reason" data-testid="play-reason" role="status">{flash}</div>}
@@ -28,7 +29,7 @@ function Ghost({ holding, boardRef }: { holding: Holding; boardRef: RefObject<HT
   const { held, pos } = holding;
   return (
     <div className="bt-ghost" data-testid="play-ghost" style={{ left: pos.x - rect.left, top: pos.y - rect.top }}>
-      {held.kind === 'hand' ? <CardFace card={held.card} width={80} /> : <EnergyIcon type={held.type} size={34} testId="ghost-energy" />}
+      {held.kind === 'energy' ? <EnergyIcon type={held.type} size={34} testId="ghost-energy" /> : <CardFace card={held.card} width={80} />}
     </div>
   );
 }

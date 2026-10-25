@@ -17,23 +17,12 @@ import (
 )
 
 // One game, guarded by a mutex so overlapping HTTP requests can't corrupt it.
-// Player 1's curated stand-in deck is built once at startup and reused; player
-// 2's (the bot's) deck is drafted fresh for every new game so it varies by seed
-// (issue #9).
+// The one in-memory game. Both decks are drafted fresh for every new game unless
+// the request supplies them, so they vary by seed (issue #9).
 var (
-	mu       sync.Mutex
-	game     *engine.Game
-	fireDeck []engine.Card
+	mu   sync.Mutex
+	game *engine.Game
 )
-
-func newGame(seed uint64) error {
-	bot, err := draftBotDeck(seed)
-	if err != nil {
-		return err
-	}
-	game = engine.NewGame(seed, fireDeck, bot)
-	return nil
-}
 
 func writeJSON(w http.ResponseWriter, v any) {
 	w.Header().Set("Content-Type", "application/json")
@@ -49,13 +38,19 @@ func handleState(w http.ResponseWriter, r *http.Request) {
 
 // newReq is the optional JSON body for POST /api/new. `you` is your deck as a
 // list of card IDs; when present you play it (player 0) against the drafted bot
-// deck (player 1). An empty body falls back to the demo matchup (player 1's
-// curated stand-in vs the bot). `energy` is your deck's chosen Energy Zone
+// deck (player 1). Without it you get a drafted deck too. `energy` is your deck's chosen Energy Zone
 // types by name (1–3, spec S2); omitted means the default from its attack costs.
 type newReq struct {
 	You    []string `json:"you"`
 	Seed   *uint64  `json:"seed"`
 	Energy []string `json:"energy"`
+	// Bot pins the bot's deck (card IDs) instead of drafting one, so tests don't
+	// shift when the draft pool does.
+	Bot []string `json:"bot"`
+	// Preset "fire" deals you the old fixed test deck (fireDeckList), which
+	// breaks the 2-copy rule, so browser tests written against its hands keep
+	// them. Test-only; the app never sends it.
+	Preset string `json:"preset"`
 }
 
 // energyChoice parses and validates a requested energy choice; nil when none
@@ -121,14 +116,16 @@ func startGame(req newReq) (gameView, *startErr) {
 		return gameView{}, &startErr{err, http.StatusInternalServerError}
 	}
 
-	p0, p1 := fireDeck, bot
-	if len(req.You) > 0 {
-		d, err := deckFromIDs(req.You)
-		if err != nil {
+	if len(req.Bot) > 0 {
+		if bot, err = deckFromIDs(req.Bot); err != nil {
 			return gameView{}, &startErr{err, http.StatusBadRequest}
 		}
-		p0 = d
 	}
+	p0, err := yourDeck(req, seed)
+	if err != nil {
+		return gameView{}, &startErr{err, http.StatusBadRequest}
+	}
+	p1 := bot
 	energy, err := energyChoice(req.Energy)
 	if err != nil {
 		return gameView{}, &startErr{err, http.StatusBadRequest}
@@ -139,6 +136,20 @@ func startGame(req newReq) (gameView, *startErr) {
 	game = engine.NewGameFromDecks(seed, [2]engine.Deck{{Cards: p0, Energy: energy}, {Cards: p1}})
 	return toGameView(game, humanSeat), nil
 }
+
+// yourDeck is the deck you asked for, or a drafted one when you named none.
+// The draft seed is offset so you and the bot never draft the same deck.
+func yourDeck(req newReq, seed uint64) ([]engine.Card, error) {
+	if len(req.You) > 0 {
+		return deckFromIDs(req.You)
+	}
+	if req.Preset == "fire" {
+		return fireDeckPreset()
+	}
+	return draftBotDeck(seed ^ yourDraftSalt)
+}
+
+const yourDraftSalt = 0x5eed_0f_ea_7e_d0_0d
 
 // startErr carries the status code a failed start should report over HTTP.
 type startErr struct {
@@ -158,6 +169,8 @@ type moveReq struct {
 	BenchIndex int      `json:"benchIndex"`
 	Index      int      `json:"index"`
 	Energy     []string `json:"energy,omitempty"`
+	// Spot is where a Trainer is dropped; absent for one with no target.
+	Spot *spotView `json:"spot,omitempty"`
 }
 
 type moveResp struct {
@@ -202,6 +215,10 @@ func toEvent(r moveReq) (engine.Event, error) {
 		return engine.SetupBench{Player: r.Player, CardID: r.CardID, Slot: r.Slot}, nil
 	case "SetupReady":
 		return engine.SetupReady{Player: r.Player}, nil
+	case "SetupReturn":
+		return engine.SetupReturn{Player: r.Player, Pos: r.Target}, nil
+	case "SetupMove": // from in `index`, to in `target`
+		return engine.SetupMove{Player: r.Player, From: r.Index, To: r.Target}, nil
 	case "PlayBasic":
 		return engine.PlayBasic{Player: r.Player, CardID: r.CardID, Slot: r.Slot}, nil
 	case "AttachEnergy":
@@ -210,6 +227,14 @@ func toEvent(r moveReq) (engine.Event, error) {
 		return engine.Evolve{Player: r.Player, HandCardID: r.HandCardID, Target: r.Target}, nil
 	case "Retreat":
 		return engine.Retreat{Player: r.Player, BenchIndex: r.BenchIndex}, nil
+	case "PlayTrainer":
+		return engine.PlayTrainer{Player: r.Player, CardID: r.CardID, Target: toSpot(r.Spot)}, nil
+	case "DiscardFossil":
+		return engine.DiscardFossil{Player: r.Player, Pos: r.Target}, nil
+	case "UseAbility":
+		return engine.UseAbility{Player: r.Player, Pos: r.Target, Target: abilitySpot(r.Spot)}, nil
+	case "UseStadium":
+		return engine.UseStadium{Player: r.Player, CardID: r.CardID}, nil
 	case "UseAttack":
 		return engine.UseAttack{Player: r.Player, Index: r.Index}, nil
 	case "EndTurn":
@@ -218,6 +243,8 @@ func toEvent(r moveReq) (engine.Event, error) {
 		return engine.ChooseNewActive{Player: r.Player, BenchIndex: r.BenchIndex}, nil
 	case "RetreatDiscard":
 		return retreatDiscard(r)
+	case "ChooseOption":
+		return engine.ChooseOption{Player: r.Player, Index: r.Index}, nil
 	case "Concede":
 		return engine.Concede{Player: r.Player}, nil
 	}
@@ -246,6 +273,10 @@ func fromEvent(ev engine.Event) moveReq {
 		return moveReq{Type: "SetupBench", Player: e.Player, CardID: e.CardID, Slot: e.Slot}
 	case engine.SetupReady:
 		return moveReq{Type: "SetupReady", Player: e.Player}
+	case engine.SetupReturn:
+		return moveReq{Type: "SetupReturn", Player: e.Player, Target: e.Pos}
+	case engine.SetupMove:
+		return moveReq{Type: "SetupMove", Player: e.Player, Index: e.From, Target: e.To}
 	case engine.PlayBasic:
 		return moveReq{Type: "PlayBasic", Player: e.Player, CardID: e.CardID, Slot: e.Slot}
 	case engine.AttachEnergy:
@@ -254,6 +285,14 @@ func fromEvent(ev engine.Event) moveReq {
 		return moveReq{Type: "Evolve", Player: e.Player, HandCardID: e.HandCardID, Target: e.Target}
 	case engine.Retreat:
 		return moveReq{Type: "Retreat", Player: e.Player, BenchIndex: e.BenchIndex}
+	case engine.PlayTrainer:
+		return moveReq{Type: "PlayTrainer", Player: e.Player, CardID: e.CardID, Spot: fromSpot(e.Target)}
+	case engine.DiscardFossil:
+		return moveReq{Type: "DiscardFossil", Player: e.Player, Target: e.Pos}
+	case engine.UseAbility:
+		return moveReq{Type: "UseAbility", Player: e.Player, Target: e.Pos, Spot: &spotView{e.Target.Player, e.Target.Pos}}
+	case engine.UseStadium:
+		return moveReq{Type: "UseStadium", Player: e.Player, CardID: e.CardID}
 	case engine.UseAttack:
 		return moveReq{Type: "UseAttack", Player: e.Player, Index: e.Index}
 	case engine.EndTurn:
@@ -262,8 +301,33 @@ func fromEvent(ev engine.Event) moveReq {
 		return moveReq{Type: "ChooseNewActive", Player: e.Player, BenchIndex: e.BenchIndex}
 	case engine.RetreatDiscard:
 		return moveReq{Type: "RetreatDiscard", Player: e.Player, Energy: energyLabels(e.Energy)}
+	case engine.ChooseOption:
+		return moveReq{Type: "ChooseOption", Player: e.Player, Index: e.Index}
 	case engine.Concede:
 		return moveReq{Type: "Concede", Player: e.Player}
 	}
 	panic(fmt.Sprintf("fromEvent: no request shape for %T", ev))
+}
+
+// abilitySpot is the spot an Ability is aimed at; the zero Spot when it has no
+// target (the engine's convention for abilities, unlike Trainers' NoSpot).
+func abilitySpot(s *spotView) engine.Spot {
+	if s == nil {
+		return engine.Spot{}
+	}
+	return engine.Spot{Player: s.Player, Pos: s.Pos}
+}
+
+func toSpot(s *spotView) engine.Spot {
+	if s == nil {
+		return engine.NoSpot
+	}
+	return engine.Spot{Player: s.Player, Pos: s.Pos}
+}
+
+func fromSpot(s engine.Spot) *spotView {
+	if s == engine.NoSpot {
+		return nil
+	}
+	return &spotView{s.Player, s.Pos}
 }

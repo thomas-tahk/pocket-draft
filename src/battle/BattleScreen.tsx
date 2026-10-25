@@ -3,7 +3,7 @@ import { useGameStore } from '../game/store';
 import { Board } from './Board';
 import { ConfirmDialog, EndScreen, GameMenu, endTurnWarning, type Confirm } from './EndControls';
 import { choiceFor } from './Choice';
-import { PlaybackStep, SkipButton, flashAttrs, useOpponentTurn } from './Playback';
+import { SkipButton, flashAttrs, useOpponentTurn } from './Playback';
 import { SetupIntro, useSetupIntro } from './Setup';
 import './battle.css';
 
@@ -11,7 +11,7 @@ import './battle.css';
 // Pocket-style board, with End Turn, Concede and the end screen (1.27). Given a
 // drafted deck (1.31) it starts a game with it; Rematch reuses that deck.
 export function BattleScreen({ deck, onExit }: { deck?: string[]; onExit?: () => void }) {
-  const { view, error, init, startGame, dispatch, runBot, botStuck, restart, leftOut } = useGameStore();
+  const { view, error, init, startGame, dispatch, runBot, botStuck, restart } = useGameStore();
   const [confirm, setConfirm] = useState<Confirm | null>(null);
 
   useEffect(() => {
@@ -20,7 +20,7 @@ export function BattleScreen({ deck, onExit }: { deck?: string[]; onExit?: () =>
   }, [deck, init, startGame]);
 
   // The bot (seat 1) plays whenever it is its move, one step at a time (F14).
-  const { step, canSkip, skip } = useOpponentTurn(view, botStuck, runBot);
+  const { step, canSkip, skip, skipping } = useOpponentTurn(view, botStuck, runBot);
   const intro = useSetupIntro(view);
 
   if (!view) {
@@ -38,11 +38,10 @@ export function BattleScreen({ deck, onExit }: { deck?: string[]; onExit?: () =>
     setConfirm({ text: 'Concede this game? It counts as a loss.', okLabel: 'Concede', onOk: () => void dispatch({ type: 'Concede', player: 0 }) });
 
   return (
-    <div className="bt-root" {...flashAttrs(step)}>
-      <Board view={view} onEndTurn={onEndTurn} onReady={onReady} choice={choiceFor(view, 0, (m) => void dispatch(m))}>
+    // A long press zooms a card; never the browser's image menu (iOS callout in battle.css).
+    <div className="bt-root" {...flashAttrs(step)} onContextMenu={(e) => e.preventDefault()}>
+      <Board view={view} instant={skipping} onEndTurn={onEndTurn} onReady={onReady} choice={choiceFor(view, 0, (m) => void dispatch(m))}>
         {view.phase !== 'over' && <GameMenu onConcede={onConcede} />}
-        {leftOut > 0 && <DeckShort count={leftOut} />}
-        {step && <PlaybackStep step={step} />}
         {canSkip && <SkipButton onSkip={skip} />}
         {intro.show && <SetupIntro view={view} onDone={intro.finish} />}
         {confirm && <ConfirmDialog confirm={confirm} onClose={() => setConfirm(null)} />}
@@ -50,9 +49,4 @@ export function BattleScreen({ deck, onExit }: { deck?: string[]; onExit?: () =>
       </Board>
     </div>
   );
-}
-
-// The server plays only the cards it can; say how many it left out (placeholder wording).
-function DeckShort({ count }: { count: number }) {
-  return <div className="bt-deck-short" data-testid="deck-short">{count} of your cards can't be played yet and were left out of this game.</div>;
 }

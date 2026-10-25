@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ActionView, GameView } from '../game/types';
-import { CardFace } from './pieces';
 
 // The bot's turn, played back one action at a time (spec F14): the bot moves
-// one step every STEP_MS; each step shows its card and result and lights the
-// spot it touched. Skip runs the rest of the bot's turn with no wait.
+// one step every STEP_MS; the board's own motion shows each step and the spot
+// it touched lights up. No panel stays over the board (owner 2026-10-23); the
+// history log has the words. Skip runs the rest of the bot's turn with no wait.
 
 const STEP_MS = 550; // F14 "about 0.5 s each"; the exact pace is the owner's
 const SLOT_NAMES = ['left', 'behind', 'right'];
-const SILENT_KINDS = ['setup', 'ready', 'end_turn', 'concede']; // nothing to play back
+const SILENT_KINDS = ['setup', 'setup_return', 'setup_move', 'ready', 'end_turn', 'concede']; // nothing to play back
 
 export type Step = { index: number; action: ActionView };
 
@@ -19,7 +19,9 @@ export function useOpponentTurn(view: GameView | null, botStuck: boolean, runBot
   const [skipping, setSkipping] = useState(false);
   const [step, setStep] = useState<Step | null>(null);
   const seen = useRef<number | null>(null);
-  const botToMove = !!view && view.phase !== 'over' && !botStuck && actorOf(view) === 1;
+  // Setup is simultaneous: the bot places while you do (owner 2026-10-19 (8)).
+  const botSetting = !!view && view.phase === 'setup' && !view.players[1].ready;
+  const botToMove = !!view && view.phase !== 'over' && !botStuck && (botSetting || actorOf(view) === 1);
 
   useEffect(() => {
     if (!botToMove) return;
@@ -54,26 +56,19 @@ export function useOpponentTurn(view: GameView | null, botStuck: boolean, runBot
     setStep(null);
   };
   const canSkip = botToMove && view.phase === 'main' && !skipping;
-  return { step, canSkip, skip };
+  return { step, canSkip, skip, skipping };
 }
 
-// Data attributes for the board root that light the step's target (battle.css).
+// Data attributes for the board root that light the step's target (battle.css)
+// and name the step on show.
 export function flashAttrs(step: Step | null): Record<string, string> {
-  const t = step?.action.target;
-  if (!t || t.player < 0) return {};
+  if (!step) return {};
+  const shown = { 'data-bot-step': String(step.index), 'data-bot-kind': step.action.kind };
+  const t = step.action.target;
+  if (!t || t.player < 0) return shown;
   const side = t.player === 0 ? 'my' : 'opp';
-  if (t.pos === 0) return { 'data-flash-zone': `${side}-active` };
-  return { 'data-flash-zone': `${side}-bench`, 'data-flash-slot': SLOT_NAMES[t.pos - 1] };
-}
-
-export function PlaybackStep({ step }: { step: Step }) {
-  const lines = step.action.result.filter((l) => !l.startsWith('---'));
-  return (
-    <div className="bt-playback" data-testid="playback" data-step={step.index} data-kind={step.action.kind}>
-      {step.action.card && <CardFace card={step.action.card} width={72} />}
-      {lines.map((l, i) => <p key={i}>{l}</p>)}
-    </div>
-  );
+  if (t.pos === 0) return { ...shown, 'data-flash-zone': `${side}-active` };
+  return { ...shown, 'data-flash-zone': `${side}-bench`, 'data-flash-slot': SLOT_NAMES[t.pos - 1] };
 }
 
 export function SkipButton({ onSkip }: { onSkip: () => void }) {

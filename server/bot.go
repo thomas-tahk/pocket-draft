@@ -24,8 +24,11 @@ func botChoice(g *engine.Game) (engine.Event, bool) {
 	if g.S.Pending != nil {
 		first = g.S.Pending.Player
 	}
+	if g.S.Phase == engine.PhaseSetup {
+		first = 1 - humanSeat // the bot places while the human still is
+	}
 	for _, p := range []int{first, 1 - first} {
-		if ev, ok := bestMove(g.LegalMoves(p)); ok {
+		if ev, ok := bestMove(g, g.LegalMoves(p)); ok {
 			return ev, true
 		}
 	}
@@ -33,43 +36,16 @@ func botChoice(g *engine.Game) (engine.Event, bool) {
 }
 
 // bestMove is the highest-ranked move, the earliest listed on a tie.
-func bestMove(moves []engine.Event) (engine.Event, bool) {
+func bestMove(g *engine.Game, moves []engine.Event) (engine.Event, bool) {
 	var best engine.Event
 	bestRank := 0
 	for _, ev := range moves {
-		r, ok := moveRank(ev)
+		r, ok := moveRank(g, ev)
 		if ok && (best == nil || r > bestRank) {
 			best, bestRank = ev, r
 		}
 	}
 	return best, best != nil
-}
-
-// moveRank is the bot's greedy policy: at setup place the Active, fill the
-// bench, then press Ready; in play get energy onto the Active, swing with it,
-// otherwise pass. Main-phase moves it has no policy
-// for rank below EndTurn, so it skips them; a prompt's answers are the only
-// moves listed, so they are chosen whatever their kind. Concede is never ok.
-func moveRank(ev engine.Event) (int, bool) {
-	switch e := ev.(type) {
-	case engine.Concede:
-		return 0, false
-	case engine.SetupActive:
-		return 3, true
-	case engine.SetupBench:
-		return 2, true
-	case engine.SetupReady:
-		return 1, true
-	case engine.AttachEnergy:
-		if e.Target == 0 {
-			return 3, true
-		}
-	case engine.UseAttack:
-		return 2, true
-	case engine.EndTurn:
-		return 1, true
-	}
-	return 0, true
 }
 
 type botResp struct {

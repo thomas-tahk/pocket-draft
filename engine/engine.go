@@ -17,6 +17,11 @@ type Game struct {
 	Events    []Event
 	Narration []string
 	Actions   []Action // one per applied event, for replay and history (actions.go)
+
+	flips []CoinFlip // coins flipped by the move being applied (coin.go)
+	dealt int        // the attack damage dealt by the move being applied
+
+	koAttacker *InPlay // the attacking Pokémon while its attack's knockouts resolve; nil otherwise
 }
 
 var errBadPrompt = errors.New("invalid response to the current prompt")
@@ -96,7 +101,7 @@ func (g *Game) dealOpeningHand(i int) {
 		})
 		hasBasic := false
 		for _, c := range pl.Deck[:min(5, len(pl.Deck))] {
-			if c.Stage == Basic {
+			if c.IsBasicPokemon() {
 				hasBasic = true
 				break
 			}
@@ -118,10 +123,12 @@ func (g *Game) Submit(ev Event) error {
 		return errors.New("game is over")
 	}
 	act, before := g.describe(ev), len(g.Narration)
+	g.flips, g.dealt = nil, 0
 	if err := g.validateAndApply(ev); err != nil {
 		return err
 	}
 	act.Result = append([]string(nil), g.Narration[before:]...)
+	act.Flips, act.Damage = g.flips, g.dealt
 	g.Events = append(g.Events, ev)
 	g.Actions = append(g.Actions, act)
 	return nil
@@ -140,6 +147,10 @@ func (g *Game) validateAndApply(ev Event) error {
 		g.applySetupBench(e)
 	case SetupReady:
 		g.applySetupReady(e)
+	case SetupReturn:
+		g.applySetupReturn(e)
+	case SetupMove:
+		g.applySetupMove(e)
 	case ChooseNewActive:
 		g.applyChooseActive(e)
 	case PlayBasic:
@@ -153,6 +164,16 @@ func (g *Game) validateAndApply(ev Event) error {
 	case RetreatDiscard:
 		g.S.Pending = nil
 		g.finishRetreat(e)
+	case PlayTrainer:
+		g.applyPlayTrainer(e)
+	case DiscardFossil:
+		g.applyDiscardFossil(e)
+	case UseAbility:
+		g.applyUseAbility(e)
+	case ChooseOption:
+		g.applyChooseOption(e)
+	case UseStadium:
+		g.applyUseStadium(e)
 	case UseAttack:
 		g.applyAttack(e)
 	case EndTurn:
@@ -225,8 +246,10 @@ func (g *Game) applyAttach(e AttachEnergy) {
 	mon := targetMon(pl, e.Target)
 	mon.Energy[pl.EnergyZone]++
 	g.narrate("%s attached %s energy to %s.", side(e.Player), pl.EnergyZone, mon.Card.Name)
+	attached := pl.EnergyZone
 	pl.EnergyZone = NoEnergy
 	pl.EnergyUsed = true
+	g.zoneAttachTrigger(e.Player, e.Target, attached)
 }
 
 func (g *Game) applyEvolve(e Evolve) {
@@ -235,9 +258,16 @@ func (g *Game) applyEvolve(e Evolve) {
 	ev := pl.Hand[hidx]
 	mon := targetMon(pl, e.Target)
 	pl.Hand = removeAt(pl.Hand, hidx)
+	g.evolveMon(e.Player, mon, ev)
+}
+
+// evolveMon puts evolution card ev onto player p's mon.
+func (g *Game) evolveMon(p int, mon *InPlay, ev Card) {
 	mon.Card = ev
 	mon.PlacedTurn = g.S.Turn
-	g.narrate("%s evolved into %s.", side(e.Player), ev.Name)
+	mon.AbilityUsedTurn = 0 // an evolved Pokémon is a new card (A4)
+	mon.CureAll()           // evolving clears every condition (C9)
+	g.narrate("%s evolved into %s.", side(p), ev.Name)
 }
 
 // applyRetreat asks which energy pays the retreat cost (T9); the swap happens
@@ -256,30 +286,34 @@ func (g *Game) finishRetreat(e RetreatDiscard) {
 	pl.DiscardedEnergy = append(pl.DiscardedEnergy, e.Energy...)
 	slot := g.S.retreatTo
 	pl.Active, pl.Bench[slot] = pl.Bench[slot], pl.Active
+	pl.Bench[slot].CureAll() // leaving the Active spot clears every condition (C9)
 	g.narrate("%s retreated to %s.", side(e.Player), pl.Active.Card.Name)
 }
 
 func (g *Game) applyAttack(e UseAttack) {
+	if g.confusionFails(e.Player) {
+		g.concludeTurn()
+		return
+	}
 	pl := &g.S.Players[e.Player]
-	atk := pl.Active.Card.Attacks[e.Index]
+	atk := pl.Active.Attacks()[e.Index]
 	opp := &g.S.Players[1-e.Player]
 	ctx := &EffectContext{g: g, attacker: e.Player, Damage: atk.Damage}
-	for _, op := range atk.Effect {
-		op.Apply(ctx)
-	}
-	dmg := ctx.Damage
-	weak := opp.Active.Card.Weakness != NoEnergy && opp.Active.Card.Weakness == pl.Active.Card.Type
-	if weak {
-		dmg += 20
-	}
+	g.runAttackEffects(e.Player, atk.Effect, ctx)
+	dmg, weakness := g.attackDamage(e.Player, ctx.Damage)
 	opp.Active.Damage += dmg
-	if weak {
-		g.narrate("%s's %s used %s for %d (+20 weakness).", side(e.Player), pl.Active.Card.Name, atk.Name, dmg)
+	g.dealt = dmg
+	g.surviveKO(e.Player)
+	g.damagedTriggers(1-e.Player, dmg)
+	if weakness != "" {
+		g.narrate("%s's %s used %s for %d (%s).", side(e.Player), pl.Active.Card.Name, atk.Name, dmg, weakness)
 	} else {
 		g.narrate("%s's %s used %s for %d.", side(e.Player), pl.Active.Card.Name, atk.Name, dmg)
 	}
 
-	g.resolveAction()
+	g.koAttacker = pl.Active
+	g.resolveAttack(e.Player, dmg)
+	g.koAttacker = nil
 	// Attacking ends the turn — but a knockout may owe a prompt first.
 	if g.S.Phase == PhaseOver {
 		return
@@ -289,6 +323,17 @@ func (g *Game) applyAttack(e UseAttack) {
 		return
 	}
 	g.concludeTurn()
+}
+
+// confusionFails flips for a Confused attacker (C8): tails, the attack fails
+// with no self-damage and the condition stays.
+func (g *Game) confusionFails(p int) bool {
+	mon := g.S.Players[p].Active
+	if !mon.Has(Confused) || g.flipCoin(p, true) {
+		return false
+	}
+	g.narrate("%s's %s is Confused: tails, the attack failed.", side(p), mon.Card.Name)
+	return true
 }
 
 func (g *Game) applyChooseActive(e ChooseNewActive) {
@@ -326,7 +371,7 @@ func koPoints(c Card) int {
 func (g *Game) resolveAction() {
 	var pts [2]int
 	for owner := 0; owner < 2; owner++ {
-		pts[1-owner] += g.removeIfKnockedOut(owner)
+		pts[1-owner] += g.removeIfKnockedOut(owner) + g.removeBenchKnockouts(owner)
 	}
 	for scorer := 0; scorer < 2; scorer++ {
 		if pts[scorer] == 0 {
@@ -346,13 +391,47 @@ func (g *Game) resolveAction() {
 func (g *Game) removeIfKnockedOut(owner int) int {
 	pl := &g.S.Players[owner]
 	mon := pl.Active
-	if mon == nil || mon.remainingHP() > 0 {
+	if mon == nil || g.hpLeft(owner, 0) > 0 {
 		return 0
 	}
-	pl.Discard = append(pl.Discard, mon.Card)
+	pts := koPoints(mon.Card)
+	if a := g.koAttacker; a != nil && owner != g.S.Active {
+		pts += g.sumHook(HookKOPoints, g.holder(owner, 0), a)
+	}
+	g.discardKnockedOut(owner, 0, mon)
 	pl.Active = nil
+	return pts
+}
+
+// removeBenchKnockouts discards a player's Benched Pokémon with no HP left
+// (damage an Ability put on the Bench) and returns what they score.
+func (g *Game) removeBenchKnockouts(owner int) int {
+	pl := &g.S.Players[owner]
+	pts := 0
+	for slot, mon := range pl.Bench {
+		if mon != nil && g.hpLeft(owner, slot+1) <= 0 {
+			g.discardKnockedOut(owner, slot+1, mon)
+			pl.Bench[slot] = nil
+			pts += koPoints(mon.Card)
+		}
+	}
+	return pts
+}
+
+// discardKnockedOut sends the knocked-out Pokémon at pos, still in place, and
+// its Tool to its owner's discard pile (or the Pokémon to the hand, if its own
+// Tool says so). The caller takes it off the board afterwards.
+func (g *Game) discardKnockedOut(owner, pos int, mon *InPlay) {
+	pl := &g.S.Players[owner]
+	if g.knockedOut(owner, pos) {
+		pl.Hand = append(pl.Hand, mon.Card)
+	} else {
+		pl.Discard = append(pl.Discard, mon.Card)
+	}
+	if mon.Tool != nil {
+		pl.Discard = append(pl.Discard, *mon.Tool)
+	}
 	g.narrate("%s's %s was Knocked Out.", side(owner), mon.Card.Name)
-	return koPoints(mon.Card)
 }
 
 // checkResult ends the game if an action decided it (spec E2, E3, E5): both at
@@ -391,7 +470,8 @@ func (g *Game) checkNoPokemon() bool {
 func (g *Game) promote(e ChooseNewActive) {
 	pl := &g.S.Players[e.Player]
 	mon := benchAt(pl, e.BenchIndex)
-	pl.Bench[e.BenchIndex] = nil
+	pl.Bench[e.BenchIndex] = g.S.switchedOut // a forced switch's old Active takes the slot
+	g.S.switchedOut = nil
 	pl.Active = mon
 	g.S.hidden = nil
 	if g.S.Players[1-e.Player].Active == nil { // double KO: the other still picks (E6)
@@ -470,25 +550,61 @@ func (g *Game) concludeTurn() {
 // resolveStatus applies poison/burn to both Actives at end of turn (mode 2,
 // automatic), then resolves any knockouts as one action.
 func (g *Game) resolveStatus() {
+	g.fireTurnEnd()
 	for i := 0; i < 2; i++ {
-		pl := &g.S.Players[i]
-		if pl.Active == nil {
+		if g.S.Players[i].Active == nil {
 			continue
 		}
-		if pl.Active.Poisoned {
-			pl.Active.Damage += 10
-			g.narrate("%s's %s took 10 from poison.", side(i), pl.Active.Card.Name)
-		}
-		if pl.Active.Burned {
-			pl.Active.Damage += 20
-			g.narrate("%s's %s took 20 from burn.", side(i), pl.Active.Card.Name)
-			if g.rng.intn(2) == 0 {
-				pl.Active.Burned = false
-				g.narrate("%s's %s recovered from burn.", side(i), pl.Active.Card.Name)
-			}
-		}
+		g.checkupPoisonBurn(i)
+		g.checkupSleep(i)
+		g.wearOffParalysis(i)
 	}
+	g.checkupAbilities()
 	g.resolveAction() // one Checkup is one action (spec E4)
+}
+
+// checkupPoisonBurn deals player i's Active its Poison (10) and Burn (20)
+// damage, in that order (C1, C2); Burn then flips, heads cures (C6).
+func (g *Game) checkupPoisonBurn(i int) {
+	mon := g.S.Players[i].Active
+	if mon.Poisoned {
+		mon.Damage += 10
+		g.narrate("%s's %s took 10 from poison.", side(i), mon.Card.Name)
+	}
+	if !mon.Burned {
+		return
+	}
+	mon.Damage += 20
+	g.narrate("%s's %s took 20 from burn.", side(i), mon.Card.Name)
+	if g.flipCoin(i, true) {
+		mon.Cure(Burn)
+		g.narrate("%s's %s recovered from burn.", side(i), mon.Card.Name)
+	}
+}
+
+// checkupSleep flips for player i's Asleep Active: heads it wakes up (C6).
+func (g *Game) checkupSleep(i int) {
+	mon := g.S.Players[i].Active
+	if !mon.Has(Asleep) {
+		return
+	}
+	if g.flipCoin(i, true) {
+		mon.Cure(Asleep)
+		g.narrate("%s's %s flipped heads and is no longer Asleep.", side(i), mon.Card.Name)
+		return
+	}
+	g.narrate("%s's %s flipped tails and is still Asleep.", side(i), mon.Card.Name)
+}
+
+// wearOffParalysis cures player i's Paralyzed Active at the Checkup that ends
+// i's turn, once a whole turn of i's has passed with it Paralyzed (C7).
+func (g *Game) wearOffParalysis(i int) {
+	mon := g.S.Players[i].Active
+	if i != g.S.Active || !mon.Has(Paralyzed) || !mon.ownTurnParalyzed {
+		return
+	}
+	mon.Cure(Paralyzed)
+	g.narrate("%s's %s is no longer Paralyzed.", side(i), mon.Card.Name)
 }
 
 func (g *Game) advanceTurn() {
@@ -496,6 +612,7 @@ func (g *Game) advanceTurn() {
 		g.tie(ReasonTurnCap)
 		return
 	}
+	g.S.Players[g.S.Active].endTurnEffects()
 	g.S.Active = 1 - g.S.Active
 	g.S.Turn++
 	g.startTurn(g.S.Active)
@@ -511,6 +628,11 @@ func (g *Game) startTurn(p int) {
 	pl := &g.S.Players[p]
 	pl.EnergyUsed = false
 	pl.Retreated = false
+	pl.SupporterUsed = false
+	pl.StadiumUsed = false
+	if pl.Active != nil && pl.Active.Has(Paralyzed) {
+		pl.Active.ownTurnParalyzed = true
+	}
 
 	if len(pl.Deck) > 0 && len(pl.Hand) < handMax {
 		c := pl.Deck[0]

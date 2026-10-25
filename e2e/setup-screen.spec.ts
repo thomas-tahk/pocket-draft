@@ -1,7 +1,7 @@
 import { test, expect, type APIRequestContext, type Locator, type Page } from '@playwright/test';
 
-// S4, S5, F11 at phone size: a new game opens on the coin flip (you tap your
-// own coin; the opponent's lands by itself), then "You go first / second",
+// S4, S5, F11 at phone size: a new game opens on the coin flip (it lands by
+// itself whoever flips, 2.11), then "You go first / second",
 // then setup on the board: drag a Basic to the Active spot and one to the
 // Bench, press Ready, and the game starts on turn 1. Both first energies show
 // during setup; the opponent's picks don't.
@@ -14,7 +14,7 @@ const basicsOf = (v: View) => v.players[0].hand.filter((c) => c.stage === 'Basic
 // The first seed whose opening flip is made by `flipper` and deals you two Basics.
 async function newGameFlippedBy(api: APIRequestContext, flipper: number): Promise<View> {
   for (let seed = 1; seed < 60; seed++) {
-    const v = (await (await api.post('/api/new', { data: { seed } })).json()) as View;
+    const v = (await (await api.post('/api/new', { data: { seed, preset: 'fire' } })).json()) as View;
     if (v.openingFlip.flipper === flipper && basicsOf(v).length >= 2) return v;
   }
   throw new Error(`no seed where player ${flipper} flips with two Basics`);
@@ -47,11 +47,9 @@ test('you flip, place Active and Bench, Ready, game starts on turn 1', async ({ 
   const [a, b] = basicsOf(v);
   await page.goto('/?battle');
 
-  // F11: your own flip waits for your tap.
+  // 2.11: the opening coin never waits, even when it is yours to flip.
   await expect(page.getByTestId('setup-intro')).toContainText('You flip the coin');
-  await page.waitForTimeout(1200);
-  await expect(page.getByTestId('setup-coin')).toHaveAttribute('data-face', '');
-  await page.getByTestId('setup-coin').click();
+  await expect(page.getByTestId('setup-coin')).toBeDisabled();
   await expectCoinAndOrder(page, v);
 
   // S4: both sides' first energy shows from setup on.
