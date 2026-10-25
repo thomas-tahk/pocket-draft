@@ -3,7 +3,7 @@ import type { GameView, Move, MoveResp, BotResp } from './types';
 // Thin wrappers over the Go server's /api endpoints. Relative URLs resolve via
 // the Vite proxy in dev (see vite.config.ts).
 
-async function asJson<T>(res: Response): Promise<T> {
+export async function asJson<T>(res: Response): Promise<T> {
   if (!res.ok) {
     // The server returns { error: "reason" } on a rejected request; surface it
     // so failures aren't opaque "400 Bad Request" messages.
