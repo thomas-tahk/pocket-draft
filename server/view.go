@@ -445,6 +445,9 @@ func toActionViews(g *engine.Game, viewer int) []actionView {
 	out := make([]actionView, 0, len(g.Actions))
 	for _, a := range g.Actions {
 		v := actionView{Player: a.Player, Kind: string(a.Kind), Target: spotView{a.Target.Player, a.Target.Pos}, Result: a.Result, Flips: toCoinViews(a.Flips), Damage: a.Damage}
+		if v.Result == nil {
+			v.Result = []string{}
+		}
 		if a.Card.ID != "" {
 			c := toCardView(a.Card)
 			v.Card = &c
