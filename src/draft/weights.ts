@@ -53,6 +53,21 @@ function typesNamedIn(text: string): EnergyType[] {
     .map(([, type]) => type);
 }
 
+// Types a card's text names, minus its own type: a card naming its own type is
+// the type weight's job, so it never counts for rule 2 (as a candidate) or
+// rule 3 (as a pick). Trainers have no type, so they are unaffected. Cached per
+// card id; a card's text never changes.
+const namedTypesCache = new Map<string, EnergyType[]>();
+
+function namedTypes(card: Card): EnergyType[] {
+  let types = namedTypesCache.get(card.id);
+  if (!types) {
+    types = typesNamedIn(effectText(card)).filter((t) => t !== card.cardType);
+    namedTypesCache.set(card.id, types);
+  }
+  return types;
+}
+
 export type Synergy = {
   pickedTypes: Set<EnergyType>; // types of picked Pokémon (not Colorless)
   textTypes: Set<EnergyType>; // types named in the text of any pick
@@ -68,7 +83,7 @@ export function buildSynergy(picks: Card[]): Synergy {
   const textTypes = new Set<EnergyType>();
   const needles: string[] = [];
   for (const p of picks) {
-    for (const t of typesNamedIn(effectText(p))) textTypes.add(t);
+    for (const t of namedTypes(p)) textTypes.add(t);
     if (p.cardType === 'Trainer') continue;
     if (p.cardType !== 'Colorless') pickedTypes.add(p.cardType);
     needles.push(escapeRegExp((p.name ?? '').replace(/ ex$/, '')));
@@ -81,7 +96,7 @@ export function buildSynergy(picks: Card[]): Synergy {
 function matchesSynergy(card: Card, s: Synergy): boolean {
   if (card.cardType === 'Trainer' && s.nameText?.test(card.trainerText ?? '')) return true;
   if (card.cardType !== 'Trainer' && s.textTypes.has(card.cardType as EnergyType)) return true;
-  return typesNamedIn(effectText(card)).some((t) => s.pickedTypes.has(t));
+  return namedTypes(card).some((t) => s.pickedTypes.has(t));
 }
 
 // Sampling weight for one candidate given the running tally.

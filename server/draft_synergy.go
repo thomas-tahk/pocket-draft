@@ -3,6 +3,7 @@ package main
 import (
 	"regexp"
 	"strings"
+	"sync"
 )
 
 // Go port of the synergy half of src/draft/weights.ts.
@@ -13,6 +14,8 @@ import (
 //  1. a Trainer's text names a picked Pokémon;
 //  2. a candidate's effect text names a type you have picked Pokémon of;
 //  3. a candidate Pokémon's type is named by the text of one of your picks.
+//
+// A card's text naming its own type never counts (the type weight covers it).
 //
 // A Colorless reference never counts.
 const synergyMult = 3.0
@@ -56,12 +59,33 @@ func typesNamedIn(text string) map[string]bool {
 	return out
 }
 
+// namedTypesCache memoises namedTypes by card id; a card's text never changes.
+var namedTypesCache sync.Map
+
+// namedTypes is the types c's effect text names, minus c's own type: a card
+// naming its own type is already covered by the type weight, so it never
+// counts for rule 2 (as a candidate) or rule 3 (as a pick). Trainers have no
+// type, so they are unaffected. Cached per card id.
+func namedTypes(c draftCard) []string {
+	if cached, ok := namedTypesCache.Load(c.ID); ok {
+		return cached.([]string)
+	}
+	out := []string{}
+	for typ := range typesNamedIn(effectText(c)) {
+		if typ != c.CardType {
+			out = append(out, typ)
+		}
+	}
+	namedTypesCache.Store(c.ID, out)
+	return out
+}
+
 // newSynergy mirrors weights.ts's buildSynergy.
 func newSynergy(picks []draftCard) synergy {
 	s := synergy{pickedTypes: map[string]bool{}, textTypes: map[string]bool{}}
 	needles := []string{}
 	for _, p := range picks {
-		for typ := range typesNamedIn(effectText(p)) {
+		for _, typ := range namedTypes(p) {
 			s.textTypes[typ] = true
 		}
 		if p.CardType == "Trainer" {
@@ -86,7 +110,7 @@ func (s synergy) matches(c draftCard) bool {
 	if c.CardType != "Trainer" && s.textTypes[c.CardType] {
 		return true
 	}
-	for typ := range typesNamedIn(effectText(c)) {
+	for _, typ := range namedTypes(c) {
 		if s.pickedTypes[typ] {
 			return true
 		}

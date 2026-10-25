@@ -62,7 +62,7 @@ test('later offers favour the types already picked', () => {
 // Synergy (#109). Mirrors server/draft_synergy_test.go.
 const mon = (name: string, cardType: string) => ({ id: name + cardType, name, cardType, attacks: [] }) as unknown as Card;
 const trainer = (name: string, trainerText: string) =>
-  ({ id: name, name, cardType: 'Trainer', trainerText, attacks: [] }) as unknown as Card;
+  ({ id: name + trainerText, name, cardType: 'Trainer', trainerText, attacks: [] }) as unknown as Card;
 
 test('a Trainer naming a picked Pokemon gets the bonus, one that does not does not', () => {
   const syn = buildSynergy([mon('Onix', 'Fighting')]);
@@ -83,8 +83,27 @@ test('text naming a picked type gets the bonus; costs and Colorless do not', () 
   expect(weightOf(trainer('C', 'Attach a [C] Energy.'), tally, syn)).toBe(1);
   const psyduck = { ...mon('Psyduck', 'Psychic'), attacks: [{ cost: '[W]', name: '[W] Splash', damage: '', effect: '' }] } as unknown as Card;
   expect(weightOf(psyduck, tally, syn)).toBe(1);
-  const withEffect = { ...psyduck, attacks: [{ cost: 'W', name: 'X', damage: '', effect: 'Take a [W] Energy.' }] } as unknown as Card;
+  const withEffect = { ...psyduck, id: 'psyduck-effect', attacks: [{ cost: 'W', name: 'X', damage: '', effect: 'Take a [W] Energy.' }] } as unknown as Card;
   expect(weightOf(withEffect, tally, syn)).toBe(SYNERGY_MULT);
+});
+
+test('a card naming its own type never counts, as pick or candidate', () => {
+  const withText = (name: string, cardType: string, effect: string) =>
+    ({ ...mon(name, cardType), id: name, attacks: [{ cost: 'W', name: 'X', damage: '', effect }] }) as unknown as Card;
+  // 3b: a Water pick whose text says [W] does not boost other Water Pokémon.
+  const waterPick = buildSynergy([withText('Vaporeon', 'Water', 'Take a [W] Energy.')]);
+  expect(weightOf(mon('Squirtle', 'Water'), {}, waterPick)).toBe(1);
+  const firePick = buildSynergy([withText('Flareon', 'Fire', 'Take a [W] Energy.')]);
+  expect(weightOf(mon('Squirtle', 'Water'), {}, firePick)).toBe(SYNERGY_MULT);
+  // 3a: a Water candidate whose own text says [W] is not boosted by Water picks.
+  const candidate = withText('Kyogre', 'Water', 'Take a [W] Energy.');
+  expect(weightOf(candidate, {}, buildSynergy([mon('Squirtle', 'Water')]))).toBe(1);
+});
+
+test('a [N] Trainer gets the bonus after a Dragon pick', () => {
+  const syn = buildSynergy([mon('Dratini', 'Dragon')]);
+  expect(weightOf(trainer('Lance', 'Choose 1 of your [N] Pokémon.'), {}, syn)).toBe(SYNERGY_MULT);
+  expect(weightOf(trainer('Blaine', 'Choose 1 of your [R] Pokémon.'), {}, syn)).toBe(1);
 });
 
 test('a pick whose text names a type boosts candidates of that type, once', () => {

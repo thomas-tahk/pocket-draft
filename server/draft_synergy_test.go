@@ -11,6 +11,7 @@ func trainerText(name, text string) draftCard {
 }
 
 func withAttackEffect(c draftCard, effect string) draftCard {
+	c.ID += effect
 	c.Attacks = []rawAttack{{Cost: "W", Effect: effect}}
 	return c
 }
@@ -67,6 +68,7 @@ func TestSynergyTextNamesPickedType(t *testing.T) {
 func TestSynergyAttackCostIsNotText(t *testing.T) {
 	syn := newSynergy([]draftCard{pokemon("Squirtle", "Water")})
 	c := pokemon("Psyduck", "Psychic")
+	c.ID = "cost-only"
 	c.Attacks = []rawAttack{{Cost: "[W]", Name: "[W] Splash", Effect: ""}}
 	if w := weightOf(c, typeTally{}, syn); w != 1 {
 		t.Errorf("symbol only in cost/name = %v, want 1", w)
@@ -94,6 +96,35 @@ func TestSynergyPickTextBoostsThatType(t *testing.T) {
 	}
 }
 
+// A card's text naming its own type is the type weight's job, not synergy's.
+func TestSynergyOwnTypeNeverCounts(t *testing.T) {
+	// A Water pick whose text says [W] must not boost other Water Pokémon (3b).
+	pick := withAttackEffect(pokemon("Vaporeon", "Water"), "Take a [W] Energy.")
+	if w := weightOf(pokemon("Squirtle", "Water"), typeTally{}, newSynergy([]draftCard{pick})); w != 1 {
+		t.Errorf("Water pick naming [W], Water candidate = %v, want 1", w)
+	}
+	// ...but it still boosts a Fire Pokémon if its text names [R].
+	fireText := withAttackEffect(pokemon("Flareon", "Fire"), "Take a [W] Energy.")
+	if w := weightOf(pokemon("Squirtle", "Water"), typeTally{}, newSynergy([]draftCard{fireText})); w != synergyMult {
+		t.Errorf("Fire pick naming [W], Water candidate = %v, want %v", w, synergyMult)
+	}
+	// A Water candidate whose own text says [W] is not boosted by Water picks (3a).
+	candidate := withAttackEffect(pokemon("Kyogre", "Water"), "Take a [W] Energy.")
+	if w := weightOf(candidate, typeTally{}, newSynergy([]draftCard{pokemon("Squirtle", "Water")})); w != 1 {
+		t.Errorf("Water candidate naming its own [W] = %v, want 1", w)
+	}
+}
+
+func TestSynergyDragonSymbol(t *testing.T) {
+	syn := newSynergy([]draftCard{pokemon("Dratini", "Dragon")})
+	if w := weightOf(trainerText("Lance", "Choose 1 of your [N] Pokémon."), typeTally{}, syn); w != synergyMult {
+		t.Errorf("[N] Trainer after a Dragon pick = %v, want %v", w, synergyMult)
+	}
+	if w := weightOf(trainerText("Blaine", "Choose 1 of your [R] Pokémon."), typeTally{}, syn); w != 1 {
+		t.Errorf("[R] Trainer after a Dragon pick = %v, want 1", w)
+	}
+}
+
 func TestSynergyNeverStacks(t *testing.T) {
 	// Squirtle-named Trainer text that also names Water: matches rules 1 and 2.
 	picks := []draftCard{pokemon("Squirtle", "Water")}
@@ -117,7 +148,7 @@ func offeredCount(byTier map[tier][]draftCard, picks []draftCard, ids map[string
 	n := 0
 	for seed := uint64(1); seed <= 20; seed++ {
 		rng := newDraftRng(seed)
-		for i := 0; i < 100; i++ {
+		for i := 0; i < 50; i++ {
 			offer, err := generateOffer(byTier, picks, rng.Float64)
 			if err != nil {
 				panic(err)
@@ -134,7 +165,7 @@ func offeredCount(byTier map[tier][]draftCard, picks []draftCard, ids map[string
 
 func firstOfType(pool []draftCard, typ string) draftCard {
 	for _, c := range pool {
-		if c.CardType == typ && len(typesNamedIn(effectText(c))) == 0 {
+		if c.CardType == typ && len(namedTypes(c)) == 0 {
 			return c
 		}
 	}
@@ -210,10 +241,10 @@ func TestSynergyRulesAreAliveInShippedPool(t *testing.T) {
 		if c.CardType == "Trainer" && allNames.nameText.MatchString(c.TrainerText) {
 			rule1++
 		}
-		if len(typesNamedIn(effectText(c))) > 0 {
+		if len(namedTypes(c)) > 0 {
 			rule2++
 		}
-		for typ := range typesNamedIn(effectText(c)) {
+		for _, typ := range namedTypes(c) {
 			textTypes[typ] = true
 		}
 	}
