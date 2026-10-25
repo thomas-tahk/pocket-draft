@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { loadCardPool, type CardPool } from './data';
 import { DraftView } from './components/DraftView';
 import { ShopView } from './components/ShopView';
@@ -12,7 +12,8 @@ import { ReplayView } from './battle/ReplayView';
 import { expandDeck } from './game/deck';
 import { autoDeck } from './game/api';
 import { derivePhase, useDraftStore } from './stores/draftStore';
-import { runScore } from './stores/run';
+import { leaveMsLeft, runScore, type InProgressBattle } from './stores/run';
+import { useCloseStamp, useLeaveExpiry } from './battle/useLeaveExpiry';
 import { decodeDeck, type Decklist } from './share/deckCode';
 import type { Card } from './types/card';
 
@@ -36,12 +37,22 @@ function readReplayIndex(): number | null {
   return raw !== null && Number.isInteger(n) && n >= 0 ? n : null;
 }
 
+// A battle still being played when the page loaded (a reload) goes straight back to it,
+// unless it was closed for 90 s or more: that one is a loss, recorded on load.
+function readInterrupted(): InProgressBattle | null {
+  const saved = useDraftStore.getState().run?.inProgress;
+  if (!saved || saved.leftAt) return null;
+  return (leaveMsLeft(saved, Date.now()) ?? 1) > 0 ? saved : null;
+}
+
 export function App() {
   const [pool, setPool] = useState<CardPool | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [homeOpen, setHomeOpen] = useState(true);
-  const [playing, setPlaying] = useState(false);
+  // A run with a battle in progress opens on that run, not Home.
+  const [homeOpen, setHomeOpen] = useState(() => !useDraftStore.getState().run?.inProgress);
+  const [resuming, setResuming] = useState<InProgressBattle | null>(readInterrupted);
+  const [playing, setPlaying] = useState(() => resuming !== null);
   // Index into run.battles of the battle being replayed: the run screen's Replay button
   // sets it, and ?replay=<i> opens it directly.
   const [replaying, setReplaying] = useState<number | null>(readReplayIndex);
@@ -79,7 +90,15 @@ export function App() {
     deleteHistoryEntry,
     reset,
     quitRun,
+    setInProgress,
   } = useDraftStore();
+  // Past 90 s the battle on screen is lost: back to the run screen.
+  const onExpired = useCallback(() => {
+    setPlaying(false);
+    setResuming(null);
+  }, []);
+  useLeaveExpiry(onExpired);
+  useCloseStamp();
 
   // A ?replay index with no battle behind it goes to the run screen, param dropped.
   const replayMissing = replaying !== null && !run?.battles[replaying];
@@ -136,9 +155,11 @@ export function App() {
       <BattleScreen
         deck={drafted}
         practice={practicing}
+        resume={resuming ?? undefined}
         onExit={() => {
           setPlaying(false);
           setPracticing(false);
+          setResuming(null);
         }}
       />
     );
@@ -254,6 +275,12 @@ export function App() {
       deck={deck}
       run={run}
       onNextBattle={() => setPlaying(true)}
+      onReturn={() => {
+        if (!run?.inProgress) return;
+        setInProgress({ ...run.inProgress, leftAt: null });
+        setResuming(run.inProgress);
+        setPlaying(true);
+      }}
       onReplay={setReplaying}
       onQuit={quitRun}
       onNewDraft={() => start(pool.draftableCards)}

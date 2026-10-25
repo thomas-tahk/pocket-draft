@@ -4,7 +4,7 @@ import type { Card } from '../types/card';
 import { generateOffer } from '../draft/offer';
 import { indexByTier } from '../draft/tiers';
 import { COPY_CAP_BY_NAME } from '../draft/expansions';
-import { newRun, quit, withBattle, type Run, type RunBattle } from './run';
+import { newRun, quit, withBattle, type InProgressBattle, type Run, type RunBattle } from './run';
 
 export const TOTAL_PACKS = 20;
 export const DECK_SIZE = 20;
@@ -50,6 +50,7 @@ type Actions = {
   archiveRun: () => void;
   recordBattle: (battle: RunBattle) => void;
   quitRun: () => void;
+  setInProgress: (battle: InProgressBattle | undefined) => void;
   updateHistoryEntry: (id: string, updates: Partial<Pick<DraftHistoryEntry, 'notes' | 'wins' | 'losses'>>) => void;
   deleteHistoryEntry: (id: string) => void;
   reset: () => void;
@@ -204,6 +205,11 @@ export const useDraftStore = create<State & Actions>()(
       recordBattle: (battle) => {
         const { run } = get();
         if (run) set({ run: withBattle(run, battle) });
+      },
+
+      setInProgress: (inProgress) => {
+        const { run } = get();
+        if (run?.status === 'active') set({ run: { ...run, inProgress } });
       },
 
       quitRun: () => {

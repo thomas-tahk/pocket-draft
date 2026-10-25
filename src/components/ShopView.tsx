@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { AbandonDraft } from './AbandonDraft';
 import type { Card } from '../types/card';
 import { SHOP_TICKETS } from '../stores/draftStore';
 import { COPY_CAP_BY_NAME } from '../draft/expansions';
@@ -119,16 +120,7 @@ export function ShopView({
             <button onClick={onFinalize}>
               {purchasedIds.length === 0 ? 'Skip shop' : 'Continue to deckbuild'}
             </button>
-            <button
-              onClick={() => {
-                if (window.confirm('Cancel this draft? You will lose all picks and purchases.')) {
-                  onCancel();
-                }
-              }}
-              style={{ fontSize: 12 }}
-            >
-              Cancel draft
-            </button>
+            <AbandonDraft loses="all picks and purchases" onAbandon={onCancel} />
           </div>
         </header>
         <p style={{ fontSize: 13, opacity: 0.6, marginTop: 0 }}>

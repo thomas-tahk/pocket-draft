@@ -5,7 +5,7 @@
 - #114 · client picks the seed (≤2^53, JSON-safe); game record exposed only after game over (no mid-game info leak)
 - #114 · rematch after a battle counts as the next battle of the run
 - #115 · any action that starts over (new draft, Auto-draft, Home/reset) archives the current run first: active → quit, saved on its deck's History entry (`run` field) · nothing is silently wiped; end-of-run screen reads it from there
-- #115 · Home is always the first screen on reload, finished runs included · Practice never records into the run
+- #115 · (superseded by #117: Home first on reload, except a battle in progress (→ battle) or a leave countdown (→ run screen)) Home is always the first screen on reload, finished runs included · Practice never records into the run
 - #115 · confirm copy "This ends your current run (W–L)." / "End run and draft" / "Keep run" · DECISION for owner (wording)
 - #115 · Auto-draft (test) creates no History entry, so leaving an auto-draft run drops it instead of archiving · it's a test shortcut; revisit if Auto-draft stays player-facing
 - #116 · mid-run "Start new draft"/"Home" confirm: "This quits your run at W–L." / "Quit run and leave" / "Keep playing" · DECISION for owner (wording); confirm renders in the run panel, not beside the header buttons
@@ -21,5 +21,20 @@
 - #119 · placement: Exit + Back / Play / Forward sit in the gap between the two Actives, "Step n / N" top-left beside the History button, caption under the opponent's points row (overlaps the top of the opponent's hand) · DECISION for owner (layout)
 - #119 · no card zoom or card sheets in replay (board taps are off); stepping redraws instantly, no slide animation
 - #119 · error copy "This replay no longer matches its battle." for any record that fails to rebuild to its recorded result; a ?replay index with no battle goes to the run screen
+- #117 · copy "Leave battle" (in-battle menu, under Concede; no confirm, since returning within 90 s costs nothing) · issue named the label; confirm skipped because it is reversible
+- #117 · copy on the run screen: "You left your battle. It counts as a loss in N s." + "Return to battle" · wording invented; DECISION for owner
+- #117 · copy "Abandon draft" button (was "Cancel draft") and on-screen confirm "Abandon this draft? You will lose all picks so far." (or "all picks and purchases" / "all picks and deck choices") with "Abandon draft" / "Cancel" · issue says abandon and Cancel keeps the draft; wording invented
+- #117 · copy "This battle could not be resumed." + "Start a new battle" when a saved battle no longer rebuilds (e.g. the engine changed) · needed an error state with a way out; starting over drops the saved battle without a loss
+- #117 · the client cannot see the bot's moves or deck mid-game (the server hides the record until game over), so the saved log is the app's own calls in order: each move the player made, and "bot" for each bot step. The bot is deterministic, so replaying them from the seed rebuilds the same game · no Go change allowed; bot deck is not saved, it comes from the seed
+- #117 · game-store calls to the server (new game, move, bot step) now run one at a time · two in flight (React StrictMode starts a game twice in dev) could be applied in a different order than the log, and a rebuild then diverged (seen in about half of runs)
+- #117 · a timed-out battle is finished as a Concede appended to the log, and the game's own record (full actions, bot deck) is stored, so the loss replays; if the rebuild fails, the loss is still recorded with an empty action list and its replay shows the mismatch error · issue said "actions so far"; a replay needs a finished game
+- #117 · the 90 s clock is wall time from the saved leftAt; the loss is recorded by an app-level timer (works from any screen) and on load when the time already passed · tab closed counts the same as tab open
+- #117 · returning to the battle clears the countdown at once, so it cannot expire while the game is rebuilding; Quit run, abandon, or a new draft drops a saved battle without recording it
+- #117 · reload mid-battle goes straight back into the battle (skips Home); reload during the countdown opens the run screen with the countdown · otherwise the owner lands on Home with a battle pending
+- #117 · practice battles: "Leave battle" just exits, no save, no countdown · per the issue brief
 - #118 · Past runs reads the live run for the entry whose id matches run.historyId (no copy kept in history until archived) · one source of truth, no per-battle writes
 - #118 · summary keeps Copy code / Copy link / Export JSON (shared DeckShare component, same handlers as the review screen) · finished runs must not lose features
+- #117 · Home first on reload, except a battle in progress (→ battle) or a leave countdown (→ run screen) · supersedes the #115 line above
+- #117 · closed-tab rule: hiding or closing the page mid-battle (pagehide, or the tab going hidden, since iOS often skips pagehide) stamps closedAt, separate from the menu's leftAt. Back or reloaded within 90 s: straight into the battle. Past 90 s: the battle is a loss, recorded on return · so closing the tab cannot keep a battle alive forever; no countdown is shown for this
+- #117 · copy "Try again" added before "Start a new battle" on the could-not-resume screen
+- #117 · each saved bot step carries the action count after it; a rebuild that disagrees counts as could-not-resume · catches a bot that changed between versions

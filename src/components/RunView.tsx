@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { CardPool } from '../data';
 import { RUN_LOSSES_TO_LOSE, RUN_WINS_TO_WIN, STATUS_LABEL, runLine, runScore, type Run } from '../stores/run';
 import { BattleList } from './BattleList';
+import { LeaveCountdown } from './LeaveCountdown';
 import { ReviewView } from './ReviewView';
 import { RunSummary } from './RunSummary';
 
@@ -10,6 +11,7 @@ type Props = {
   deck: Record<string, number>;
   run: Run | null;
   onNextBattle: () => void;
+  onReturn: () => void;
   onReplay: (index: number) => void;
   onQuit: () => void;
   onNewDraft: () => void;
@@ -33,7 +35,7 @@ function Marks({ kind, count, total }: { kind: 'win' | 'loss'; count: number; to
   );
 }
 
-export function RunView({ pool, deck, run, onNextBattle, onReplay, onQuit, onNewDraft, onHome }: Props) {
+export function RunView({ pool, deck, run, onNextBattle, onReturn, onReplay, onQuit, onNewDraft, onHome }: Props) {
   const [confirmingQuit, setConfirmingQuit] = useState(false);
   const [leaving, setLeaving] = useState<(() => void) | null>(null);
   if (!run) return <ReviewView pool={pool} deck={deck} run={run} onNewDraft={onNewDraft} onHome={onHome} />;
@@ -54,10 +56,14 @@ export function RunView({ pool, deck, run, onNextBattle, onReplay, onQuit, onNew
         </div>
         {ties > 0 && <p className="run-ties">{ties} {ties === 1 ? 'tie' : 'ties'} (count toward neither)</p>}
 
-        <div className="run-next">
-          <button className="run-btn run-btn-primary" onClick={onNextBattle}>Next battle</button>
-          <p className="run-opponent"><span aria-hidden="true">🤖</span> Opponent: practice bot</p>
-        </div>
+        {run.inProgress?.leftAt && <LeaveCountdown battle={run.inProgress} onReturn={onReturn} />}
+
+        {!run.inProgress && (
+          <div className="run-next">
+            <button className="run-btn run-btn-primary" onClick={onNextBattle}>Next battle</button>
+            <p className="run-opponent"><span aria-hidden="true">🤖</span> Opponent: practice bot</p>
+          </div>
+        )}
 
         <h3 className="run-sub">Battles</h3>
         {run.battles.length === 0 ? (

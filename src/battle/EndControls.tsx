@@ -30,13 +30,16 @@ export function endTurnWarning(view: GameView): string | null {
   return `You can still ${what}. End your turn?`;
 }
 
-export function GameMenu({ onConcede }: { onConcede: () => void }) {
+export function GameMenu({ onConcede, onLeave }: { onConcede: () => void; onLeave?: () => void }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="bt-menu">
       <button className="bt-menu-button" aria-label="Menu" data-testid="menu" onClick={() => setOpen(!open)}>☰</button>
       {open && (
-        <button className="bt-btn bt-menu-item" data-testid="menu-concede" onClick={() => { setOpen(false); onConcede(); }}>Concede</button>
+        <>
+          <button className="bt-btn bt-menu-item" data-testid="menu-concede" onClick={() => { setOpen(false); onConcede(); }}>Concede</button>
+          {onLeave && <button className="bt-btn bt-menu-item" data-testid="menu-leave" onClick={() => { setOpen(false); onLeave(); }}>Leave battle</button>}
+        </>
       )}
     </div>
   );
