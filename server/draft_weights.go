@@ -23,10 +23,15 @@ func tallyTypes(picks []draftCard) typeTally {
 }
 
 // weightOf mirrors weights.ts's weightOf: Trainers and Colorless Pokémon are
-// flat 1 (always equally eligible); other types get the type-nudge term.
-func weightOf(c draftCard, tally typeTally) float64 {
-	if c.CardType == "Trainer" || c.CardType == "Colorless" {
-		return 1
+// flat 1 (always equally eligible); other types get the type-nudge term; then
+// a matching synergy multiplies the result once.
+func weightOf(c draftCard, tally typeTally, syn synergy) float64 {
+	w := 1.0
+	if c.CardType != "Trainer" && c.CardType != "Colorless" {
+		w = 1 + typeWeightCoef*float64(tally[c.CardType])
 	}
-	return 1 + typeWeightCoef*float64(tally[c.CardType])
+	if syn.matches(c) {
+		w *= synergyMult
+	}
+	return w
 }

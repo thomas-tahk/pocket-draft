@@ -20,9 +20,92 @@ export function tallyTypes(picks: Card[]): TypeTally {
   return t;
 }
 
+// A candidate that works with the picks has its weight multiplied by this, once,
+// never stacked, however many rules match. Rules:
+//   1. a Trainer's text names a picked Pokémon;
+//   2. a candidate's effect text names a type you have picked Pokémon of;
+//   3. a candidate Pokémon's type is named by the text of one of your picks.
+// A Colorless reference never counts. Mirrored by synergyMult in
+// server/draft_synergy.go.
+export const SYNERGY_MULT = 3;
+
+// Energy symbol letters in card text -> card type ([W], {W}).
+const TYPE_SYMBOLS: Record<string, EnergyType> = {
+  G: 'Grass', R: 'Fire', W: 'Water', L: 'Lightning', P: 'Psychic',
+  F: 'Fighting', D: 'Darkness', M: 'Metal', N: 'Dragon',
+};
+
+// Trainer text, ability and attack effects. Attack costs are not text.
+function effectText(card: Card): string {
+  return [card.trainerText ?? '', card.ability?.effect ?? '', ...(card.attacks ?? []).map((a) => a.effect)].join('\n');
+}
+
+// Non-Colorless types a text names: "<Type> Pokémon", "<Type> Energy", [W] or {W}.
+function typesNamedIn(text: string): EnergyType[] {
+  return Object.entries(TYPE_SYMBOLS)
+    .filter(
+      ([letter, type]) =>
+        text.includes(`[${letter}]`) ||
+        text.includes(`{${letter}}`) ||
+        text.includes(`${type} Pokémon`) ||
+        text.includes(`${type} Energy`),
+    )
+    .map(([, type]) => type);
+}
+
+// Types a card's text names, minus its own type: a card naming its own type is
+// the type weight's job, so it never counts for rule 2 (as a candidate) or
+// rule 3 (as a pick). Trainers have no type, so they are unaffected. Cached per
+// card id; a card's text never changes.
+const namedTypesCache = new Map<string, EnergyType[]>();
+
+function namedTypes(card: Card): EnergyType[] {
+  let types = namedTypesCache.get(card.id);
+  if (!types) {
+    types = typesNamedIn(effectText(card)).filter((t) => t !== card.cardType);
+    namedTypesCache.set(card.id, types);
+  }
+  return types;
+}
+
+export type Synergy = {
+  pickedTypes: Set<EnergyType>; // types of picked Pokémon (not Colorless)
+  textTypes: Set<EnergyType>; // types named in the text of any pick
+  nameText: RegExp | null; // a picked Pokémon's base name inside Trainer text
+};
+
+export const NO_SYNERGY: Synergy = { pickedTypes: new Set(), textTypes: new Set(), nameText: null };
+
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+export function buildSynergy(picks: Card[]): Synergy {
+  const pickedTypes = new Set<EnergyType>();
+  const textTypes = new Set<EnergyType>();
+  const needles: string[] = [];
+  for (const p of picks) {
+    for (const t of namedTypes(p)) textTypes.add(t);
+    if (p.cardType === 'Trainer') continue;
+    if (p.cardType !== 'Colorless') pickedTypes.add(p.cardType);
+    needles.push(escapeRegExp((p.name ?? '').replace(/ ex$/, '')));
+  }
+  const nameText =
+    needles.length > 0 ? new RegExp(`(^|[^\\p{L}])(${needles.join('|')})($|[^\\p{L}])`, 'u') : null;
+  return { pickedTypes, textTypes, nameText };
+}
+
+function matchesSynergy(card: Card, s: Synergy): boolean {
+  if (card.cardType === 'Trainer' && s.nameText?.test(card.trainerText ?? '')) return true;
+  if (card.cardType !== 'Trainer' && s.textTypes.has(card.cardType as EnergyType)) return true;
+  return namedTypes(card).some((t) => s.pickedTypes.has(t));
+}
+
 // Sampling weight for one candidate given the running tally.
 // Trainers and Colorless Pokémon: flat 1 (always equally eligible per rules.md).
-export function weightOf(card: Card, tally: TypeTally): number {
-  if (card.cardType === 'Trainer' || card.cardType === 'Colorless') return 1;
-  return 1 + TYPE_WEIGHT_COEF * (tally[card.cardType] ?? 0);
+// A synergy match multiplies the result once.
+export function weightOf(card: Card, tally: TypeTally, synergy: Synergy = NO_SYNERGY): number {
+  const base =
+    card.cardType === 'Trainer' || card.cardType === 'Colorless'
+      ? 1
+      : 1 + TYPE_WEIGHT_COEF * (tally[card.cardType] ?? 0);
+  return matchesSynergy(card, synergy) ? base * SYNERGY_MULT : base;
 }

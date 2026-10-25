@@ -1,6 +1,6 @@
 import type { Card } from '../types/card';
 import { SLOT_TIER_WEIGHTS, type Tier } from './tiers';
-import { tallyTypes, weightOf } from './weights';
+import { buildSynergy, tallyTypes, weightOf, type Synergy } from './weights';
 
 type Rng = () => number;
 
@@ -25,12 +25,13 @@ function rollTier(rng: Rng): Tier {
 function pickFromTier(
   pool: Card[],
   tally: ReturnType<typeof tallyTypes>,
+  synergy: Synergy,
   exclude: Set<string>,
   rng: Rng,
 ): Card | null {
   const eligible = pool.filter((c) => !exclude.has(c.id));
   if (eligible.length === 0) return null;
-  const weights = eligible.map((c) => weightOf(c, tally));
+  const weights = eligible.map((c) => weightOf(c, tally, synergy));
   return pickWeighted(eligible, weights, rng);
 }
 
@@ -50,19 +51,20 @@ export function generateOffer(
   { isPack1, picks, rng = Math.random }: OfferOptions,
 ): Card[] {
   const tally = tallyTypes(picks);
+  const synergy = buildSynergy(picks);
   const offer: Card[] = [];
   const used = new Set<string>();
 
   for (let slot = 0; slot < SLOTS_PER_PACK; slot++) {
     const targetTier: Tier = isPack1 && slot === SLOTS_PER_PACK - 1 ? 1 : rollTier(rng);
 
-    let card = pickFromTier(byTier[targetTier], tally, used, rng);
+    let card = pickFromTier(byTier[targetTier], tally, synergy, used, rng);
 
     if (!card) {
       // Tier ran out (e.g. tier 1 has no eligible cards left). Step through other tiers.
       for (const t of TIER_ORDER) {
         if (t === targetTier) continue;
-        card = pickFromTier(byTier[t], tally, used, rng);
+        card = pickFromTier(byTier[t], tally, synergy, used, rng);
         if (card) break;
       }
     }
