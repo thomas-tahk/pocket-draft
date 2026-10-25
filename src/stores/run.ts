@@ -9,7 +9,7 @@ export type RunStatus = 'active' | 'won' | 'lost' | 'quit';
 // One finished game, with what it takes to replay it (ADR-0005): the seed, both
 // decks as card ids in dealt order, and every applied move, bot's included.
 export type RunBattle = {
-  result: 'win' | 'loss';
+  result: 'win' | 'loss' | 'tie';
   seed: number;
   yourDeck: string[];
   botDeck: string[];
@@ -27,9 +27,21 @@ export function newRun(deck: Record<string, number>): Run {
   return { deck: { ...deck }, battles: [], status: 'active' };
 }
 
-export function runScore(run: Pick<Run, 'battles'>): { wins: number; losses: number } {
-  const wins = run.battles.filter((b) => b.result === 'win').length;
-  return { wins, losses: run.battles.length - wins };
+// A tie counts toward neither wins nor losses.
+export function runScore(run: Pick<Run, 'battles'>): { wins: number; losses: number; ties: number } {
+  const count = (result: RunBattle['result']) => run.battles.filter((b) => b.result === result).length;
+  return { wins: count('win'), losses: count('loss'), ties: count('tie') };
+}
+
+export function runLine(run: Run): string {
+  const { wins, losses, ties } = runScore(run);
+  const tieText = ties > 0 ? `, ${ties} ${ties === 1 ? 'tie' : 'ties'}` : '';
+  return `Run: ${wins}–${losses}${tieText}`;
+}
+
+// Quitting ends an active run; any other run is unchanged.
+export function quit(run: Run): Run {
+  return run.status === 'active' ? { ...run, status: 'quit' } : run;
 }
 
 // The run after a battle ends. A finished run, or a battle already recorded

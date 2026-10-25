@@ -4,7 +4,7 @@ import type { Card } from '../types/card';
 import { generateOffer } from '../draft/offer';
 import { indexByTier } from '../draft/tiers';
 import { COPY_CAP_BY_NAME } from '../draft/expansions';
-import { newRun, withBattle, type Run, type RunBattle } from './run';
+import { newRun, quit, withBattle, type Run, type RunBattle } from './run';
 
 export const TOTAL_PACKS = 20;
 export const DECK_SIZE = 20;
@@ -183,7 +183,7 @@ export const useDraftStore = create<State & Actions>()(
 
       quitRun: () => {
         const { run } = get();
-        if (run?.status === 'active') set({ run: { ...run, status: 'quit' } });
+        if (run) set({ run: quit(run) });
       },
 
       updateHistoryEntry: (id, updates) => {

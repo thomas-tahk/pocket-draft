@@ -4,7 +4,7 @@ import type { Card, EnergyType } from '../types/card';
 import type { CardPool } from '../data';
 import { tallyTypes } from '../draft/weights';
 import { encodeDeck } from '../share/deckCode';
-import { runScore, type Run } from '../stores/run';
+import { runLine, type Run } from '../stores/run';
 import { CardTile, type HoverPayload } from './CardTile';
 import { CardPreview, type HoverState } from './CardPreview';
 
@@ -102,7 +102,7 @@ export function ReviewView({ pool, deck, run, onPlay, onNewDraft, onHome }: Prop
         <h1 style={{ fontSize: 20, margin: 0 }}>Deck finalized</h1>
         {run && (
           <span data-testid="run-record">
-            Run: {runScore(run).wins}–{runScore(run).losses} ({run.status})
+            {runLine(run)} ({run.status})
           </span>
         )}
         <div style={{ display: 'flex', gap: 8 }}>

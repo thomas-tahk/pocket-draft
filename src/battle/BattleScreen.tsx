@@ -12,7 +12,7 @@ import './battle.css';
 // Pocket-style board, with End Turn, Concede and the end screen (1.27). Given a
 // drafted deck (1.31) it starts a game with it; Rematch reuses that deck.
 export function BattleScreen({ deck, onExit }: { deck?: string[]; onExit?: () => void }) {
-  const { view, error, init, startGame, dispatch, runBot, botStuck, restart } = useGameStore();
+  const { view, status, error, init, startGame, dispatch, runBot, botStuck, restart } = useGameStore();
   const [confirm, setConfirm] = useState<Confirm | null>(null);
 
   useEffect(() => {
@@ -23,11 +23,14 @@ export function BattleScreen({ deck, onExit }: { deck?: string[]; onExit?: () =>
   // A run's game ends once: save its result and replayable record. The store
   // ignores a seed it already holds, so a re-render cannot record it twice.
   const recordBattle = useDraftStore((s) => s.recordBattle);
+  // On mount this runs after startGame's effect has cleared the store, but with
+  // the render's stale values, so read the store's current game here.
   useEffect(() => {
-    if (!deck || view?.phase !== 'over' || (view.outcome !== 'win' && view.outcome !== 'loss')) return;
-    const { seed, you, bot, actions } = view.record;
-    recordBattle({ result: view.outcome, seed, yourDeck: you, botDeck: bot, actions, endedAt: new Date().toISOString() });
-  }, [deck, view, recordBattle]);
+    const { view: current, status: now } = useGameStore.getState();
+    if (!deck || now !== 'ready' || current?.phase !== 'over' || !current.outcome) return;
+    const { seed, you, bot, actions } = current.record;
+    recordBattle({ result: current.outcome, seed, yourDeck: you, botDeck: bot, actions, endedAt: new Date().toISOString() });
+  }, [deck, status, view, recordBattle]);
 
   // The bot (seat 1) plays whenever it is its move, one step at a time (F14).
   const { step, canSkip, skip, skipping } = useOpponentTurn(view, botStuck, runBot);

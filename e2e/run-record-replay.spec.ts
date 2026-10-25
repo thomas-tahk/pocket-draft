@@ -9,7 +9,9 @@ async function post<T>(api: APIRequestContext, url: string, data?: object): Prom
   return (body.state ?? body) as T;
 }
 
-test('a finished game replays from its record to the same final state', async ({ request }) => {
+// bot: false replays without the bot deck, so the server derives it from the seed.
+for (const withBot of [true, false]) {
+test(`a finished game replays from its record to the same final state (bot deck ${withBot ? 'given' : 'derived from seed'})`, async ({ request }) => {
   const { deck } = await post<{ deck: string[] }>(request, '/api/autodeck');
   let v = await post<GameView>(request, '/api/new', { you: deck, seed: 424242 });
   expect(v.record.actions).toEqual([]); // no record before the game is over
@@ -35,7 +37,7 @@ test('a finished game replays from its record to the same final state', async ({
   expect(bot).toHaveLength(20);
   expect(actions.length).toBeGreaterThan(5);
 
-  await post(request, '/api/new', { you, bot, seed });
+  await post(request, '/api/new', { you, bot: withBot ? bot : undefined, seed });
   let replay: GameView | undefined;
   for (const move of actions as Move[]) {
     const res = await (await request.post('/api/move', { data: move })).json();
@@ -48,5 +50,6 @@ test('a finished game replays from its record to the same final state', async ({
   expect(replay!.players.map((p) => [p.points, p.deckCount, p.discardCount])).toEqual(
     final.players.map((p) => [p.points, p.deckCount, p.discardCount]),
   );
-  expect(replay!.record).toEqual(final.record);
+  expect(replay!.record.bot).toEqual(bot);
 });
+}

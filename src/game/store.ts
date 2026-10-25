@@ -41,7 +41,7 @@ export const useGameStore = create<State & Actions>((set, get) => ({
   },
 
   startGame: async (deck, seed = freshSeed()) => {
-    set({ status: 'loading', error: null, deck });
+    set({ status: 'loading', error: null, deck, view: null });
     try {
       const view = await newGame({ deck, seed });
       set({ view, status: 'ready', botStuck: false });
