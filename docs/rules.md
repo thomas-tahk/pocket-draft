@@ -96,14 +96,14 @@ If the player has more than 20 cards after shop purchases, they cut down to exac
 
 Players play games with their drafted deck until a win/loss threshold is reached.
 
-- **Starting threshold (to be tested):** 7 wins or 3 losses
+- **Threshold:** 5 wins or 2 losses (owner, 2026-10-24)
 - Specific numbers subject to adjustment based on playtesting.
 
 ---
 
 ## Matchmaking
 
-- Open matchmaking for v1.
+- Open matchmaking for v1: queue against a real player; after 2 minutes with no match, fall back to a bot playing another player's drafted deck, clearly marked as a bot (owner, 2026-10-24).
 - MMR-based skill matching is a future consideration.
 
 ---
@@ -112,4 +112,4 @@ Players play games with their drafted deck until a win/loss threshold is reached
 
 - **Conquest format:** Players build 3 distinct decks and must win at least 1 game with each (see `swucube-rules.md`). Deferred — potential tournament mode after Arena is implemented.
 - **Ticket count:** Starting at 4, to be tuned through playtesting.
-- **Win/loss threshold:** Starting at 7W/3L, to be tuned through playtesting.
+- **Win/loss threshold:** 5W/2L, to be tuned through playtesting.

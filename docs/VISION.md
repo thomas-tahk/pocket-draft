@@ -54,7 +54,7 @@ Three modes of play, plus replay across all of them.
 | Mode | Deck comes from | Wrapped by | People |
 |---|---|---|---|
 | **Ranked** | constructed, full pool | ladder + rating, always on | PvP, always |
-| **Draft** | a solo draft session | a run (3 losses / 7 wins) | solo draft, then battle |
+| **Draft** | a solo draft session | a run (5 wins / 2 losses) | solo draft, then battle |
 | **Custom** | constructed, or given | a preset's rules, or nothing | solo or invited |
 
 **Ranked is PvP without exception.** A rating against a bot means nothing, so no
