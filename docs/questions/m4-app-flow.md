@@ -16,3 +16,8 @@
 - #118 · Past runs rows with a `run` show W/L from runScore plus "Run won/lost/quit" label; expanded view shows "Record W–L, from the run." instead of inputs; notes stay editable · only W/L is read-only per the issue
 - #118 · heading stays "Draft history" (existing test pins it) though the button says Past runs · not renaming
 - #118 · done check seeds a finalized deck + history entry via localStorage, since Auto-draft makes no history entry · so the run can archive to Past runs
+- #119 · replay caption wording (placeholder, DECISION for owner): "Battle start", "You Attacked · <card>" (History's labels, You/Opponent), end lines "You win 3–1" / "You lose 1–3" / "Tie 3–3" / "You conceded — Opponent wins" / "Opponent conceded — You win"
+- #119 · Play advances one step every 700 ms; Play at the last step restarts from step 0 · DECISION for owner (pace)
+- #119 · placement: Exit + Back / Play / Forward sit in the gap between the two Actives, "Step n / N" top-left beside the History button, caption under the opponent's points row (overlaps the top of the opponent's hand) · DECISION for owner (layout)
+- #119 · no card zoom or card sheets in replay (board taps are off); stepping redraws instantly, no slide animation
+- #119 · error copy "This replay no longer matches its battle." for any record that fails to rebuild to its recorded result; a ?replay index with no battle goes to the run screen

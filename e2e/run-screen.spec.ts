@@ -35,7 +35,7 @@ test('two conceded battles are listed in order as losses; run lost, Next battle 
   await expect(rows).toHaveCount(2);
   await expect(rows.nth(0)).toContainText('Battle 1: Loss');
   await expect(rows.nth(1)).toContainText('Battle 2: Loss');
-  await expect(rows.nth(0).getByRole('button', { name: 'Replay' })).toBeDisabled();
+  await expect(rows.nth(0).getByRole('button', { name: 'Replay' })).toBeEnabled();
   await expect(page.getByTestId('run-status')).toHaveText('Run lost');
   await expect(page.getByRole('button', { name: 'Next battle' })).toHaveCount(0);
   await page.screenshot({ path: 'test-results/run-screen-lost.png', fullPage: true });

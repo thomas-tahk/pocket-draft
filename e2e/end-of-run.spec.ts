@@ -45,6 +45,10 @@ test('two concessions end the run on a summary; Draft again keeps it in Past run
   await expect(rows.nth(1)).toContainText('Battle 2: Loss');
   await page.screenshot({ path: 'test-results/end-of-run-summary.png', fullPage: true });
 
+  await rows.nth(0).getByRole('button', { name: 'Replay' }).click();
+  await page.getByTestId('replay-exit').click();
+  await expect(page.getByTestId('run-status')).toHaveText('Run lost');
+
   await page.getByRole('button', { name: 'Draft again' }).click();
   page.once('dialog', (d) => d.accept());
   await page.getByRole('button', { name: 'Cancel draft' }).click();

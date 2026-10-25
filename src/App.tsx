@@ -8,6 +8,7 @@ import { SharedDeckView } from './components/SharedDeckView';
 import { HomeView } from './components/HomeView';
 import { HistoryView } from './components/HistoryView';
 import { BattleScreen } from './battle/BattleScreen';
+import { ReplayView } from './battle/ReplayView';
 import { expandDeck } from './game/deck';
 import { autoDeck } from './game/api';
 import { derivePhase, useDraftStore } from './stores/draftStore';
@@ -27,14 +28,30 @@ function readSharedDeck(): Decklist | null {
   }
 }
 
+// ?replay=<i> opens run.battles[i] as a replay (handy for sharing and tests). An index
+// with no battle behind it is dropped (see the effect in App).
+function readReplayIndex(): number | null {
+  const raw = new URLSearchParams(window.location.search).get('replay');
+  const n = Number(raw);
+  return raw !== null && Number.isInteger(n) && n >= 0 ? n : null;
+}
+
 export function App() {
   const [pool, setPool] = useState<CardPool | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [homeOpen, setHomeOpen] = useState(true);
   const [playing, setPlaying] = useState(false);
+  // Index into run.battles of the battle being replayed: the run screen's Replay button
+  // sets it, and ?replay=<i> opens it directly.
+  const [replaying, setReplaying] = useState<number | null>(readReplayIndex);
   const [practicing, setPracticing] = useState(false);
   const [sharedDeck, setSharedDeck] = useState<Decklist | null>(readSharedDeck);
+
+  const closeReplay = () => {
+    window.history.replaceState({}, '', window.location.pathname);
+    setReplaying(null);
+  };
 
   useEffect(() => {
     loadCardPool().then(setPool).catch((e) => setError(String(e)));
@@ -63,6 +80,14 @@ export function App() {
     reset,
     quitRun,
   } = useDraftStore();
+
+  // A ?replay index with no battle behind it goes to the run screen, param dropped.
+  const replayMissing = replaying !== null && !run?.battles[replaying];
+  useEffect(() => {
+    if (!replayMissing) return;
+    closeReplay();
+    setHomeOpen(false);
+  }, [replayMissing]);
 
   const draftableById = useMemo(() => {
     if (!pool) return new Map<string, Card>();
@@ -118,6 +143,9 @@ export function App() {
       />
     );
   }
+
+  const replayed = replaying !== null ? run?.battles[replaying] : undefined;
+  if (replayed) return <ReplayView battle={replayed} onExit={closeReplay} />;
 
   if (error) return <main style={{ padding: 24 }}>Error: {error}</main>;
   if (!pool) return <main style={{ padding: 24 }}>Loading card data…</main>;
@@ -225,6 +253,7 @@ export function App() {
       deck={deck}
       run={run}
       onNextBattle={() => setPlaying(true)}
+      onReplay={setReplaying}
       onQuit={quitRun}
       onNewDraft={() => start(pool.draftableCards)}
       onHome={reset}

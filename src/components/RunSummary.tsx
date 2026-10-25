@@ -4,7 +4,7 @@ type Props = {
   run: Run;
   onDraftAgain: () => void;
   onHome: () => void;
-  onReplay?: (index: number) => void; // absent until the replay viewer lands
+  onReplay: (index: number) => void;
 };
 
 const RESULT = { win: 'Win', loss: 'Loss', tie: 'Tie' } as const;
@@ -26,14 +26,7 @@ export function RunSummary({ run, onDraftAgain, onHome, onReplay }: Props) {
           {run.battles.map((b, i) => (
             <li key={b.seed} className="run-battle">
               <span>Battle {i + 1}: <strong>{RESULT[b.result]}</strong></span>
-              <button
-                className="run-btn"
-                disabled={!onReplay}
-                title={onReplay ? undefined : 'Replay coming'}
-                onClick={() => onReplay?.(i)}
-              >
-                Replay
-              </button>
+              <button className="run-btn" onClick={() => onReplay(i)}>Replay</button>
             </li>
           ))}
         </ol>
