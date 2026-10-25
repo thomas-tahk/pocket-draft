@@ -6,7 +6,7 @@ import (
 )
 
 func TestTopUpToDeckSizeRespectsCapAndReachesSize(t *testing.T) {
-	// 16 "picks": "Dupe" was drafted 3 times (across different packs, which the
+	// 20 "picks": "Dupe" was drafted 3 times (across different packs, which the
 	// real draft allows), everything else once. The cap must still hold even
 	// though a raw pick count already exceeds it.
 	picks := []draftCard{
@@ -14,7 +14,7 @@ func TestTopUpToDeckSizeRespectsCapAndReachesSize(t *testing.T) {
 		{rawCard: rawCard{ID: "dupe", Name: "Dupe"}, DraftRarity: rarityDot1},
 		{rawCard: rawCard{ID: "dupe", Name: "Dupe"}, DraftRarity: rarityDot1},
 	}
-	for i := 0; i < 13; i++ {
+	for i := 0; i < 17; i++ {
 		name := fmt.Sprintf("solo-%d", i)
 		picks = append(picks, draftCard{rawCard: rawCard{ID: name, Name: name}, DraftRarity: rarityDot1})
 	}

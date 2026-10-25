@@ -37,8 +37,8 @@ func attackTypes(deck []engine.Card) map[engine.Energy]bool {
 	return types
 }
 
-// A finished deck holds no Trainer its drafter did not pick (#107: no free
-// universals), for the bot and for the auto-draft deck alike.
+// A finished deck holds no Trainer its drafter did not pick (#107), for the
+// bot and for the auto-draft deck alike.
 func TestBotDeckHasNoUnpickedTrainers(t *testing.T) {
 	useRealCards(t)
 	for seed := uint64(1); seed <= botSeeds; seed++ {

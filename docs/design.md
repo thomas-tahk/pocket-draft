@@ -84,7 +84,7 @@ pocket-draft/
 Applied by `src/data/loader.ts`:
 - Drop cosmetic variants (☆/☆☆/☆☆☆/♕)
 - Drop the entire `A4b` set (reprint-only "Deluxe Pack: ex" — every base-art card has a functional duplicate)
-- Drop the 5 free-universal trainers (Potion, X Speed, Red Card, Poké Ball, Professor's Research) — they're available freely at deckbuild
+- Poké Ball and Professor's Research are ordinary draftable Trainers — no free universals since the 2026-10 rework
 - For Promo cards, infer draft rarity from `exKind` (EX/Mega-EX → ◊◊◊◊, regular → ◊)
 - Dedupe the `pa-064` / `pa-065` Rayquaza ex pair (same functional signature) — keep lowest id
 - No general functional dedup: multi-pack cards (e.g. A1 Eevee in three packs) are kept as separate entries for pack-composition tables

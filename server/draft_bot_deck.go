@@ -265,8 +265,9 @@ func (b *botDeckBuilder) fillFrom(picks []draftCard) {
 	b.addGroups(trainers, 2)
 }
 
-// botDeckIDs turns the bot's draft picks into 20 card ids: each Pokémon pick with its under-evolutions, then Trainers,
-// then second copies. The always-legal fallback is the plain top-up.
+// botDeckIDs turns the bot's draft picks into 20 card ids: each Pokémon pick
+// with its under-evolutions, then Trainers, then second copies. The
+// always-legal fallback is the plain top-up.
 func botDeckIDs(picks []draftCard, byName map[string][]rawCard) []string {
 	b := &botDeckBuilder{count: map[string]int{}, types: typeSet{}, byName: byName, limit: botMaxAttackTypes}
 	b.fillFrom(picks)
