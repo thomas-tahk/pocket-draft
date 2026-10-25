@@ -188,7 +188,17 @@ export const useDraftStore = create<State & Actions>()(
         set({ ...activeStateInitial, history });
       },
     }),
-    { name: 'pocket-draft-v0.4' },
+    {
+      name: 'pocket-draft-v0.4',
+      // v1: the draft grew from 16 to 20 picks and lost the free universals, so a
+      // saved v0 draft cannot resume. Keep finished history, drop the active draft.
+      version: 1,
+      migrate: (persisted, version) => {
+        if (version >= 1) return persisted as State & Actions;
+        const { history = [] } = persisted as Partial<State>;
+        return { ...initialState, history } as State & Actions;
+      },
+    },
   ),
 );
 
