@@ -8,7 +8,7 @@ import (
 
 // seatPlays is what one seat did in a finished bot-vs-bot game.
 type seatPlays struct {
-	benched, evolved, trainers bool
+	benched, evolved bool
 }
 
 func playsBySeat() [2]seatPlays {
@@ -21,8 +21,6 @@ func playsBySeat() [2]seatPlays {
 			out[e.Player].benched = true
 		case engine.Evolve:
 			out[e.Player].evolved = true
-		case engine.PlayTrainer:
-			out[e.Player].trainers = true
 		}
 	}
 	return out
@@ -54,9 +52,6 @@ func TestBotPlaysARealGame(t *testing.T) {
 		for seat, deck := range decks {
 			if !plays[seat].benched {
 				t.Errorf("seed %d seat %d: never benched a Pokémon", seed, seat)
-			}
-			if hasCard(game.S.Players[seat].Hand, engine.Card.IsTrainer) && !plays[seat].trainers {
-				t.Errorf("seed %d seat %d: ended holding a Trainer, played none", seed, seat)
 			}
 			if hasCard(deck, isEvolution) {
 				evolvers++

@@ -55,7 +55,7 @@ func TestTopUpToDeckSizePrefersRarestTierFirst(t *testing.T) {
 }
 
 // syntheticDraftPool installs a small but varied rawByID so draftBotDeck can
-// run a full 16-round draft without depending on the scraped public/data/cards.json.
+// run a full 20-round draft without depending on the scraped public/data/cards.json.
 func syntheticDraftPool(t *testing.T) {
 	t.Helper()
 	saved := rawByID

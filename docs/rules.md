@@ -67,7 +67,7 @@ Each ticket buys **one deck copy** of a chosen card. Spend two tickets on the sa
 - 1 card selected from each of the 20 packs (the 4 unchosen cards per pack), scored and filtered by:
   - Synergy with the player's drafted cards
   - Rarity weighting
-- Results in up to **16 candidates** from the undrafted pool.
+- Results in up to **20 candidates** from the undrafted pool.
 - Total shop pool: ~26–28 cards.
 
 ### Shop purpose
