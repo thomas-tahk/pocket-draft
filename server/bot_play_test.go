@@ -78,17 +78,15 @@ func TestBotPlaysARealGame(t *testing.T) {
 			}
 		}
 	}
-	// Without the free universals a Trainer-heavy pick can leave a hand with
-	// one Basic (#107); #110 rebuilds the bot's picker.
-	if benchedSeats*10 < seats*9 {
-		t.Errorf("bot benched a Pokémon in %d of %d seats, want at least 90%%", benchedSeats, seats)
+	t.Logf("seats %d, benched %d; Trainer holders %d, played %d; evolvers %d, evolved %d", seats, benchedSeats, holders, holdersPlayed, evolvers, evolved)
+	if benchedSeats != seats {
+		t.Errorf("bot benched a Pokémon in %d of %d seats, want every seat", benchedSeats, seats)
 	}
-	// Seats whose deck holds a non-Fossil Trainer should play one. Measured on
-	// these 50 seeds (100 seats): 7 such seats, 5 played one (71%); the other
-	// two are presumably conditional Trainers (heal, switch) the bot holds back. The floor is 50%. The
-	// count guard stops the check passing with no Trainer decks at all.
-	if holders == 0 || holdersPlayed*2 < holders {
-		t.Errorf("bot played a Trainer in %d of %d seats whose deck had one, want at least half", holdersPlayed, holders)
+	// Most seats hold a non-Fossil Trainer now (#110); a clear majority of
+	// them should play one. The count guard stops the check passing with few
+	// Trainer decks.
+	if holders*2 < seats || holdersPlayed*10 < holders*7 {
+		t.Errorf("bot played a Trainer in %d of %d seats whose deck had one (of %d seats), want 70%% of at least half the seats", holdersPlayed, holders, seats)
 	}
 	if evolved*2 < evolvers {
 		t.Errorf("bot evolved in %d of %d games with an evolution, want at least half", evolved, evolvers)

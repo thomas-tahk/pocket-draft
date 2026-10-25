@@ -14,6 +14,7 @@ import (
 const (
 	botMaxAttackTypes = 2
 	botTrainerPicks   = 4 // Trainers the draft takes before preferring Pokémon again
+	botSecondCopy     = 4 // score bonus for a card the draft already holds one copy of
 )
 
 type typeSet map[engine.Energy]bool
@@ -46,6 +47,16 @@ func (have typeSet) fitsWithin(rc rawCard, limit int) bool {
 	return n <= limit
 }
 
+// has reports whether every typed Energy the card asks for is already drafted.
+func (have typeSet) has(rc rawCard) bool {
+	for e := range costTypes(rc) {
+		if !have[e] {
+			return false
+		}
+	}
+	return true
+}
+
 func (have typeSet) add(rc rawCard) {
 	for e := range costTypes(rc) {
 		have[e] = true
@@ -68,7 +79,14 @@ func botPick(offer, picks []draftCard, byName map[string][]rawCard) draftCard {
 	}
 	best, bestScore := offer[0], -1
 	for _, c := range offer {
-		if s := botPickScore(c, have, trainers, byName) - copies[c.Name]; copies[c.Name] < 2 && s > bestScore {
+		if copies[c.Name] >= 2 {
+			continue
+		}
+		s := botPickScore(c, have, trainers, byName)
+		if s > 0 && copies[c.Name] == 1 {
+			s += botSecondCopy
+		}
+		if s > bestScore {
 			best, bestScore = c, s
 		}
 	}
@@ -78,7 +96,7 @@ func botPick(offer, picks []draftCard, byName map[string][]rawCard) draftCard {
 func botPickScore(c draftCard, have typeSet, trainers int, byName map[string][]rawCard) int {
 	if c.CardType == "Trainer" {
 		if trainers < botTrainerPicks {
-			return 6
+			return 11
 		}
 		return 2
 	}
@@ -89,7 +107,14 @@ func botPickScore(c draftCard, have typeSet, trainers int, byName map[string][]r
 	if line == nil {
 		return 0 // an evolution whose earlier stage can't be had
 	}
-	return 12 - len(line)
+	score := 12 - len(line)
+	if c.IsEx {
+		score++
+	}
+	if !have.has(c.rawCard) && len(have) > 0 {
+		score-- // prefer staying inside the types already drafted
+	}
+	return score
 }
 
 // nameIndex maps a card name to every printing, lowest id first.
@@ -169,24 +194,75 @@ func (b *botDeckBuilder) addCopies(line []rawCard, target int) {
 	}
 }
 
-func (b *botDeckBuilder) addPicks(picks []draftCard, trainers bool, target int) {
+// pickGroup is one distinct picked card and how many times it was picked.
+type pickGroup struct {
+	card  draftCard
+	times int
+}
+
+// groupPicks collapses the picks by name, keeping first-pick order.
+func groupPicks(picks []draftCard) []pickGroup {
+	var groups []pickGroup
+	index := map[string]int{}
 	for _, p := range picks {
-		if (p.CardType == "Trainer") != trainers {
+		if i, ok := index[p.Name]; ok {
+			groups[i].times++
 			continue
 		}
-		if trainers {
-			b.addCopies([]rawCard{p.rawCard}, target)
+		index[p.Name] = len(groups)
+		groups = append(groups, pickGroup{p, 1})
+	}
+	return groups
+}
+
+// addGroups raises each group's card (with its line, for Pokémon) to target
+// copies where it fits.
+func (b *botDeckBuilder) addGroups(groups []pickGroup, target int) {
+	for _, g := range groups {
+		if g.card.CardType == "Trainer" {
+			b.addCopies([]rawCard{g.card.rawCard}, target)
 		} else {
-			b.addCopies(lineFrom(p.rawCard, b.types, b.byName), target)
+			b.addCopies(lineFrom(g.card.rawCard, b.types, b.byName), target)
 		}
 	}
 }
 
+// rankGroups splits the picks into Pokémon (picked twice first, then the
+// cheapest line) and Trainers (pick order, at most botTrainerPicks).
+func (b *botDeckBuilder) rankGroups(picks []draftCard) (pokemon, trainers []pickGroup) {
+	for _, g := range groupPicks(picks) {
+		if g.card.CardType == "Trainer" {
+			trainers = append(trainers, g)
+		} else {
+			pokemon = append(pokemon, g)
+		}
+	}
+	cost := func(g pickGroup) int { return len(lineFrom(g.card.rawCard, b.types, b.byName)) }
+	sort.SliceStable(pokemon, func(i, j int) bool {
+		if pokemon[i].times != pokemon[j].times {
+			return pokemon[i].times > pokemon[j].times
+		}
+		return cost(pokemon[i]) < cost(pokemon[j])
+	})
+	return pokemon, trainers[:min(len(trainers), botTrainerPicks)]
+}
+
+// fillFrom builds the deck around pairs: Trainers picked twice at two, the
+// other Trainers, then Pokémon lines two copies at a time (cheapest first).
+// Singles and second Trainer copies only fill what is left.
 func (b *botDeckBuilder) fillFrom(picks []draftCard) {
-	b.addPicks(picks, false, 1)
-	b.addPicks(picks, true, 1)
-	b.addPicks(picks, false, 2)
-	b.addPicks(picks, true, 2)
+	pokemon, trainers := b.rankGroups(picks)
+	var pairs []pickGroup
+	for _, g := range trainers {
+		if g.times >= 2 {
+			pairs = append(pairs, g)
+		}
+	}
+	b.addGroups(pairs, 2)
+	b.addGroups(trainers, 1)
+	b.addGroups(pokemon, 2)
+	b.addGroups(pokemon, 1)
+	b.addGroups(trainers, 2)
 }
 
 // botDeckIDs turns the bot's draft picks into 20 card ids: each Pokémon pick with its under-evolutions, then Trainers,
