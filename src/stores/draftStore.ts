@@ -22,6 +22,7 @@ export type DraftHistoryEntry = {
   notes: string;
   wins: number;
   losses: number;
+  run?: Run; // the run played with this deck, saved when it is left
 };
 
 type State = {
@@ -46,6 +47,7 @@ type Actions = {
   removeFromDeck: (cardId: string) => void;
   finalizeDeck: () => void;
   autoDraft: (picks: string[], deck: string[]) => void;
+  archiveRun: () => void;
   recordBattle: (battle: RunBattle) => void;
   quitRun: () => void;
   updateHistoryEntry: (id: string, updates: Partial<Pick<DraftHistoryEntry, 'notes' | 'wins' | 'losses'>>) => void;
@@ -69,6 +71,11 @@ const initialState: State = {
   history: [],
 };
 
+function sameDeck(a: Record<string, number>, b: Record<string, number>): boolean {
+  const keys = Object.keys(a);
+  return keys.length === Object.keys(b).length && keys.every((k) => a[k] === b[k]);
+}
+
 function newEntryId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -78,7 +85,24 @@ export const useDraftStore = create<State & Actions>()(
     (set, get) => ({
       ...initialState,
 
+      // Leaving a run never wipes it: an active run is quit, then saved on the
+      // history entry made for its deck (an auto-draft, or an entry that is gone, drops it).
+      archiveRun: () => {
+        const { run, history } = get();
+        if (!run) return;
+        const ended = quit(run);
+        // Old saves have no historyId: fall back to the entry with the same deck.
+        const target = history.find((e) =>
+          ended.historyId ? e.id === ended.historyId : !e.run && sameDeck(e.deck, ended.deck),
+        );
+        set({
+          run: null,
+          history: history.map((e) => (e === target ? { ...e, run: ended } : e)),
+        });
+      },
+
       start: (pool) => {
+        get().archiveRun();
         const byTier = indexByTier(pool);
         const firstOffer = generateOffer(byTier, { isPack1: true, picks: [] });
         const { history } = get();
@@ -164,12 +188,13 @@ export const useDraftStore = create<State & Actions>()(
         };
         // FIFO cap: newest first, drop oldest beyond HISTORY_CAP.
         const nextHistory = [entry, ...history].slice(0, HISTORY_CAP);
-        set({ deckFinalized: true, history: nextHistory, run: newRun(deck) });
+        set({ deckFinalized: true, history: nextHistory, run: { ...newRun(deck), historyId: entry.id } });
       },
 
       // Jumps straight to review with a finished draft, for testing battles.
       // Not saved to history: nobody drafted it.
       autoDraft: (picks, deck) => {
+        get().archiveRun();
         const counts: Record<string, number> = {};
         for (const id of deck) counts[id] = (counts[id] ?? 0) + 1;
         const { history } = get();
@@ -199,6 +224,7 @@ export const useDraftStore = create<State & Actions>()(
       },
 
       reset: () => {
+        get().archiveRun();
         const { history } = get();
         set({ ...activeStateInitial, history });
       },

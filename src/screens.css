@@ -129,3 +129,48 @@
     justify-content: stretch;
   }
 }
+
+/* Opening screen (HomeView): one column, 16px gutters on a phone. */
+.home {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+  text-align: center;
+}
+.home button { min-height: 44px; font-size: 16px; padding: 8px 16px; }
+.home .home-primary { min-height: 64px; font-size: 22px; }
+.home-secondary { display: flex; flex-direction: column; gap: 8px; }
+.home-note { opacity: 0.75; font-size: 14px; margin: 0; }
+.home .home-link { background: none; border: none; text-decoration: underline; cursor: pointer; font-size: 14px; }
+.home button:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+/* Run screen (#116). Shapes carry the meaning: round = win, square = loss, filled = earned. */
+.run-panel { border: 2px solid #8886; border-radius: 8px; padding: 16px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.run-title, .run-sub { margin: 0; font-size: 18px; }
+.run-sub { font-size: 15px; }
+.run-record, .run-status, .run-ties, .run-empty, .run-opponent { margin: 0; }
+.run-status { font-weight: 700; }
+.run-marks-wrap { display: flex; gap: 24px; flex-wrap: wrap; }
+.run-marks { display: flex; flex-direction: column; gap: 4px; }
+.run-marks-label { font-size: 13px; font-weight: 600; }
+.run-marks-row { display: flex; gap: 6px; }
+.run-mark { width: 28px; height: 28px; box-sizing: border-box; border: 2px solid currentColor; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+.run-mark-win { border-radius: 50%; }
+.run-mark-loss { border-radius: 2px; }
+.run-mark.filled { background: var(--ink); -webkit-text-fill-color: var(--surface); }
+.run-next { display: flex; flex-direction: column; gap: 6px; }
+.run-battles { list-style: none; margin: 0; padding: 0; width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 6px; }
+.run-battle { display: flex; justify-content: space-between; align-items: center; gap: 12px; border-bottom: 1px solid #8884; padding-bottom: 6px; }
+.run-btn { min-height: 44px; min-width: 44px; padding: 0 16px; font-size: 15px; cursor: pointer; }
+.run-btn:disabled { cursor: not-allowed; opacity: 0.6; }
+.run-btn-primary { font-weight: 700; }
+.run-confirm { border: 2px solid currentColor; border-radius: 8px; padding: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.run-confirm p { margin: 0; flex-basis: 100%; }
+@media (max-width: 700px) {
+  .run-panel { align-items: stretch; }
+  .run-btn { width: 100%; }
+  .run-battle .run-btn { width: auto; }
+}

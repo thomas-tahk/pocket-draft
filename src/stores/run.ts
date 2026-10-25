@@ -21,6 +21,7 @@ export type Run = {
   deck: Record<string, number>; // the finalized deck, cardId → count
   battles: RunBattle[];
   status: RunStatus;
+  historyId?: string; // the history entry made when this deck was finalized
 };
 
 export function newRun(deck: Record<string, number>): Run {

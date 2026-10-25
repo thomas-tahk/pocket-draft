@@ -10,7 +10,7 @@ const savedRun = (page: Page) =>
   page.evaluate(() => (JSON.parse(localStorage.getItem('pocket-draft-v0.4') ?? '{}').state as Saved).run);
 
 async function concedeGame(page: Page) {
-  await page.getByRole('button', { name: '▶ Play deck' }).click();
+  await page.getByRole('button', { name: 'Next battle' }).click();
   await expect(page.getByTestId('battle-board')).toBeVisible();
   await page.getByTestId('menu').click();
   await page.getByTestId('menu-concede').click();
@@ -49,8 +49,9 @@ test('a new run does not inherit the previous run\'s finished game', async ({ pa
   await expect(page.getByTestId('run-record')).toHaveText('Run: 0–1 (active)');
 
   await page.getByRole('button', { name: 'Home' }).click();
+  await page.getByTestId('leave-ok').click();
   await page.getByRole('button', { name: 'Auto-draft (test)' }).click();
-  await page.getByRole('button', { name: '▶ Play deck' }).click();
+  await page.getByRole('button', { name: 'Next battle' }).click();
   await expect(page.getByTestId('battle-board')).toBeVisible();
   await page.waitForTimeout(500); // a stale record would be saved on mount
   expect((await savedRun(page)).battles).toHaveLength(0);

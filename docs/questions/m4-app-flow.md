@@ -4,3 +4,14 @@
 - #114 · ties (both hit 3 points / both out of Pokémon / turn cap) are recorded as "tie": count toward neither 5W nor 2L, run continues · DECISION for owner (alt: tie = loss)
 - #114 · client picks the seed (≤2^53, JSON-safe); game record exposed only after game over (no mid-game info leak)
 - #114 · rematch after a battle counts as the next battle of the run
+- #115 · any action that starts over (new draft, Auto-draft, Home/reset) archives the current run first: active → quit, saved on its deck's History entry (`run` field) · nothing is silently wiped; end-of-run screen reads it from there
+- #115 · Home is always the first screen on reload, finished runs included · Practice never records into the run
+- #115 · confirm copy "This ends your current run (W–L)." / "End run and draft" / "Keep run" · DECISION for owner (wording)
+- #115 · Auto-draft (test) creates no History entry, so leaving an auto-draft run drops it instead of archiving · it's a test shortcut; revisit if Auto-draft stays player-facing
+- #116 · mid-run "Start new draft"/"Home" confirm: "This quits your run at W–L." / "Quit run and leave" / "Keep playing" · DECISION for owner (wording); confirm renders in the run panel, not beside the header buttons
+- #116 · Rematch hidden once the run is over; while active, Rematch = next battle of the run
+- #119 · replay caption wording (placeholder, DECISION for owner): "Battle start", "You Attacked · <card>" (History's labels, You/Opponent), end lines "You win 3–1" / "You lose 1–3" / "Tie 3–3" / "You conceded — Opponent wins" / "Opponent conceded — You win"
+- #119 · Play advances one step every 700 ms; Play at the last step restarts from step 0 · DECISION for owner (pace)
+- #119 · placement: Exit + Back / Play / Forward sit in the gap between the two Actives, "Step n / N" top-left beside the History button, caption under the opponent's points row (overlaps the top of the opponent's hand) · DECISION for owner (layout)
+- #119 · no card zoom or card sheets in replay (board taps are off); stepping redraws instantly, no slide animation
+- #119 · error copy "This replay no longer matches its battle." for any record that fails to rebuild to its recorded result; a ?replay index with no battle goes to the run screen
