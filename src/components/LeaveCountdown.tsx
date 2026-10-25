@@ -13,7 +13,7 @@ export function LeaveCountdown({ battle, onReturn }: { battle: InProgressBattle;
   return (
     <div className="run-confirm" data-testid="leave-countdown">
       <p>You left your battle. It counts as a loss in <strong data-testid="leave-seconds">{seconds}</strong> s.</p>
-      <button className="run-btn run-btn-primary" onClick={onReturn}>Return to battle</button>
+      <button className="run-btn run-btn-primary" disabled={seconds <= 0} onClick={onReturn}>Return to battle</button>
     </div>
   );
 }

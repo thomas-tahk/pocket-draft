@@ -270,3 +270,24 @@ test('a fixed seed resumes after a complete bot turn', async ({ page, request })
   await expect(page.getByTestId('battle-board')).toBeVisible();
   await expect.poll(() => board(request)).toEqual(before);
 });
+
+test('a bot step while the page is hidden keeps the closed-tab stamp', async ({ page, request }) => {
+  await intoBattle(page, request);
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  const closedAt = () => page.evaluate((key) => JSON.parse(localStorage.getItem(key)!).state.run.inProgress?.closedAt, KEY);
+  await expect.poll(closedAt).toBeTruthy();
+  const stamped = await closedAt();
+  const turnBefore = (await state(request) as View & { turn: number }).turn;
+  await page.getByTestId('end-turn').getByRole('button').click();
+  const ok = page.getByTestId('confirm-ok');
+  if (await ok.isVisible()) await ok.click();
+  // the bot plays its whole turn, then it is yours again
+  await expect.poll(async () => {
+    const v = (await state(request)) as View & { turn: number };
+    return v.turn > turnBefore && v.phase === 'main' && !v.pending && v.active === 0;
+  }, { timeout: 30_000 }).toBe(true);
+  expect(await closedAt()).toBe(stamped);
+});

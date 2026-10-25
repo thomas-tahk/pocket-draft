@@ -58,7 +58,7 @@ export function RunView({ pool, deck, run, onNextBattle, onReturn, onReplay, onQ
 
         {run.inProgress?.leftAt && <LeaveCountdown battle={run.inProgress} onReturn={onReturn} />}
 
-        {!run.inProgress?.leftAt && (
+        {!run.inProgress && (
           <div className="run-next">
             <button className="run-btn run-btn-primary" onClick={onNextBattle}>Next battle</button>
             <p className="run-opponent"><span aria-hidden="true">🤖</span> Opponent: practice bot</p>

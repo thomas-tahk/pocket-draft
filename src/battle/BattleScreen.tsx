@@ -29,7 +29,10 @@ export function BattleScreen({ deck, onExit, practice, resume }: Props) {
   useEffect(() => {
     const g = useGameStore.getState();
     if (!deck || practice || g.status !== 'ready' || g.view?.phase === 'over' || g.seed === null) return;
-    setInProgress({ seed: g.seed, yourDeck: deck, log: g.log, leftAt: null, closedAt: null });
+    // A bot step that lands while the page is hidden must not wipe the closed-tab stamp.
+    const hidden = document.visibilityState === 'hidden';
+    const stamp = useDraftStore.getState().run?.inProgress?.closedAt ?? new Date().toISOString();
+    setInProgress({ seed: g.seed, yourDeck: deck, log: g.log, leftAt: null, closedAt: hidden ? stamp : null });
   }, [deck, practice, status, log, setInProgress]);
 
   // A run's game ends once: save its result and replayable record. The store
