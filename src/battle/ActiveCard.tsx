@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useGameStore } from '../game/store';
-import type { GameView, InPlayView, Move } from '../game/types';
+import type { AttackView, GameView, InPlayView, Move } from '../game/types';
 import { litKey, type Choice } from './Choice';
 import { CardFace, EnergyIcon } from './pieces';
+import { EnergyText } from './energy';
 
 // Tap your Active to open its card (spec F9): its attacks, the ones no legal
 // move names greyed, its Ability, and Retreat. Tapping an attack uses it.
@@ -60,12 +61,15 @@ export function useActiveCard(view: GameView) {
   return { open, openBench, sheet, retreat: choice };
 }
 
-function AttackRow({ name, cost, damage, move, pick }: { name: string; cost: string[]; damage: number; move?: Move; pick: (m: Move) => void }) {
+function AttackRow({ name, cost, damage, effect, printed, move, pick }: AttackView & { move?: Move; pick: (m: Move) => void }) {
   return (
-    <button className="bt-sheet-row" data-testid="sheet-attack" data-usable={!!move} disabled={!move} onClick={() => move && pick(move)}>
-      <span className="bt-sheet-cost">{cost.map((t, i) => <EnergyIcon key={i} type={t} size={18} />)}</span>
-      <span className="bt-sheet-name">{name}</span>
-      <span className="bt-sheet-damage">{damage || ''}</span>
+    <button className="bt-sheet-row bt-sheet-attack" data-testid="sheet-attack" data-usable={!!move} disabled={!move} onClick={() => move && pick(move)}>
+      <span className="bt-sheet-attack-head">
+        <span className="bt-sheet-cost">{cost.map((t, i) => <EnergyIcon key={i} type={t} size={18} />)}</span>
+        <span className="bt-sheet-name">{name}</span>
+        <span className="bt-sheet-damage">{printed ?? (damage || '')}</span>
+      </span>
+      {effect && <span className="bt-sheet-effect" data-testid="attack-effect"><EnergyText text={effect} size={13} /></span>}
     </button>
   );
 }
@@ -76,7 +80,7 @@ function AbilityRow({ mon, move, pick }: { mon: InPlayView; move?: Move; pick: (
   return (
     <button className="bt-sheet-row bt-sheet-ability" data-testid="sheet-ability" data-usable={!!move} disabled={!move} onClick={() => move && pick(move)}>
       <span className="bt-sheet-name">{ability.name}</span>
-      <span className="bt-sheet-effect">{ability.effect}</span>
+      <span className="bt-sheet-effect"><EnergyText text={ability.effect} size={13} /></span>
     </button>
   );
 }

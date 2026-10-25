@@ -11,7 +11,8 @@ export default defineConfig({
   // One Go server holds one global game, so tests must not run in parallel.
   workers: 1,
   testDir: 'e2e',
-  use: { baseURL: `http://localhost:${webPort}`, ...devices['Pixel 7'], viewport: { width: 390, height: 844 } },
+  // Reduced motion by default: cards sliding around would race the gesture tests. motion.spec.ts turns motion back on.
+  use: { baseURL: `http://localhost:${webPort}`, ...devices['Pixel 7'], viewport: { width: 390, height: 844 }, contextOptions: { reducedMotion: 'reduce' } },
   projects: [{ name: 'phone', use: { browserName: 'chromium' } }],
   webServer: [
     { command: `cd server && go build -o ../.pd-e2e-server . && PD_ADDR=:${apiPort} ../.pd-e2e-server`, url: `http://localhost:${apiPort}/api/state`, reuseExistingServer: false, timeout: 120_000 },

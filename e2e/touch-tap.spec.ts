@@ -19,7 +19,7 @@ async function post(api: APIRequestContext, url: string, data?: object): Promise
 
 // Seed 7: you go first; on your second turn a Basic is in hand, the Bench is empty, energy is ready.
 async function toYourSecondTurn(api: APIRequestContext): Promise<Card> {
-  const start = await post(api, '/api/new', { seed: 7, bot: BOT });
+  const start = await post(api, '/api/new', { seed: 7, bot: BOT, preset: 'fire' });
   const basics = start.players[0].hand.filter((c) => c.stage === 'Basic');
   await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: basics[0].id });
   await post(api, '/api/move', { type: 'SetupReady', player: 0 });

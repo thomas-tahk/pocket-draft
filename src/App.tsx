@@ -8,6 +8,7 @@ import { SharedDeckView } from './components/SharedDeckView';
 import { HistoryView } from './components/HistoryView';
 import { BattleScreen } from './battle/BattleScreen';
 import { expandDeck } from './game/deck';
+import { autoDeck } from './game/api';
 import { derivePhase, HISTORY_CAP, TOTAL_PACKS, useDraftStore } from './stores/draftStore';
 import { decodeDeck, type Decklist } from './share/deckCode';
 import type { Card } from './types/card';
@@ -51,6 +52,7 @@ export function App() {
     addToDeck,
     removeFromDeck,
     finalizeDeck,
+    autoDraft,
     updateHistoryEntry,
     deleteHistoryEntry,
     reset,
@@ -140,6 +142,16 @@ export function App() {
         </p>
         <button style={{ fontSize: 16, padding: '8px 20px' }} onClick={() => start(pool.draftableCards)}>
           Start draft
+        </button>{' '}
+        <button
+          style={{ fontSize: 16, padding: '8px 20px' }}
+          onClick={() =>
+            autoDeck()
+              .then((d) => autoDraft(d.picks, d.deck))
+              .catch((e) => setError(String(e)))
+          }
+        >
+          Auto-draft (test)
         </button>
         {history.length > 0 && (
           <div style={{ marginTop: 24 }}>

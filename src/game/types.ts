@@ -1,5 +1,6 @@
 // Mirrors server/view.go. The client renders these; it does not own them.
-export type AttackView = { name: string; cost: string[]; damage: number };
+// effect is the printed text; printed is the damage as printed ("40+")
+export type AttackView = { name: string; cost: string[]; damage: number; effect?: string; printed?: string };
 
 export type AbilityView = { name: string; effect: string }; // effect is the printed text
 
@@ -65,6 +66,7 @@ export type ActionView = {
   result: string[];
   // every coin the move flipped, in order (spec F11); waits: hold for the flipper's tap
   flips: { flipper: number; heads: boolean; waits: boolean }[];
+  damage?: number; // an attack's damage after Weakness
 };
 
 // title and labels word a card's choice ('choose'); only the chooser gets them.

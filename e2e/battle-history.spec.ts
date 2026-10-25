@@ -19,7 +19,7 @@ async function post(api: APIRequestContext, url: string, data?: object): Promise
 
 // Setup, end your first turn, let the bot take its turn, attach an energy.
 async function playAFewMoves(api: APIRequestContext): Promise<View> {
-  const start = await post(api, '/api/new', { seed: 7, bot: BOT });
+  const start = await post(api, '/api/new', { seed: 7, bot: BOT, preset: 'fire' });
   const basics = start.players[0].hand.filter((c) => c.stage === 'Basic');
   await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: basics[0].id });
   await post(api, '/api/move', { type: 'SetupBench', player: 0, cardId: basics[1].id, slot: 0 });
@@ -56,7 +56,8 @@ async function expectEntriesInOrder(page: Page, view: View) {
     await expect(entry).toHaveAttribute('data-kind', a.kind);
     await expect(entry).toContainText(a.player === 0 ? 'You' : 'Opponent');
     if (a.card) await expect(entry).toContainText(a.card.name);
-    for (const line of a.result) await expect(entry).toContainText(line);
+    // The Energy type in "attached Fire energy" is drawn as an icon, not text.
+    for (const line of a.result) await expect(entry).toContainText(line.replace(/(Grass|Fire|Water|Lightning|Psychic|Fighting|Darkness|Metal|Dragon|Colorless) (?=energy)/, ''));
   }
 }
 
