@@ -18,11 +18,11 @@ const working = new Set(
   (JSON.parse(readFileSync('public/data/draft-pool.json', 'utf8')) as { working: string[] }).working,
 );
 
-async function draftSixteen(page: Page): Promise<Set<string>> {
+async function draftTwenty(page: Page): Promise<Set<string>> {
   const picked = new Set<string>();
   const names = new Set<string>();
-  for (let pack = 1; pack <= 16; pack++) {
-    await expect(page.getByText(`Pack ${pack} / 16`)).toBeVisible();
+  for (let pack = 1; pack <= 20; pack++) {
+    await expect(page.getByText(`Pack ${pack} / 20`)).toBeVisible();
     const offer = page.locator('main button[title]');
     await expect(offer).toHaveCount(5);
     const ids = (await offer.evaluateAll((els) => els.map((e) => e.getAttribute('title') ?? ''))).map(idOf);
@@ -74,7 +74,7 @@ test('a finished draft starts on the new board with its 20, and Rematch keeps th
   test.setTimeout(90_000);
   await page.goto('/');
   await page.getByRole('button', { name: 'Start draft' }).click();
-  const picked = await draftSixteen(page);
+  const picked = await draftTwenty(page);
   await page.getByRole('button', { name: 'Skip shop' }).click();
   await buildFromDraft(page);
 
@@ -108,7 +108,7 @@ test('deckbuild offers only cards the engine can play, so any deck built there p
   test.setTimeout(90_000);
   await page.goto('/');
   await page.getByRole('button', { name: 'Start draft' }).click();
-  await draftSixteen(page);
+  await draftTwenty(page);
   await page.getByRole('button', { name: 'Skip shop' }).click();
   await expect(page.getByRole('heading', { name: 'Deckbuilding' })).toBeVisible();
 

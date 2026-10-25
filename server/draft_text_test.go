@@ -50,7 +50,7 @@ func TestDraftPoolOffersOnlyCardsWhoseTextWorks(t *testing.T) {
 	}
 }
 
-// draftIDs plays a 16-pack draft, choosing from each offer with choose, and
+// draftIDs plays a 20-pack draft, choosing from each offer with choose, and
 // tops the picks up to 20 ids exactly as the bot's draft does.
 func draftIDs(t *testing.T, seed uint64, choose func([]draftCard) draftCard) []string {
 	t.Helper()

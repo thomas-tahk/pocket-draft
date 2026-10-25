@@ -352,8 +352,8 @@ const idOf = (title: string) => title.split(' · ').pop() ?? '';
 // (same draft as draft-to-battle.spec.ts).
 async function draftAndBuild(page: Page) {
   const names = new Set<string>();
-  for (let pack = 1; pack <= 16; pack++) {
-    await expect(page.getByText(`Pack ${pack} / 16`)).toBeVisible();
+  for (let pack = 1; pack <= 20; pack++) {
+    await expect(page.getByText(`Pack ${pack} / 20`)).toBeVisible();
     const offer = page.locator('main button[title]');
     await expect(offer).toHaveCount(5);
     const ids = (await offer.evaluateAll((els) => els.map((e) => e.getAttribute('title') ?? ''))).map(idOf);
