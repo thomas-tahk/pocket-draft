@@ -129,3 +129,20 @@
     justify-content: stretch;
   }
 }
+
+/* Opening screen (HomeView): one column, 16px gutters on a phone. */
+.home {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+  text-align: center;
+}
+.home button { min-height: 44px; font-size: 16px; padding: 8px 16px; }
+.home .home-primary { min-height: 64px; font-size: 22px; }
+.home-secondary { display: flex; flex-direction: column; gap: 8px; }
+.home-note { opacity: 0.75; font-size: 14px; margin: 0; }
+.home .home-link { background: none; border: none; text-decoration: underline; cursor: pointer; font-size: 14px; }

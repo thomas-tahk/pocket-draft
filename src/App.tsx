@@ -5,11 +5,12 @@ import { ShopView } from './components/ShopView';
 import { DeckbuildView } from './components/DeckbuildView';
 import { ReviewView } from './components/ReviewView';
 import { SharedDeckView } from './components/SharedDeckView';
+import { HomeView } from './components/HomeView';
 import { HistoryView } from './components/HistoryView';
 import { BattleScreen } from './battle/BattleScreen';
 import { expandDeck } from './game/deck';
 import { autoDeck } from './game/api';
-import { derivePhase, HISTORY_CAP, TOTAL_PACKS, useDraftStore } from './stores/draftStore';
+import { derivePhase, useDraftStore } from './stores/draftStore';
 import { decodeDeck, type Decklist } from './share/deckCode';
 import type { Card } from './types/card';
 
@@ -29,6 +30,7 @@ export function App() {
   const [pool, setPool] = useState<CardPool | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [homeOpen, setHomeOpen] = useState(true);
   const [playing, setPlaying] = useState(false);
   const [sharedDeck, setSharedDeck] = useState<Decklist | null>(readSharedDeck);
 
@@ -131,37 +133,30 @@ export function App() {
     );
   }
 
-  if (phase === 'unstarted') {
+  if (phase === 'unstarted' || (homeOpen && phase === 'review' && run?.status === 'active')) {
     return (
-      <main style={{ padding: 24, maxWidth: 720, margin: '0 auto', textAlign: 'center' }}>
-        <h1>Pocket Draft</h1>
-        <p style={{ opacity: 0.75 }}>
-          {pool.draftableCards.length} draftable cards (final-evolution Pokémon and Trainers).
-        </p>
-        <p style={{ opacity: 0.6, fontSize: 13 }}>
-          {TOTAL_PACKS} rounds → shop → choose your 20-card deck.
-        </p>
-        <button style={{ fontSize: 16, padding: '8px 20px' }} onClick={() => start(pool.draftableCards)}>
-          Start draft
-        </button>{' '}
-        <button
-          style={{ fontSize: 16, padding: '8px 20px' }}
-          onClick={() =>
-            autoDeck()
-              .then((d) => autoDraft(d.picks, d.deck))
-              .catch((e) => setError(String(e)))
-          }
-        >
-          Auto-draft (test)
-        </button>
-        {history.length > 0 && (
-          <div style={{ marginTop: 24 }}>
-            <button onClick={() => setHistoryOpen(true)} style={{ fontSize: 13 }}>
-              View past drafts ({history.length} / {HISTORY_CAP})
-            </button>
-          </div>
-        )}
-      </main>
+      <HomeView
+        cardCount={pool.draftableCards.length}
+        hasActiveRun={run?.status === 'active'}
+        canPractice={deckFinalized}
+        historyCount={history.length}
+        onDraft={() => {
+          setHomeOpen(false);
+          start(pool.draftableCards);
+        }}
+        onContinue={() => setHomeOpen(false)}
+        onPractice={() => {
+          setHomeOpen(false);
+          setPlaying(true);
+        }}
+        onPastRuns={() => setHistoryOpen(true)}
+        onAutoDraft={() => {
+          setHomeOpen(false);
+          autoDeck()
+            .then((d) => autoDraft(d.picks, d.deck))
+            .catch((e) => setError(String(e)));
+        }}
+      />
     );
   }
 
