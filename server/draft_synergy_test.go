@@ -211,7 +211,7 @@ func TestOffersFavourTrainerNamingPick(t *testing.T) {
 		}
 		var n []draftCard
 		for _, tr := range pool {
-			if tr.CardType == "Trainer" && newSynergy([]draftCard{c}).nameText.MatchString(tr.TrainerText) {
+			if tr.CardType == "Trainer" && newSynergy([]draftCard{c}).namesPickedIn(tr.TrainerText) {
 				n = append(n, tr)
 			}
 		}
@@ -238,7 +238,7 @@ func TestSynergyRulesAreAliveInShippedPool(t *testing.T) {
 	allNames := newSynergy(pool)
 	rule1, rule2, rule3, textTypes := 0, 0, 0, map[string]bool{}
 	for _, c := range pool {
-		if c.CardType == "Trainer" && allNames.nameText.MatchString(c.TrainerText) {
+		if c.CardType == "Trainer" && allNames.namesPickedIn(c.TrainerText) {
 			rule1++
 		}
 		if len(namedTypes(c)) > 0 {
@@ -257,5 +257,24 @@ func TestSynergyRulesAreAliveInShippedPool(t *testing.T) {
 		len(pool), rule1, rule2, rule3)
 	if rule1 == 0 || rule2 == 0 || rule3 == 0 {
 		t.Errorf("a rule can fire on nothing: %d %d %d", rule1, rule2, rule3)
+	}
+}
+
+func TestNamesPickedInChecksEveryOccurrenceAtWordBoundaries(t *testing.T) {
+	s := newSynergy([]draftCard{pokemon("Mew ex", "Psychic")})
+	cases := map[string]bool{
+		"Mew":             true,
+		"Heal Mew.":       true,
+		"Mewtwo then Mew": true, // first hit is inside a word, second is not
+		"Mewtwo":          false,
+		"Smew":            false,
+		"Pokémew":         false,
+		"Mewé":            false,
+		"":                false,
+	}
+	for text, want := range cases {
+		if got := s.namesPickedIn(text); got != want {
+			t.Errorf("namesPickedIn(%q) = %v, want %v", text, got, want)
+		}
 	}
 }

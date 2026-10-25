@@ -1,9 +1,10 @@
 package main
 
 import (
-	"regexp"
 	"strings"
 	"sync"
+	"unicode"
+	"unicode/utf8"
 )
 
 // Go port of the synergy half of src/draft/weights.ts.
@@ -30,7 +31,7 @@ var typeSymbols = map[string]string{
 type synergy struct {
 	pickedTypes map[string]bool // types of picked Pokémon (not Colorless)
 	textTypes   map[string]bool // types named in the text of any pick
-	nameText    *regexp.Regexp  // a picked Pokémon's base name inside Trainer text
+	pickedNames []string        // base names (no " ex") of picked Pokémon, matched in Trainer text
 }
 
 // effectText is the text that can name a type: Trainer text, ability and
@@ -83,7 +84,6 @@ func namedTypes(c draftCard) []string {
 // newSynergy mirrors weights.ts's buildSynergy.
 func newSynergy(picks []draftCard) synergy {
 	s := synergy{pickedTypes: map[string]bool{}, textTypes: map[string]bool{}}
-	needles := []string{}
 	for _, p := range picks {
 		for _, typ := range namedTypes(p) {
 			s.textTypes[typ] = true
@@ -94,17 +94,14 @@ func newSynergy(picks []draftCard) synergy {
 		if p.CardType != "Colorless" {
 			s.pickedTypes[p.CardType] = true
 		}
-		needles = append(needles, regexp.QuoteMeta(strings.TrimSuffix(p.Name, " ex")))
-	}
-	if len(needles) > 0 {
-		s.nameText = regexp.MustCompile(`(^|[^\p{L}])(` + strings.Join(needles, "|") + `)($|[^\p{L}])`)
+		s.pickedNames = append(s.pickedNames, strings.TrimSuffix(p.Name, " ex"))
 	}
 	return s
 }
 
 // matches reports whether c works with the picks.
 func (s synergy) matches(c draftCard) bool {
-	if c.CardType == "Trainer" && s.nameText != nil && s.nameText.MatchString(c.TrainerText) {
+	if c.CardType == "Trainer" && s.namesPickedIn(c.TrainerText) {
 		return true
 	}
 	if c.CardType != "Trainer" && s.textTypes[c.CardType] {
@@ -114,6 +111,35 @@ func (s synergy) matches(c draftCard) bool {
 		if s.pickedTypes[typ] {
 			return true
 		}
+	}
+	return false
+}
+
+// namesPickedIn reports whether text contains a picked name as a whole word:
+// not preceded or followed by a letter. Every occurrence is checked.
+func (s synergy) namesPickedIn(text string) bool {
+	for _, name := range s.pickedNames {
+		if containsWord(text, name) {
+			return true
+		}
+	}
+	return false
+}
+
+func containsWord(text, word string) bool {
+	for from := 0; from <= len(text); {
+		i := strings.Index(text[from:], word)
+		if i < 0 {
+			return false
+		}
+		start := from + i
+		end := start + len(word)
+		before, _ := utf8.DecodeLastRuneInString(text[:start])
+		after, _ := utf8.DecodeRuneInString(text[end:])
+		if (start == 0 || !unicode.IsLetter(before)) && (end == len(text) || !unicode.IsLetter(after)) {
+			return true
+		}
+		from = start + 1
 	}
 	return false
 }
