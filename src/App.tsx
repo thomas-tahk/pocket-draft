@@ -7,6 +7,7 @@ import { ReviewView } from './components/ReviewView';
 import { SharedDeckView } from './components/SharedDeckView';
 import { HistoryView } from './components/HistoryView';
 import { BattleScreen } from './battle/BattleScreen';
+import { ReplayView } from './battle/ReplayView';
 import { expandDeck } from './game/deck';
 import { autoDeck } from './game/api';
 import { derivePhase, HISTORY_CAP, TOTAL_PACKS, useDraftStore } from './stores/draftStore';
@@ -25,11 +26,20 @@ function readSharedDeck(): Decklist | null {
   }
 }
 
+// ?replay=<i> opens run.battles[i] as a replay (handy for sharing and tests).
+function readReplayIndex(): number | null {
+  const raw = new URLSearchParams(window.location.search).get('replay');
+  const n = Number(raw);
+  return raw !== null && Number.isInteger(n) && n >= 0 ? n : null;
+}
+
 export function App() {
   const [pool, setPool] = useState<CardPool | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [playing, setPlaying] = useState(false);
+  // Index into run.battles of the battle being replayed; the run screen calls setReplaying(i).
+  const [replaying, setReplaying] = useState<number | null>(readReplayIndex);
   const [sharedDeck, setSharedDeck] = useState<Decklist | null>(readSharedDeck);
 
   useEffect(() => {
@@ -102,6 +112,15 @@ export function App() {
 
   // In-app deck play (1.31), launched from the review screen with the finalized deck.
   if (playing) return <BattleScreen deck={drafted} onExit={() => setPlaying(false)} />;
+
+  const replayed = replaying !== null ? run?.battles[replaying] : undefined;
+  if (replayed) {
+    const exit = () => {
+      window.history.replaceState({}, '', window.location.pathname);
+      setReplaying(null);
+    };
+    return <ReplayView battle={replayed} onExit={exit} />;
+  }
 
   if (error) return <main style={{ padding: 24 }}>Error: {error}</main>;
   if (!pool) return <main style={{ padding: 24 }}>Loading card data…</main>;
