@@ -21,7 +21,7 @@ const STATUS = { active: 'In progress', won: 'Run won', lost: 'Run lost', quit: 
 function Marks({ kind, count, total }: { kind: 'win' | 'loss'; count: number; total: number }) {
   const label = kind === 'win' ? 'Wins' : 'Losses';
   return (
-    <div className="run-marks" data-testid={kind === "win" ? 'run-wins' : 'run-losses'}>
+    <div className="run-marks" data-testid={kind === 'win' ? 'run-wins' : 'run-losses'}>
       <span className="run-marks-label">{label} {count} of {total}</span>
       <span className="run-marks-row" aria-hidden="true">
         {Array.from({ length: total }, (_, i) => (
@@ -36,12 +36,18 @@ function Marks({ kind, count, total }: { kind: 'win' | 'loss'; count: number; to
 
 export function RunView({ pool, deck, run, onNextBattle, onReplay, onQuit, onNewDraft, onHome }: Props) {
   const [confirmingQuit, setConfirmingQuit] = useState(false);
+  const [leaving, setLeaving] = useState<(() => void) | null>(null);
   if (!run) return <ReviewView pool={pool} deck={deck} run={run} onNewDraft={onNewDraft} onHome={onHome} />;
   const { wins, losses, ties } = runScore(run);
   const active = run.status === 'active';
+  // Leaving mid-run quits it first, so no button ends a run silently.
+  const guard = (leave: () => void) => () => {
+    if (active) setLeaving(() => leave);
+    else leave();
+  };
 
   return (
-    <ReviewView pool={pool} deck={deck} run={null} onNewDraft={onNewDraft} onHome={onHome}>
+    <ReviewView pool={pool} deck={deck} run={null} onNewDraft={guard(onNewDraft)} onHome={guard(onHome)}>
       <section className="run-panel" aria-label="Run">
         <h2 className="run-title">Your run</h2>
         <p data-testid="run-record" className="run-record">{runLine(run)} ({run.status})</p>
@@ -88,6 +94,13 @@ export function RunView({ pool, deck, run, onNextBattle, onReplay, onQuit, onNew
             <p>Quit this run? It ends at {wins}–{losses}.</p>
             <button className="run-btn run-btn-danger" data-testid="quit-confirm" onClick={onQuit}>Yes, quit run</button>
             <button className="run-btn" onClick={() => setConfirmingQuit(false)}>Keep playing</button>
+          </div>
+        )}
+        {active && leaving && (
+          <div role="alertdialog" aria-label="Leave run" className="run-confirm" data-testid="leave-confirm">
+            <p>This quits your run at {wins}–{losses}.</p>
+            <button className="run-btn run-btn-danger" data-testid="leave-ok" onClick={() => { onQuit(); leaving(); }}>Quit run and leave</button>
+            <button className="run-btn" data-testid="leave-cancel" onClick={() => setLeaving(null)}>Keep playing</button>
           </div>
         )}
       </section>

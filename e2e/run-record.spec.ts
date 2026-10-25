@@ -49,6 +49,7 @@ test('a new run does not inherit the previous run\'s finished game', async ({ pa
   await expect(page.getByTestId('run-record')).toHaveText('Run: 0–1 (active)');
 
   await page.getByRole('button', { name: 'Home' }).click();
+  await page.getByTestId('leave-ok').click();
   await page.getByRole('button', { name: 'Auto-draft (test)' }).click();
   await page.getByRole('button', { name: 'Next battle' }).click();
   await expect(page.getByTestId('battle-board')).toBeVisible();

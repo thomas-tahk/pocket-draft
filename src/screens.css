@@ -143,7 +143,6 @@
 .run-mark { width: 28px; height: 28px; box-sizing: border-box; border: 2px solid currentColor; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
 .run-mark-win { border-radius: 50%; }
 .run-mark-loss { border-radius: 2px; }
-.run-mark { --ink: currentColor; }
 .run-mark.filled { background: var(--ink); -webkit-text-fill-color: var(--surface); }
 .run-next { display: flex; flex-direction: column; gap: 6px; }
 .run-battles { list-style: none; margin: 0; padding: 0; width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 6px; }

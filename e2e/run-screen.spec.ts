@@ -50,4 +50,51 @@ test('Quit run asks on-screen, then ends the run as quit', async ({ page }) => {
   await page.getByTestId('quit-confirm').click();
   await expect(page.getByTestId('run-status')).toHaveText('Run quit');
   await expect(page.getByRole('button', { name: 'Next battle' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Quit run' })).toHaveCount(0);
+});
+
+for (const opener of ['Start new draft', 'Home']) {
+  test(`${opener} mid-run asks on-screen; cancel keeps the run active`, async ({ page }) => {
+    await start(page);
+    await page.getByRole('button', { name: new RegExp(opener) }).first().click();
+    await expect(page.getByTestId('leave-confirm')).toContainText('This quits your run at 0–0.');
+    if (opener === 'Home') await page.screenshot({ path: 'test-results/run-leave-confirm-390.png', fullPage: true });
+    await page.getByTestId('leave-cancel').click();
+    await expect(page.getByTestId('leave-confirm')).toHaveCount(0);
+    await expect(page.getByTestId('run-status')).toHaveText('In progress');
+  });
+}
+
+test('confirming leave quits the run, then leaves', async ({ page }) => {
+  await start(page);
+  await page.getByRole('button', { name: 'Start new draft' }).click();
+  await page.getByTestId('leave-ok').click();
+  await expect(page.getByTestId('run-record')).toHaveCount(0);
+});
+
+test('lost run: the losing battle end screen has no Rematch', async ({ page }) => {
+  await start(page);
+  await concede(page);
+  await page.getByRole('button', { name: 'Next battle' }).click();
+  await page.getByTestId('menu').click();
+  await page.getByTestId('menu-concede').click();
+  await page.getByTestId('confirm-ok').click();
+  await expect(page.getByTestId('end-result')).toHaveText('Loss');
+  await expect(page.getByRole('button', { name: 'Back' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Rematch' })).toHaveCount(0);
+});
+
+test('a won run hides Next battle and Quit run', async ({ page }) => {
+  await start(page);
+  await page.evaluate(() => {
+    const saved = JSON.parse(localStorage.getItem('pocket-draft-v0.4')!);
+    const battle = (seed: number) => ({ result: 'win', seed, yourDeck: [], botDeck: [], actions: [], endedAt: new Date().toISOString() });
+    saved.state.run.battles = [1, 2, 3, 4, 5].map(battle);
+    saved.state.run.status = 'won';
+    localStorage.setItem('pocket-draft-v0.4', JSON.stringify(saved));
+  });
+  await page.reload();
+  await expect(page.getByTestId('run-status')).toHaveText('Run won');
+  await expect(page.getByRole('button', { name: 'Next battle' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Quit run' })).toHaveCount(0);
 });
