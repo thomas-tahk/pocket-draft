@@ -51,8 +51,8 @@ async function expectCentredColumn(page: Page, tiles: Locator) {
   return { left, right };
 }
 
-const hoverPreview = (page: Page) => page.locator('div[style*="position: fixed"]');
-const zoom = (page: Page) => page.locator('.card-zoom');
+const hoverPreview = (page: Page) => page.getByTestId('card-preview');
+const zoom = (page: Page) => page.getByTestId('card-zoom');
 
 const touch = (cdp: CDPSession, type: string, p?: { x: number; y: number }) =>
   cdp.send('Input.dispatchTouchEvent', { type, touchPoints: p ? [p] : [] });
@@ -192,6 +192,60 @@ test.describe('phone 390x844', () => {
     await deckbuildChecks(page);
     record('measurements-390');
     console.log('MEASURED@390', JSON.stringify(measured));
+  });
+});
+
+test.describe('phone gestures on a pack', () => {
+  const packTwo = (page: Page) => page.getByText(`Pack 2 / ${TOTAL_PACKS}`);
+  const packOne = (page: Page) => page.getByText(`Pack 1 / ${TOTAL_PACKS}`);
+
+  async function openPack(page: Page) {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Start draft' }).tap();
+    await expect(offers(page)).toHaveCount(5);
+    await imagesLoaded(page);
+    return { cdp: await page.context().newCDPSession(page), at: await centre(offers(page).first()) };
+  }
+
+  test('a cancelled hold closes the zoom and the next click still picks', async ({ page }) => {
+    const { cdp, at } = await openPack(page);
+    await touch(cdp, 'touchStart', at);
+    await expect(zoom(page)).toBeVisible();
+    await touch(cdp, 'touchCancel');
+    await expect(zoom(page)).toHaveCount(0);
+    await offers(page).first().click();
+    await expect(packTwo(page)).toBeVisible();
+  });
+
+  test('moving over 8 px before the hold time opens no zoom', async ({ page }) => {
+    const { cdp, at } = await openPack(page);
+    await touch(cdp, 'touchStart', at);
+    await touch(cdp, 'touchMove', { x: at.x, y: at.y + 20 });
+    await page.waitForTimeout(600);
+    await expect(zoom(page)).toHaveCount(0);
+    await touch(cdp, 'touchEnd');
+  });
+
+  test('moving over 8 px after the zoom closes it and the release does not pick', async ({ page }) => {
+    const { cdp, at } = await openPack(page);
+    await touch(cdp, 'touchStart', at);
+    await expect(zoom(page)).toBeVisible();
+    await touch(cdp, 'touchMove', { x: at.x, y: at.y + 20 });
+    await expect(zoom(page)).toHaveCount(0);
+    await touch(cdp, 'touchEnd');
+    await page.waitForTimeout(400);
+    await expect(packOne(page)).toBeVisible();
+  });
+
+  test('a mouse move over another card right after a tap shows no preview', async ({ page }) => {
+    await openPack(page);
+    await offers(page).first().tap();
+    await expect(packTwo(page)).toBeVisible();
+    const other = await centre(offers(page).nth(2));
+    await page.mouse.move(other.x - 5, other.y);
+    await page.mouse.move(other.x, other.y);
+    await page.waitForTimeout(200);
+    await expect(hoverPreview(page)).toHaveCount(0);
   });
 });
 

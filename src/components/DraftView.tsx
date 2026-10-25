@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TypeTally } from '../battle/energy';
 import type { Card, EnergyType } from '../types/card';
 import { TOTAL_PACKS } from '../stores/draftStore';
@@ -18,6 +18,8 @@ type Props = {
 export function DraftView({ packIndex, offer, picks, onPick, onCancel }: Props) {
   const [hover, setHover] = useState<HoverState>(null);
   const handleHover = (p: HoverPayload | null) => setHover(p);
+  // A new pack replaces the tiles; drop any preview or zoom left from the old ones.
+  useEffect(() => setHover(null), [offer]);
 
   const tally = tallyTypes(picks);
   const sortedTally = (Object.entries(tally) as [EnergyType, number][]).sort(

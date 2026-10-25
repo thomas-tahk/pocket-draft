@@ -114,7 +114,8 @@
     padding: 16px;
     overflow: visible;
   }
-  .tile-lg, .tile-sm { --tile-w: 100%; }
+  /* Only inside the three screens; History, Review and Shared keep their fixed tile sizes. */
+  .screen .tile-lg, .screen .tile-sm { --tile-w: 100%; }
   .offer-grid,
   .shelf-grid {
     display: grid;
