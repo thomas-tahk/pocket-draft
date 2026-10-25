@@ -1,5 +1,6 @@
-import { test, expect, type Locator, type Page, type Request } from '@playwright/test';
+import { test, expect, type Page, type Request } from '@playwright/test';
 import { readFileSync } from 'node:fs';
+import { buildFromDraft, draftTwenty, fillFrom, idOf } from './helpers/draft';
 
 // 1.31 at phone size: a draft finished in the real app starts its battle on the
 // new board (src/battle) with the drafted 20 as your deck, and Rematch from the
@@ -8,49 +9,9 @@ import { readFileSync } from 'node:fs';
 // The draft picks Basics first and new names first. Deckbuild offers only the
 // cards the engine can play (2.10), so any 20 built there reach the board whole.
 
-type Raw = { id: string; name: string; stage: string };
-const stageById = new Map(
-  (JSON.parse(readFileSync('public/data/cards.json', 'utf8')) as Raw[]).map((c) => [c.id, c]),
-);
-
-const idOf = (title: string) => title.split(' · ').pop() ?? '';
 const working = new Set(
   (JSON.parse(readFileSync('public/data/draft-pool.json', 'utf8')) as { working: string[] }).working,
 );
-
-async function draftTwenty(page: Page): Promise<Set<string>> {
-  const picked = new Set<string>();
-  const names = new Set<string>();
-  for (let pack = 1; pack <= 20; pack++) {
-    await expect(page.getByText(`Pack ${pack} / 20`)).toBeVisible();
-    const offer = page.locator('main button[title]');
-    await expect(offer).toHaveCount(5);
-    const ids = (await offer.evaluateAll((els) => els.map((e) => e.getAttribute('title') ?? ''))).map(idOf);
-    const fresh = ids.filter((id) => !names.has(stageById.get(id)!.name));
-    const basic = fresh.find((id) => stageById.get(id)!.stage === 'Basic');
-    const id = basic ?? fresh[0] ?? ids[0];
-    picked.add(id);
-    names.add(stageById.get(id)!.name);
-    await offer.nth(ids.indexOf(id)).click();
-  }
-  return picked;
-}
-
-async function buildFromDraft(page: Page) {
-  await expect(page.getByRole('heading', { name: 'Deckbuilding' })).toBeVisible();
-  const drafted = page.locator('section', { has: page.getByRole('heading', { name: /^Your draft/ }) });
-  await fillFrom(drafted);
-  await expect(page.getByText('Deck: 20 / 20')).toBeVisible();
-  await page.getByRole('button', { name: 'Finalize deck' }).click();
-}
-
-// Adds up to two copies of every card in the section, in order, until 20.
-async function fillFrom(section: Locator) {
-  const plus = section.getByRole('button', { name: '+' });
-  for (let i = 0; i < (await plus.count()); i++) {
-    for (let copy = 0; copy < 2 && (await plus.nth(i).isEnabled()); copy++) await plus.nth(i).click();
-  }
-}
 
 const deckSent = (req: Request) => (req.postDataJSON() as { you: string[] }).you;
 const isNewGame = (req: Request) => req.url().endsWith('/api/new') && req.method() === 'POST';

@@ -176,3 +176,5 @@
 }
 .run-summary { max-width: 560px; margin: 0 auto; padding: 24px 16px; }
 .run-summary-actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.run-tally { margin: 0; }
+.run-summary-share { margin-top: 8px; }

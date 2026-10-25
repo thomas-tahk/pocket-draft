@@ -21,3 +21,5 @@
 - #119 · placement: Exit + Back / Play / Forward sit in the gap between the two Actives, "Step n / N" top-left beside the History button, caption under the opponent's points row (overlaps the top of the opponent's hand) · DECISION for owner (layout)
 - #119 · no card zoom or card sheets in replay (board taps are off); stepping redraws instantly, no slide animation
 - #119 · error copy "This replay no longer matches its battle." for any record that fails to rebuild to its recorded result; a ?replay index with no battle goes to the run screen
+- #118 · Past runs reads the live run for the entry whose id matches run.historyId (no copy kept in history until archived) · one source of truth, no per-battle writes
+- #118 · summary keeps Copy code / Copy link / Export JSON (shared DeckShare component, same handlers as the review screen) · finished runs must not lose features
