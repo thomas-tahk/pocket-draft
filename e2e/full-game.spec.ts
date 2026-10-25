@@ -377,7 +377,7 @@ test('a whole game by gestures only, from a finished draft', async ({ page, requ
   await page.goto('/');
   await page.getByRole('button', { name: 'Start draft' }).click();
   await draftAndBuild(page);
-  await page.getByRole('button', { name: /Play deck/ }).click();
+  await page.getByRole('button', { name: /Next battle/ }).click();
   await expect(page.getByTestId('battle-board')).toBeVisible();
   const ctx: Ctx = { page, api: request, label: 'draft', step: 'open' };
   await playToEnd(ctx);
