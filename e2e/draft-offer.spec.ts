@@ -60,47 +60,60 @@ test('later offers favour the types already picked', () => {
 });
 
 // Synergy (#109). Mirrors server/draft_synergy_test.go.
-const mon = (name: string, cardType: string, evolvesFrom: string | null = null) =>
-  ({ id: name + cardType, name, cardType, evolvesFrom }) as Card;
+const mon = (name: string, cardType: string) => ({ id: name + cardType, name, cardType, attacks: [] }) as unknown as Card;
 const trainer = (name: string, trainerText: string) =>
-  ({ id: name, name, cardType: 'Trainer', trainerText }) as Card;
-
-test('evolution line gets the synergy bonus in both directions, once', () => {
-  const syn = buildSynergy([mon('Charmeleon', 'Fire', 'Charmander')]);
-  const tally = { Fire: 1 };
-  expect(weightOf(mon('Charizard', 'Fire', 'Charmeleon'), tally, syn)).toBe(2 * SYNERGY_MULT);
-  expect(weightOf(mon('Charmander', 'Fire'), tally, syn)).toBe(2 * SYNERGY_MULT);
-  expect(weightOf(mon('Charmander', 'Colorless'), tally, syn)).toBe(SYNERGY_MULT);
-  expect(weightOf(mon('Squirtle', 'Fire'), tally, syn)).toBe(2);
-  const both = buildSynergy([mon('Charmeleon', 'Fire', 'Charmander'), mon('Charizard', 'Fire', 'Charmeleon')]);
-  expect(weightOf(mon('Charmeleon', 'Fire', 'Charmander'), { Fire: 2 }, both)).toBe(3 * SYNERGY_MULT);
-});
+  ({ id: name, name, cardType: 'Trainer', trainerText, attacks: [] }) as unknown as Card;
 
 test('a Trainer naming a picked Pokemon gets the bonus, one that does not does not', () => {
   const syn = buildSynergy([mon('Onix', 'Fighting')]);
-  expect(weightOf(trainer('Brock', 'Attach a [F] Energy to Golem or Onix.'), {}, syn)).toBe(SYNERGY_MULT);
-  expect(weightOf(trainer('Misty', 'Attach Water Energy.'), {}, syn)).toBe(1);
+  expect(weightOf(trainer('Brock', 'Attach an Energy to Golem or Onix.'), {}, syn)).toBe(SYNERGY_MULT);
+  expect(weightOf(trainer('Misty', 'Attach an Energy to your Pokémon.'), {}, syn)).toBe(1);
   expect(weightOf(trainer('Other', 'Attach to Onixia.'), {}, syn)).toBe(1);
   const ex = buildSynergy([mon('Mewtwo ex', 'Psychic')]);
   expect(weightOf(trainer('X', 'Heal your Mewtwo.'), {}, ex)).toBe(SYNERGY_MULT);
 });
 
-test('offers contain the line of a pick measurably more often', () => {
-  const raichu = [0, 1, 2].map(
-    (i) => ({ ...mon('Raichu', 'Fire', 'Pika'), id: `r${i}`, draftRarity: '◊', isEx: false }) as Card,
+test('text naming a picked type gets the bonus; costs and Colorless do not', () => {
+  const picks = [mon('Squirtle', 'Water')];
+  const syn = buildSynergy(picks);
+  const tally = { Water: 1 };
+  for (const text of ['Choose 1 of your [W] Pokémon.', 'Attach a {W} Energy.', 'Heal your Water Pokémon.', 'Discard a Water Energy.'])
+    expect(weightOf(trainer('T', text), tally, syn), text).toBe(SYNERGY_MULT);
+  expect(weightOf(trainer('Blaine', 'Choose 1 of your [R] Pokémon.'), tally, syn)).toBe(1);
+  expect(weightOf(trainer('C', 'Attach a [C] Energy.'), tally, syn)).toBe(1);
+  const psyduck = { ...mon('Psyduck', 'Psychic'), attacks: [{ cost: '[W]', name: '[W] Splash', damage: '', effect: '' }] } as unknown as Card;
+  expect(weightOf(psyduck, tally, syn)).toBe(1);
+  const withEffect = { ...psyduck, attacks: [{ cost: 'W', name: 'X', damage: '', effect: 'Take a [W] Energy.' }] } as unknown as Card;
+  expect(weightOf(withEffect, tally, syn)).toBe(SYNERGY_MULT);
+});
+
+test('a pick whose text names a type boosts candidates of that type, once', () => {
+  const syn = buildSynergy([trainer('Misty', 'Choose 1 of your [W] Pokémon.')]);
+  expect(weightOf(mon('Squirtle', 'Water'), {}, syn)).toBe(SYNERGY_MULT);
+  expect(weightOf(mon('Charmander', 'Fire'), {}, syn)).toBe(1);
+  expect(weightOf(trainer('Other', 'Draw a card.'), {}, syn)).toBe(1);
+  const colorless = buildSynergy([trainer('Poké Ball', 'Put a [C] Pokémon in hand.')]);
+  expect(weightOf(mon('Meowth', 'Colorless'), {}, colorless)).toBe(1);
+  const two = buildSynergy([mon('Squirtle', 'Water')]);
+  expect(weightOf(trainer('X', 'Heal your Squirtle and your [W] Pokémon.'), {}, two)).toBe(SYNERGY_MULT);
+});
+
+test('Trainers naming the picked type are offered measurably more often', () => {
+  const mistys = [0, 1, 2].map(
+    (i) => ({ ...trainer('Misty', 'Choose 1 of your [W] Pokémon.'), id: `m${i}`, draftRarity: '◊', isEx: false }) as unknown as Card,
   );
-  const lineTier = indexByTier([...pool, ...raichu]);
+  const tiers = indexByTier([...pool, ...mistys]);
   const count = (picks: Card[]) => {
     let n = 0;
     for (let seed = 1; seed <= 20; seed++) {
       const rng = seeded(seed);
       for (let i = 0; i < 100; i++)
-        for (const c of generateOffer(lineTier, { isPack1: false, picks, rng })) if (c.name === 'Raichu') n++;
+        for (const c of generateOffer(tiers, { isPack1: false, picks, rng })) if (c.name === 'Misty') n++;
     }
     return n;
   };
-  const withPick = count([mon('Pika', 'Fire')]);
-  const control = count([mon('Other', 'Fire')]);
-  expect(control).toBeGreaterThan(0);
-  expect(withPick).toBeGreaterThan(control * 1.5);
+  const withWater = count([mon('W', 'Water')]);
+  const withFire = count([mon('F', 'Fire')]);
+  expect(withFire).toBeGreaterThan(0);
+  expect(withWater).toBeGreaterThan(withFire * 1.5);
 });

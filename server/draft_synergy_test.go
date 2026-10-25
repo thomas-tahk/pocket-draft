@@ -1,44 +1,25 @@
 package main
 
-import (
-	"sort"
-	"testing"
-)
+import "testing"
 
-func pokemon(name, typ, evolvesFrom string) draftCard {
-	return draftCard{rawCard: rawCard{ID: name + typ, Name: name, CardType: typ, EvolvesFrom: evolvesFrom}}
+func pokemon(name, typ string) draftCard {
+	return draftCard{rawCard: rawCard{ID: name + typ, Name: name, CardType: typ}}
 }
 
 func trainerText(name, text string) draftCard {
 	return draftCard{rawCard: rawCard{ID: name + text, Name: name, CardType: "Trainer", TrainerText: text}}
 }
 
-func TestSynergyEvolutionLineBothDirections(t *testing.T) {
-	picks := []draftCard{pokemon("Charmeleon", "Fire", "Charmander")}
-	syn := newSynergy(picks)
-	tally := tallyTypes(picks) // Fire 1 -> base weight 2
-	cases := []struct {
-		card draftCard
-		want float64
-	}{
-		{pokemon("Charizard", "Fire", "Charmeleon"), 2 * synergyMult},
-		{pokemon("Charmander", "Fire", ""), 2 * synergyMult},
-		{pokemon("Charmander", "Colorless", ""), 1 * synergyMult},
-		{pokemon("Squirtle", "Fire", ""), 2},
-		{pokemon("Charizard", "Fire", "Charmeleon X"), 2},
-	}
-	for _, c := range cases {
-		if got := weightOf(c.card, tally, syn); got != c.want {
-			t.Errorf("weightOf(%s from %q) = %v, want %v", c.card.Name, c.card.EvolvesFrom, got, c.want)
-		}
-	}
+func withAttackEffect(c draftCard, effect string) draftCard {
+	c.Attacks = []rawAttack{{Cost: "W", Effect: effect}}
+	return c
 }
 
 func TestSynergyNamedTrainerOnly(t *testing.T) {
-	syn := newSynergy([]draftCard{pokemon("Onix", "Fighting", "")})
+	syn := newSynergy([]draftCard{pokemon("Onix", "Fighting")})
 	tally := typeTally{}
-	brock := trainerText("Brock", "Attach a [F] Energy to Golem or Onix.")
-	misty := trainerText("Misty", "Flip a coin until you get tails. Attach Water Energy.")
+	brock := trainerText("Brock", "Attach an Energy to Golem or Onix.")
+	misty := trainerText("Misty", "Attach an Energy to your Pokémon.")
 	longer := trainerText("Other", "Attach to Onixia.")
 	if w := weightOf(brock, tally, syn); w != synergyMult {
 		t.Errorf("Brock naming Onix = %v, want %v", w, synergyMult)
@@ -52,109 +33,87 @@ func TestSynergyNamedTrainerOnly(t *testing.T) {
 }
 
 func TestSynergyExPickNamedByBaseName(t *testing.T) {
-	syn := newSynergy([]draftCard{pokemon("Mewtwo ex", "Psychic", "")})
+	syn := newSynergy([]draftCard{pokemon("Mewtwo ex", "Psychic")})
 	if w := weightOf(trainerText("X", "Heal your Mewtwo."), typeTally{}, syn); w != synergyMult {
 		t.Errorf("trainer naming base name = %v, want %v", w, synergyMult)
 	}
 }
 
+// Rule 3a: candidate text names a type you picked.
+func TestSynergyTextNamesPickedType(t *testing.T) {
+	syn := newSynergy([]draftCard{pokemon("Squirtle", "Water")})
+	tally := tallyTypes([]draftCard{pokemon("Squirtle", "Water")}) // Water 1
+	cases := []struct {
+		name string
+		card draftCard
+		want float64
+	}{
+		{"symbol in brackets", trainerText("Misty", "Choose 1 of your [W] Pokémon."), synergyMult},
+		{"symbol in braces", trainerText("M2", "Attach a {W} Energy."), synergyMult},
+		{"Type Pokémon words", trainerText("M3", "Heal your Water Pokémon."), synergyMult},
+		{"Type Energy words", trainerText("M4", "Discard a Water Energy."), synergyMult},
+		{"other type", trainerText("Blaine", "Choose 1 of your [R] Pokémon."), 1},
+		{"colorless never counts", trainerText("C", "Attach a [C] Energy."), 1},
+		{"attack effect counts", withAttackEffect(pokemon("Psyduck", "Psychic"), "Take a [W] Energy."), synergyMult}, // Psychic, no Psychic picks: base 1
+		{"no text", pokemon("Lapras", "Colorless"), 1},
+	}
+	for _, c := range cases {
+		if got := weightOf(c.card, tally, syn); got != c.want {
+			t.Errorf("%s: weight %v, want %v", c.name, got, c.want)
+		}
+	}
+}
+
+func TestSynergyAttackCostIsNotText(t *testing.T) {
+	syn := newSynergy([]draftCard{pokemon("Squirtle", "Water")})
+	c := pokemon("Psyduck", "Psychic")
+	c.Attacks = []rawAttack{{Cost: "[W]", Name: "[W] Splash", Effect: ""}}
+	if w := weightOf(c, typeTally{}, syn); w != 1 {
+		t.Errorf("symbol only in cost/name = %v, want 1", w)
+	}
+}
+
+// Rule 3b: a pick's text names a type, so candidates of that type are boosted.
+func TestSynergyPickTextBoostsThatType(t *testing.T) {
+	pick := trainerText("Misty", "Choose 1 of your [W] Pokémon.")
+	syn := newSynergy([]draftCard{pick})
+	tally := typeTally{}
+	if w := weightOf(pokemon("Squirtle", "Water"), tally, syn); w != synergyMult {
+		t.Errorf("Water Pokémon after picking Misty = %v, want %v", w, synergyMult)
+	}
+	if w := weightOf(pokemon("Charmander", "Fire"), tally, syn); w != 1 {
+		t.Errorf("Fire Pokémon = %v, want 1", w)
+	}
+	colorless := newSynergy([]draftCard{trainerText("Poké Ball", "Put a [C] Pokémon in hand.")})
+	if w := weightOf(pokemon("Meowth", "Colorless"), tally, colorless); w != 1 {
+		t.Errorf("Colorless reference = %v, want 1", w)
+	}
+	// A Trainer is not a "candidate Pokémon": rule 3b does not apply to it.
+	if w := weightOf(trainerText("Other", "Draw a card."), tally, syn); w != 1 {
+		t.Errorf("Trainer under rule 3b = %v, want 1", w)
+	}
+}
+
 func TestSynergyNeverStacks(t *testing.T) {
-	picks := []draftCard{pokemon("Charmeleon", "Fire", "Charmander"), pokemon("Charizard", "Fire", "Charmeleon")}
+	// Squirtle-named Trainer text that also names Water: matches rules 1 and 2.
+	picks := []draftCard{pokemon("Squirtle", "Water")}
 	syn := newSynergy(picks)
-	// Charmeleon is both the parent of a pick and the child of... itself picked.
-	w := weightOf(pokemon("Charmeleon", "Fire", "Charmander"), tallyTypes(picks), syn)
-	if w != 3*synergyMult {
-		t.Errorf("both directions = %v, want a single x%v on base 3", w, synergyMult)
+	both := trainerText("X", "Heal your Squirtle and your [W] Pokémon.")
+	if w := weightOf(both, tallyTypes(picks), syn); w != synergyMult {
+		t.Errorf("two rules = %v, want one x%v", w, synergyMult)
 	}
 }
 
-// poolWithEvolutions is toDraftablePool minus the final-evolutions-only filter.
-// The shipped pool drops every Pokémon something evolves into by name, so a
-// pick and a candidate can never be one stage apart there (see
-// TestShippedPoolHasNoEvolutionPairs); this is the only way to exercise the
-// evolution rule on real card data.
-func poolWithEvolutions() []draftCard {
-	enriched := []draftCard{}
-	for _, rc := range rawByID {
-		if !isDraftCandidate(rc) {
-			continue
-		}
-		if dc, ok := enrichForDraft(rc); ok {
-			enriched = append(enriched, dc)
-		}
+func idsOf(cards []draftCard) map[string]bool {
+	out := map[string]bool{}
+	for _, c := range cards {
+		out[c.ID] = true
 	}
-	sort.Slice(enriched, func(i, j int) bool { return enriched[i].ID < enriched[j].ID })
-	pool := keepWorkingText(functionalDedupe(dedupePromoRayquaza(enriched)))
-	sort.Slice(pool, func(i, j int) bool { return pool[i].ID < pool[j].ID })
-	return pool
+	return out
 }
 
-// Documents why the rule is quiet in the shipped draft: no pick is ever one
-// stage from a candidate by name, because the pool is final evolutions only.
-func TestShippedPoolHasNoEvolutionPairs(t *testing.T) {
-	useRealCards(t)
-	names := map[string]bool{}
-	pool := toDraftablePool()
-	for _, c := range pool {
-		names[c.Name] = true
-	}
-	for _, c := range pool {
-		if c.EvolvesFrom != "" && names[c.EvolvesFrom] {
-			t.Errorf("%s evolves from %s and both are in the shipped pool", c.Name, c.EvolvesFrom)
-		}
-	}
-}
-
-// Real Trainers that name a pool Pokémon get offered more once you pick it.
-func TestOffersFavourTrainerNamingPick(t *testing.T) {
-	useRealCards(t)
-	pool := toDraftablePool()
-	byTier := indexByTier(pool)
-	var pick draftCard
-	var named map[string]bool
-	for _, c := range pool {
-		if c.CardType == "Trainer" || c.CardType == "Colorless" {
-			continue
-		}
-		syn := newSynergy([]draftCard{c})
-		n := map[string]bool{}
-		for _, tr := range pool {
-			if tr.CardType == "Trainer" && syn.matches(tr) {
-				n[tr.ID] = true
-			}
-		}
-		if len(n) > len(named) {
-			pick, named = c, n
-		}
-	}
-	if len(named) == 0 {
-		t.Fatal("no Trainer in the pool names a pool Pokémon")
-	}
-	var control draftCard
-	for _, c := range pool {
-		if c.CardType == pick.CardType && c.Name != pick.Name && !newSynergy([]draftCard{c}).matchesAny(pool, named) {
-			control = c
-			break
-		}
-	}
-	with := countIDsOffered(byTier, []draftCard{pick}, named)
-	without := countIDsOffered(byTier, []draftCard{control}, named)
-	t.Logf("pick %s, %d naming Trainers: with %d, control (%s) %d", pick.Name, len(named), with, control.Name, without)
-	if without == 0 || float64(with) < 1.5*float64(without) {
-		t.Errorf("naming Trainers offered %d with the pick vs %d without, want >= 1.5x", with, without)
-	}
-}
-
-func (s synergy) matchesAny(pool []draftCard, ids map[string]bool) bool {
-	for _, c := range pool {
-		if ids[c.ID] && s.matches(c) {
-			return true
-		}
-	}
-	return false
-}
-
-func countIDsOffered(byTier map[tier][]draftCard, picks []draftCard, ids map[string]bool) int {
+// offeredCount counts cards in idSet offered over 20 seeds x 100 offers.
+func offeredCount(byTier map[tier][]draftCard, picks []draftCard, ids map[string]bool) int {
 	n := 0
 	for seed := uint64(1); seed <= 20; seed++ {
 		rng := newDraftRng(seed)
@@ -173,83 +132,99 @@ func countIDsOffered(byTier map[tier][]draftCard, picks []draftCard, ids map[str
 	return n
 }
 
-// Picks the Basic with the most evolution printings, then compares how often
-// those evolutions are offered against picking an unrelated Basic of the same
-// type (same type tally, no line link). Runs on poolWithEvolutions.
-func TestOffersFavourEvolutionLineOfPick(t *testing.T) {
+func firstOfType(pool []draftCard, typ string) draftCard {
+	for _, c := range pool {
+		if c.CardType == typ && len(typesNamedIn(effectText(c))) == 0 {
+			return c
+		}
+	}
+	return draftCard{}
+}
+
+// Rule 3a on the shipped pool: Trainers that name only Water are offered more
+// after a Water pick than after a Fire pick.
+func TestOffersFavourTrainersNamingPickedType(t *testing.T) {
 	useRealCards(t)
-	pool := poolWithEvolutions()
+	pool := toDraftablePool()
 	byTier := indexByTier(pool)
-	basic, line := bestBasicWithLine(pool)
-	if basic.ID == "" {
-		t.Fatal("no Basic with an evolution in the pool")
-	}
-	var control draftCard
+	var waterOnly []draftCard
 	for _, c := range pool {
-		if c.Stage == "Basic" && c.CardType == basic.CardType && c.Name != basic.Name && !line[c.Name] {
-			control = c
-			break
+		named := typesNamedIn(effectText(c))
+		if c.CardType == "Trainer" && len(named) == 1 && named["Water"] {
+			waterOnly = append(waterOnly, c)
 		}
 	}
-	with := lineMembersOffered(byTier, []draftCard{basic}, line)
-	without := lineMembersOffered(byTier, []draftCard{control}, line)
-	t.Logf("%s line %v: with pick %d, control (%s) %d", basic.Name, sortedKeys(line), with, control.Name, without)
+	if len(waterOnly) == 0 {
+		t.Fatal("no Trainer in the pool names only Water")
+	}
+	ids := idsOf(waterOnly)
+	water, fire := firstOfType(pool, "Water"), firstOfType(pool, "Fire")
+	with := offeredCount(byTier, []draftCard{water}, ids)
+	without := offeredCount(byTier, []draftCard{fire}, ids)
+	t.Logf("%d Water-only Trainers: with Water pick %d, with Fire pick %d", len(waterOnly), with, without)
 	if without == 0 || float64(with) < 1.5*float64(without) {
-		t.Errorf("line members offered %d with the pick vs %d without, want >= 1.5x", with, without)
+		t.Errorf("Water-naming Trainers offered %d vs %d, want >= 1.5x", with, without)
 	}
 }
 
-func sortedKeys(m map[string]bool) []string {
-	out := []string{}
-	for k := range m {
-		out = append(out, k)
-	}
-	sort.Strings(out)
-	return out
-}
-
-// bestBasicWithLine returns the non-Colorless Basic whose name has the most
-// evolution printings in pool (ties: lowest ID), and the names evolving from it.
-func bestBasicWithLine(pool []draftCard) (draftCard, map[string]bool) {
-	count := map[string]int{}
+// Rule 2 on the shipped pool: Trainers naming a picked Pokémon.
+func TestOffersFavourTrainerNamingPick(t *testing.T) {
+	useRealCards(t)
+	pool := toDraftablePool()
+	byTier := indexByTier(pool)
+	var pick draftCard
+	var named []draftCard
 	for _, c := range pool {
-		if c.EvolvesFrom != "" {
-			count[c.EvolvesFrom]++
-		}
-	}
-	var best draftCard
-	for _, c := range pool {
-		if c.Stage != "Basic" || c.CardType == "Colorless" || c.CardType == "Trainer" {
+		if c.CardType == "Trainer" || c.CardType == "Colorless" {
 			continue
 		}
-		if best.ID == "" || count[c.Name] > count[best.Name] || (count[c.Name] == count[best.Name] && c.ID < best.ID) {
-			best = c
+		var n []draftCard
+		for _, tr := range pool {
+			if tr.CardType == "Trainer" && newSynergy([]draftCard{c}).nameText.MatchString(tr.TrainerText) {
+				n = append(n, tr)
+			}
+		}
+		if len(n) > len(named) {
+			pick, named = c, n
 		}
 	}
-	line := map[string]bool{}
-	for _, c := range pool {
-		if c.EvolvesFrom == best.Name {
-			line[c.Name] = true
-		}
+	if len(named) == 0 {
+		t.Fatal("no Trainer in the pool names a pool Pokémon")
 	}
-	return best, line
+	control := firstOfType(pool, pick.CardType)
+	with := offeredCount(byTier, []draftCard{pick}, idsOf(named))
+	without := offeredCount(byTier, []draftCard{control}, idsOf(named))
+	t.Logf("pick %s, %d naming Trainers: with %d, control (%s) %d", pick.Name, len(named), with, control.Name, without)
+	if without == 0 || float64(with) < 1.5*float64(without) {
+		t.Errorf("naming Trainers offered %d vs %d, want >= 1.5x", with, without)
+	}
 }
 
-func lineMembersOffered(byTier map[tier][]draftCard, picks []draftCard, line map[string]bool) int {
-	n := 0
-	for seed := uint64(1); seed <= 20; seed++ {
-		rng := newDraftRng(seed)
-		for i := 0; i < 100; i++ {
-			offer, err := generateOffer(byTier, picks, rng.Float64)
-			if err != nil {
-				panic(err)
-			}
-			for _, c := range offer {
-				if line[c.Name] {
-					n++
-				}
-			}
+// How many shipped-pool cards each rule can fire on, so we know it is alive.
+func TestSynergyRulesAreAliveInShippedPool(t *testing.T) {
+	useRealCards(t)
+	pool := toDraftablePool()
+	allNames := newSynergy(pool)
+	rule1, rule2, rule3, textTypes := 0, 0, 0, map[string]bool{}
+	for _, c := range pool {
+		if c.CardType == "Trainer" && allNames.nameText.MatchString(c.TrainerText) {
+			rule1++
+		}
+		if len(typesNamedIn(effectText(c))) > 0 {
+			rule2++
+		}
+		for typ := range typesNamedIn(effectText(c)) {
+			textTypes[typ] = true
 		}
 	}
-	return n
+	for _, c := range pool {
+		if c.CardType != "Trainer" && textTypes[c.CardType] {
+			rule3++
+		}
+	}
+	t.Logf("pool %d cards: rule 1 (Trainer names a pool Pokémon) %d; rule 2 (text names a type) %d; rule 3 (Pokémon of a type some card's text names) %d",
+		len(pool), rule1, rule2, rule3)
+	if rule1 == 0 || rule2 == 0 || rule3 == 0 {
+		t.Errorf("a rule can fire on nothing: %d %d %d", rule1, rule2, rule3)
+	}
 }

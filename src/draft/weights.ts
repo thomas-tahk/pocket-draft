@@ -20,40 +20,68 @@ export function tallyTypes(picks: Card[]): TypeTally {
   return t;
 }
 
-// A candidate that works with the picks (evolution line, or a Trainer naming a
-// picked Pokémon) has its weight multiplied by this, once, never stacked.
-// Energy match is not a synergy rule; type weighting already covers it.
-// Mirrored by synergyMult in server/draft_weights.go.
+// A candidate that works with the picks has its weight multiplied by this, once,
+// never stacked, however many rules match. Rules:
+//   1. a Trainer's text names a picked Pokémon;
+//   2. a candidate's effect text names a type you have picked Pokémon of;
+//   3. a candidate Pokémon's type is named by the text of one of your picks.
+// A Colorless reference never counts. Mirrored by synergyMult in
+// server/draft_synergy.go.
 export const SYNERGY_MULT = 3;
 
-export type Synergy = {
-  names: Set<string>; // picked Pokémon names
-  parents: Set<string>; // names the picked Pokémon evolve from
-  text: RegExp | null; // a picked Pokémon's base name inside Trainer text
+// Energy symbol letters in card text -> card type ([W], {W}).
+const TYPE_SYMBOLS: Record<string, EnergyType> = {
+  G: 'Grass', R: 'Fire', W: 'Water', L: 'Lightning', P: 'Psychic',
+  F: 'Fighting', D: 'Darkness', M: 'Metal', N: 'Dragon',
 };
 
-export const NO_SYNERGY: Synergy = { names: new Set(), parents: new Set(), text: null };
+// Trainer text, ability and attack effects. Attack costs are not text.
+function effectText(card: Card): string {
+  return [card.trainerText ?? '', card.ability?.effect ?? '', ...(card.attacks ?? []).map((a) => a.effect)].join('\n');
+}
+
+// Non-Colorless types a text names: "<Type> Pokémon", "<Type> Energy", [W] or {W}.
+function typesNamedIn(text: string): EnergyType[] {
+  return Object.entries(TYPE_SYMBOLS)
+    .filter(
+      ([letter, type]) =>
+        text.includes(`[${letter}]`) ||
+        text.includes(`{${letter}}`) ||
+        text.includes(`${type} Pokémon`) ||
+        text.includes(`${type} Energy`),
+    )
+    .map(([, type]) => type);
+}
+
+export type Synergy = {
+  pickedTypes: Set<EnergyType>; // types of picked Pokémon (not Colorless)
+  textTypes: Set<EnergyType>; // types named in the text of any pick
+  nameText: RegExp | null; // a picked Pokémon's base name inside Trainer text
+};
+
+export const NO_SYNERGY: Synergy = { pickedTypes: new Set(), textTypes: new Set(), nameText: null };
 
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 export function buildSynergy(picks: Card[]): Synergy {
-  const names = new Set<string>();
-  const parents = new Set<string>();
+  const pickedTypes = new Set<EnergyType>();
+  const textTypes = new Set<EnergyType>();
   const needles: string[] = [];
   for (const p of picks) {
+    for (const t of typesNamedIn(effectText(p))) textTypes.add(t);
     if (p.cardType === 'Trainer') continue;
-    names.add(p.name);
-    if (p.evolvesFrom) parents.add(p.evolvesFrom);
-    needles.push(escapeRegExp(p.name.replace(/ ex$/, '')));
+    if (p.cardType !== 'Colorless') pickedTypes.add(p.cardType);
+    needles.push(escapeRegExp((p.name ?? '').replace(/ ex$/, '')));
   }
-  const text =
+  const nameText =
     needles.length > 0 ? new RegExp(`(^|[^\\p{L}])(${needles.join('|')})($|[^\\p{L}])`, 'u') : null;
-  return { names, parents, text };
+  return { pickedTypes, textTypes, nameText };
 }
 
 function matchesSynergy(card: Card, s: Synergy): boolean {
-  if (card.cardType === 'Trainer') return s.text !== null && s.text.test(card.trainerText ?? '');
-  return (!!card.evolvesFrom && s.names.has(card.evolvesFrom)) || s.parents.has(card.name);
+  if (card.cardType === 'Trainer' && s.nameText?.test(card.trainerText ?? '')) return true;
+  if (card.cardType !== 'Trainer' && s.textTypes.has(card.cardType as EnergyType)) return true;
+  return typesNamedIn(effectText(card)).some((t) => s.pickedTypes.has(t));
 }
 
 // Sampling weight for one candidate given the running tally.
