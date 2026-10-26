@@ -10,7 +10,7 @@ const never = new AbortController().signal;
 
 // The battle as the player left it: the view after the last logged step.
 export async function resumeView(saved: InProgressBattle): Promise<GameView> {
-  const views = await inQueue(() => applySteps({ you: saved.yourDeck, seed: saved.seed }, saved.log, never));
+  const views = await inQueue(() => applySteps({ you: saved.yourDeck, seed: saved.seed, energy: saved.energy }, saved.log, never));
   return views[views.length - 1];
 }
 
@@ -19,11 +19,11 @@ export async function resumeView(saved: InProgressBattle): Promise<GameView> {
 export async function timedOutBattle(saved: InProgressBattle, now: Date): Promise<RunBattle> {
   try {
     const log = [...saved.log, { type: 'Concede' as const, player: 0 }];
-    const views = await inQueue(() => applySteps({ you: saved.yourDeck, seed: saved.seed }, log, never));
+    const views = await inQueue(() => applySteps({ you: saved.yourDeck, seed: saved.seed, energy: saved.energy }, log, never));
     const { record } = views[views.length - 1];
-    return { result: 'loss', seed: record.seed, yourDeck: record.you, botDeck: record.bot, actions: record.actions, endedAt: now.toISOString() };
+    return { result: 'loss', seed: record.seed, yourDeck: record.you, botDeck: record.bot, energy: saved.energy, actions: record.actions, endedAt: now.toISOString() };
   } catch {
     // The engine could not rebuild it: the loss still counts; its replay will say it no longer matches.
-    return { result: 'loss', seed: saved.seed, yourDeck: saved.yourDeck, botDeck: [], actions: [], endedAt: now.toISOString() };
+    return { result: 'loss', seed: saved.seed, yourDeck: saved.yourDeck, botDeck: [], energy: saved.energy, actions: [], endedAt: now.toISOString() };
   }
 }

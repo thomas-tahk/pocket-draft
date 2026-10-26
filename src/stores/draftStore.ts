@@ -33,6 +33,7 @@ type State = {
   shopFinalized: boolean;
   deck: Record<string, number>; // cardId → count (1 or 2)
   deckFinalized: boolean;
+  energy: string[]; // Energy Zone types picked at deckbuild; [] = not chosen yet (the default shows)
   history: DraftHistoryEntry[];
   run: Run | null; // starts when the deck is finalized
 };
@@ -45,7 +46,8 @@ type Actions = {
   finalizeShop: () => void;
   addToDeck: (cardId: string) => void;
   removeFromDeck: (cardId: string) => void;
-  finalizeDeck: () => void;
+  setEnergy: (types: string[]) => void;
+  finalizeDeck: (energy?: string[]) => void;
   autoDraft: (picks: string[], deck: string[]) => void;
   archiveRun: () => void;
   recordBattle: (battle: RunBattle) => void;
@@ -65,6 +67,7 @@ const activeStateInitial: Omit<State, 'history'> = {
   shopFinalized: false,
   deck: {},
   deckFinalized: false,
+  energy: [],
 };
 
 const initialState: State = {
@@ -175,8 +178,11 @@ export const useDraftStore = create<State & Actions>()(
         }
       },
 
-      finalizeDeck: () => {
+      setEnergy: (types) => set({ energy: types }),
+
+      finalizeDeck: (chosen) => {
         const { pickIds, shopPurchasedIds, deck, history } = get();
+        const energy = chosen ?? get().energy ?? [];
         const entry: DraftHistoryEntry = {
           id: newEntryId(),
           completedAt: new Date().toISOString(),
@@ -189,7 +195,7 @@ export const useDraftStore = create<State & Actions>()(
         };
         // FIFO cap: newest first, drop oldest beyond HISTORY_CAP.
         const nextHistory = [entry, ...history].slice(0, HISTORY_CAP);
-        set({ deckFinalized: true, history: nextHistory, run: { ...newRun(deck), historyId: entry.id } });
+        set({ deckFinalized: true, energy, history: nextHistory, run: { ...newRun(deck, energy), historyId: entry.id } });
       },
 
       // Jumps straight to review with a finished draft, for testing battles.
