@@ -4,7 +4,7 @@ import type { Card } from '../types/card';
 import { SHOP_TICKETS } from '../stores/draftStore';
 import { COPY_CAP_BY_NAME } from '../draft/expansions';
 import { buildShopInventory } from '../shop/inventory';
-import { CardTile, type HoverPayload } from './CardTile';
+import { CardTile, FocusPreview, type HoverPayload } from './CardTile';
 import { CardPreview, type HoverState } from './CardPreview';
 
 type Props = {
@@ -52,8 +52,10 @@ export function ShopView({
           const noTickets = ticketsLeft === 0;
           const addDisabled = atPerCardCap || noTickets;
           return (
-            <div
+            <FocusPreview
               key={c.id}
+              card={c}
+              onHover={handleHover}
               className={`shelf-cell${count > 0 ? ' is-picked' : ''}${addDisabled && count === 0 ? ' is-dim' : ''}`}
             >
               <CardTile card={c} size="lg" onHover={handleHover} />
@@ -85,7 +87,7 @@ export function ShopView({
                   +
                 </button>
               </div>
-            </div>
+            </FocusPreview>
           );
         })}
       </div>

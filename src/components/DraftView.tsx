@@ -46,7 +46,7 @@ export function DraftView({ packIndex, offer, picks, onPick, onCancel }: Props) 
           <h1 className="screen-title">Pocket Draft</h1>
           <div className="screen-header-actions">
             <div className="muted">
-              <span role="status">Pack {packIndex + 1} / {TOTAL_PACKS}</span>
+              Pack {packIndex + 1} / {TOTAL_PACKS}
               {sortedTally.length > 0 && (
                 <span style={{ marginLeft: 16 }}>
                   <TypeTally entries={sortedTally} />

@@ -181,5 +181,5 @@ input:focus {
 
 /* Windows high-contrast: keep the ring visible. */
 @media (forced-colors: active) {
-  button:focus-visible, a:focus-visible, button.tile-lg:focus-visible, button.tile-sm:focus-visible { outline: 3px solid Highlight !important; }
+  button:focus-visible, a:focus-visible, button.tile-lg:focus-visible, button.tile-sm:focus-visible, div.tile-lg:focus-visible, div.tile-sm:focus-visible { outline: 3px solid Highlight !important; }
 }

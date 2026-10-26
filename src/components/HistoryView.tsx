@@ -141,7 +141,7 @@ export function HistoryView({ history, run, pool, onClose, onUpdate, onDelete }:
             <div className="history-grid">
               {deckCards.flatMap(({ card, count }) =>
                 Array.from({ length: count }).map((_, i) => (
-                  <CardTile key={`${card.id}-${i}`} card={card} size="sm" onHover={handleHover} />
+                  <CardTile key={`${card.id}-${i}`} card={card} size="sm" focusable onHover={handleHover} />
                 )),
               )}
             </div>

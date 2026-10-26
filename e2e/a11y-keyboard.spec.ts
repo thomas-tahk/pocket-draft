@@ -108,7 +108,7 @@ test('a whole run by keyboard: draft, shop, deckbuild, Energy Zone, battle, summ
   await headingFocused(page, 'Pocket Draft');
   const offerBtns = page.locator('.offer-grid button');
   for (let pack = 1; pack <= 20; pack++) {
-    await expect(page.getByRole('status').filter({ hasText: `Pack ${pack} / 20` })).toBeVisible();
+    await expect(page.getByText(`Pack ${pack} / 20`)).toBeVisible();
     await expect(offerBtns).toHaveCount(5);
     await expect(page.getByRole('group', { name: `Pack ${pack} of 20: choose a card` })).toBeVisible();
     if (pack > 1) {
@@ -312,3 +312,120 @@ for (const vp of [
     expect(small, small.join('\n')).toEqual([]);
   });
 }
+
+// ---------- names without glyphs; keyboard-focus previews; the leave countdown ----------
+
+// Every accessible name that carries a rarity is in words: no diamond, star or crown glyph, no other symbol.
+async function expectNamesInWords(page: Page, screen: string, minTiles: number) {
+  const { bad, tiles } = await page.evaluate(() => {
+    const names = [...document.querySelectorAll<HTMLElement>('[aria-label]')].map((e) => e.getAttribute('aria-label') ?? '');
+    const alts = [...document.images].map((i) => i.alt);
+    const glyph = /[^\p{L}\p{N}\s,.'’:+−\-–()/]/u;
+    return {
+      bad: [...names, ...alts].filter((n) => glyph.test(n)),
+      tiles: names.filter((n) => /, \d (diamond|star)s?(,|$)|, crown/.test(n)).length,
+    };
+  });
+  expect(bad, `${screen}: names with symbols`).toEqual([]);
+  expect(tiles, `${screen}: tiles named with rarity words`).toBeGreaterThanOrEqual(minTiles);
+}
+
+const previewBox = (page: Page) => page.getByTestId('card-preview').boundingBox();
+const overlaps = (a: { x: number; y: number; width: number; height: number }, b: typeof a) =>
+  a.x < b.x + b.width - 0.5 && b.x < a.x + a.width - 0.5 && a.y < b.y + b.height - 0.5 && b.y < a.y + a.height - 0.5;
+
+// Keyboard focus on a card's control shows that card's preview; on a phone it never covers the card.
+async function focusPreviewChecks(page: Page, add: Locator, phone: boolean) {
+  const preview = page.getByTestId('card-preview');
+  const cell = (n: number) => add.nth(n).locator('xpath=ancestor::div[contains(@class,"shelf-cell")]');
+  for (const where of phone ? (['top', 'bottom'] as const) : (['top'] as const)) {
+    const c = cell(0);
+    await c.evaluate((el, y) => window.scrollBy(0, el.getBoundingClientRect().top - y), where === 'top' ? 60 : 460);
+    await page.keyboard.press('Shift'); // the keyboard is the input in use
+    await add.nth(0).focus();
+    await expect(preview, `${where}: preview on focus`).toBeVisible();
+    const tile = (await c.locator('.tile-lg').boundingBox())!;
+    const pv = (await previewBox(page))!;
+    if (phone) {
+      expect(overlaps(pv, tile), `${where}: preview ${JSON.stringify(pv)} covers tile ${JSON.stringify(tile)}`).toBe(false);
+      expect(pv.y).toBeGreaterThanOrEqual(0);
+      expect(pv.y + pv.height).toBeLessThanOrEqual(page.viewportSize()!.height);
+    }
+    // Escape hides it and it stays hidden while focus stays on this card's buttons.
+    await page.keyboard.press('Escape');
+    await expect(preview).toHaveCount(0);
+    // Another card's control: its preview.
+    await add.nth(1).focus();
+    await expect(preview).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(preview).toHaveCount(0);
+  }
+}
+
+for (const vp of [
+  { width: 390, height: 844 },
+  { width: 1440, height: 900 },
+]) {
+  test(`card names in words and previews on keyboard focus at ${vp.width}x${vp.height}`, async ({ page }) => {
+    test.setTimeout(300_000);
+    await page.setViewportSize(vp);
+    await stubImages(page);
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Start draft' }).click();
+    await expect(page.locator('.offer-grid button')).toHaveCount(5);
+    await expectNamesInWords(page, 'draft offers', 5);
+    await draftTwenty(page);
+    await expect(page.getByRole('heading', { name: 'Shop' })).toBeVisible();
+    await expectNamesInWords(page, 'shop', 1);
+    await focusPreviewChecks(page, page.locator('button[aria-label^="+ Add"]'), vp.width <= 700);
+    await page.getByRole('button', { name: 'Skip shop' }).click();
+    await expect(page.getByRole('heading', { name: 'Deckbuilding' })).toBeVisible();
+    await focusPreviewChecks(page, page.locator('button[aria-label^="+ Add"]'), vp.width <= 700);
+    await buildFromDraft(page);
+    await expect(page.getByRole('heading', { name: 'Deck finalized' })).toBeVisible();
+    await expectNamesInWords(page, 'run / review', 20);
+
+    // The review's cards are focus stops with a preview.
+    await page.keyboard.press('Shift');
+    await page.locator('.deck-grid [role="group"]').first().focus();
+    await expect(page.getByTestId('card-preview')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('card-preview')).toHaveCount(0);
+
+    // Deck-side tiles (deckbuild) and history: end the run, open Past runs.
+    for (let i = 0; i < 2; i++) {
+      await page.getByRole('button', { name: 'Next battle' }).click();
+      await concedeByStore(page);
+      await page.getByRole('button', { name: 'Back' }).click();
+    }
+    await expect(page.getByRole('heading', { name: 'Run lost' })).toBeVisible();
+    await page.getByRole('button', { name: 'Home', exact: true }).click();
+    await page.getByRole('button', { name: /Past runs/ }).click();
+    await page.getByRole('button', { name: 'View' }).first().click();
+    await expectNamesInWords(page, 'history', 20);
+    await page.keyboard.press('Shift');
+    await page.locator('.history-grid [role="group"]').first().focus();
+    await expect(page.getByTestId('card-preview')).toBeVisible();
+  });
+}
+
+test('leave countdown: when time runs out under the Return button, focus goes to the heading, not the page', async ({ page }) => {
+  test.setTimeout(120_000);
+  await stubImages(page);
+  await page.clock.install();
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Auto-draft (test)' }).click();
+  await expect(page.getByTestId('run-record')).toBeVisible();
+  await page.getByRole('button', { name: 'Next battle' }).click();
+  await expect(page.getByTestId('battle-board')).toBeVisible();
+  await page.getByTestId('menu').click();
+  await page.getByTestId('menu-leave').click();
+  await expect(page.getByTestId('leave-countdown')).toBeVisible();
+  const ret = page.getByRole('button', { name: 'Return to battle' });
+  await tabTo(page, ret);
+  await expect(ret).toBeFocused();
+  await page.clock.fastForward(91_000);
+  await expect(page.getByTestId('leave-countdown')).toHaveCount(0);
+  await expect(page.getByTestId('run-record')).toHaveText('Run: 0–1 (active)');
+  await expect(page.getByRole('heading', { level: 1 })).toBeFocused();
+});

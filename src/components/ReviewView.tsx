@@ -84,7 +84,7 @@ export function ReviewView({ pool, deck, run, onPlay, children, onNewDraft, onHo
       <div className="deck-grid" role="group" aria-label="Your deck">
         {deckCards.flatMap(({ card, count }) =>
           Array.from({ length: count }).map((_, i) => (
-            <CardTile key={`${card.id}-${i}`} card={card} size="lg" onHover={handleHover} />
+            <CardTile key={`${card.id}-${i}`} card={card} size="lg" focusable onHover={handleHover} />
           )),
         )}
       </div>

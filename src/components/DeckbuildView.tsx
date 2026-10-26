@@ -14,7 +14,7 @@ import {
   type CollectionSource,
 } from '../draft/expansions';
 import { tallyTypes } from '../draft/weights';
-import { CardTile, type HoverPayload } from './CardTile';
+import { CardTile, FocusPreview, type HoverPayload } from './CardTile';
 import { CardPreview, type HoverState } from './CardPreview';
 
 type Props = {
@@ -147,8 +147,10 @@ export function DeckbuildView({
     const addDisabled = !canAddEntry(entry);
 
     return (
-      <div
+      <FocusPreview
         key={`${entry.source}-${entry.card.id}`}
+        card={entry.card}
+        onHover={handleHover}
         className={`shelf-cell${inDeck > 0 ? ' is-picked' : ''}`}
       >
         <CardTile card={entry.card} size="lg" onHover={handleHover} />
@@ -174,7 +176,7 @@ export function DeckbuildView({
             +
           </button>
         </div>
-      </div>
+      </FocusPreview>
     );
   };
 
