@@ -13,7 +13,8 @@ import (
 // the picks has its weight multiplied by this. One multiplication, never
 // stacked, however many rules match. Rules:
 //  1. a Trainer's text names a picked Pokémon;
-//  2. a candidate's effect text names a type you have picked Pokémon of;
+//  2. a candidate Pokémon's effect text names a type you have picked Pokémon
+//     of (a Trainer doing so is type support instead: weightOf's lean);
 //  3. a candidate Pokémon's type is named by the text of one of your picks.
 //
 // A card's text naming its own type never counts (the type weight covers it).
@@ -106,6 +107,9 @@ func (s synergy) matches(c draftCard) bool {
 	}
 	if c.CardType != "Trainer" && s.textTypes[c.CardType] {
 		return true
+	}
+	if c.CardType == "Trainer" {
+		return false // a Trainer naming a picked type is type support, see weightOf
 	}
 	for _, typ := range namedTypes(c) {
 		if s.pickedTypes[typ] {
