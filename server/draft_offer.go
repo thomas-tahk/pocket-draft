@@ -33,11 +33,13 @@ func rollTier(rng func() float64) tier {
 }
 
 // pickFromTier mirrors offer.ts's pickFromTier. ok is false when every card in
-// the tier is already excluded (used up in this offer).
-func pickFromTier(pool []draftCard, tally typeTally, syn synergy, exclude map[string]bool, rng func() float64) (draftCard, bool) {
+// the tier is already excluded (used up in this offer, or its exact name already
+// picked: a pick is secured for the whole draft, so other printings of it are
+// out too, while "Snorlax" and "Snorlax ex" stay distinct names).
+func pickFromTier(pool []draftCard, tally typeTally, syn synergy, exclude, pickedNames map[string]bool, rng func() float64) (draftCard, bool) {
 	eligible := make([]draftCard, 0, len(pool))
 	for _, c := range pool {
-		if !exclude[c.ID] {
+		if !exclude[c.ID] && !pickedNames[c.Name] {
 			eligible = append(eligible, c)
 		}
 	}
@@ -52,7 +54,9 @@ func pickFromTier(pool []draftCard, tally typeTally, syn synergy, exclude map[st
 }
 
 // generateOffer mirrors offer.ts's generateOffer: one 5-card offer. Within an
-// offer, no duplicate ids; duplicates across packs are allowed. No picks yet
+// offer, no duplicate ids; and no card whose name is already in picks (a pick is
+// secured for the whole draft; a tier emptied by that falls through to the
+// other tiers like any empty tier). No picks yet
 // means pack 1, whose last slot is always tier 1 (ex / mega-ex); if tier 1 has
 // nothing eligible the usual fall-through applies.
 func generateOffer(byTier map[tier][]draftCard, picks []draftCard, rng func() float64) ([]draftCard, error) {
@@ -60,6 +64,10 @@ func generateOffer(byTier map[tier][]draftCard, picks []draftCard, rng func() fl
 	isPack1 := len(picks) == 0
 	offer := make([]draftCard, 0, slotsPerPack)
 	used := map[string]bool{}
+	pickedNames := map[string]bool{}
+	for _, p := range picks {
+		pickedNames[p.Name] = true
+	}
 
 	for slot := 0; slot < slotsPerPack; slot++ {
 		targetTier := rollTier(rng)
@@ -67,7 +75,7 @@ func generateOffer(byTier map[tier][]draftCard, picks []draftCard, rng func() fl
 			targetTier = tier1 // pack 1 always offers an ex
 		}
 
-		card, ok := pickFromTier(byTier[targetTier], tally, syn, used, rng)
+		card, ok := pickFromTier(byTier[targetTier], tally, syn, used, pickedNames, rng)
 		if !ok {
 			// Tier ran out (e.g. tier 1 has no eligible cards left). Step through
 			// other tiers.
@@ -75,7 +83,7 @@ func generateOffer(byTier map[tier][]draftCard, picks []draftCard, rng func() fl
 				if t == targetTier {
 					continue
 				}
-				card, ok = pickFromTier(byTier[t], tally, syn, used, rng)
+				card, ok = pickFromTier(byTier[t], tally, syn, used, pickedNames, rng)
 				if ok {
 					break
 				}
