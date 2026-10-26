@@ -291,3 +291,51 @@ test('a bot step while the page is hidden keeps the closed-tab stamp', async ({ 
   }, { timeout: 30_000 }).toBe(true);
   expect(await closedAt()).toBe(stamped);
 });
+
+// Found by the M4 review. Reopened 1 s before the 90 s closed-tab limit with a slow first /api/new: the
+// expiry timer fires while the resume rebuild is still in flight. The resume has claimed the battle, so
+// the timeout must not rebuild it as a concede (that left the server game over, and the next End Turn
+// recorded a loss). Real clock on purpose; it only shows without <StrictMode>, so it runs in the prod config too.
+test('reopened at 89 s with a slow resume: the expiry firing mid-resume records no loss', async ({ page, request }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Auto-draft (test)' }).click();
+  await expect(page.getByTestId('run-record')).toBeVisible();
+  await enterBattle(page, request);
+
+  // Stamp the close (again, if a late save from the battle wiped it) until it sticks.
+  await expect.poll(() => page.evaluate((key) => {
+    window.dispatchEvent(new Event('pagehide'));
+    return JSON.parse(localStorage.getItem(key)!).state.run.inProgress.closedAt;
+  }, KEY)).toBeTruthy();
+  await page.evaluate((key) => {
+    const saved = JSON.parse(localStorage.getItem(key)!);
+    saved.state.run.inProgress.closedAt = new Date(Date.now() - 89_000).toISOString();
+    localStorage.setItem(key, JSON.stringify(saved));
+  }, KEY);
+
+  const newGames: string[] = [];
+  await page.route('**/api/new', async (route) => {
+    newGames.push(route.request().postData() ?? '');
+    if (newGames.length === 1) await new Promise((r) => setTimeout(r, 2500));
+    await route.continue();
+  });
+  await page.reload();
+  await expect(page.getByTestId('battle-board')).toBeVisible({ timeout: 15_000 });
+  // Past the 90 s mark (the stamp was 89 s old at the reload) and past anything queued behind the resume.
+  await page.waitForTimeout(5_000);
+  expect(newGames.length).toBeGreaterThan(0); // (the dev build starts a resume twice under <StrictMode>)
+  expect(((await state(request)) as View).phase).not.toBe('over');
+
+  const turnBefore = ((await state(request)) as View & { turn: number }).turn;
+  await page.getByTestId('end-turn').getByRole('button').click();
+  const ok = page.getByTestId('confirm-ok');
+  if (await ok.isVisible()) await ok.click();
+  await expect.poll(async () => {
+    const v = (await state(request)) as View & { turn: number };
+    return v.turn > turnBefore && v.phase === 'main' && !v.pending && v.active === 0;
+  }, { timeout: 30_000 }).toBe(true);
+  await expect(page.getByTestId('battle-board')).toBeVisible();
+  const run = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)!).state.run, KEY);
+  expect(run.battles).toHaveLength(0);
+  expect(run.inProgress).toBeTruthy();
+});

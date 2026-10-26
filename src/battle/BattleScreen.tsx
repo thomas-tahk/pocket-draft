@@ -20,10 +20,17 @@ export function BattleScreen({ deck, energy, onExit, practice, resume }: Props) 
   const [confirm, setConfirm] = useState<Confirm | null>(null);
 
   useEffect(() => {
-    if (resume) void resumeGame(resume);
-    else if (deck) void startGame(deck, undefined, energy);
+    if (resume) {
+      // The player is back on the battle: claim it now, so the 90 s expiry (useLeaveExpiry) stands down
+      // instead of racing the rebuild, which can take longer than the time that was left. A page that is
+      // still hidden keeps its closed-tab stamp.
+      const now = useDraftStore.getState().run?.inProgress;
+      const hidden = document.visibilityState === 'hidden';
+      if (now && now.seed === resume.seed && (now.leftAt || (now.closedAt && !hidden))) setInProgress({ ...now, leftAt: null, closedAt: hidden ? now.closedAt ?? new Date().toISOString() : null });
+      void resumeGame(resume);
+    } else if (deck) void startGame(deck, undefined, energy);
     else void init();
-  }, [deck, energy, resume, init, startGame, resumeGame]);
+  }, [deck, energy, resume, init, startGame, resumeGame, setInProgress]);
 
   // A run's battle is saved as it is played, so a reload or a closed tab can pick it up again.
   useEffect(() => {

@@ -49,6 +49,7 @@ scratch/
 test-results/
 playwright-report/
 .pd-e2e-server
+.pd-e2e-prod-server
 
 # Claude Code: only skills/ and agents/ are shared
 .claude/worktrees/
