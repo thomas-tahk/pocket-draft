@@ -1,4 +1,6 @@
 import { test, expect } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+import { idOf } from './helpers/draft';
 import { generateOffer } from '../src/draft/offer';
 import { indexByTier } from '../src/draft/tiers';
 import { buildSynergy, weightOf, SYNERGY_MULT } from '../src/draft/weights';
@@ -115,6 +117,37 @@ test('a pick whose text names a type boosts candidates of that type, once', () =
   expect(weightOf(mon('Meowth', 'Colorless'), {}, colorless)).toBe(1);
   const two = buildSynergy([mon('Squirtle', 'Water')]);
   expect(weightOf(trainer('X', 'Heal your Squirtle and your [W] Pokémon.'), {}, two)).toBe(SYNERGY_MULT);
+});
+
+// A pick is secured for the whole draft (#124). Mirrors
+// TestBotDraftNeverReoffersAPickedName in server/draft_no_repeat_test.go.
+test('generateOffer never offers a picked name, other printings included', () => {
+  const picks = pool.slice(0, 20).map((c, i) => ({ ...c, id: `reprint-${i}` }) as Card);
+  const names = new Set(picks.map((c) => c.name));
+  for (let seed = 1; seed <= 20; seed++) {
+    for (const c of generateOffer(byTier, { isPack1: false, picks, rng: seeded(seed) })) {
+      expect(names.has(c.name), `seed ${seed}: ${c.name}`).toBe(false);
+    }
+  }
+});
+
+test('a full 20-pick draft in the UI never shows an already-picked name', async ({ page }) => {
+  const raw = JSON.parse(readFileSync('public/data/cards.json', 'utf8')) as { id: string; name: string }[];
+  const nameById = new Map(raw.map((c) => [c.id, c.name]));
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Start draft' }).click();
+  const pickedNames = new Set<string>();
+  for (let pack = 1; pack <= 20; pack++) {
+    await expect(page.getByText(`Pack ${pack} / 20`)).toBeVisible();
+    const offer = page.locator('main button[title]');
+    await expect(offer).toHaveCount(5);
+    const ids = (await offer.evaluateAll((els) => els.map((e) => e.getAttribute('title') ?? ''))).map(idOf);
+    const names = ids.map((id) => nameById.get(id)!);
+    for (const name of names) expect(pickedNames.has(name), `pack ${pack} offered ${name}`).toBe(false);
+    // Always take the first card: nothing here steers around repeats.
+    pickedNames.add(names[0]);
+    await offer.nth(0).click();
+  }
 });
 
 test('Trainers naming the picked type are offered measurably more often', () => {
