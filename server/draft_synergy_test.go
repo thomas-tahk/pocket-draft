@@ -117,21 +117,31 @@ func TestSynergyOwnTypeNeverCounts(t *testing.T) {
 
 func TestSynergyDragonSymbol(t *testing.T) {
 	syn := newSynergy([]draftCard{pokemon("Dratini", "Dragon")})
-	if w := weightOf(trainerText("Lance", "Choose 1 of your [N] Pokémon."), typeTally{}, syn); w != synergyMult {
-		t.Errorf("[N] Trainer after a Dragon pick = %v, want %v", w, synergyMult)
+	tally := typeTally{"Dragon": 1}
+	if w := weightOf(trainerText("Lance", "Choose 1 of your [N] Pokémon."), tally, syn); w != 1+typeSupportCoef {
+		t.Errorf("[N] Trainer after a Dragon pick = %v, want %v", w, 1+typeSupportCoef)
 	}
-	if w := weightOf(trainerText("Blaine", "Choose 1 of your [R] Pokémon."), typeTally{}, syn); w != 1 {
+	if w := weightOf(trainerText("Blaine", "Choose 1 of your [R] Pokémon."), tally, syn); w != 1 {
 		t.Errorf("[R] Trainer after a Dragon pick = %v, want 1", w)
 	}
 }
 
 func TestSynergyNeverStacks(t *testing.T) {
-	// Squirtle-named Trainer text that also names Water: matches rules 1 and 2.
-	picks := []draftCard{pokemon("Squirtle", "Water")}
+	// Rules 1, 2 and 3 on one Pokémon candidate: x3 once, not x9.
+	picks := []draftCard{pokemon("Squirtle", "Water"), withAttackEffect(pokemon("Flareon", "Fire"), "Heal a [P] Pokémon.")}
 	syn := newSynergy(picks)
-	both := trainerText("X", "Heal your Squirtle and your [W] Pokémon.")
-	if w := weightOf(both, tallyTypes(picks), syn); w != synergyMult {
+	both := withAttackEffect(pokemon("Psyduck", "Psychic"), "Heal a [W] Pokémon.") // rule 2: names picked Water; rule 3: Flareon's text names Psychic
+	if w := weightOf(both, typeTally{}, syn); w != synergyMult {
 		t.Errorf("two rules = %v, want one x%v", w, synergyMult)
+	}
+	// A Trainer naming a picked Pokémon and a picked type: the name rule is the
+	// synergy (x3, once); the type is type support, a separate lean.
+	trainer := trainerText("X", "Heal your Squirtle and your [W] Pokémon.")
+	if w := weightOf(trainer, typeTally{}, syn); w != synergyMult {
+		t.Errorf("name rule alone = %v, want %v", w, synergyMult)
+	}
+	if w := weightOf(trainer, typeTally{"Water": 1}, syn); w != synergyMult*(1+typeSupportCoef) {
+		t.Errorf("name rule + 1 Water pick = %v, want %v", w, synergyMult*(1+typeSupportCoef))
 	}
 }
 

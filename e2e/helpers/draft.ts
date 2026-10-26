@@ -18,9 +18,9 @@ export async function draftTwenty(page: Page): Promise<Set<string>> {
     const offer = page.locator('main button[title]');
     await expect(offer).toHaveCount(5);
     const ids = (await offer.evaluateAll((els) => els.map((e) => e.getAttribute('title') ?? ''))).map(idOf);
-    const fresh = ids.filter((id) => !names.has(stageById.get(id)!.name));
-    const basic = fresh.find((id) => stageById.get(id)!.stage === 'Basic');
-    const id = basic ?? fresh[0] ?? ids[0];
+    // A picked name never comes back (#124), so every offer is fresh.
+    for (const id of ids) expect(names.has(stageById.get(id)!.name), `pack ${pack} re-offered ${id}`).toBe(false);
+    const id = ids.find((i) => stageById.get(i)!.stage === 'Basic') ?? ids[0];
     picked.add(id);
     names.add(stageById.get(id)!.name);
     await offer.nth(ids.indexOf(id)).click();

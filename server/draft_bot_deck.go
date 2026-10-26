@@ -227,8 +227,11 @@ func (b *botDeckBuilder) addGroups(groups []pickGroup, target int) {
 	}
 }
 
-// rankGroups splits the picks into Pokémon (picked twice first, then the
-// cheapest line) and Trainers (pick order, at most botTrainerPicks).
+// rankGroups splits the picks into Pokémon (picked twice first, then pick
+// order) and Trainers (pick order, at most botTrainerPicks). Pick order, not
+// the cheapest line: since a picked name is never offered again (#124) every
+// pick is single, and cheapest-first filled the deck with Basics before any
+// evolution line fit. botPickScore already prefers short lines.
 func (b *botDeckBuilder) rankGroups(picks []draftCard) (pokemon, trainers []pickGroup) {
 	for _, g := range groupPicks(picks) {
 		if g.card.CardType == "Trainer" {
@@ -237,13 +240,7 @@ func (b *botDeckBuilder) rankGroups(picks []draftCard) (pokemon, trainers []pick
 			pokemon = append(pokemon, g)
 		}
 	}
-	cost := func(g pickGroup) int { return len(lineFrom(g.card.rawCard, b.types, b.byName)) }
-	sort.SliceStable(pokemon, func(i, j int) bool {
-		if pokemon[i].times != pokemon[j].times {
-			return pokemon[i].times > pokemon[j].times
-		}
-		return cost(pokemon[i]) < cost(pokemon[j])
-	})
+	sort.SliceStable(pokemon, func(i, j int) bool { return pokemon[i].times > pokemon[j].times })
 	return pokemon, trainers[:min(len(trainers), botTrainerPicks)]
 }
 
