@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { AbandonDraft } from './AbandonDraft';
 import { EnergyIcon, TypeTally } from '../battle/energy';
-import { defaultZoneTypes, MAX_ZONE_TYPES, ZONE_TYPES } from '../game/energy';
+import { defaultZoneTypes, MAX_ZONE_TYPES, ZONE_FALLBACK, ZONE_TYPES } from '../game/energy';
 import type { Card, EnergyType } from '../types/card';
 import { DECK_SIZE } from '../stores/draftStore';
 import {
@@ -230,12 +230,18 @@ export function DeckbuildView({
 
         <div className="zone-picker" role="group" data-testid="energy-picker" aria-labelledby="zone-title">
           <h2 id="zone-title" style={{ fontSize: 14, margin: 0 }}>
-            Energy Zone ({zone.length} / {MAX_ZONE_TYPES})
+            {zone.length > 0 ? `Energy Zone (${zone.length} / ${MAX_ZONE_TYPES})` : `Energy Zone: ${ZONE_FALLBACK} only`}
           </h2>
           <p style={{ fontSize: 12, opacity: 0.7, margin: '2px 0 8px' }}>
             Your Energy Zone makes only these types, in every battle of this run. Choose 1 to {MAX_ZONE_TYPES}.
-            {energy.length === 0 && zone.length > 0 ? ' Starting from your deck’s Pokémon types.' : ''}
+            {energy.length === 0 && zone.length > 0 ? ' Starting from the energy your deck’s attacks need.' : ''}
+            {zone.length === 0 ? ' None of your attacks need a typed energy, so it makes Colorless unless you choose.' : ''}
           </p>
+          {zone.length >= MAX_ZONE_TYPES && (
+            <p data-testid="energy-cap-hint" style={{ fontSize: 12, margin: '0 0 8px' }}>
+              Up to 3: deselect one to change.
+            </p>
+          )}
           <div className="zone-picker-row" role="group" aria-label="Energy Zone types">
             {ZONE_TYPES.map((t) => {
               const on = zone.includes(t);

@@ -65,14 +65,21 @@ test('the Energy Zone picker reaches every battle: only Water or Fire show', asy
   await expect(page.getByTestId('battle-board')).toBeVisible();
   await expect(page.getByTestId('setup-intro')).toHaveCount(0, { timeout: 10_000 });
 
-  // Set up through the screen's own store, then end turn repeatedly; the screen plays the bot.
-  await page.evaluate(async () => {
+  const setUp = () => page.evaluate(async () => {
     const { useGameStore } = await import('/src/game/store.ts');
     const g = useGameStore.getState();
     const basic = g.view!.players[0].hand.find((c) => c.stage === 'Basic')!;
     await g.dispatch({ type: 'SetupActive', player: 0, cardId: basic.id });
-    await g.dispatch({ type: 'SetupReady', player: 0 });
+    // Bench every other Basic too, so the opponent cannot end the game on an early knock-out.
+    for (let i = 0; i < 3; i++) {
+      const move = useGameStore.getState().view!.players[0].legalMoves.find((m) => m.type === 'SetupBench');
+      if (move) await useGameStore.getState().dispatch(move);
+    }
+    await useGameStore.getState().dispatch({ type: 'SetupReady', player: 0 });
   });
+  // Set up through the screen's own store, then end turn repeatedly; the screen plays the bot.
+  await setUp();
+
 
   const seen = new Set<string>();
   let turns = 0;
@@ -91,7 +98,15 @@ test('the Energy Zone picker reaches every battle: only Water or Fire show', asy
       const myTurn = me.legalMoves.some((m) => m.type === 'EndTurn');
       return { myTurn, zone: me.energyZone, next: me.energyNext, types: me.energyTypes };
     });
-    if (state.over) break;
+    if (state.over) {
+      // A short game: Rematch keeps the run's types, and play on until enough turns are seen.
+      const rematch = page.getByTestId('end-screen').getByRole('button', { name: 'Rematch' });
+      if (turns >= 4 || !(await rematch.isVisible())) break;
+      await rematch.click();
+      await expect(page.getByTestId('setup-intro')).toHaveCount(0, { timeout: 10_000 });
+      await setUp();
+      continue;
+    }
     if (!state.myTurn) {
       await page.waitForTimeout(300);
       continue;
