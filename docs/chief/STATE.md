@@ -1,16 +1,11 @@
 # Chief state
 Vision: docs/VISION.md
 Rule: one milestone = one branch (mN-<name>) = one PR into main, in number order. No in-between milestones.
-Phase: Build — M4 "Draft runs, start to finish" (branch m4-draft-runs → main). Includes the draft rework (old PR #112, closed and folded in on 2026-10-25).
-Done in M4: draft rework #106–#110 · phone layout #113 · run record #114 · opening #115 · run screen #116 · leaving/quitting #117 · end of run #118 · replay #119
-Next action (in order; every worker branches off m4-draft-runs and merges back into it):
-1. DONE: draft fixes #124–#128 + rules.md shop section, all merged (2026-10-26).
-   Cloud note: .claude/agents/* didn't load as agent types here; dispatch general-purpose told to read the specialist file. Workers don't commit pd.wasm; chief rebuilds after each merge. 16 e2e (full-game ×9, phone-layout ×6, replay:74) fail in the cloud only: card-image CDN blocked.
-2. DONE: #120 Pocket look, #121 accessibility, merged 2026-10-26.
-3. IN PROGRESS — Milestone end: full suite → fresh qa-engineer exercises the M4 done-gate (docs/chief/plan-app-flow.html, phone + desktop) → code-reviewer over the whole m4-draft-runs diff vs main → docs/milestones/M4.md (fold in docs/milestones/draft-rework.md; incl. "Learn from it") + row in docs/chief/scorecard.md → one PR m4-draft-runs → main
-Reviewers: code-reviewer. Any engine/server work: pocket-draft-engine.
-Known gaps from #117: "Next battle" hidden while a saved battle settles — untested; closed-past-90 s test ages the stamp instead of the clock
-Waiting on him: M4 PR play-test + merge (at milestone end)
-M5 "Every card works" PLAN APPROVED 2026-10-25 (docs/chief/plan-every-card.html; M5 issues incl. #122, #123). Build after M4 merges: branch m5-every-card off main. Real opponents = M6.
-Open questions: docs/questions/draft-rework.md, docs/questions/m4-app-flow.md
+Phase: Review — M4 "Draft runs, start to finish" (branch m4-draft-runs → main, PR https://github.com/thomas-tahk/pocket-draft/pull/129)
+Done in M4: #106–#110 draft rework · #113–#119 app flow · #124–#128 draft play-test fixes · #120 Pocket look · #121 accessibility · milestone QA + whole-diff review fixes (resume race 4fe3962, double-tap pick 761f55a)
+Next action: wait for his play-test and answers to the 9 decisions in docs/milestones/M4.md; then write each answer where it belongs, fill escaped bugs / guesses kept in docs/chief/scorecard.md, route fixes to issues. Watch PR #129 CI (first run of the 16 image-dependent e2e with real images).
+Waiting on him: M4 play-test + the 9 decisions in docs/milestones/M4.md + merging PR #129
+After M4 merges: M5 "Every card works" PLAN APPROVED 2026-10-25 (docs/chief/plan-every-card.html; M5 issues incl. #122, #123). Branch m5-every-card off main. Real opponents = M6.
+Cloud notes: .claude/agents/* don't load as agent types in a cloud session started on another branch; dispatch general-purpose told to read the specialist file. Workers don't commit pd.wasm; chief rebuilds after each merge. 16 e2e (full-game ×9, phone-layout ×6, replay:74) fail in the cloud only: card-image CDN blocked.
+Open questions: docs/questions/m4-app-flow.md, docs/questions/draft-rework.md
 Updated: 2026-10-26
