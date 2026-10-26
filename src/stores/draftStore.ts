@@ -115,6 +115,9 @@ export const useDraftStore = create<State & Actions>()(
 
       pick: (cardId, pool) => {
         const { pickIds, offerIds, packOffers } = get();
+        // Only a card of the current pack can be picked: a second click in the same tick, or one that
+        // lands on the next pack, names a card that is no longer on offer.
+        if (!offerIds.includes(cardId)) return;
         const picked = pool.find((c) => c.id === cardId);
         if (!picked) return;
         const newPickIds = [...pickIds, cardId];

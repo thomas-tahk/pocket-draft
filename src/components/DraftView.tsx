@@ -16,12 +16,28 @@ type Props = {
   onCancel: () => void;
 };
 
+// A new pack ignores a touch tap for this long after it appears: a double-tap's second tap (or a slow
+// finger lifting) would otherwise land on the new pack's tile at the same spot. Keyboard and mouse are exempt.
+export const PACK_SETTLE_MS = 350;
+
 export function DraftView({ packIndex, offer, picks, onPick, onCancel }: Props) {
   const [hover, setHover] = useState<HoverState>(null);
+  // When this pack appeared, and the last kind of input ('touch' | 'pen' | 'mouse' | 'key').
+  const shownAt = useRef(-Infinity); // the pack that opens the screen is not guarded, only the ones a pick brings
+  const lastInput = useRef('mouse');
+  const handlePick = (card: Card) => {
+    const touch = lastInput.current === 'touch' || lastInput.current === 'pen';
+    if (touch && performance.now() - shownAt.current < PACK_SETTLE_MS) return;
+    onPick(card);
+  };
   const handleHover = (p: HoverPayload | null) => setHover(p);
   // A new pack replaces the tiles; drop any preview or zoom left from the old ones.
   const packKey = offer.map((c) => c.id).join();
-  useEffect(() => setHover(null), [packKey]);
+  const firstPack = useRef(packKey);
+  useEffect(() => {
+    if (firstPack.current !== packKey) shownAt.current = performance.now();
+    setHover(null);
+  }, [packKey]);
   // After a pick the tile that had focus is gone: keep the keyboard on the new pack.
   const packRef = useRef<HTMLElement>(null);
   const openingPack = useRef(packKey);
@@ -57,9 +73,14 @@ export function DraftView({ packIndex, offer, picks, onPick, onCancel }: Props) 
           </div>
         </header>
 
-        <section ref={packRef} style={{ marginTop: 16 }}>
+        <section
+          ref={packRef}
+          style={{ marginTop: 16 }}
+          onPointerDownCapture={(e) => (lastInput.current = e.pointerType)}
+          onKeyDownCapture={() => (lastInput.current = 'key')}
+        >
           <h2 className="sr-only">Choose a card</h2>
-          <OfferRow packIndex={packIndex} offer={offer} onPick={onPick} onHover={handleHover} />
+          <OfferRow packIndex={packIndex} offer={offer} onPick={handlePick} onHover={handleHover} />
         </section>
       </main>
 
