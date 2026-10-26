@@ -204,7 +204,11 @@ export function DeckbuildView({
             <div className="muted">
               <span role="status">
                 Deck: {size} / {DECK_SIZE}
-                {finalizeBlocker && <span className="sr-only">. {finalizeBlocker}</span>}
+                {finalizeBlocker && (
+                  <small className="muted-sm" style={{ marginLeft: 8 }}>
+                    {finalizeBlocker}
+                  </small>
+                )}
               </span>
               {sortedTally.length > 0 && (
                 <span style={{ marginLeft: 16 }}>
