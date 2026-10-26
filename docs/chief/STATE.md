@@ -11,6 +11,7 @@ Next action (in order; every worker branches off m4-draft-runs and merges back i
 3. Milestone end: full suite → fresh qa-engineer exercises the M4 done-gate (docs/chief/plan-app-flow.html, phone + desktop) → code-reviewer over the whole m4-draft-runs diff vs main → docs/milestones/M4.md (fold in docs/milestones/draft-rework.md; incl. "Learn from it") + row in docs/chief/scorecard.md → one PR m4-draft-runs → main
 Reviewers: code-reviewer. Any engine/server work: pocket-draft-engine.
 Known gaps from #117: "Next battle" hidden while a saved battle settles — untested; closed-past-90 s test ages the stamp instead of the clock
-Waiting on him: M4 PR play-test + merge (at milestone end). M5 planning at his Mac: #122, #123 + the 16 effect issues
+Waiting on him: M4 PR play-test + merge (at milestone end)
+M5 "Every card works" PLAN APPROVED 2026-10-25 (docs/chief/plan-every-card.html; M5 issues incl. #122, #123). Build after M4 merges: branch m5-every-card off main. Real opponents = M6.
 Open questions: docs/questions/draft-rework.md, docs/questions/m4-app-flow.md
 Updated: 2026-10-25
