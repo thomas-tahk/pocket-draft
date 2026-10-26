@@ -158,3 +158,28 @@ input:focus {
   .screen-fade { animation: none; }
   button { transition: none; }
 }
+
+/* Text for screen readers only (labels, live-region messages); never shown. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* A heading that receives focus when a screen opens (so keyboard and screen-reader users start at the top)
+   is not a control: no ring on it. */
+[tabindex='-1']:focus-visible { outline: none; }
+
+/* Side-panel headings keep the small muted look of the labels they replaced. */
+.aside-title { font-size: var(--fs-xs); font-weight: var(--fw-regular); color: var(--color-text-muted); margin: 0 0 var(--space-2); }
+
+/* Windows high-contrast: keep the ring visible. */
+@media (forced-colors: active) {
+  button:focus-visible, a:focus-visible, button.tile-lg:focus-visible, button.tile-sm:focus-visible, div.tile-lg:focus-visible, div.tile-sm:focus-visible { outline: 3px solid Highlight !important; }
+}

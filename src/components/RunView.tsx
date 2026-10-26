@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
+import { onEscape, useDialog } from './useDialog';
 import type { CardPool } from '../data';
 import { RUN_LOSSES_TO_LOSE, RUN_WINS_TO_WIN, STATUS_LABEL, runLine, runScore, type Run } from '../stores/run';
 import { BattleList } from './BattleList';
@@ -31,6 +32,16 @@ function Marks({ kind, count, total }: { kind: 'win' | 'loss'; count: number; to
           </span>
         ))}
       </span>
+    </div>
+  );
+}
+
+// An on-screen confirm: focus goes to its safe button, Escape cancels, focus goes back to the opener.
+function Confirm({ label, testId, returnId, onCancel, children }: { label: string; testId?: string; returnId?: string; onCancel: () => void; children: ReactNode }) {
+  const ref = useDialog(returnId);
+  return (
+    <div ref={ref} role="alertdialog" aria-label={label} className="run-confirm" data-testid={testId} onKeyDown={onEscape(onCancel)}>
+      {children}
     </div>
   );
 }
@@ -73,21 +84,21 @@ export function RunView({ pool, deck, run, onNextBattle, onReturn, onReplay, onQ
         )}
 
         {!confirmingQuit && (
-          <button className="run-btn" onClick={() => setConfirmingQuit(true)}>Quit run</button>
+          <button id="quit-run-open" className="run-btn" onClick={() => setConfirmingQuit(true)}>Quit run</button>
         )}
         {confirmingQuit && (
-          <div role="alertdialog" aria-label="Quit run" className="run-confirm">
+          <Confirm label="Quit run" returnId="quit-run-open" onCancel={() => setConfirmingQuit(false)}>
             <p>Quit this run? It ends at {wins}–{losses}.</p>
             <button className="run-btn run-btn-danger" data-testid="quit-confirm" onClick={onQuit}>Yes, quit run</button>
-            <button className="run-btn" onClick={() => setConfirmingQuit(false)}>Keep playing</button>
-          </div>
+            <button className="run-btn" data-autofocus onClick={() => setConfirmingQuit(false)}>Keep playing</button>
+          </Confirm>
         )}
         {leaving && (
-          <div role="alertdialog" aria-label="Leave run" className="run-confirm" data-testid="leave-confirm">
+          <Confirm label="Leave run" testId="leave-confirm" onCancel={() => setLeaving(null)}>
             <p>This quits your run at {wins}–{losses}.</p>
             <button className="run-btn run-btn-danger" data-testid="leave-ok" onClick={() => { onQuit(); leaving(); }}>Quit run and leave</button>
-            <button className="run-btn" data-testid="leave-cancel" onClick={() => setLeaving(null)}>Keep playing</button>
-          </div>
+            <button className="run-btn" data-testid="leave-cancel" data-autofocus onClick={() => setLeaving(null)}>Keep playing</button>
+          </Confirm>
         )}
       </section>
     </ReviewView>

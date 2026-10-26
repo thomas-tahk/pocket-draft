@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { Announcer } from './components/Announcer';
 import { bootWasmEngine } from './game/wasmBoot';
 import './tokens.css';
 import './index.css';
@@ -12,6 +13,7 @@ function render() {
   root.render(
     <StrictMode>
       <App />
+      <Announcer />
     </StrictMode>,
   );
 }

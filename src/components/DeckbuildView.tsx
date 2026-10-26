@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { announce } from '../announce';
 import { AbandonDraft } from './AbandonDraft';
 import { EnergyIcon, TypeTally } from '../battle/energy';
 import { defaultZoneTypes, MAX_ZONE_TYPES, ZONE_FALLBACK, ZONE_TYPES } from '../game/energy';
@@ -13,7 +14,7 @@ import {
   type CollectionSource,
 } from '../draft/expansions';
 import { tallyTypes } from '../draft/weights';
-import { CardTile, type HoverPayload } from './CardTile';
+import { CardTile, FocusPreview, type HoverPayload } from './CardTile';
 import { CardPreview, type HoverState } from './CardPreview';
 
 type Props = {
@@ -114,6 +115,7 @@ export function DeckbuildView({
       if (zone.length > 1) onEnergy(zone.filter((z) => z !== t));
     } else if (zone.length < MAX_ZONE_TYPES) {
       onEnergy([...zone, t]);
+      if (zone.length + 1 === MAX_ZONE_TYPES) announce('Up to 3: deselect one to change.');
     }
   };
 
@@ -145,8 +147,10 @@ export function DeckbuildView({
     const addDisabled = !canAddEntry(entry);
 
     return (
-      <div
+      <FocusPreview
         key={`${entry.source}-${entry.card.id}`}
+        card={entry.card}
+        onHover={handleHover}
         className={`shelf-cell${inDeck > 0 ? ' is-picked' : ''}`}
       >
         <CardTile card={entry.card} size="lg" onHover={handleHover} />
@@ -155,21 +159,24 @@ export function DeckbuildView({
             onClick={() => onRemove(entry.card.id)}
             disabled={inDeck === 0}
             className="btn-step"
+            aria-label={`− Remove ${entry.card.name}`}
           >
             −
           </button>
-          <span className="muted-xs">
+          <span className="muted-xs" aria-hidden="true">
             {nameTotal} / {cap}
           </span>
+          <span className="sr-only">{nameTotal} of {cap} copies</span>
           <button
             onClick={() => onAdd(entry.card.id)}
             disabled={addDisabled}
             className="btn-step"
+            aria-label={`+ Add ${entry.card.name}`}
           >
             +
           </button>
         </div>
-      </div>
+      </FocusPreview>
     );
   };
 
@@ -195,7 +202,10 @@ export function DeckbuildView({
           <h1 className="screen-title">Deckbuilding</h1>
           <div className="screen-header-actions">
             <div className="muted">
-              Deck: {size} / {DECK_SIZE}
+              <span role="status">
+                Deck: {size} / {DECK_SIZE}
+                {finalizeBlocker && <span className="sr-only">. {finalizeBlocker}</span>}
+              </span>
               {sortedTally.length > 0 && (
                 <span style={{ marginLeft: 16 }}>
                   <TypeTally entries={sortedTally} />
@@ -259,20 +269,21 @@ export function DeckbuildView({
         {SOURCE_ORDER.map(renderSection)}
       </main>
 
-      <aside className="screen-aside" style={{ ['--aside-w' as string]: '280px' }}>
-        <div className="muted-xs" style={{ marginBottom: 8 }}>
+      <aside className="screen-aside" aria-labelledby="deck-aside-title" style={{ ['--aside-w' as string]: '280px' }}>
+        <h2 id="deck-aside-title" className="aside-title">
           Deck ({size} / {DECK_SIZE})
-        </div>
+        </h2>
         {deckCards.length === 0 ? (
           <p className="muted-xs">No cards yet.</p>
         ) : (
-          <div className="tile-grid-sm">
+          <div className="tile-grid-sm" role="group" aria-labelledby="deck-aside-title">
             {deckCards.map(({ card, count }) =>
               Array.from({ length: count }).map((_, i) => (
                 <CardTile
                   key={`${card.id}-${i}`}
                   card={card}
                   size="sm"
+                  label={`Remove ${card.name} from deck`}
                   onPick={() => onRemove(card.id)}
                   onHover={handleHover}
                 />

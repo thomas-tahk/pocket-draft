@@ -43,6 +43,22 @@ export function CardPreview({ hover, dock = false }: Props) {
       </div>
     );
   }
+  // A keyboard-focus preview on a phone goes where the focused card is not: above it or below it,
+  // whichever has more room, shrunk to fit, so it never covers the card the keyboard is on.
+  if (hover.anchor && vp.w <= 700) {
+    const GAP = 8;
+    const above = Math.max(0, hover.anchor.top - 2 * GAP);
+    const below = Math.max(0, vp.h - hover.anchor.bottom - 2 * GAP);
+    const room = Math.max(above, below);
+    const h = Math.max(120, Math.min(PREVIEW_H, room));
+    const w = Math.min(PREVIEW_W, Math.round((h * 5) / 7), vp.w - 2 * GAP);
+    const top = above >= below ? Math.max(GAP, hover.anchor.top - GAP - h) : hover.anchor.bottom + GAP;
+    return (
+      <div className="card-preview" data-testid="card-preview" style={{ left: Math.round((vp.w - w) / 2), top, width: w }}>
+        <img src={src} alt={card.name} />
+      </div>
+    );
+  }
   // The side panel is beside the offers above 700 px; below that the cursor-follow preview is used.
   if (dock && vp.w > 700) {
     return (

@@ -143,7 +143,7 @@
 button.tile-lg:hover > .card-img, button.tile-sm:hover > .card-img { box-shadow: var(--card-shadow-hover); }
 .card-cap { font-size: var(--fs-xs); margin-top: var(--space-1); color: var(--color-text-muted); }
 /* The tile resets itself with an inline all: unset, which also drops the focus ring: put it back. */
-button.tile-lg:focus-visible, button.tile-sm:focus-visible {
+button.tile-lg:focus-visible, button.tile-sm:focus-visible, div.tile-lg:focus-visible, div.tile-sm:focus-visible {
   outline: 3px solid var(--color-focus) !important;
   outline-offset: 3px !important;
   border-radius: var(--radius-md);

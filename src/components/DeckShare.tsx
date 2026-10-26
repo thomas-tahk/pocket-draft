@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { CardPool } from '../data';
+import { announce } from '../announce';
 import { encodeDeck } from '../share/deckCode';
 
 function download(filename: string, content: string) {
@@ -21,6 +22,7 @@ export function DeckShare({ deck, pool }: { deck: Record<string, number>; pool: 
   const copy = (text: string, label: string) => {
     navigator.clipboard.writeText(text).then(() => {
       setCopied(label);
+      announce('Copied!');
       setTimeout(() => setCopied((c) => (c === label ? null : c)), 1500);
     });
   };

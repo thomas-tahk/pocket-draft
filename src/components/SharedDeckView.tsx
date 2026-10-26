@@ -74,7 +74,7 @@ export function SharedDeckView({ pool, deck, onExit }: Props) {
           <div className="deck-grid">
             {deckCards.flatMap(({ card, count }) =>
               Array.from({ length: count }).map((_, i) => (
-                <CardTile key={`${card.id}-${i}`} card={card} size="lg" onHover={setHover} />
+                <CardTile key={`${card.id}-${i}`} card={card} size="lg" focusable onHover={setHover} />
               )),
             )}
           </div>

@@ -1,8 +1,12 @@
-import { useEffect, useRef, type PointerEvent } from 'react';
+import { useEffect, useRef, type FocusEvent, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react';
 import type { Card } from '../types/card';
+import { cardFacts } from '../data/rarity';
 
 // A mouse hover follows the cursor; a touch long-press (zoom) shows the card large and centred.
-export type HoverPayload = { card: Card; position: { x: number; y: number } } | { card: Card; zoom: true };
+// `anchor` (keyboard focus only) is the focused element's box, so a phone-sized preview can keep clear of it.
+export type HoverPayload =
+  | { card: Card; position: { x: number; y: number }; anchor?: { top: number; bottom: number } }
+  | { card: Card; zoom: true };
 
 // Same hold and drag thresholds as the battle screen's long-press zoom (src/battle/useZoom.ts).
 const HOLD_MS = 350;
@@ -13,15 +17,76 @@ const TOUCH_QUIET_MS = 1000;
 // The click that follows a zoomed press arrives right after the release; swallow it for this long.
 const CLICK_WINDOW_MS = 300;
 let lastTouchAt = -Infinity;
+// Whether the last input was the keyboard: focus that arrives from a key press (even one moved by the
+// app after a pick) shows the card preview; focus from a mouse or touch press does not.
+let keyboardMode = false;
+if (typeof document !== 'undefined') {
+  document.addEventListener('keydown', () => (keyboardMode = true), true);
+  document.addEventListener('pointerdown', () => (keyboardMode = false), true);
+}
 
 type Props = {
   card: Card;
   onPick?: () => void;
   onHover?: (payload: HoverPayload | null) => void;
   size?: 'lg' | 'sm';
+  // The accessible name of a pickable tile when the plain card facts are not enough
+  // (e.g. a tile that removes the card from the deck). Defaults to name + rarity.
+  label?: string;
+  // A tile with no button of its own is a focus stop (so the keyboard can reach its preview);
+  // only where no other control of the card is on screen.
+  focusable?: boolean;
 };
 
-export function CardTile({ card, onPick, onHover, size = 'lg' }: Props) {
+// The preview a keyboard user gets when a card's own control takes focus (as a mouse hover gives it).
+// Escape hides it until focus moves to another card. Used by tiles and by FocusPreview cells.
+export function useFocusPreview(card: Card, onHover?: (p: HoverPayload | null) => void) {
+  const shown = useRef(false);
+  const dismissed = useRef(false);
+  const hoverRef = useRef(onHover);
+  hoverRef.current = onHover;
+  const hide = () => {
+    if (shown.current) {
+      shown.current = false;
+      hoverRef.current?.(null);
+    }
+  };
+  useEffect(() => hide, []); // eslint-disable-line react-hooks/exhaustive-deps
+  return {
+    shown,
+    hide,
+    onFocus: (e: FocusEvent<HTMLElement>) => {
+      if (!keyboardMode || dismissed.current || !hoverRef.current) return;
+      const r = e.currentTarget.getBoundingClientRect();
+      shown.current = true;
+      hoverRef.current({ card, position: { x: r.right - r.width / 3, y: r.top + r.height / 3 }, anchor: { top: r.top, bottom: r.bottom } });
+    },
+    onBlur: (e: FocusEvent<HTMLElement>) => {
+      if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+      dismissed.current = false;
+      hide();
+    },
+    onKeyDown: (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && shown.current) {
+        e.stopPropagation();
+        dismissed.current = true;
+        hide();
+      }
+    },
+  };
+}
+
+// A card's cell with its own buttons (shop and deckbuild +/-): focus anywhere inside previews the card.
+export function FocusPreview({ card, onHover, className, children }: { card: Card; onHover: (p: HoverPayload | null) => void; className?: string; children: ReactNode }) {
+  const f = useFocusPreview(card, onHover);
+  return (
+    <div className={className} onFocus={f.onFocus} onBlur={f.onBlur} onKeyDown={f.onKeyDown}>
+      {children}
+    </div>
+  );
+}
+
+export function CardTile({ card, onPick, onHover, size = 'lg', label, focusable }: Props) {
   const Tag = onPick ? 'button' : 'div';
   const holdTimer = useRef<number | undefined>(undefined);
   const clickTimer = useRef<number | undefined>(undefined);
@@ -89,8 +154,14 @@ export function CardTile({ card, onPick, onHover, size = 'lg' }: Props) {
     if (showing.current) show(null);
   };
 
+  // The tile's own preview state is shared with the hover's (`showing`), so a focus preview is cleaned up with it.
+  const focus = useFocusPreview(card, (p) => (p ? show(p) : showing.current && show(null)));
+  const facts = cardFacts(card);
   const handlers = onHover
     ? {
+        onFocus: focus.onFocus,
+        onBlur: focus.onBlur,
+        onKeyDown: focus.onKeyDown,
         onPointerEnter: trackHover,
         onPointerMove: movePress,
         onPointerLeave: (e: PointerEvent) => (e.pointerType === 'mouse' ? show(null) : endPress()),
@@ -115,6 +186,9 @@ export function CardTile({ card, onPick, onHover, size = 'lg' }: Props) {
       data-type={card.cardType}
       onClick={click}
       {...handlers}
+      aria-label={onPick ? (label ?? facts) : facts}
+      role={onPick ? undefined : 'group'}
+      tabIndex={!onPick && focusable ? 0 : undefined}
       title={`${card.name} · ${card.draftRarity}${card.isMegaEx ? ' Mega-EX' : card.isEx ? ' EX' : ''} · ${card.id}`}
       style={{
         all: 'unset',
@@ -128,13 +202,13 @@ export function CardTile({ card, onPick, onHover, size = 'lg' }: Props) {
     >
       <img
         src={card.imageThumb}
-        alt={card.name}
+        alt={onPick ? card.name : ''}
         loading="lazy"
         draggable={false}
         className="card-img"
       />
       {size === 'lg' && (
-        <div className="card-cap">
+        <div className="card-cap" aria-hidden="true">
           {card.name} · {card.draftRarity}
           {card.isMegaEx ? ' M-EX' : card.isEx ? ' ex' : ''}
         </div>
