@@ -1,4 +1,5 @@
 import type { Card, EnergyType } from '../types/card';
+import { nicheGroupsOf, pokemonBaseName } from './nicheSupport';
 import { NOT_TYPE_SUPPORT, TYPE_SUPPORT_TABLE } from './typeSupport';
 import { eeveeBoost, isEeveelution } from './eeveeBoost';
 
@@ -31,7 +32,10 @@ export function tallyTypes(picks: Card[]): TypeTally {
 //   1. a Trainer's text names a picked Pokémon;
 //   2. a candidate Pokémon's effect text names a type you have picked Pokémon of
 //      (a Trainer doing so is type support instead: weightOf's lean);
-//   3. a candidate Pokémon's type is named by the text of one of your picks.
+//   3. a candidate Pokémon's type is named by the text of one of your picks;
+//   4. the other direction of rule 1 (#126): a candidate Pokémon is named in the
+//      text of a Trainer you picked, or a Trainer and a Pokémon share a group in
+//      nicheSupport.ts and you picked the other one.
 // A Colorless reference never counts. Mirrored by synergyMult in
 // server/draft_synergy.go.
 export const SYNERGY_MULT = 3;
@@ -94,33 +98,91 @@ export function supportedTypes(card: Card): EnergyType[] {
 export type Synergy = {
   pickedTypes: Set<EnergyType>; // types of picked Pokémon (not Colorless)
   textTypes: Set<EnergyType>; // types named in the text of any pick
-  nameText: RegExp | null; // a picked Pokémon's base name inside Trainer text
+  pickedNames: string[]; // names of picked Pokémon, matched in Trainer text by textNames
+  trainerTexts: string[]; // text of picked Trainers, for the Pokémon they name (rule 4)
+  nicheOfTrainers: Set<number>; // niche groups of picked Trainers (rule 4)
+  nicheOfPokemon: Set<number>; // niche groups of picked Pokémon (rule 4)
   eeveelution?: boolean; // an Eeveelution is picked (eeveeBoost.ts)
 };
 
-export const NO_SYNERGY: Synergy = { pickedTypes: new Set(), textTypes: new Set(), nameText: null };
+export const NO_SYNERGY: Synergy = {
+  pickedTypes: new Set(),
+  textTypes: new Set(),
+  pickedNames: [],
+  trainerTexts: [],
+  nicheOfTrainers: new Set(),
+  nicheOfPokemon: new Set(),
+};
 
-const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 export function buildSynergy(picks: Card[]): Synergy {
   const pickedTypes = new Set<EnergyType>();
   const textTypes = new Set<EnergyType>();
-  const needles: string[] = [];
+  const pickedNames: string[] = [];
+  const trainerTexts: string[] = [];
+  const nicheOfTrainers = new Set<number>();
+  const nicheOfPokemon = new Set<number>();
   for (const p of picks) {
     for (const t of namedTypes(p)) textTypes.add(t);
-    if (p.cardType === 'Trainer') continue;
+    if (p.cardType === 'Trainer') {
+      trainerTexts.push(p.trainerText ?? '');
+      nicheGroupsOf(p).forEach((g) => nicheOfTrainers.add(g));
+      continue;
+    }
+    nicheGroupsOf(p).forEach((g) => nicheOfPokemon.add(g));
     if (p.cardType !== 'Colorless') pickedTypes.add(p.cardType);
-    needles.push(escapeRegExp((p.name ?? '').replace(/ ex$/, '')));
+    pickedNames.push(p.name ?? '');
   }
-  const nameText =
-    needles.length > 0 ? new RegExp(`(^|[^\\p{L}])(${needles.join('|')})($|[^\\p{L}])`, 'u') : null;
-  return { pickedTypes, textTypes, nameText, eeveelution: picks.some(isEeveelution) };
+  return {
+    pickedTypes,
+    textTypes,
+    pickedNames,
+    trainerTexts,
+    nicheOfTrainers,
+    nicheOfPokemon,
+    eeveelution: picks.some(isEeveelution),
+  };
 }
 
+// Text saying "Alolan Marowak" does not name "Marowak": these precede a Pokémon
+// name to make a different, longer card name.
+const LONGER_NAME_PREFIXES = ['Alolan ', 'Galarian ', 'Hisuian ', 'Paldean ', "Team Rocket's "];
+const isLetter = (ch: string) => /\p{L}/u.test(ch);
+
+// Whether a Trainer's text names the Pokémon card called cardName, as a whole
+// word, used the same way in both directions (rule 1 and rule 4). A card named
+// "X ex" is named by text saying "X" or "X ex"; a card named "X" is not named by
+// text saying "X ex", a different card. An occurrence does not count when it is
+// part of a longer card name (preceded by a regional or Team Rocket's prefix) or
+// when it only says what something evolves from ("evolves from Eevee" names no
+// Eevee ex). Mirrored by textNames in server/draft_synergy.go.
+export function textNames(text: string, cardName: string): boolean {
+  const word = pokemonBaseName(cardName);
+  const isEx = word !== cardName;
+  for (let from = 0; from <= text.length; ) {
+    const start = text.indexOf(word, from);
+    if (start < 0) return false;
+    const end = start + word.length;
+    from = start + 1;
+    if (start > 0 && isLetter([...text.slice(0, start)].pop()!)) continue;
+    if (end < text.length && isLetter(String.fromCodePoint(text.codePointAt(end)!))) continue;
+    if (!isEx && text.startsWith(' ex', end)) continue;
+    const head = text.slice(0, start);
+    if (head.endsWith('evolve from ') || head.endsWith('evolves from ')) continue;
+    if (LONGER_NAME_PREFIXES.some((p) => head.endsWith(p) && !word.startsWith(p))) continue;
+    return true;
+  }
+  return false;
+}
+
+const inSet = (set: Set<number>, groups: number[]) => groups.some((g) => set.has(g));
+
 function matchesSynergy(card: Card, s: Synergy): boolean {
-  if (card.cardType === 'Trainer' && s.nameText?.test(card.trainerText ?? '')) return true;
-  if (card.cardType === 'Trainer') return false; // naming a picked type is type support, see weightOf
+  // A Trainer naming a picked type is type support, see weightOf.
+  if (card.cardType === 'Trainer')
+    return s.pickedNames.some((n) => textNames(card.trainerText ?? '', n)) || inSet(s.nicheOfPokemon, nicheGroupsOf(card));
   if (s.textTypes.has(card.cardType as EnergyType)) return true;
+  if (s.trainerTexts.some((t) => textNames(t, card.name ?? '')) || inSet(s.nicheOfTrainers, nicheGroupsOf(card))) return true;
   return namedTypes(card).some((t) => s.pickedTypes.has(t));
 }
 
