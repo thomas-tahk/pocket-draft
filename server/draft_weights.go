@@ -30,8 +30,9 @@ func weightOf(c draftCard, tally typeTally, syn synergy) float64 {
 	if c.CardType != "Trainer" && c.CardType != "Colorless" {
 		w = 1 + typeWeightCoef*float64(tally[c.CardType])
 	}
-	if syn.matches(c) {
+	matched := syn.matches(c)
+	if matched {
 		w *= synergyMult
 	}
-	return w
+	return w * eeveeBoost(c, syn.eeveelution, matched)
 }

@@ -112,7 +112,7 @@ func botPickScore(c draftCard, have typeSet, trainers int, byName map[string][]r
 		score++
 	}
 	if !have.has(c.rawCard) && len(have) > 0 {
-		score-- // prefer staying inside the types already drafted
+		score -= 3 // prefer staying inside the types already drafted
 	}
 	return score
 }
