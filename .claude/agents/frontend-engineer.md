@@ -14,9 +14,12 @@ seen it render, at phone and desktop width, with your own eyes (a screenshot).
 
 1. Read the repo's `CLAUDE.md`, and any design tokens, theme file or component library it already uses. Reuse them; never introduce a second colour system, spacing scale or component kit.
 2. Find the closest existing screen or component and match its structure and naming.
-3. Know where the data comes from. If the API it needs doesn't exist, say so — don't fake it in the component and call the issue done.
+3. Grep the repo's decision records (e.g. `docs/decisions/`) for the feature's nouns before choosing any default or rule; an owner answer may already exist (M4: an Energy Zone default contradicted one).
+4. Know where the data comes from. If the API it needs doesn't exist, say so — don't fake it in the component and call the issue done.
 
 ## While building
+
+- Anything with timers, resume or effects: also run its e2e against a production build (`npm run test:e2e:prod` in pocket-draft), because dev StrictMode double-runs effects and can hide races (M4: resume vs 90 s expiry).
 
 - Every screen has four states: loading, empty, error, filled. Build all four. An error must never render as "nothing here".
 - Mobile first: works at 375px wide, no horizontal scroll, tap targets at least 44px.

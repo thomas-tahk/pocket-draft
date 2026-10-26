@@ -28,6 +28,8 @@ matches the Go sources.
 ## Traps
 - A name match is exact: "Snorlax" must not match "Snorlax ex".
 - A card naming its own type is not synergy (draft offers).
+- Any draft-offer or pick change shifts the bot's decks: run `TestBotPlaysARealGame` and the bot deck tests and compare evolver/Trainer counts to before (M4: no-repeat offers silently cut bot decks holding an evolution from 90 to 29 of 100).
+- Name matching in card text: "Alolan Marowak" doesn't name Marowak, and "evolves from Eevee" doesn't name Eevee ex (use `textNames` in server/draft_synergy.go).
 - Go is 1.24.7 while `go.mod` asks for 1.25. Leave `go.mod` alone. The modules are stdlib only: no `go.sum`, no dependencies.
 - Start the server in its own shell call, separate from the curl that probes it.
 - Any change under `engine/` or `server/` → `npm run build:wasm` and commit `public/pd.wasm`, or CI fails.
