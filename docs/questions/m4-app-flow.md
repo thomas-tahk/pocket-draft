@@ -59,3 +59,7 @@
 - #120 · screens fade in over 160 ms (opacity only); reduced motion: none · wins/losses marks now green/red (shape and label still carry meaning)
 - #120 · draft hover preview docks in the side panel (desktop, > 700 px) so it never covers the offers; narrower mouse windows keep the cursor-follow preview; touch keeps long-press
 - #127 · with an empty deck the Energy picker reads "Energy Zone: Colorless only" until a Pokémon is added · cosmetic, owner's call
+- #121 · screen readers hear rarity as words ("Pikachu, 2 diamonds, EX"; ☆ "stars", ♕ "crown") · sr-only wording
+- #121 · keyboard focus on a card (or its +/−) opens its large preview; on a phone it sits above or below the card, whichever has room, never over it; Escape hides it until focus moves to another card
+- #121 · focus goes to the screen's heading on every screen change and to the first card of the next pack after a pick; confirms focus the safe button and close on Escape
+- #121 · the battle's own end screen (Back, Rematch, History: 34–43 px) is left as board scope, not made 44 px · "board later" in the issue
