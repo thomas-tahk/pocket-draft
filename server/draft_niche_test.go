@@ -1,6 +1,15 @@
 package main
 
-import "testing"
+import (
+	"os"
+	"regexp"
+	"slices"
+	"sort"
+	"strings"
+	"testing"
+
+	"github.com/thomas-tahk/pocket-draft/engine"
+)
 
 // Niche odds (#126): a Trainer and the Pokémon it supports raise each other's
 // odds, whichever is picked first. Mirrored in e2e/draft-offer.spec.ts.
@@ -115,8 +124,15 @@ func TestNicheTableBothDirections(t *testing.T) {
 		c, _ := nicheOdds(t, byTier, []draftCard{mon}, tr)
 		d, _ := nicheOdds(t, byTier, []draftCard{sameType}, tr)
 		t.Logf("%s offered %d of %d after %s, %d after %s (%.2fx)", tr.Name, c, slots, mon.Name, d, sameType.Name, float64(c)/float64(d))
-		if d == 0 || float64(c) < 1.5*float64(d) {
-			t.Errorf("%s after %s: %d vs %d, want >= 1.5x", tr.Name, mon.Name, c, d)
+		// The offer counts are small and noisy, so the assertion is on the weight:
+		// exactly the synergy multiplier over the same-type control.
+		wMon := weightOf(tr, tallyTypes([]draftCard{mon}), newSynergy([]draftCard{mon}))
+		wCtl := weightOf(tr, tallyTypes([]draftCard{sameType}), newSynergy([]draftCard{sameType}))
+		if wMon != synergyMult*wCtl {
+			t.Errorf("%s weight after %s = %v, after %s = %v, want exactly %vx", tr.Name, mon.Name, wMon, sameType.Name, wCtl, synergyMult)
+		}
+		if d > 0 && c <= d {
+			t.Errorf("%s after %s: %d offers vs %d, want more", tr.Name, mon.Name, c, d)
 		}
 	}
 }
@@ -191,4 +207,150 @@ func TestNicheTableNamesExistInCards(t *testing.T) {
 			}
 		}
 	}
+}
+
+// Kiawe names "Alolan Marowak". It raises that card and not the Fighting
+// Marowak, and picking Marowak does not raise Kiawe.
+func TestKiaweNamesAlolanMarowakNotMarowak(t *testing.T) {
+	useRealCards(t)
+	pool := toDraftablePool()
+	kiawe := poolCard(t, pool, "Kiawe")
+	var marowak, alolan draftCard
+	for _, c := range pool {
+		switch c.Name {
+		case "Marowak":
+			if marowak.ID == "" {
+				marowak = c
+			}
+		case "Alolan Marowak":
+			alolan = c
+		}
+	}
+	if marowak.ID != "A1-152" {
+		t.Fatalf("Marowak in the pool is %q, want A1-152", marowak.ID)
+	}
+	tally := typeTally{}
+	syn := newSynergy([]draftCard{kiawe})
+	if w := weightOf(marowak, tally, syn); w != 1 {
+		t.Errorf("Marowak after Kiawe = %v, want 1", w)
+	}
+	if alolan.ID == "" {
+		t.Log("Alolan Marowak is not in the draft pool today; checked on a synthetic card")
+		alolan = pokemon("Alolan Marowak", "Fire")
+	}
+	if w := weightOf(alolan, tally, syn); w != synergyMult {
+		t.Errorf("Alolan Marowak after Kiawe = %v, want %v", w, synergyMult)
+	}
+	// Rule 1's direction: picking Marowak must not raise Kiawe; picking the Alolan one does.
+	base := weightOf(kiawe, tally, synergy{})
+	if w := weightOf(kiawe, tally, newSynergy([]draftCard{marowak})); w != base {
+		t.Errorf("Kiawe after Marowak = %v, want unchanged %v", w, base)
+	}
+	if w := weightOf(kiawe, tally, newSynergy([]draftCard{alolan})); w != synergyMult*base {
+		t.Errorf("Kiawe after Alolan Marowak = %v, want %vx", w, synergyMult)
+	}
+}
+
+// Eevee Bag says "evolve from Eevee": it names no Eevee ex.
+func TestEeveeBagDoesNotRaiseEeveeEx(t *testing.T) {
+	useRealCards(t)
+	pool := toDraftablePool()
+	bag := poolCard(t, pool, "Eevee Bag")
+	eevee := draftCard{rawCard: rawCard{ID: "ex", Name: "Eevee ex", CardType: "Colorless"}}
+	tally := typeTally{}
+	if got, want := weightOf(eevee, tally, newSynergy([]draftCard{bag})), weightOf(eevee, tally, synergy{}); got != want {
+		t.Errorf("Eevee ex after Eevee Bag = %v, want unchanged %v", got, want)
+	}
+}
+
+// Rule 1 and rule 4 read " ex" the same way: text naming only "Snorlax ex"
+// names only the ex card, in both directions; text naming "Snorlax" names both.
+func TestExIsReadTheSameBothDirections(t *testing.T) {
+	tally := typeTally{}
+	snorlax, snorlaxEx := pokemon("Snorlax", "Colorless"), pokemon("Snorlax ex", "Colorless")
+	onlyEx, plain := trainerText("A", "Heal your Snorlax ex."), trainerText("B", "Heal your Snorlax.")
+	one := func(c draftCard, picks ...draftCard) float64 { return weightOf(c, tally, newSynergy(picks)) }
+	cases := []struct {
+		name string
+		got  float64
+		want float64
+	}{
+		{"rule 4: Snorlax after text 'Snorlax ex'", one(snorlax, onlyEx), 1},
+		{"rule 4: Snorlax ex after text 'Snorlax ex'", one(snorlaxEx, onlyEx), synergyMult},
+		{"rule 4: Snorlax after text 'Snorlax'", one(snorlax, plain), synergyMult},
+		{"rule 4: Snorlax ex after text 'Snorlax'", one(snorlaxEx, plain), synergyMult},
+		{"rule 1: text 'Snorlax ex' after picked Snorlax", one(onlyEx, snorlax), 1},
+		{"rule 1: text 'Snorlax ex' after picked Snorlax ex", one(onlyEx, snorlaxEx), synergyMult},
+		{"rule 1: text 'Snorlax' after picked Snorlax", one(plain, snorlax), synergyMult},
+		{"rule 1: text 'Snorlax' after picked Snorlax ex", one(plain, snorlaxEx), synergyMult},
+	}
+	for _, c := range cases {
+		if c.got != c.want {
+			t.Errorf("%s = %v, want %v", c.name, c.got, c.want)
+		}
+	}
+}
+
+// The TS table (src/draft/nicheSupport.ts) must hold the same groups as the Go
+// one, and the Ancient / Future / Ultra Beast members must be the engine's.
+func TestNicheTSTableMatchesTheEngine(t *testing.T) {
+	useRealCards(t)
+	src, err := os.ReadFile("../src/draft/nicheSupport.ts")
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := string(src)
+	body = body[strings.Index(body, "export const NICHE_GROUPS"):]
+	body = body[:strings.Index(body, "];\n")]
+	quoted := regexp.MustCompile(`'([^']+)'`)
+	names := func(block, field string) []string {
+		m := regexp.MustCompile(field + `: \[([^\]]*)\]`).FindStringSubmatch(block)
+		var out []string
+		if m != nil {
+			for _, q := range quoted.FindAllStringSubmatch(m[1], -1) {
+				out = append(out, q[1])
+			}
+		}
+		sort.Strings(out)
+		return out
+	}
+	blocks := regexp.MustCompile(`label: '([^']+)'`).FindAllStringSubmatchIndex(body, -1)
+	if len(blocks) != len(nicheGroups) {
+		t.Fatalf("TS has %d groups, Go has %d", len(blocks), len(nicheGroups))
+	}
+	// Every Pokémon the engine's rule calls Future, by name before " ex".
+	var future []string
+	seen := map[string]bool{}
+	for _, rc := range rawByID {
+		n := pokemonBaseName(rc.Name)
+		if rc.CardType != "Trainer" && isFuture(engine.Card{Name: rc.Name}) && !seen[n] {
+			seen[n] = true
+			future = append(future, n)
+		}
+	}
+	for i, g := range nicheGroups {
+		end := len(body)
+		if i+1 < len(blocks) {
+			end = blocks[i+1][0]
+		}
+		block := body[blocks[i][0]:end]
+		if label := body[blocks[i][2]:blocks[i][3]]; label != g.label {
+			t.Fatalf("group %d: TS %q, Go %q", i, label, g.label)
+		}
+		want := g.pokemon
+		if g.fits != nil {
+			want = future
+		}
+		for field, w := range map[string][]string{"trainers": g.trainers, "pokemon": want, "evolvesFrom": g.evolvesFrom} {
+			if got := names(block, field); !slices.Equal(got, sortedCopy(w)) {
+				t.Errorf("%s %s: TS %v, Go %v", g.label, field, got, sortedCopy(w))
+			}
+		}
+	}
+}
+
+func sortedCopy(in []string) []string {
+	out := append([]string{}, in...)
+	sort.Strings(out)
+	return out
 }

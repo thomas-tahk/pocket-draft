@@ -38,3 +38,13 @@
 - #117 · closed-tab rule: hiding or closing the page mid-battle (pagehide, or the tab going hidden, since iOS often skips pagehide) stamps closedAt, separate from the menu's leftAt. Back or reloaded within 90 s: straight into the battle. Past 90 s: the battle is a loss, recorded on return · so closing the tab cannot keep a battle alive forever; no countdown is shown for this
 - #117 · copy "Try again" added before "Start a new battle" on the could-not-resume screen
 - #117 · each saved bot step carries the action count after it; a rebuild that disagrees counts as could-not-resume · catches a bot that changed between versions
+- #124 · "picked" matches by exact card name across printings; "Snorlax" and "Snorlax ex" stay separate cards · same rule as the 2-copy cap
+- #124 · bot deckbuild now keeps the bot's pick order instead of cheapest line first · with every pick single, cheapest-first filled bot decks with Basics (decks holding an evolution fell from 90 to 29 of 100)
+- #125 · lean = 1 + 2 × picks of the type (was 1 ×), for that type's Pokémon and for Trainers that support it; no cap (8 picks → weight 17) · after 3 Water picks Water Pokémon go 14% → 49% of slots, other types keep ~27%
+- #125 · a Trainer "supports" a type if its text names it ("Water Pokémon", "[W]", "Water Energy") or it is in the hand table: Blaine Fire · Koga Darkness · Marlon Water+Psychic · Lana Water · Hala Fighting · Nemona, Clemont, Clemont's Backpack, Sophocles Lightning · Jasmine Metal · Iris, Drayden Dragon · Piers, Team Galactic Grunt Darkness · Mallow Grass+Psychic · Acerola, Budding Expeditioner Psychic · Squirt Bottle excluded (it hurts Fire)
+- #125 · multi-type Trainers (Hau, Cynthia, Barry, Cheren, Whitney, Gladion) left out of the table · they span several types
+- #125 · Stadiums that boost a type for both players (Arena of Antiquity, Peculiar Plaza) count as that type's support
+- #125 · picking a Trainer adds nothing to the type tally · the lean follows Pokémon picks only
+- #128 · Eevee ex's "Veevee ’volve" works for a Stage 1 played from hand only; deck-evolve effects (Rare Candy, Quick-Grow Extract, Wallace…) still need the name "Eevee" · the card says "if you play it from your hand onto this Pokémon"
+- #128 · an effect that removes Abilities (Alolan Muk) also stops Eevee ex taking an Eeveelution · it is an Ability
+- #128 · Eevee ex offers ×3 once any Pokémon that evolves from Eevee is picked (not stacked with other boosts); an Eeveelution still grants plain Eevee free at deckbuild, never Eevee ex

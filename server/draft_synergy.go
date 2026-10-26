@@ -35,16 +35,16 @@ var typeSymbols = map[string]string{
 type synergy struct {
 	pickedTypes map[string]bool // types of picked Pokémon (not Colorless)
 	textTypes   map[string]bool // types named in the text of any pick
-	pickedNames []string        // base names (no " ex") of picked Pokémon, matched in Trainer text
+	pickedNames []string        // names of picked Pokémon, matched in Trainer text by textNames
 
 	trainerTexts    []string     // text of picked Trainers, for the Pokémon they name (rule 4)
 	nicheOfTrainers map[int]bool // niche groups of picked Trainers (rule 4)
 	nicheOfPokemon  map[int]bool // niche groups of picked Pokémon (rule 4)
+	eeveelution     bool         // an Eeveelution is picked (draft_eevee.go)
 }
 
-// pokemonBaseName is a Pokémon's name without a trailing " ex", the form a Trainer's
-// text uses: "Snorlax ex" is named by text saying "Snorlax". The match is on
-// the whole name, so "Snorlax" is not named by text saying only "Snorlax ex".
+// pokemonBaseName is a Pokémon's name without a trailing " ex", the form a
+// Trainer's text uses; see textNames for how it is matched.
 func pokemonBaseName(name string) string { return strings.TrimSuffix(name, " ex") }
 
 // effectText is the text that can name a type: Trainer text, ability and
@@ -101,6 +101,7 @@ func newSynergy(picks []draftCard) synergy {
 		nicheOfTrainers: map[int]bool{}, nicheOfPokemon: map[int]bool{},
 	}
 	for _, p := range picks {
+		s.eeveelution = s.eeveelution || isEeveelution(p)
 		for _, typ := range namedTypes(p) {
 			s.textTypes[typ] = true
 		}
@@ -117,7 +118,7 @@ func newSynergy(picks []draftCard) synergy {
 		if p.CardType != "Colorless" {
 			s.pickedTypes[p.CardType] = true
 		}
-		s.pickedNames = append(s.pickedNames, pokemonBaseName(p.Name))
+		s.pickedNames = append(s.pickedNames, p.Name)
 	}
 	return s
 }
@@ -139,11 +140,10 @@ func (s synergy) matches(c draftCard) bool {
 	return false
 }
 
-// namesPickedIn reports whether text contains a picked name as a whole word:
-// not preceded or followed by a letter. Every occurrence is checked.
+// namesPickedIn reports whether text names a picked Pokémon (see textNames).
 func (s synergy) namesPickedIn(text string) bool {
 	for _, name := range s.pickedNames {
-		if containsWord(text, name) {
+		if textNames(text, name) {
 			return true
 		}
 	}
@@ -161,28 +161,66 @@ func anyIn(set map[int]bool, groups []int) bool {
 }
 
 // namedByPickedTrainer reports whether the text of a Trainer you picked names
-// the Pokémon c as a whole word. A card named "X ex" is named by text saying
-// "X" (as rule 1 does for picked names) or "X ex"; a card named "X" is not
-// named by text saying "X ex", which is a different card.
+// the Pokémon c (see textNames).
 func (s synergy) namedByPickedTrainer(c draftCard) bool {
-	name := pokemonBaseName(c.Name)
-	notFollowedBy := ""
-	if name == c.Name {
-		notFollowedBy = " ex"
-	}
 	for _, text := range s.trainerTexts {
-		if containsWordNot(text, name, notFollowedBy) {
+		if textNames(text, c.Name) {
 			return true
 		}
 	}
 	return false
 }
 
-func containsWord(text, word string) bool { return containsWordNot(text, word, "") }
+// longerNamePrefixes precede a Pokémon name to make a different, longer card
+// name: text saying "Alolan Marowak" does not name "Marowak".
+var longerNamePrefixes = []string{"Alolan ", "Galarian ", "Hisuian ", "Paldean ", "Team Rocket's "}
 
-// containsWordNot is containsWord that skips an occurrence directly followed by
-// notFollowedBy (when not empty), so "Snorlax" is not found in "Snorlax ex".
-func containsWordNot(text, word, notFollowedBy string) bool {
+// textNames reports whether a Trainer's text names the Pokémon card called
+// cardName, as a whole word, used the same way in both directions (rule 1 and
+// rule 4). A card named "X ex" is named by text saying "X" or "X ex"; a card
+// named "X" is not named by text saying "X ex", a different card. An
+// occurrence does not count when it is part of a longer card name (preceded by
+// a regional or Team Rocket's prefix) or when it only says what something
+// evolves from ("evolves from Eevee" names no Eevee ex).
+func textNames(text, cardName string) bool {
+	word := pokemonBaseName(cardName)
+	isEx := word != cardName
+	for from := 0; from <= len(text); {
+		i := strings.Index(text[from:], word)
+		if i < 0 {
+			return false
+		}
+		start := from + i
+		end := start + len(word)
+		from = start + 1
+		before, _ := utf8.DecodeLastRuneInString(text[:start])
+		after, _ := utf8.DecodeRuneInString(text[end:])
+		if (start > 0 && unicode.IsLetter(before)) || (end < len(text) && unicode.IsLetter(after)) {
+			continue
+		}
+		if !isEx && strings.HasPrefix(text[end:], " ex") {
+			continue
+		}
+		head := text[:start]
+		if strings.HasSuffix(head, "evolve from ") || strings.HasSuffix(head, "evolves from ") {
+			continue
+		}
+		longer := false
+		for _, p := range longerNamePrefixes {
+			if strings.HasSuffix(head, p) && !strings.HasPrefix(word, p) {
+				longer = true
+			}
+		}
+		if !longer {
+			return true
+		}
+	}
+	return false
+}
+
+// containsWord reports whether text contains word not preceded or followed by
+// a letter. Every occurrence is checked.
+func containsWord(text, word string) bool {
 	for from := 0; from <= len(text); {
 		i := strings.Index(text[from:], word)
 		if i < 0 {
@@ -192,8 +230,7 @@ func containsWordNot(text, word, notFollowedBy string) bool {
 		end := start + len(word)
 		before, _ := utf8.DecodeLastRuneInString(text[:start])
 		after, _ := utf8.DecodeRuneInString(text[end:])
-		if (start == 0 || !unicode.IsLetter(before)) && (end == len(text) || !unicode.IsLetter(after)) &&
-			(notFollowedBy == "" || !strings.HasPrefix(text[end:], notFollowedBy)) {
+		if (start == 0 || !unicode.IsLetter(before)) && (end == len(text) || !unicode.IsLetter(after)) {
 			return true
 		}
 		from = start + 1

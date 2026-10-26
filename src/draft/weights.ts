@@ -1,6 +1,7 @@
 import type { Card, EnergyType } from '../types/card';
 import { nicheGroupsOf, pokemonBaseName } from './nicheSupport';
 import { NOT_TYPE_SUPPORT, TYPE_SUPPORT_TABLE } from './typeSupport';
+import { eeveeBoost, isEeveelution } from './eeveeBoost';
 
 export type TypeTally = Partial<Record<EnergyType, number>>;
 
@@ -97,27 +98,27 @@ export function supportedTypes(card: Card): EnergyType[] {
 export type Synergy = {
   pickedTypes: Set<EnergyType>; // types of picked Pokémon (not Colorless)
   textTypes: Set<EnergyType>; // types named in the text of any pick
-  nameText: RegExp | null; // a picked Pokémon's base name inside Trainer text
+  pickedNames: string[]; // names of picked Pokémon, matched in Trainer text by textNames
   trainerTexts: string[]; // text of picked Trainers, for the Pokémon they name (rule 4)
   nicheOfTrainers: Set<number>; // niche groups of picked Trainers (rule 4)
   nicheOfPokemon: Set<number>; // niche groups of picked Pokémon (rule 4)
+  eeveelution?: boolean; // an Eeveelution is picked (eeveeBoost.ts)
 };
 
 export const NO_SYNERGY: Synergy = {
   pickedTypes: new Set(),
   textTypes: new Set(),
-  nameText: null,
+  pickedNames: [],
   trainerTexts: [],
   nicheOfTrainers: new Set(),
   nicheOfPokemon: new Set(),
 };
 
-const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 export function buildSynergy(picks: Card[]): Synergy {
   const pickedTypes = new Set<EnergyType>();
   const textTypes = new Set<EnergyType>();
-  const needles: string[] = [];
+  const pickedNames: string[] = [];
   const trainerTexts: string[] = [];
   const nicheOfTrainers = new Set<number>();
   const nicheOfPokemon = new Set<number>();
@@ -130,29 +131,48 @@ export function buildSynergy(picks: Card[]): Synergy {
     }
     nicheGroupsOf(p).forEach((g) => nicheOfPokemon.add(g));
     if (p.cardType !== 'Colorless') pickedTypes.add(p.cardType);
-    needles.push(escapeRegExp(pokemonBaseName(p.name ?? '')));
+    pickedNames.push(p.name ?? '');
   }
-  const nameText =
-    needles.length > 0 ? new RegExp(`(^|[^\\p{L}])(${needles.join('|')})($|[^\\p{L}])`, 'u') : null;
-  return { pickedTypes, textTypes, nameText, trainerTexts, nicheOfTrainers, nicheOfPokemon };
+  return {
+    pickedTypes,
+    textTypes,
+    pickedNames,
+    trainerTexts,
+    nicheOfTrainers,
+    nicheOfPokemon,
+    eeveelution: picks.some(isEeveelution),
+  };
 }
 
-// Whether a Trainer's text names a Pokémon card, as a whole word. A card named
-// "X ex" is named by text saying "X" (as rule 1 does for picked names) or
-// "X ex"; a card named "X" is not named by text saying "X ex", a different card.
-// Mirrored by namedByPickedTrainer in server/draft_synergy.go.
-const nameInTextCache = new Map<string, RegExp>();
+// Text saying "Alolan Marowak" does not name "Marowak": these precede a Pokémon
+// name to make a different, longer card name.
+const LONGER_NAME_PREFIXES = ['Alolan ', 'Galarian ', 'Hisuian ', 'Paldean ', "Team Rocket's "];
+const isLetter = (ch: string) => /\p{L}/u.test(ch);
 
-function namedInText(card: Card, text: string): boolean {
-  const name = card.name ?? '';
-  let re = nameInTextCache.get(name);
-  if (!re) {
-    const base = pokemonBaseName(name);
-    const notEx = base === name ? '(?! ex)' : '';
-    re = new RegExp(`(^|[^\\p{L}])${escapeRegExp(base)}(?![\\p{L}])${notEx}`, 'u');
-    nameInTextCache.set(name, re);
+// Whether a Trainer's text names the Pokémon card called cardName, as a whole
+// word, used the same way in both directions (rule 1 and rule 4). A card named
+// "X ex" is named by text saying "X" or "X ex"; a card named "X" is not named by
+// text saying "X ex", a different card. An occurrence does not count when it is
+// part of a longer card name (preceded by a regional or Team Rocket's prefix) or
+// when it only says what something evolves from ("evolves from Eevee" names no
+// Eevee ex). Mirrored by textNames in server/draft_synergy.go.
+export function textNames(text: string, cardName: string): boolean {
+  const word = pokemonBaseName(cardName);
+  const isEx = word !== cardName;
+  for (let from = 0; from <= text.length; ) {
+    const start = text.indexOf(word, from);
+    if (start < 0) return false;
+    const end = start + word.length;
+    from = start + 1;
+    if (start > 0 && isLetter([...text.slice(0, start)].pop()!)) continue;
+    if (end < text.length && isLetter(String.fromCodePoint(text.codePointAt(end)!))) continue;
+    if (!isEx && text.startsWith(' ex', end)) continue;
+    const head = text.slice(0, start);
+    if (head.endsWith('evolve from ') || head.endsWith('evolves from ')) continue;
+    if (LONGER_NAME_PREFIXES.some((p) => head.endsWith(p) && !word.startsWith(p))) continue;
+    return true;
   }
-  return re.test(text);
+  return false;
 }
 
 const inSet = (set: Set<number>, groups: number[]) => groups.some((g) => set.has(g));
@@ -160,9 +180,9 @@ const inSet = (set: Set<number>, groups: number[]) => groups.some((g) => set.has
 function matchesSynergy(card: Card, s: Synergy): boolean {
   // A Trainer naming a picked type is type support, see weightOf.
   if (card.cardType === 'Trainer')
-    return !!s.nameText?.test(card.trainerText ?? '') || inSet(s.nicheOfPokemon, nicheGroupsOf(card));
+    return s.pickedNames.some((n) => textNames(card.trainerText ?? '', n)) || inSet(s.nicheOfPokemon, nicheGroupsOf(card));
   if (s.textTypes.has(card.cardType as EnergyType)) return true;
-  if (s.trainerTexts.some((t) => namedInText(card, t)) || inSet(s.nicheOfTrainers, nicheGroupsOf(card))) return true;
+  if (s.trainerTexts.some((t) => textNames(t, card.name ?? '')) || inSet(s.nicheOfTrainers, nicheGroupsOf(card))) return true;
   return namedTypes(card).some((t) => s.pickedTypes.has(t));
 }
 
@@ -179,5 +199,6 @@ export function weightOf(card: Card, tally: TypeTally, synergy: Synergy = NO_SYN
   } else if (card.cardType !== 'Colorless') {
     base = 1 + TYPE_WEIGHT_COEF * (tally[card.cardType] ?? 0);
   }
-  return matchesSynergy(card, synergy) ? base * SYNERGY_MULT : base;
+  const matched = matchesSynergy(card, synergy);
+  return (matched ? base * SYNERGY_MULT : base) * eeveeBoost(card, !!synergy.eeveelution, matched);
 }

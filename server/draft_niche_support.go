@@ -1,5 +1,11 @@
 package main
 
+import (
+	"sort"
+
+	"github.com/thomas-tahk/pocket-draft/engine"
+)
+
 // Niche support for draft offers (#126): archetype Trainers whose text does
 // not name the Pokémon they work with, paired with those Pokémon, so picking
 // either raises the other's odds (owner, 2026-10-25, point 2). Mirrored by
@@ -22,9 +28,10 @@ package main
 // each other.
 type nicheGroup struct {
 	label       string
-	trainers    []string // exact Trainer names
-	pokemon     []string // Pokémon names without " ex"
-	evolvesFrom []string // any Pokémon whose card says it evolves from one of these
+	trainers    []string               // exact Trainer names
+	pokemon     []string               // Pokémon names without " ex"
+	evolvesFrom []string               // any Pokémon whose card says it evolves from one of these
+	fits        func(engine.Card) bool // Pokémon the engine recognises by rule rather than by list
 }
 
 var nicheGroups = []nicheGroup{
@@ -43,33 +50,34 @@ var nicheGroups = []nicheGroup{
 	// Eevee Bag's text says "Eevee"; the Pokémon it helps are the ones that
 	// evolve from it (Eevee ex itself is #128's).
 	{label: "Eeveelutions", trainers: []string{"Eevee Bag"}, evolvesFrom: []string{"Eevee"}},
-	// Ancient / Future / Ultra Beast: the printed tag is not in cards.json, so
-	// the members are the real-TCG ones, by hand.
+	// Ancient / Future / Ultra Beast: cards.json has no such tag, so the members
+	// are the engine's own lists (texts_3_13.go, texts_3_12.go), not a third
+	// copy. TestNicheTSTableMatchesTheEngine keeps the TS table equal to them.
 	{
 		label:    "Ancient",
 		trainers: []string{"Ancient Booster Energy Capsule", "Professor Sada"},
-		pokemon: []string{
-			"Great Tusk", "Scream Tail", "Brute Bonnet", "Flutter Mane", "Slither Wing",
-			"Sandy Shocks", "Roaring Moon", "Walking Wake", "Gouging Fire", "Koraidon",
-		},
+		pokemon:  ancientPokemon,
 	},
 	{
 		label:    "Future",
 		trainers: []string{"Future Booster Energy Capsule", "Professor Turo"},
-		pokemon: []string{
-			"Iron Treads", "Iron Bundle", "Iron Hands", "Iron Jugulis", "Iron Moth",
-			"Iron Thorns", "Iron Valiant", "Iron Leaves", "Iron Crown", "Iron Boulder",
-			"Raging Bolt", "Miraidon",
-		},
+		fits:     func(c engine.Card) bool { return isFuture(c) }, // Miraidon and every "Iron ..."
 	},
 	{
 		label:    "Ultra Beast",
 		trainers: []string{"Lusamine", "Beast Wall", "Beastite"},
-		pokemon: []string{
-			"Nihilego", "Buzzwole", "Pheromosa", "Xurkitree", "Celesteela", "Kartana",
-			"Guzzlord", "Poipole", "Naganadel", "Stakataka", "Blacephalon",
-		},
+		pokemon:  ultraBeastNames(),
 	},
+}
+
+// ultraBeastNames is the engine's Ultra Beast list (texts_3_12.go), sorted.
+func ultraBeastNames() []string {
+	out := make([]string, 0, len(ultraBeasts))
+	for n := range ultraBeasts {
+		out = append(out, n)
+	}
+	sort.Strings(out)
+	return out
 }
 
 // Lookup tables over nicheGroups: name -> indexes of the groups it is in.
@@ -100,6 +108,11 @@ func nicheGroupsOf(c draftCard) []int {
 		return nicheByTrainer[c.Name]
 	}
 	out := append([]int{}, nicheByPokemon[pokemonBaseName(c.Name)]...)
+	for i, g := range nicheGroups {
+		if g.fits != nil && g.fits(engine.Card{Name: c.Name}) {
+			out = append(out, i)
+		}
+	}
 	if c.EvolvesFrom != "" {
 		out = append(out, nicheByEvolvesFrom[c.EvolvesFrom]...)
 	}

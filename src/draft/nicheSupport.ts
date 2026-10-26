@@ -49,7 +49,7 @@ export const NICHE_GROUPS: NicheGroup[] = [
     trainers: ['Ancient Booster Energy Capsule', 'Professor Sada'],
     pokemon: [
       'Great Tusk', 'Scream Tail', 'Brute Bonnet', 'Flutter Mane', 'Slither Wing',
-      'Sandy Shocks', 'Roaring Moon', 'Walking Wake', 'Gouging Fire', 'Koraidon',
+      'Sandy Shocks', 'Roaring Moon', 'Walking Wake', 'Gouging Fire', 'Raging Bolt', 'Koraidon',
     ],
   },
   {
@@ -58,7 +58,7 @@ export const NICHE_GROUPS: NicheGroup[] = [
     pokemon: [
       'Iron Treads', 'Iron Bundle', 'Iron Hands', 'Iron Jugulis', 'Iron Moth',
       'Iron Thorns', 'Iron Valiant', 'Iron Leaves', 'Iron Crown', 'Iron Boulder',
-      'Raging Bolt', 'Miraidon',
+      'Miraidon',
     ],
   },
   {

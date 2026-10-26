@@ -262,3 +262,35 @@ test('picking a Trainer that names a Pokemon, or the Pokemon, raises the other i
   expect(baseTrainer).toBeGreaterThan(0);
   expect(afterPokemon).toBeGreaterThan(baseTrainer * 2);
 });
+
+test('Alolan Marowak is not Marowak, Eevee Bag names no Eevee ex, and " ex" reads the same both ways', () => {
+  const kiawe = trainer('Kiawe', 'Choose 1 of your Alolan Marowak or Turtonator. Attach 2 [R] Energy.');
+  const afterKiawe = buildSynergy([kiawe]);
+  expect(weightOf(mon('Marowak', 'Fighting'), {}, afterKiawe)).toBe(1);
+  expect(weightOf(mon('Alolan Marowak', 'Fire'), {}, afterKiawe)).toBe(SYNERGY_MULT);
+  expect(weightOf(kiawe, {}, buildSynergy([mon('Marowak', 'Fighting')]))).toBe(weightOf(kiawe, {}, buildSynergy([])));
+  expect(weightOf(kiawe, {}, buildSynergy([mon('Alolan Marowak', 'Fire')]))).toBe(SYNERGY_MULT);
+
+  const bag = buildSynergy([trainer('Eevee Bag', 'Heal each Pokémon that evolves from Eevee.')]);
+  expect(weightOf(mon('Eevee ex', 'Colorless'), {}, bag)).toBe(1);
+
+  const snorlax = mon('Snorlax', 'Colorless');
+  const snorlaxEx = mon('Snorlax ex', 'Colorless');
+  const onlyEx = trainer('A', 'Heal your Snorlax ex.');
+  const plain = trainer('B', 'Heal your Snorlax.');
+  const w = (c: Card, ...picks: Card[]) => weightOf(c, {}, buildSynergy(picks));
+  expect(w(snorlax, onlyEx)).toBe(1);
+  expect(w(snorlaxEx, onlyEx)).toBe(SYNERGY_MULT);
+  expect(w(snorlax, plain)).toBe(SYNERGY_MULT);
+  expect(w(snorlaxEx, plain)).toBe(SYNERGY_MULT);
+  expect(w(onlyEx, snorlax)).toBe(1);
+  expect(w(onlyEx, snorlaxEx)).toBe(SYNERGY_MULT);
+  expect(w(plain, snorlax)).toBe(SYNERGY_MULT);
+  expect(w(plain, snorlaxEx)).toBe(SYNERGY_MULT);
+
+  // Raging Bolt is Ancient (the engine's list), not Future.
+  const turo = buildSynergy([trainer('Professor Turo', 'x')]);
+  const sada = buildSynergy([trainer('Professor Sada', 'x')]);
+  expect(weightOf(mon('Raging Bolt', 'Dragon'), {}, sada)).toBe(SYNERGY_MULT);
+  expect(weightOf(mon('Raging Bolt', 'Dragon'), {}, turo)).toBe(1);
+});
