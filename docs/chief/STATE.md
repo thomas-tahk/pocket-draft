@@ -6,8 +6,8 @@ Done in M4: draft rework #106–#110 · phone layout #113 · run record #114 · 
 Next action (in order; every worker branches off m4-draft-runs and merges back into it):
 1. DONE: draft fixes #124–#128 + rules.md shop section, all merged (2026-10-26).
    Cloud note: .claude/agents/* didn't load as agent types here; dispatch general-purpose told to read the specialist file. Workers don't commit pd.wasm; chief rebuilds after each merge. 16 e2e (full-game ×9, phone-layout ×6, replay:74) fail in the cloud only: card-image CDN blocked.
-2. IN BUILD: #120 Pocket look (branch w120-pocket-look), then #121 accessibility (frontend-engineer).
-3. Milestone end: full suite → fresh qa-engineer exercises the M4 done-gate (docs/chief/plan-app-flow.html, phone + desktop) → code-reviewer over the whole m4-draft-runs diff vs main → docs/milestones/M4.md (fold in docs/milestones/draft-rework.md; incl. "Learn from it") + row in docs/chief/scorecard.md → one PR m4-draft-runs → main
+2. DONE: #120 Pocket look, #121 accessibility, merged 2026-10-26.
+3. IN PROGRESS — Milestone end: full suite → fresh qa-engineer exercises the M4 done-gate (docs/chief/plan-app-flow.html, phone + desktop) → code-reviewer over the whole m4-draft-runs diff vs main → docs/milestones/M4.md (fold in docs/milestones/draft-rework.md; incl. "Learn from it") + row in docs/chief/scorecard.md → one PR m4-draft-runs → main
 Reviewers: code-reviewer. Any engine/server work: pocket-draft-engine.
 Known gaps from #117: "Next battle" hidden while a saved battle settles — untested; closed-past-90 s test ages the stamp instead of the clock
 Waiting on him: M4 PR play-test + merge (at milestone end)
