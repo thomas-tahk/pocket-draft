@@ -16,7 +16,7 @@ import type { EnergyType } from '../types/card';
 export const TYPE_SUPPORT_TABLE: Record<string, EnergyType[]> = {
   Blaine: ['Fire'], // Ninetales, Rapidash, Magmar
   Koga: ['Darkness'], // Muk, Weezing
-  Marlon: ['Water'], // Carracosta, Jellicent
+  Marlon: ['Water', 'Psychic'], // Carracosta (Water), Jellicent (Psychic)
   Lana: ['Water'], // Araquanid
   Hala: ['Fighting'], // Hariyama, Crabominable
   Nemona: ['Lightning'], // Pawmot
@@ -28,7 +28,7 @@ export const TYPE_SUPPORT_TABLE: Record<string, EnergyType[]> = {
   Drayden: ['Dragon'], // Draco Meteor attack
   Piers: ['Darkness'], // Galarian Obstagoon
   'Team Galactic Grunt': ['Darkness'], // Stunky, Croagunk (Glameow is Colorless)
-  Mallow: ['Grass'], // Shiinotic, Tsareena
+  Mallow: ['Grass', 'Psychic'], // Tsareena (Grass), Shiinotic (Psychic)
   Acerola: ['Psychic'], // Mimikyu, Palossand
   'Budding Expeditioner': ['Psychic'], // Mew ex
 };

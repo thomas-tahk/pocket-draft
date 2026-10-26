@@ -15,23 +15,23 @@ package main
 // Pokémon the text names; the type is their card type in cards.json, judged
 // by hand.
 var typeSupportTable = map[string][]string{
-	"Blaine":               {"Fire"},      // Ninetales, Rapidash, Magmar
-	"Koga":                 {"Darkness"},  // Muk, Weezing
-	"Marlon":               {"Water"},     // Carracosta, Jellicent
-	"Lana":                 {"Water"},     // Araquanid
-	"Hala":                 {"Fighting"},  // Hariyama, Crabominable
-	"Nemona":               {"Lightning"}, // Pawmot
-	"Clemont":              {"Lightning"}, // Magneton, Heliolisk
-	"Clemont's Backpack":   {"Lightning"}, // Magneton, Heliolisk
-	"Sophocles":            {"Lightning"}, // Alolan Golem, Vikavolt, Togedemaru
-	"Jasmine":              {"Metal"},     // Steelix, Skarmory ex
-	"Iris":                 {"Dragon"},    // Haxorus
-	"Drayden":              {"Dragon"},    // Draco Meteor attack
-	"Piers":                {"Darkness"},  // Galarian Obstagoon
-	"Team Galactic Grunt":  {"Darkness"},  // Stunky, Croagunk (Glameow is Colorless)
-	"Mallow":               {"Grass"},     // Shiinotic, Tsareena
-	"Acerola":              {"Psychic"},   // Mimikyu, Palossand
-	"Budding Expeditioner": {"Psychic"},   // Mew ex
+	"Blaine":               {"Fire"},             // Ninetales, Rapidash, Magmar
+	"Koga":                 {"Darkness"},         // Muk, Weezing
+	"Marlon":               {"Water", "Psychic"}, // Carracosta (Water), Jellicent (Psychic)
+	"Lana":                 {"Water"},            // Araquanid
+	"Hala":                 {"Fighting"},         // Hariyama, Crabominable
+	"Nemona":               {"Lightning"},        // Pawmot
+	"Clemont":              {"Lightning"},        // Magneton, Heliolisk
+	"Clemont's Backpack":   {"Lightning"},        // Magneton, Heliolisk
+	"Sophocles":            {"Lightning"},        // Alolan Golem, Vikavolt, Togedemaru
+	"Jasmine":              {"Metal"},            // Steelix, Skarmory ex
+	"Iris":                 {"Dragon"},           // Haxorus
+	"Drayden":              {"Dragon"},           // Draco Meteor attack
+	"Piers":                {"Darkness"},         // Galarian Obstagoon
+	"Team Galactic Grunt":  {"Darkness"},         // Stunky, Croagunk (Glameow is Colorless)
+	"Mallow":               {"Grass", "Psychic"}, // Tsareena (Grass), Shiinotic (Psychic)
+	"Acerola":              {"Psychic"},          // Mimikyu, Palossand
+	"Budding Expeditioner": {"Psychic"},          // Mew ex
 }
 
 // notTypeSupport lists Trainers whose text names a type but works against it,
