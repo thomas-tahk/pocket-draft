@@ -33,6 +33,7 @@ type synergy struct {
 	pickedTypes map[string]bool // types of picked Pokémon (not Colorless)
 	textTypes   map[string]bool // types named in the text of any pick
 	pickedNames []string        // base names (no " ex") of picked Pokémon, matched in Trainer text
+	eeveelution bool            // an Eeveelution is picked (draft_eevee.go)
 }
 
 // effectText is the text that can name a type: Trainer text, ability and
@@ -86,6 +87,7 @@ func namedTypes(c draftCard) []string {
 func newSynergy(picks []draftCard) synergy {
 	s := synergy{pickedTypes: map[string]bool{}, textTypes: map[string]bool{}}
 	for _, p := range picks {
+		s.eeveelution = s.eeveelution || isEeveelution(p)
 		for _, typ := range namedTypes(p) {
 			s.textTypes[typ] = true
 		}

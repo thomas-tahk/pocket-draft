@@ -1,5 +1,6 @@
 import type { Card, EnergyType } from '../types/card';
 import { NOT_TYPE_SUPPORT, TYPE_SUPPORT_TABLE } from './typeSupport';
+import { eeveeBoost, isEeveelution } from './eeveeBoost';
 
 export type TypeTally = Partial<Record<EnergyType, number>>;
 
@@ -94,6 +95,7 @@ export type Synergy = {
   pickedTypes: Set<EnergyType>; // types of picked Pokémon (not Colorless)
   textTypes: Set<EnergyType>; // types named in the text of any pick
   nameText: RegExp | null; // a picked Pokémon's base name inside Trainer text
+  eeveelution?: boolean; // an Eeveelution is picked (eeveeBoost.ts)
 };
 
 export const NO_SYNERGY: Synergy = { pickedTypes: new Set(), textTypes: new Set(), nameText: null };
@@ -112,7 +114,7 @@ export function buildSynergy(picks: Card[]): Synergy {
   }
   const nameText =
     needles.length > 0 ? new RegExp(`(^|[^\\p{L}])(${needles.join('|')})($|[^\\p{L}])`, 'u') : null;
-  return { pickedTypes, textTypes, nameText };
+  return { pickedTypes, textTypes, nameText, eeveelution: picks.some(isEeveelution) };
 }
 
 function matchesSynergy(card: Card, s: Synergy): boolean {
@@ -135,5 +137,6 @@ export function weightOf(card: Card, tally: TypeTally, synergy: Synergy = NO_SYN
   } else if (card.cardType !== 'Colorless') {
     base = 1 + TYPE_WEIGHT_COEF * (tally[card.cardType] ?? 0);
   }
-  return matchesSynergy(card, synergy) ? base * SYNERGY_MULT : base;
+  const matched = matchesSynergy(card, synergy);
+  return (matched ? base * SYNERGY_MULT : base) * eeveeBoost(card, !!synergy.eeveelution, matched);
 }

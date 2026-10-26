@@ -24,6 +24,7 @@ type Ability struct {
 	Use         []EffectOp              // nil: nothing to activate
 	OncePerTurn bool                    // "Once during your turn"
 	Where       AbilitySpot             // where it may be used from
+	EvolvesAs   string                  // "can evolve into any Pokémon that evolves from <name>": also takes evolutions of that name (Eevee ex)
 	When        func(AbilityCheck) bool // nil means always
 
 	// Triggered parts, run by the engine instead of a player's move (4.4):
