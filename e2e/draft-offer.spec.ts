@@ -201,3 +201,64 @@ test('3 Water picks lean Water Pokémon but do not force them', () => {
   expect(share(water, 'Water')).toBeGreaterThan(share([], 'Water') * 1.5);
   expect(share(water, 'Fire')).toBeGreaterThan(0);
 });
+
+// Niche odds (#126). Mirrors server/draft_niche_test.go.
+const mark = (c: Card, id: string) => ({ ...c, id, draftRarity: '◊◊', isEx: false }) as unknown as Card;
+const withEvolvesFrom = (c: Card, evolvesFrom: string) => ({ ...c, evolvesFrom }) as unknown as Card;
+
+test('a Pokemon named in a picked Trainer gets the bonus, once; Snorlax is not Snorlax ex', () => {
+  const nemona = trainer('Nemona', 'During this turn, attacks used by your Pawmot do +80 damage.');
+  const syn = buildSynergy([nemona]);
+  expect(weightOf(mon('Pawmot', 'Lightning'), {}, syn)).toBe(SYNERGY_MULT);
+  expect(weightOf(mon('Pawmotte', 'Lightning'), {}, syn)).toBe(1);
+  const snorlaxEx = buildSynergy([trainer('T', 'Heal your Snorlax.')]);
+  expect(weightOf(mon('Snorlax ex', 'Colorless'), {}, snorlaxEx)).toBe(SYNERGY_MULT);
+  const onlyEx = buildSynergy([trainer('T', 'Heal your Snorlax ex.')]);
+  expect(weightOf(mon('Snorlax', 'Colorless'), {}, onlyEx)).toBe(1);
+  // Named by the text and in the table together: still one multiplication.
+  const sada = buildSynergy([trainer('Professor Sada', 'Heal your Roaring Moon.')]);
+  expect(weightOf(mon('Roaring Moon', 'Darkness'), {}, sada)).toBe(SYNERGY_MULT);
+});
+
+test('table groups raise Trainer and Pokemon both ways, cross-kind only', () => {
+  const moon = buildSynergy([mon('Roaring Moon', 'Darkness')]);
+  expect(weightOf(trainer('Professor Sada', 'x'), {}, moon)).toBe(SYNERGY_MULT);
+  expect(weightOf(trainer('Ancient Booster Energy Capsule', 'x'), {}, moon)).toBe(SYNERGY_MULT);
+  expect(weightOf(trainer('Professor Turo', 'x'), {}, moon)).toBe(1);
+  expect(weightOf(mon('Great Tusk', 'Fighting'), {}, moon)).toBe(1);
+  const sada = buildSynergy([trainer('Professor Sada', 'x')]);
+  expect(weightOf(mon('Roaring Moon', 'Darkness'), {}, sada)).toBe(SYNERGY_MULT);
+  expect(weightOf(mon('Aerodactyl ex', 'Fighting'), {}, buildSynergy([trainer('Old Amber', 'x')]))).toBe(SYNERGY_MULT);
+  const bag = buildSynergy([trainer('Eevee Bag', 'Heal each Pokémon that evolves from Eevee.')]);
+  expect(weightOf(withEvolvesFrom(mon('Vaporeon', 'Water'), 'Eevee'), {}, bag)).toBe(SYNERGY_MULT);
+  expect(weightOf(mon('Vaporeon', 'Water'), {}, bag)).toBe(1); // no evolvesFrom, no match
+  const vap = buildSynergy([withEvolvesFrom(mon('Vaporeon', 'Water'), 'Eevee')]);
+  expect(weightOf(trainer('Eevee Bag', 'x'), {}, vap)).toBe(SYNERGY_MULT);
+});
+
+test('picking a Trainer that names a Pokemon, or the Pokemon, raises the other in the offers', () => {
+  const pawmots = [0, 1, 2].map((i) => mark(mon('Pawmot', 'Lightning'), `pawmot${i}`));
+  const nemonas = [0, 1, 2].map((i) =>
+    mark(trainer('Nemona', 'During this turn, attacks used by your Pawmot do +80 damage.'), `nemona${i}`),
+  );
+  const tiers = indexByTier([...pool, ...pawmots, ...nemonas]);
+  const count = (picks: Card[], name: string) => {
+    let n = 0;
+    for (let seed = 1; seed <= 20; seed++) {
+      const rng = seeded(seed);
+      for (let i = 0; i < 100; i++)
+        for (const c of generateOffer(tiers, { isPack1: false, picks, rng })) if (c.name === name) n++;
+    }
+    return n;
+  };
+  const control = mark(trainer('Poké Ball', 'Put 1 random Basic Pokémon from your deck into your hand.'), 'ctl');
+  const lightning = pool.find((c) => c.cardType === 'Lightning')!;
+  const afterTrainer = count([nemonas[0]], 'Pawmot');
+  const base = count([control], 'Pawmot');
+  expect(base).toBeGreaterThan(0);
+  expect(afterTrainer).toBeGreaterThan(base * 2);
+  const afterPokemon = count([pawmots[0]], 'Nemona');
+  const baseTrainer = count([lightning], 'Nemona');
+  expect(baseTrainer).toBeGreaterThan(0);
+  expect(afterPokemon).toBeGreaterThan(baseTrainer * 2);
+});

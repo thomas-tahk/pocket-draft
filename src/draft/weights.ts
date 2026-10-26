@@ -1,4 +1,5 @@
 import type { Card, EnergyType } from '../types/card';
+import { nicheGroupsOf, pokemonBaseName } from './nicheSupport';
 import { NOT_TYPE_SUPPORT, TYPE_SUPPORT_TABLE } from './typeSupport';
 
 export type TypeTally = Partial<Record<EnergyType, number>>;
@@ -30,7 +31,10 @@ export function tallyTypes(picks: Card[]): TypeTally {
 //   1. a Trainer's text names a picked Pokémon;
 //   2. a candidate Pokémon's effect text names a type you have picked Pokémon of
 //      (a Trainer doing so is type support instead: weightOf's lean);
-//   3. a candidate Pokémon's type is named by the text of one of your picks.
+//   3. a candidate Pokémon's type is named by the text of one of your picks;
+//   4. the other direction of rule 1 (#126): a candidate Pokémon is named in the
+//      text of a Trainer you picked, or a Trainer and a Pokémon share a group in
+//      nicheSupport.ts and you picked the other one.
 // A Colorless reference never counts. Mirrored by synergyMult in
 // server/draft_synergy.go.
 export const SYNERGY_MULT = 3;
@@ -94,9 +98,19 @@ export type Synergy = {
   pickedTypes: Set<EnergyType>; // types of picked Pokémon (not Colorless)
   textTypes: Set<EnergyType>; // types named in the text of any pick
   nameText: RegExp | null; // a picked Pokémon's base name inside Trainer text
+  trainerTexts: string[]; // text of picked Trainers, for the Pokémon they name (rule 4)
+  nicheOfTrainers: Set<number>; // niche groups of picked Trainers (rule 4)
+  nicheOfPokemon: Set<number>; // niche groups of picked Pokémon (rule 4)
 };
 
-export const NO_SYNERGY: Synergy = { pickedTypes: new Set(), textTypes: new Set(), nameText: null };
+export const NO_SYNERGY: Synergy = {
+  pickedTypes: new Set(),
+  textTypes: new Set(),
+  nameText: null,
+  trainerTexts: [],
+  nicheOfTrainers: new Set(),
+  nicheOfPokemon: new Set(),
+};
 
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -104,21 +118,51 @@ export function buildSynergy(picks: Card[]): Synergy {
   const pickedTypes = new Set<EnergyType>();
   const textTypes = new Set<EnergyType>();
   const needles: string[] = [];
+  const trainerTexts: string[] = [];
+  const nicheOfTrainers = new Set<number>();
+  const nicheOfPokemon = new Set<number>();
   for (const p of picks) {
     for (const t of namedTypes(p)) textTypes.add(t);
-    if (p.cardType === 'Trainer') continue;
+    if (p.cardType === 'Trainer') {
+      trainerTexts.push(p.trainerText ?? '');
+      nicheGroupsOf(p).forEach((g) => nicheOfTrainers.add(g));
+      continue;
+    }
+    nicheGroupsOf(p).forEach((g) => nicheOfPokemon.add(g));
     if (p.cardType !== 'Colorless') pickedTypes.add(p.cardType);
-    needles.push(escapeRegExp((p.name ?? '').replace(/ ex$/, '')));
+    needles.push(escapeRegExp(pokemonBaseName(p.name ?? '')));
   }
   const nameText =
     needles.length > 0 ? new RegExp(`(^|[^\\p{L}])(${needles.join('|')})($|[^\\p{L}])`, 'u') : null;
-  return { pickedTypes, textTypes, nameText };
+  return { pickedTypes, textTypes, nameText, trainerTexts, nicheOfTrainers, nicheOfPokemon };
 }
 
+// Whether a Trainer's text names a Pokémon card, as a whole word. A card named
+// "X ex" is named by text saying "X" (as rule 1 does for picked names) or
+// "X ex"; a card named "X" is not named by text saying "X ex", a different card.
+// Mirrored by namedByPickedTrainer in server/draft_synergy.go.
+const nameInTextCache = new Map<string, RegExp>();
+
+function namedInText(card: Card, text: string): boolean {
+  const name = card.name ?? '';
+  let re = nameInTextCache.get(name);
+  if (!re) {
+    const base = pokemonBaseName(name);
+    const notEx = base === name ? '(?! ex)' : '';
+    re = new RegExp(`(^|[^\\p{L}])${escapeRegExp(base)}(?![\\p{L}])${notEx}`, 'u');
+    nameInTextCache.set(name, re);
+  }
+  return re.test(text);
+}
+
+const inSet = (set: Set<number>, groups: number[]) => groups.some((g) => set.has(g));
+
 function matchesSynergy(card: Card, s: Synergy): boolean {
-  if (card.cardType === 'Trainer' && s.nameText?.test(card.trainerText ?? '')) return true;
-  if (card.cardType === 'Trainer') return false; // naming a picked type is type support, see weightOf
+  // A Trainer naming a picked type is type support, see weightOf.
+  if (card.cardType === 'Trainer')
+    return !!s.nameText?.test(card.trainerText ?? '') || inSet(s.nicheOfPokemon, nicheGroupsOf(card));
   if (s.textTypes.has(card.cardType as EnergyType)) return true;
+  if (s.trainerTexts.some((t) => namedInText(card, t)) || inSet(s.nicheOfTrainers, nicheGroupsOf(card))) return true;
   return namedTypes(card).some((t) => s.pickedTypes.has(t));
 }
 
