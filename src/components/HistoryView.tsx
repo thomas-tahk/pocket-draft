@@ -78,6 +78,7 @@ export function HistoryView({ history, run, pool, onClose, onUpdate, onDelete }:
               onClick={() => {
                 if (window.confirm('Delete this draft from history?')) onDelete(entry.id);
               }}
+              className="btn-quiet"
             >
               Delete
             </button>
@@ -140,7 +141,7 @@ export function HistoryView({ history, run, pool, onClose, onUpdate, onDelete }:
 
   return (
     <main className="page page-narrow">
-      <header className="screen-header">
+      <header className="screen-header screen-header-static">
         <h1 className="screen-title">Draft history</h1>
         <button onClick={onClose}>Back</button>
       </header>

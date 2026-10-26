@@ -133,7 +133,7 @@
   width: calc(var(--u) * 112); height: calc(var(--u) * 36);
   border-radius: calc(var(--u) * 18);
   display: grid; place-items: center;
-  background: var(--color-surface); color: var(--color-navy); font-weight: var(--fw-heavy); font-size: calc(var(--u) * 14);
+  background: var(--color-surface); color: var(--color-text); font-weight: var(--fw-heavy); font-size: calc(var(--u) * 14);
   border: calc(var(--u) * 2.5) solid var(--color-primary-bright);
   box-shadow: 0 0 calc(var(--u) * 8) var(--color-primary-bright);
 }
@@ -162,7 +162,7 @@
 .bt-btn {
   all: unset; cursor: pointer; box-sizing: border-box;
   min-width: calc(var(--u) * 100); padding: calc(var(--u) * 8) calc(var(--u) * 14); border-radius: calc(var(--u) * 18);
-  border: calc(var(--u) * 2) solid var(--color-border-strong); background: var(--color-surface); color: var(--color-navy); font-weight: var(--fw-heavy); font-size: calc(var(--u) * 14); text-align: center;
+  border: calc(var(--u) * 2) solid var(--color-border-strong); background: var(--color-surface); color: var(--color-text); font-weight: var(--fw-heavy); font-size: calc(var(--u) * 14); text-align: center;
 }
 .bt-btn-main { border-color: var(--color-primary-bright); box-shadow: 0 0 calc(var(--u) * 6) var(--color-primary-bright); }
 /* ---- L5: turn banner and usable-card pulse ---- */
@@ -208,7 +208,7 @@
 .bt-prompt-button {
   all: unset; pointer-events: auto; cursor: pointer;
   display: flex; gap: calc(var(--u) * 3); padding: calc(var(--u) * 5) calc(var(--u) * 10);
-  border-radius: calc(var(--u) * 14); background: var(--color-surface); color: var(--color-navy); font-weight: var(--fw-bold); font-size: calc(var(--u) * 13);
+  border-radius: calc(var(--u) * 14); background: var(--color-surface); color: var(--color-text); font-weight: var(--fw-bold); font-size: calc(var(--u) * 13);
   box-shadow: 0 0 0 calc(var(--u) * 2.5) #ffe14a;
 }
 
@@ -231,7 +231,7 @@
   right: calc(var(--u) * 10); top: calc(var(--u) * 356);
   width: calc(var(--u) * 112); height: calc(var(--u) * 34); border-radius: calc(var(--u) * 17);
   display: grid; place-items: center;
-  background: var(--color-surface); color: var(--color-navy); font-weight: var(--fw-heavy); font-size: calc(var(--u) * 14);
+  background: var(--color-surface); color: var(--color-text); font-weight: var(--fw-heavy); font-size: calc(var(--u) * 14);
   border: calc(var(--u) * 2.5) solid var(--color-border-strong);
 }
 /* ---- press-and-drag play (F1, F3, F17) ---- */

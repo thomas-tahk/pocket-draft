@@ -43,7 +43,8 @@ export function CardPreview({ hover, dock = false }: Props) {
       </div>
     );
   }
-  if (dock) {
+  // The side panel is beside the offers above 700 px; below that the cursor-follow preview is used.
+  if (dock && vp.w > 700) {
     return (
       <div className="card-preview card-preview-dock" data-testid="card-preview">
         <img src={src} alt={card.name} />

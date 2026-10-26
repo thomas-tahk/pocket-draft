@@ -46,8 +46,8 @@
 .hx-thumb-none { background: #d5d6f6; }
 .hx-head { font-weight: 600; }
 .hx-who { font-weight: 800; }
-.hx-p0 { color: #1a58b8; }
-.hx-p1 { color: #b31616; }
+.hx-p0 { color: var(--color-p0); }
+.hx-p1 { color: var(--color-p1); }
 .hx-line { color: var(--color-text-muted); margin-top: 2px; }
 .hx-empty { color: var(--color-text-muted); padding: 10px 0; }
 

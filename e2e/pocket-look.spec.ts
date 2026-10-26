@@ -1,5 +1,7 @@
-import { test, expect, type Locator, type Page } from '@playwright/test';
+import { test, expect, type APIRequestContext, type Locator, type Page } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 import { buildFromDraft, draftTwenty } from './helpers/draft';
+import { encodeDeck } from '../src/share/deckCode';
 
 // #120: one Pocket-style look across every screen. This spec
 //  1. visits each screen at 390x844 and 1440x900 and saves test-results/look/<screen>-<w>.png,
@@ -43,6 +45,7 @@ const settled = (page: Page) =>
   );
 
 async function shot(page: Page, name: string) {
+  // (name already carries any -dark suffix)
   await settled(page);
   // The screen fade is 160 ms at most; with reduced motion it is already done.
   await page.waitForTimeout(250);
@@ -56,7 +59,7 @@ for (const vp of [
   { width: 1440, height: 900 },
 ]) {
   test.describe(`screens at ${vp.width}x${vp.height}`, () => {
-    test.use({ viewport: vp, isMobile: vp.width < 700, hasTouch: vp.width < 700 });
+    test.use({ viewport: vp, isMobile: vp.width < 700, hasTouch: vp.width < 700, deviceScaleFactor: 1 });
 
     test('every screen has a screenshot', async ({ page }) => {
       test.setTimeout(240_000);
@@ -105,8 +108,6 @@ for (const vp of [
       // battle, its end screen, and the run with a battle in the list
       await page.getByRole('button', { name: 'Next battle' }).click();
       await expect(page.getByTestId('battle-board')).toBeVisible();
-      await expect(page.getByTestId('turn-banner')).toBeHidden({ timeout: 5000 });
-      await shot(page, 'battle');
       await page.getByTestId('menu').click();
       await page.getByTestId('menu-concede').click();
       await page.getByTestId('confirm-ok').click();
@@ -135,9 +136,87 @@ for (const vp of [
       await shot(page, 'history');
       await page.getByRole('button', { name: 'View' }).first().click();
       await shot(page, 'history-open');
+
+      // a shared deck, read-only
+      const ids = (JSON.parse(readFileSync('public/data/cards.json', 'utf8')) as { id: string }[]).slice(0, 10);
+      const code = encodeDeck(Object.fromEntries(ids.map((c) => [c.id, 2])));
+      await page.goto(`/?deck=${encodeURIComponent(code)}`);
+      await expect(page.getByRole('heading', { name: 'Shared deck' })).toBeVisible();
+      await shot(page, 'shared');
+    });
+
+    // The board in play: setup finished through the API, so no coin-flip overlay is on top.
+    test('the battle board in play', async ({ page, request }) => {
+      await stubImages(page);
+      await toYourSecondTurn(request);
+      await page.goto('/?battle');
+      await expect(page.getByTestId('battle-board')).toBeVisible();
+      await expect(page.getByTestId('turn-banner')).toBeHidden({ timeout: 5000 });
+      await shot(page, 'battle');
+    });
+
+    // The same three screens in a dark system setting.
+    test.describe('dark', () => {
+      test.use({ colorScheme: 'dark' });
+      test('home, draft and deckbuild', async ({ page }) => {
+        test.setTimeout(120_000);
+        await stubImages(page);
+        await page.goto('/');
+        await expect(page.getByRole('button', { name: 'Start draft' })).toBeVisible();
+        await shot(page, 'home-dark');
+        await page.getByRole('button', { name: 'Start draft' }).click();
+        await expect(offers(page)).toHaveCount(5);
+        await shot(page, 'draft-dark');
+        await draftTwenty(page);
+        await page.getByRole('button', { name: 'Skip shop' }).click();
+        await expect(page.getByRole('heading', { name: 'Deckbuilding' })).toBeVisible();
+        await expect(page.getByTestId('energy-picker')).toBeInViewport();
+        await shot(page, 'deckbuild-dark');
+      });
     });
   });
 }
+
+// A game at the start of your second turn (same pinned game as card-zoom.spec.ts).
+const BOT = ['A1-211', 'A1-202', 'B4-015', 'B4-112', 'A3-044', 'A2-112', 'A1-150', 'B4-036', 'P-A-001', 'A4b-373'].flatMap((id) => [id, id]);
+type View = { phase: string; active: number; pending: { player: number } | null; players: { hand: { id: string; stage: string }[] }[] };
+async function post(api: APIRequestContext, url: string, data?: object): Promise<View> {
+  const body = await (await api.post(url, data ? { data } : undefined)).json();
+  return body.state ?? body;
+}
+async function toYourSecondTurn(api: APIRequestContext) {
+  const start = await post(api, '/api/new', { seed: 7, bot: BOT, preset: 'fire' });
+  const basic = start.players[0].hand.find((c) => c.stage === 'Basic')!;
+  await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: basic.id });
+  await post(api, '/api/move', { type: 'SetupReady', player: 0 });
+  for (let i = 0; i < 6 && (await post(api, '/api/bot')).phase === 'setup'; i++);
+  await post(api, '/api/move', { type: 'EndTurn', player: 0 });
+  for (let i = 0; i < 40; i++) {
+    const v = await post(api, '/api/bot');
+    if (v.phase !== 'main' || (v.pending ? v.pending.player : v.active) === 0) break;
+  }
+}
+
+test.describe('dark colour scheme', () => {
+  test.use({ colorScheme: 'dark' });
+  test('the page is dark with light text', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByRole('button', { name: 'Start draft' })).toBeVisible();
+    const { bg, fg } = await page.evaluate(() => {
+      const lum = (css: string) => {
+        const [r, g, b] = css.match(/[\d.]+/g)!.slice(0, 3).map((v) => {
+          const c = Number(v) / 255;
+          return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+        });
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      };
+      const st = getComputedStyle(document.body);
+      return { bg: lum(st.backgroundColor), fg: lum(st.color) };
+    });
+    expect(bg).toBeLessThan(0.05);
+    expect(fg).toBeGreaterThan(0.6);
+  });
+});
 
 test.describe('screen change motion', () => {
   const toDraft = async (page: Page) => {
@@ -202,12 +281,14 @@ test.describe('hover on draft offers', () => {
     await expect(offers(page)).toHaveCount(5);
     await settled(page);
     const boxes = await Promise.all((await offers(page).all()).map((o) => o.boundingBox()));
+    const label = (await page.getByText(/^Drafted \(\d+\)$/).boundingBox())!;
     const preview = page.getByTestId('card-preview');
     for (let i = 0; i < 5; i++) {
       await offers(page).nth(i).hover();
       await expect(preview).toHaveCount(1);
       await settled(page);
       const p = (await preview.boundingBox())!;
+      expect(p.y, 'preview starts below the Drafted label').toBeGreaterThanOrEqual(label.y + label.height);
       boxes.forEach((b, j) => {
         const overlap = p.x < b!.x + b!.width && p.x + p.width > b!.x && p.y < b!.y + b!.height && p.y + p.height > b!.y;
         expect(overlap, `hovering offer ${i} covers offer ${j}`).toBe(false);
@@ -216,5 +297,21 @@ test.describe('hover on draft offers', () => {
     }
     await page.mouse.move(5, 5);
     await expect(preview).toHaveCount(0);
+  });
+});
+
+test.describe('hover at a narrow window', () => {
+  test.use({ viewport: { width: 600, height: 900 }, isMobile: false, hasTouch: false });
+
+  test('a mouse still gets the cursor-follow preview, with no side panel to dock to', async ({ page }) => {
+    await stubImages(page);
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Start draft' }).click();
+    await expect(offers(page)).toHaveCount(5);
+    await offers(page).first().hover();
+    const preview = page.getByTestId('card-preview');
+    await expect(preview).toHaveCount(1);
+    await expect(preview).toBeVisible();
+    await expect(preview).not.toHaveClass(/card-preview-dock/);
   });
 });
