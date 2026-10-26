@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { bootWasmEngine } from './game/wasmBoot';
+import './tokens.css';
 import './index.css';
 import './screens.css';
 

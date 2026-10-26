@@ -1,70 +1,152 @@
-:root {
-  color-scheme: light dark;
-  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  font-size: 15px;
-  line-height: 1.5;
-  --surface: #f7f7f7;
-  --border: #8884;
-  --accent: #4c8;
-  --accent-soft: #4c81;
-}
+/* Base look. Every value comes from the tokens in tokens.css. */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --surface: #15171b;
-    --border: #fff2;
-  }
+:root {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: var(--lh-body);
+  color: var(--color-text);
+  /* The old names, kept so nothing that still reads them breaks. */
+  --surface: var(--color-bg);
+  --border: var(--color-border);
+  --accent: var(--color-primary);
+  --accent-soft: var(--color-primary-soft);
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--surface);
+  background: var(--color-bg) var(--gradient-page) no-repeat;
+  color: var(--color-text);
 }
 
 h1, h2, h3 {
   letter-spacing: -0.01em;
+  font-weight: var(--fw-heavy);
+  color: var(--color-text);
 }
 
+.screen-title { font-size: var(--fs-xl); margin: 0; }
+.muted { color: var(--color-text-muted); }
+.muted-sm { color: var(--color-text-muted); font-size: var(--fs-sm); }
+.muted-xs { color: var(--color-text-muted); font-size: var(--fs-xs); }
+.section-title { font-size: var(--fs-md); color: var(--color-text-muted); margin: 0 0 var(--space-2); }
+
+/* Buttons: white pill with a coloured border (secondary); .btn-primary and the
+   run/home primaries are the filled teal pill; .btn-danger is the filled red one. */
 button {
   font: inherit;
-  font-size: 13px;
-  padding: 6px 12px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: inherit;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
+  padding: 0 var(--space-4);
+  box-sizing: border-box;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--color-primary);
+  background: var(--color-surface);
+  color: var(--color-primary-strong);
   cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease;
+  transition: background-color var(--motion-fast) var(--motion-ease), border-color var(--motion-fast) var(--motion-ease);
 }
 
 button:hover:not(:disabled) {
-  background: rgba(127, 127, 127, 0.12);
-  border-color: rgba(127, 127, 127, 0.5);
+  background: var(--color-primary-soft);
 }
 
 button:active:not(:disabled) {
-  background: rgba(127, 127, 127, 0.2);
+  background: #cdeaf4;
 }
 
 button:disabled {
-  opacity: 0.4;
+  opacity: 0.5;
   cursor: not-allowed;
+}
+
+.btn-primary,
+.run-btn-primary,
+.home-primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+.btn-primary:hover:not(:disabled),
+.run-btn-primary:hover:not(:disabled),
+.home-primary:hover:not(:disabled) {
+  background: var(--color-primary-strong);
+}
+.btn-primary:active:not(:disabled),
+.run-btn-primary:active:not(:disabled),
+.home-primary:active:not(:disabled) {
+  background: var(--color-navy-deep);
+}
+
+.btn-danger,
+.run-btn-danger {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: var(--color-on-primary);
+}
+.btn-danger:hover:not(:disabled),
+.run-btn-danger:hover:not(:disabled) {
+  background: var(--color-danger-strong);
+}
+
+/* The - and + beside a card. */
+.btn-step {
+  padding: 0;
+  font-size: var(--fs-lg);
+  line-height: 1;
 }
 
 input[type='number'],
 textarea {
   font: inherit;
-  font-size: 13px;
-  padding: 4px 6px;
-  border-radius: 4px;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: inherit;
+  font-size: var(--fs-sm);
+  padding: var(--space-2);
+  min-height: var(--tap-min);
+  box-sizing: border-box;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+textarea { min-height: 0; }
+
+/* Keyboard focus: one visible ring everywhere. */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
 }
 
 textarea:focus,
 input:focus {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--color-focus);
   outline-offset: 1px;
+}
+
+/* Panels: white, rounded, softly shadowed. */
+.panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-4);
+}
+
+/* Screen change (App.tsx): a short fade, opacity only. Reduced motion removes it. */
+.screen-fade {
+  animation: screen-in var(--motion-screen) var(--motion-ease);
+}
+@keyframes screen-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen-fade { animation: none; }
+  button { transition: none; }
 }

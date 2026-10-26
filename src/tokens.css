@@ -1,0 +1,96 @@
+/* Design tokens: the whole Pokémon TCG Pocket-style look is set here and nowhere else (#120).
+   Every screen (home, draft, shop, deckbuild, review, run, summary, history) and the chrome of
+   the battle board (buttons, panels, banners, fonts) reads these custom properties, so the look
+   is retuned by editing this one block. The values are the designer's first guess: the owner's call. */
+
+:root {
+  color-scheme: light;
+
+  /* Type: a bold rounded sans from the system stack (no web font, no new dependency). */
+  --font-ui: ui-rounded, 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', 'Nunito', 'Varela Round', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 15px;
+  --fs-lg: 18px;
+  --fs-xl: 22px;
+  --fs-hero: 32px;
+  --fw-regular: 500;
+  --fw-bold: 700;
+  --fw-heavy: 800;
+  --lh-body: 1.5;
+
+  /* Colour: light, clean, high contrast. Text pairs are all 4.5:1 or better on their surface. */
+  --color-bg: #eef3fb;
+  --color-bg-top: #d9f1fa;
+  --color-surface: #ffffff;
+  --color-surface-2: #f5f8fd;
+  --color-text: #17233d;
+  --color-text-muted: #4a5878;
+  --color-border: #d3dcec;
+  --color-border-strong: #9aa7c0;
+
+  --color-primary: #0a7ea4;
+  --color-primary-strong: #086584;
+  --color-primary-soft: #e2f4fa;
+  --color-primary-bright: #2fc6e8;
+  --color-on-primary: #ffffff;
+  --color-focus: #1b4dd8;
+
+  --color-danger: #c62828;
+  --color-danger-strong: #a31f1f;
+  --color-success: #1b7f3b;
+  --color-highlight: #ffd23f;
+
+  --color-navy: #3d4766;
+  --color-navy-deep: #1c2340;
+  --color-navy-ink: #22283c;
+  --color-board-bg: #1d2a52;
+  --color-you: #1f8fe0;
+  --color-opp: #d8343a;
+
+  --gradient-header: linear-gradient(135deg, #d4f1fa 0%, #e6edff 100%);
+  --gradient-page: linear-gradient(180deg, var(--color-bg-top) 0, var(--color-bg) 280px);
+
+  /* Shape. */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+  --shadow-sm: 0 1px 3px rgba(23, 35, 61, 0.1);
+  --shadow-md: 0 4px 14px rgba(23, 35, 61, 0.14);
+  --shadow-lg: 0 8px 24px rgba(23, 35, 61, 0.28);
+
+  /* Card frame. */
+  --card-radius: 10px;
+  --card-border: 2px solid var(--color-border);
+  --card-shadow: var(--shadow-sm);
+  --card-shadow-hover: var(--shadow-md);
+
+  /* Spacing and targets. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --tap-min: 44px;
+  --gutter: 16px;
+
+  /* Motion: screen changes only. Opacity only, at most 200 ms; reduced motion removes it. */
+  --motion-fast: 120ms;
+  --motion-screen: 160ms;
+  --motion-ease: ease-out;
+
+  /* Energy and card types. */
+  --type-grass: #3a9d3f;
+  --type-fire: #e2481f;
+  --type-water: #1f86de;
+  --type-lightning: #e8b800;
+  --type-psychic: #9a4fc6;
+  --type-fighting: #b8611f;
+  --type-darkness: #2c3646;
+  --type-metal: #7f8d9b;
+  --type-dragon: #a88a1c;
+  --type-colorless: #9da3ad;
+  --type-trainer: #5b6b8c;
+  --type-spent: #b9bcc8;
+}

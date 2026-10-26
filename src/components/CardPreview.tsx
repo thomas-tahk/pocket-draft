@@ -5,6 +5,8 @@ export type HoverState = HoverPayload | null;
 
 type Props = {
   hover: HoverState;
+  // Draft offers: park the preview over the side panel instead of beside the cursor, so it never covers the offers.
+  dock?: boolean;
 };
 
 const PREVIEW_W = 260;
@@ -21,7 +23,7 @@ function placeNearCursor(x: number, y: number, winW: number, winH: number) {
   return { left, top };
 }
 
-export function CardPreview({ hover }: Props) {
+export function CardPreview({ hover, dock = false }: Props) {
   const [vp, setVp] = useState({ w: 1280, h: 800 });
 
   useEffect(() => {
@@ -41,24 +43,17 @@ export function CardPreview({ hover }: Props) {
       </div>
     );
   }
+  if (dock) {
+    return (
+      <div className="card-preview card-preview-dock" data-testid="card-preview">
+        <img src={src} alt={card.name} />
+      </div>
+    );
+  }
   const { left, top } = placeNearCursor(hover.position.x, hover.position.y, vp.w, vp.h);
   return (
-    <div
-      data-testid="card-preview"
-      style={{
-        position: 'fixed',
-        left,
-        top,
-        width: PREVIEW_W,
-        pointerEvents: 'none',
-        zIndex: 100,
-        boxShadow: '0 8px 24px rgba(0,0,0,0.45)',
-        borderRadius: 12,
-        overflow: 'hidden',
-        background: '#0008',
-      }}
-    >
-      <img src={src} alt={card.name} style={{ width: '100%', display: 'block' }} />
+    <div className="card-preview" data-testid="card-preview" style={{ left, top }}>
+      <img src={src} alt={card.name} />
     </div>
   );
 }

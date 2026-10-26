@@ -4,7 +4,7 @@ import { useState } from 'react';
 export function AbandonDraft({ loses, onAbandon }: { loses: string; onAbandon: () => void }) {
   const [asking, setAsking] = useState(false);
   if (!asking) {
-    return <button className="run-btn" style={{ fontSize: 14 }} onClick={() => setAsking(true)}>Abandon draft</button>;
+    return <button className="run-btn" onClick={() => setAsking(true)}>Abandon draft</button>;
   }
   return (
     <div role="alertdialog" aria-label="Abandon draft" className="run-confirm" data-testid="abandon-confirm">
