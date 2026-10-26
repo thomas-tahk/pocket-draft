@@ -45,3 +45,6 @@
 - #125 · multi-type Trainers (Hau, Cynthia, Barry, Cheren, Whitney, Gladion) left out of the table · they span several types
 - #125 · Stadiums that boost a type for both players (Arena of Antiquity, Peculiar Plaza) count as that type's support
 - #125 · picking a Trainer adds nothing to the type tally · the lean follows Pokémon picks only
+- #128 · Eevee ex's "Veevee ’volve" works for a Stage 1 played from hand only; deck-evolve effects (Rare Candy, Quick-Grow Extract, Wallace…) still need the name "Eevee" · the card says "if you play it from your hand onto this Pokémon"
+- #128 · an effect that removes Abilities (Alolan Muk) also stops Eevee ex taking an Eeveelution · it is an Ability
+- #128 · Eevee ex offers ×3 once any Pokémon that evolves from Eevee is picked (not stacked with other boosts); an Eeveelution still grants plain Eevee free at deckbuild, never Eevee ex
