@@ -147,34 +147,24 @@ export function DeckbuildView({
     return (
       <div
         key={`${entry.source}-${entry.card.id}`}
-        className="shelf-cell"
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 4,
-          padding: 6,
-          borderRadius: 8,
-          background: inDeck > 0 ? '#4c81' : 'transparent',
-          outline: inDeck > 0 ? '2px solid #4c8' : 'none',
-        }}
+        className={`shelf-cell${inDeck > 0 ? ' is-picked' : ''}`}
       >
         <CardTile card={entry.card} size="lg" onHover={handleHover} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
+        <div className="step-row">
           <button
             onClick={() => onRemove(entry.card.id)}
             disabled={inDeck === 0}
-            style={{ minWidth: 28 }}
+            className="btn-step"
           >
             −
           </button>
-          <span style={{ opacity: 0.8 }}>
+          <span className="muted-xs">
             {nameTotal} / {cap}
           </span>
           <button
             onClick={() => onAdd(entry.card.id)}
             disabled={addDisabled}
-            style={{ minWidth: 28 }}
+            className="btn-step"
           >
             +
           </button>
@@ -188,7 +178,7 @@ export function DeckbuildView({
     if (entries.length === 0) return null;
     return (
       <section key={source} style={{ marginTop: 16 }}>
-        <h2 style={{ fontSize: 14, opacity: 0.75, margin: '0 0 8px' }}>
+        <h2 className="section-title">
           {SOURCE_LABEL[source]} ({entries.length})
         </h2>
         <div className="shelf-grid">
@@ -202,9 +192,9 @@ export function DeckbuildView({
     <div className="screen">
       <main className="screen-main wide">
         <header className="screen-header">
-          <h1 style={{ fontSize: 20, margin: 0 }}>Deckbuilding</h1>
+          <h1 className="screen-title">Deckbuilding</h1>
           <div className="screen-header-actions">
-            <div style={{ fontSize: 14, opacity: 0.75 }}>
+            <div className="muted">
               Deck: {size} / {DECK_SIZE}
               {sortedTally.length > 0 && (
                 <span style={{ marginLeft: 16 }}>
@@ -213,6 +203,7 @@ export function DeckbuildView({
               )}
             </div>
             <button
+              className="btn-primary"
               onClick={() => onFinalize(zone)}
               disabled={finalizeBlocker !== ''}
               title={finalizeBlocker}
@@ -222,23 +213,23 @@ export function DeckbuildView({
             <AbandonDraft loses="all picks and deck choices" onAbandon={onCancel} />
           </div>
         </header>
-        <p style={{ fontSize: 13, opacity: 0.6, marginTop: 0 }}>
+        <p className="muted-sm" style={{ marginTop: 0 }}>
           Build a deck of exactly {DECK_SIZE} cards. Max 2 of any card by name. Drafted Pokémon
           unlock their under-evolutions (all functional variants) for free. Trainers come only from
           your draft and the shop.
         </p>
 
         <div className="zone-picker" role="group" data-testid="energy-picker" aria-labelledby="zone-title">
-          <h2 id="zone-title" style={{ fontSize: 14, margin: 0 }}>
+          <h2 id="zone-title" className="section-title" style={{ color: 'var(--color-text)', margin: 0 }}>
             {zone.length > 0 ? `Energy Zone (${zone.length} / ${MAX_ZONE_TYPES})` : `Energy Zone: ${ZONE_FALLBACK} only`}
           </h2>
-          <p style={{ fontSize: 12, opacity: 0.7, margin: '2px 0 8px' }}>
+          <p className="muted-xs" style={{ margin: '2px 0 8px' }}>
             Your Energy Zone makes only these types, in every battle of this run. Choose 1 to {MAX_ZONE_TYPES}.
             {energy.length === 0 && zone.length > 0 ? ' Starting from the energy your deck’s attacks need.' : ''}
             {zone.length === 0 ? ' None of your attacks need a typed energy, so it makes Colorless unless you choose.' : ''}
           </p>
           {zone.length >= MAX_ZONE_TYPES && (
-            <p data-testid="energy-cap-hint" style={{ fontSize: 12, margin: '0 0 8px' }}>
+            <p data-testid="energy-cap-hint" className="muted-xs" style={{ margin: '0 0 8px' }}>
               Up to 3: deselect one to change.
             </p>
           )}
@@ -269,11 +260,11 @@ export function DeckbuildView({
       </main>
 
       <aside className="screen-aside" style={{ ['--aside-w' as string]: '280px' }}>
-        <div style={{ fontSize: 12, opacity: 0.6, marginBottom: 8 }}>
+        <div className="muted-xs" style={{ marginBottom: 8 }}>
           Deck ({size} / {DECK_SIZE})
         </div>
         {deckCards.length === 0 ? (
-          <p style={{ fontSize: 12, opacity: 0.5 }}>No cards yet.</p>
+          <p className="muted-xs">No cards yet.</p>
         ) : (
           <div className="tile-grid-sm">
             {deckCards.map(({ card, count }) =>

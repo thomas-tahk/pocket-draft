@@ -53,48 +53,25 @@ export function SharedDeckView({ pool, deck, onExit }: Props) {
     Object.values(deck).reduce((s, n) => s + n, 0) - total;
 
   return (
-    <main style={{ padding: '0 24px 24px', maxWidth: 1100, margin: '0 auto' }}>
-      <header
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'baseline',
-          padding: '16px 0',
-          marginBottom: 8,
-          position: 'sticky',
-          top: 0,
-          background: 'var(--surface)',
-          zIndex: 5,
-          borderBottom: '1px solid #8882',
-          gap: 12,
-          flexWrap: 'wrap',
-        }}
-      >
-        <h1 style={{ fontSize: 20, margin: 0 }}>Shared deck</h1>
+    <main className="page">
+      <header className="screen-header">
+        <h1 className="screen-title">Shared deck</h1>
         <button onClick={onExit}>Go to Pocket Draft</button>
       </header>
 
       {total === 0 ? (
-        <p style={{ opacity: 0.75 }}>
+        <p className="muted">
           This deck code didn’t match any known cards. It may be from a newer card set than this
           build has, or the code may be incomplete.
         </p>
       ) : (
         <>
-          <div style={{ fontSize: 13, opacity: 0.75, marginBottom: 16 }}>
+          <div className="muted-sm" style={{ marginBottom: 16 }}>
             {total} cards · <TypeTally entries={sortedTally} />
             {unknownCount > 0 && ` · ${unknownCount} unrecognized card(s) hidden`}
           </div>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, 180px)',
-              justifyContent: 'start',
-              gap: 12,
-              alignItems: 'start',
-            }}
-          >
+          <div className="deck-grid">
             {deckCards.flatMap(({ card, count }) =>
               Array.from({ length: count }).map((_, i) => (
                 <CardTile key={`${card.id}-${i}`} card={card} size="lg" onHover={setHover} />

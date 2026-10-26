@@ -57,36 +57,20 @@ export function HistoryView({ history, run, pool, onClose, onUpdate, onDelete }:
     const record = played ? runScore(played) : { wins: entry.wins, losses: entry.losses };
 
     return (
-      <div
-        key={entry.id}
-        style={{
-          border: '1px solid #8884',
-          borderRadius: 8,
-          padding: 12,
-          marginBottom: 8,
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: 8,
-            flexWrap: 'wrap',
-          }}
-        >
-          <div style={{ fontSize: 13 }}>
-            <div style={{ fontWeight: 600 }}>{formatDate(entry.completedAt)}</div>
-            <div style={{ opacity: 0.75, fontSize: 12, marginTop: 2 }}>
+      <div key={entry.id} className="panel history-entry">
+        <div className="history-entry-head">
+          <div style={{ fontSize: 'var(--fs-sm)' }}>
+            <div style={{ fontWeight: 'var(--fw-bold)' }}>{formatDate(entry.completedAt)}</div>
+            <div className="muted-xs" style={{ marginTop: 2 }}>
               {total} cards · <TypeTally entries={sortedTally} />
               {' '}·{' '}
-              <span style={{ color: '#4c8' }}>{record.wins}W</span>
+              <span className="count-w">{record.wins}W</span>
               {' / '}
-              <span style={{ color: '#c66' }}>{record.losses}L</span>
+              <span className="count-l">{record.losses}L</span>
               {played && <> · <span data-testid="history-run-status">{STATUS_LABEL[played.status]}</span></>}
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 6 }}>
+          <div className="history-actions">
             <button onClick={() => setExpandedId(expanded ? null : entry.id)}>
               {expanded ? 'Collapse' : 'View'}
             </button>
@@ -94,7 +78,7 @@ export function HistoryView({ history, run, pool, onClose, onUpdate, onDelete }:
               onClick={() => {
                 if (window.confirm('Delete this draft from history?')) onDelete(entry.id);
               }}
-              style={{ fontSize: 11, opacity: 0.7 }}
+              className="btn-quiet"
             >
               Delete
             </button>
@@ -104,12 +88,12 @@ export function HistoryView({ history, run, pool, onClose, onUpdate, onDelete }:
         {expanded && (
           <div style={{ marginTop: 12 }}>
             {played ? (
-              <p style={{ fontSize: 12, margin: '0 0 8px' }}>
+              <p className="muted-xs" style={{ margin: '0 0 8px' }}>
                 Record {record.wins}–{record.losses}, from the run.
               </p>
             ) : (
               <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 8 }}>
-                <label style={{ fontSize: 12 }}>
+                <label className="muted-xs">
                   Wins:{' '}
                   <input
                     type="number"
@@ -119,7 +103,7 @@ export function HistoryView({ history, run, pool, onClose, onUpdate, onDelete }:
                     style={{ width: 50 }}
                   />
                 </label>
-                <label style={{ fontSize: 12 }}>
+                <label className="muted-xs">
                   Losses:{' '}
                   <input
                     type="number"
@@ -139,22 +123,10 @@ export function HistoryView({ history, run, pool, onClose, onUpdate, onDelete }:
               value={entry.notes}
               onChange={(e) => onUpdate(entry.id, { notes: e.target.value })}
               rows={3}
-              style={{
-                width: '100%',
-                boxSizing: 'border-box',
-                fontSize: 12,
-                fontFamily: 'inherit',
-                marginBottom: 12,
-              }}
+              className="history-notes"
             />
 
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))',
-                gap: 4,
-              }}
-            >
+            <div className="history-grid">
               {deckCards.flatMap(({ card, count }) =>
                 Array.from({ length: count }).map((_, i) => (
                   <CardTile key={`${card.id}-${i}`} card={card} size="sm" onHover={handleHover} />
@@ -168,21 +140,14 @@ export function HistoryView({ history, run, pool, onClose, onUpdate, onDelete }:
   };
 
   return (
-    <main style={{ padding: '16px 24px', maxWidth: 900, margin: '0 auto' }}>
-      <header
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'baseline',
-          marginBottom: 16,
-        }}
-      >
-        <h1 style={{ fontSize: 20, margin: 0 }}>Draft history</h1>
+    <main className="page page-narrow">
+      <header className="screen-header screen-header-static">
+        <h1 className="screen-title">Draft history</h1>
         <button onClick={onClose}>Back</button>
       </header>
 
       {history.length === 0 ? (
-        <p style={{ opacity: 0.6, fontSize: 14 }}>No completed drafts yet.</p>
+        <p className="muted">No completed drafts yet.</p>
       ) : (
         history.map(renderEntry)
       )}

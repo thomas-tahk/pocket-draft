@@ -30,10 +30,10 @@ export function DraftView({ packIndex, offer, picks, onPick, onCancel }: Props) 
   return (
     <div className="screen">
       <main className="screen-main">
-        <header className="screen-header" style={{ zIndex: 5 }}>
-          <h1 style={{ fontSize: 20, margin: 0 }}>Pocket Draft</h1>
+        <header className="screen-header">
+          <h1 className="screen-title">Pocket Draft</h1>
           <div className="screen-header-actions">
-            <div style={{ fontSize: 14, opacity: 0.75 }}>
+            <div className="muted">
               Pack {packIndex + 1} / {TOTAL_PACKS}
               {sortedTally.length > 0 && (
                 <span style={{ marginLeft: 16 }}>
@@ -51,7 +51,7 @@ export function DraftView({ packIndex, offer, picks, onPick, onCancel }: Props) 
       </main>
 
       <aside className="screen-aside">
-        <div style={{ fontSize: 12, opacity: 0.6, marginBottom: 8 }}>
+        <div className="muted-xs" style={{ marginBottom: 8 }}>
           Drafted ({picks.length})
         </div>
         <div className="tile-grid-sm">
@@ -61,7 +61,7 @@ export function DraftView({ packIndex, offer, picks, onPick, onCancel }: Props) 
         </div>
       </aside>
 
-      <CardPreview hover={hover} />
+      <CardPreview hover={hover} dock />
     </div>
   );
 }

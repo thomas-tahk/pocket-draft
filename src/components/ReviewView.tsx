@@ -56,34 +56,19 @@ export function ReviewView({ pool, deck, run, onPlay, children, onNewDraft, onHo
   const total = deckCards.reduce((s, { count }) => s + count, 0);
 
   return (
-    <main style={{ padding: '0 24px 24px', maxWidth: 1100, margin: '0 auto' }}>
-      <header
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'baseline',
-          padding: '16px 0',
-          marginBottom: 8,
-          position: 'sticky',
-          top: 0,
-          background: 'var(--surface)',
-          zIndex: 5,
-          borderBottom: '1px solid #8882',
-          gap: 12,
-          flexWrap: 'wrap',
-        }}
-      >
-        <h1 style={{ fontSize: 20, margin: 0 }}>Deck finalized</h1>
+    <main className="page">
+      <header className="screen-header">
+        <h1 className="screen-title">Deck finalized</h1>
         {run && (
-          <span data-testid="run-record">
+          <span data-testid="run-record" className="record-chip">
             {runLine(run)} ({run.status})
           </span>
         )}
-        <div style={{ display: 'flex', gap: 8 }}>
-          {onPlay && <button onClick={onPlay} style={{ fontWeight: 600 }}>▶ Play deck</button>}
+        <div className="review-actions">
+          {onPlay && <button className="btn-primary" onClick={onPlay}>▶ Play deck</button>}
           <DeckShare deck={deck} pool={pool} />
           <button onClick={onNewDraft}>Start new draft</button>
-          <button onClick={onHome} style={{ fontSize: 12 }}>
+          <button onClick={onHome}>
             Home
           </button>
         </div>
@@ -91,19 +76,11 @@ export function ReviewView({ pool, deck, run, onPlay, children, onNewDraft, onHo
 
       {children}
 
-      <div style={{ fontSize: 13, opacity: 0.75, marginBottom: 16 }}>
+      <div className="muted-sm" style={{ marginBottom: 16 }}>
         {total} cards · <TypeTally entries={sortedTally} />
       </div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, 180px)',
-          justifyContent: 'start',
-          gap: 12,
-          alignItems: 'start',
-        }}
-      >
+      <div className="deck-grid">
         {deckCards.flatMap(({ card, count }) =>
           Array.from({ length: count }).map((_, i) => (
             <CardTile key={`${card.id}-${i}`} card={card} size="lg" onHover={handleHover} />

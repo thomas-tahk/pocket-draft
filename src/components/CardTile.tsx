@@ -112,6 +112,7 @@ export function CardTile({ card, onPick, onHover, size = 'lg' }: Props) {
   return (
     <Tag
       className={`tile-${size}`}
+      data-type={card.cardType}
       onClick={click}
       {...handlers}
       title={`${card.name} · ${card.draftRarity}${card.isMegaEx ? ' Mega-EX' : card.isEx ? ' EX' : ''} · ${card.id}`}
@@ -130,10 +131,10 @@ export function CardTile({ card, onPick, onHover, size = 'lg' }: Props) {
         alt={card.name}
         loading="lazy"
         draggable={false}
-        style={{ width: '100%', borderRadius: 8, display: 'block' }}
+        className="card-img"
       />
       {size === 'lg' && (
-        <div style={{ fontSize: 12, marginTop: 4, opacity: 0.75 }}>
+        <div className="card-cap">
           {card.name} · {card.draftRarity}
           {card.isMegaEx ? ' M-EX' : card.isEx ? ' ex' : ''}
         </div>

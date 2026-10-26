@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { loadCardPool, type CardPool } from './data';
 import { DraftView } from './components/DraftView';
 import { ShopView } from './components/ShopView';
@@ -44,6 +44,11 @@ function readInterrupted(): InProgressBattle | null {
   if (!saved || saved.leftAt) return null;
   return (leaveMsLeft(saved, Date.now()) ?? 1) > 0 ? saved : null;
 }
+
+// A screen change remounts this wrapper, which fades in (.screen-fade; none with reduced motion).
+const screen = (name: string, el: ReactNode) => (
+  <div key={name} className="screen-fade" data-screen={name}>{el}</div>
+);
 
 export function App() {
   const [pool, setPool] = useState<CardPool | null>(null);
@@ -149,11 +154,11 @@ export function App() {
   const phase = derivePhase({ pickIds, offerIds, shopFinalized, deckFinalized });
 
   // The new battle screen (plan 1.19), on the server's current game.
-  if (new URLSearchParams(window.location.search).has('battle')) return <BattleScreen />;
+  if (new URLSearchParams(window.location.search).has('battle')) return screen('battle', <BattleScreen />);
 
   // In-app deck play (1.31), launched from the review screen with the finalized deck.
   if (playing) {
-    return (
+    return screen('battle', (
       <BattleScreen
         deck={drafted}
         energy={run?.energy}
@@ -165,17 +170,17 @@ export function App() {
           setResuming(null);
         }}
       />
-    );
+    ));
   }
 
   const replayed = replaying !== null ? run?.battles[replaying] : undefined;
-  if (replayed) return <ReplayView battle={replayed} onExit={closeReplay} />;
+  if (replayed) return screen('replay', <ReplayView battle={replayed} onExit={closeReplay} />);
 
-  if (error) return <main style={{ padding: 24 }}>Error: {error}</main>;
+  if (error) return screen('error', <main style={{ padding: 24 }}>Error: {error}</main>);
   if (!pool) return <main style={{ padding: 24 }}>Loading card data…</main>;
 
   if (sharedDeck) {
-    return (
+    return screen('shared', (
       <SharedDeckView
         pool={pool}
         deck={sharedDeck}
@@ -184,11 +189,11 @@ export function App() {
           setSharedDeck(null);
         }}
       />
-    );
+    ));
   }
 
   if (historyOpen) {
-    return (
+    return screen('history', (
       <HistoryView
         history={history}
         run={run}
@@ -197,11 +202,11 @@ export function App() {
         onUpdate={updateHistoryEntry}
         onDelete={deleteHistoryEntry}
       />
-    );
+    ));
   }
 
   if (phase === 'unstarted' || (homeOpen && phase === 'review')) {
-    return (
+    return screen('home', (
       <HomeView
         cardCount={pool.draftableCards.length}
         hasActiveRun={run?.status === 'active'}
@@ -227,11 +232,11 @@ export function App() {
             .catch((e) => setError(String(e)));
         }}
       />
-    );
+    ));
   }
 
   if (phase === 'drafting') {
-    return (
+    return screen('draft', (
       <DraftView
         packIndex={pickIds.length}
         offer={offer}
@@ -239,11 +244,11 @@ export function App() {
         onPick={(card) => pick(card.id, pool.draftableCards)}
         onCancel={reset}
       />
-    );
+    ));
   }
 
   if (phase === 'shop') {
-    return (
+    return screen('shop', (
       <ShopView
         picks={picks}
         fullPool={shopPool}
@@ -253,11 +258,11 @@ export function App() {
         onFinalize={finalizeShop}
         onCancel={reset}
       />
-    );
+    ));
   }
 
   if (phase === 'deckbuild') {
-    return (
+    return screen('deckbuild', (
       <DeckbuildView
         picks={picks}
         purchases={purchases}
@@ -271,10 +276,10 @@ export function App() {
         onFinalize={finalizeDeck}
         onCancel={reset}
       />
-    );
+    ));
   }
 
-  return (
+  return screen(run ? (run.status === 'active' ? 'run' : 'summary') : 'review', (
     <RunView
       pool={pool}
       deck={deck}
@@ -291,5 +296,5 @@ export function App() {
       onNewDraft={() => start(pool.draftableCards)}
       onHome={reset}
     />
-  );
+  ));
 }

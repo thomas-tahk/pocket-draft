@@ -42,7 +42,7 @@ export function ShopView({
 
   const renderShelf = (cards: Card[]) => {
     if (cards.length === 0) {
-      return <p style={{ fontSize: 13, opacity: 0.5 }}>No candidates.</p>;
+      return <p className="muted-sm">No candidates.</p>;
     }
     return (
       <div className="shelf-grid">
@@ -54,41 +54,25 @@ export function ShopView({
           return (
             <div
               key={c.id}
-              className="shelf-cell"
-              style={{
-                opacity: addDisabled && count === 0 ? 0.4 : 1,
-                outline: count > 0 ? '2px solid #4c8' : 'none',
-                outlineOffset: 2,
-                borderRadius: 10,
-                padding: 2,
-              }}
+              className={`shelf-cell${count > 0 ? ' is-picked' : ''}${addDisabled && count === 0 ? ' is-dim' : ''}`}
             >
               <CardTile card={c} size="lg" onHover={handleHover} />
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                  fontSize: 12,
-                  marginTop: 4,
-                }}
-              >
+              <div className="step-row">
                 <button
                   onClick={() => onUnpurchase(c.id)}
                   disabled={count === 0}
-                  style={{ minWidth: 28 }}
+                  className="btn-step"
                   aria-label="Remove one"
                 >
                   −
                 </button>
-                <span style={{ opacity: 0.8, minWidth: 36, textAlign: 'center' }}>
+                <span className="muted-xs" style={{ minWidth: 36, textAlign: 'center' }}>
                   {count > 0 ? `×${count}` : '1 ticket'}
                 </span>
                 <button
                   onClick={() => onPurchase(c.id)}
                   disabled={addDisabled}
-                  style={{ minWidth: 28 }}
+                  className="btn-step"
                   aria-label="Add one"
                   title={
                     atPerCardCap
@@ -112,32 +96,32 @@ export function ShopView({
     <div className="screen">
       <main className="screen-main wide">
         <header className="screen-header">
-          <h1 style={{ fontSize: 20, margin: 0 }}>Shop</h1>
+          <h1 className="screen-title">Shop</h1>
           <div className="screen-header-actions">
-            <div style={{ fontSize: 14, opacity: 0.75 }}>
+            <div className="muted">
               Tickets: {ticketsLeft} / {SHOP_TICKETS}
             </div>
-            <button onClick={onFinalize}>
+            <button className="btn-primary" onClick={onFinalize}>
               {purchasedIds.length === 0 ? 'Skip shop' : 'Continue to deckbuild'}
             </button>
             <AbandonDraft loses="all picks and purchases" onAbandon={onCancel} />
           </div>
         </header>
-        <p style={{ fontSize: 13, opacity: 0.6, marginTop: 0 }}>
+        <p className="muted-sm" style={{ marginTop: 0 }}>
           Each ticket buys one deck copy of a card. Spend up to {COPY_CAP_BY_NAME} tickets on the
           same card. Tickets don't carry over. Drafted-by-name cards aren't shown — you already
           have access to them.
         </p>
 
         <section style={{ marginTop: 16 }}>
-          <h2 style={{ fontSize: 14, opacity: 0.75, margin: '0 0 8px' }}>
+          <h2 className="section-title">
             Generic staple Trainers ({inventory.staples.length})
           </h2>
           {renderShelf(inventory.staples)}
         </section>
 
         <section style={{ marginTop: 24 }}>
-          <h2 style={{ fontSize: 14, opacity: 0.75, margin: '0 0 8px' }}>
+          <h2 className="section-title">
             Same-type EX / Mega-EX ({inventory.alts.length})
           </h2>
           {renderShelf(inventory.alts)}
@@ -145,7 +129,7 @@ export function ShopView({
       </main>
 
       <aside className="screen-aside" style={{ ['--aside-w' as string]: '260px' }}>
-        <div style={{ fontSize: 12, opacity: 0.6, marginBottom: 6 }}>
+        <div className="muted-xs" style={{ marginBottom: 6 }}>
           Drafted ({picks.length})
         </div>
         <div className="tile-grid-sm" style={{ marginBottom: 16 }}>
@@ -156,7 +140,7 @@ export function ShopView({
 
         {purchased.length > 0 && (
           <>
-            <div style={{ fontSize: 12, opacity: 0.6, marginBottom: 6 }}>
+            <div className="muted-xs" style={{ marginBottom: 6 }}>
               Purchased ({purchased.length})
             </div>
             <div className="tile-grid-sm">
