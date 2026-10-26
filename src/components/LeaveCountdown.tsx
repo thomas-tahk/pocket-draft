@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { announce } from '../announce';
 import { leaveMsLeft, type InProgressBattle } from '../stores/run';
 
 // Shown on the run screen while a left battle can still be returned to (#117).
@@ -8,6 +9,11 @@ export function LeaveCountdown({ battle, onReturn }: { battle: InProgressBattle;
   useEffect(() => {
     const tick = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(tick);
+  }, []);
+  // The count ticks every second: announce it once, when the countdown starts.
+  useEffect(() => {
+    announce(`You left your battle. It counts as a loss in ${Math.ceil((leaveMsLeft(battle, Date.now()) ?? 0) / 1000)} s.`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const seconds = Math.ceil((leaveMsLeft(battle, now) ?? 0) / 1000);
   return (

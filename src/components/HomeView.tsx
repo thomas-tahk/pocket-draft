@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { HISTORY_CAP } from '../stores/draftStore';
+import { onEscape, useDialog } from './useDialog';
 
 type Props = {
   cardCount: number;
@@ -39,16 +40,23 @@ export function HomeView(p: Props) {
         </button>
       </div>
       {p.hasActiveRun && !confirming && (
-        <button className="home-link" onClick={() => setConfirming(true)}>Start a new draft instead</button>
+        <button id="home-new-draft" className="home-link" onClick={() => setConfirming(true)}>Start a new draft instead</button>
       )}
       {p.hasActiveRun && confirming && p.runScore && (
-        <div role="alertdialog" aria-label="End current run" className="home-secondary">
-          <p className="home-note">This ends your current run ({p.runScore.wins}–{p.runScore.losses}).</p>
-          <button onClick={p.onDraft}>End run and draft</button>
-          <button onClick={() => setConfirming(false)}>Keep run</button>
-        </div>
+        <EndRunConfirm score={p.runScore} onDraft={p.onDraft} onKeep={() => setConfirming(false)} />
       )}
       <button className="home-link" onClick={p.onAutoDraft}>Auto-draft (test)</button>
     </main>
+  );
+}
+
+function EndRunConfirm({ score, onDraft, onKeep }: { score: { wins: number; losses: number }; onDraft: () => void; onKeep: () => void }) {
+  const ref = useDialog('home-new-draft');
+  return (
+    <div ref={ref} role="alertdialog" aria-label="End current run" aria-describedby="end-run-msg" className="home-secondary" onKeyDown={onEscape(onKeep)}>
+      <p id="end-run-msg" className="home-note">This ends your current run ({score.wins}–{score.losses}).</p>
+      <button onClick={onDraft}>End run and draft</button>
+      <button data-autofocus onClick={onKeep}>Keep run</button>
+    </div>
   );
 }

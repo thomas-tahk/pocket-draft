@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { announce } from './announce';
 import { loadCardPool, type CardPool } from './data';
 import { DraftView } from './components/DraftView';
 import { ShopView } from './components/ShopView';
@@ -12,7 +13,7 @@ import { ReplayView } from './battle/ReplayView';
 import { expandDeck } from './game/deck';
 import { autoDeck } from './game/api';
 import { derivePhase, useDraftStore } from './stores/draftStore';
-import { leaveMsLeft, runScore, type InProgressBattle } from './stores/run';
+import { RESULT_LABEL, STATUS_LABEL, leaveMsLeft, runLine, runScore, type InProgressBattle } from './stores/run';
 import { useCloseStamp, useLeaveExpiry } from './battle/useLeaveExpiry';
 import { decodeDeck, type Decklist } from './share/deckCode';
 import type { Card } from './types/card';
@@ -46,9 +47,20 @@ function readInterrupted(): InProgressBattle | null {
 }
 
 // A screen change remounts this wrapper, which fades in (.screen-fade; none with reduced motion).
-const screen = (name: string, el: ReactNode) => (
-  <div key={name} className="screen-fade" data-screen={name}>{el}</div>
-);
+// On a new screen, focus moves to its heading (tabindex -1, no ring) so keyboard and screen-reader
+// users start at the top instead of on a control that no longer exists. The battle board keeps its own.
+function ScreenRoot({ name, children }: { name: string; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (name === 'battle' || name === 'replay') return;
+    const h = ref.current?.querySelector<HTMLElement>('h1');
+    if (!h) return;
+    h.tabIndex = -1;
+    h.focus({ preventScroll: true });
+  }, [name]);
+  return <div ref={ref} className="screen-fade" data-screen={name}>{children}</div>;
+}
+const screen = (name: string, el: ReactNode) => <ScreenRoot key={name} name={name}>{el}</ScreenRoot>;
 
 export function App() {
   const [pool, setPool] = useState<CardPool | null>(null);
@@ -106,6 +118,20 @@ export function App() {
   }, []);
   useLeaveExpiry(onExpired);
   useCloseStamp();
+
+  // A battle result and a run ending are announced; the screen they appear on has no navigation of its own.
+  const battleCount = run?.battles.length ?? 0;
+  const lastBattle = run?.battles[battleCount - 1];
+  const runStatus = run?.status;
+  const seenBattles = useRef(battleCount);
+  useEffect(() => {
+    if (battleCount > seenBattles.current && run && lastBattle) {
+      const ended = run.status !== 'active' ? `. ${STATUS_LABEL[run.status]}` : '';
+      announce(`Battle ${battleCount}: ${RESULT_LABEL[lastBattle.result]}. ${runLine(run)}${ended}`);
+    }
+    seenBattles.current = battleCount;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [battleCount, runStatus]);
 
   // A ?replay index with no battle behind it goes to the run screen, param dropped.
   const replayMissing = replaying !== null && !run?.battles[replaying];
@@ -176,8 +202,8 @@ export function App() {
   const replayed = replaying !== null ? run?.battles[replaying] : undefined;
   if (replayed) return screen('replay', <ReplayView battle={replayed} onExit={closeReplay} />);
 
-  if (error) return screen('error', <main style={{ padding: 24 }}>Error: {error}</main>);
-  if (!pool) return <main style={{ padding: 24 }}>Loading card data…</main>;
+  if (error) return screen('error', <main role="alert" style={{ padding: 24 }}>Error: {error}</main>);
+  if (!pool) return <main role="status" style={{ padding: 24 }}>Loading card data…</main>;
 
   if (sharedDeck) {
     return screen('shared', (

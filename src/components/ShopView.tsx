@@ -62,7 +62,7 @@ export function ShopView({
                   onClick={() => onUnpurchase(c.id)}
                   disabled={count === 0}
                   className="btn-step"
-                  aria-label="Remove one"
+                  aria-label={`− Remove ${c.name}`}
                 >
                   −
                 </button>
@@ -73,7 +73,7 @@ export function ShopView({
                   onClick={() => onPurchase(c.id)}
                   disabled={addDisabled}
                   className="btn-step"
-                  aria-label="Add one"
+                  aria-label={`+ Add ${c.name}`}
                   title={
                     atPerCardCap
                       ? `Max ${COPY_CAP_BY_NAME} of any card`
@@ -99,7 +99,7 @@ export function ShopView({
           <h1 className="screen-title">Shop</h1>
           <div className="screen-header-actions">
             <div className="muted">
-              Tickets: {ticketsLeft} / {SHOP_TICKETS}
+              <span role="status">Tickets: {ticketsLeft} / {SHOP_TICKETS}</span>
             </div>
             <button className="btn-primary" onClick={onFinalize}>
               {purchasedIds.length === 0 ? 'Skip shop' : 'Continue to deckbuild'}
@@ -128,11 +128,11 @@ export function ShopView({
         </section>
       </main>
 
-      <aside className="screen-aside" style={{ ['--aside-w' as string]: '260px' }}>
-        <div className="muted-xs" style={{ marginBottom: 6 }}>
+      <aside className="screen-aside" aria-label="Your cards" style={{ ['--aside-w' as string]: '260px' }}>
+        <h2 id="shop-drafted" className="aside-title">
           Drafted ({picks.length})
-        </div>
-        <div className="tile-grid-sm" style={{ marginBottom: 16 }}>
+        </h2>
+        <div className="tile-grid-sm" role="group" aria-labelledby="shop-drafted" style={{ marginBottom: 16 }}>
           {picks.map((c, i) => (
             <CardTile key={`d-${c.id}-${i}`} card={c} size="sm" onHover={handleHover} />
           ))}
@@ -140,10 +140,10 @@ export function ShopView({
 
         {purchased.length > 0 && (
           <>
-            <div className="muted-xs" style={{ marginBottom: 6 }}>
+            <h2 id="shop-purchased" className="aside-title">
               Purchased ({purchased.length})
-            </div>
-            <div className="tile-grid-sm">
+            </h2>
+            <div className="tile-grid-sm" role="group" aria-labelledby="shop-purchased">
               {purchased.map((c, i) => (
                 <CardTile key={`p-${c.id}-${i}`} card={c} size="sm" onHover={handleHover} />
               ))}

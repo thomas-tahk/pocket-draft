@@ -1,4 +1,4 @@
-import { useEffect, useRef, type PointerEvent } from 'react';
+import { useEffect, useRef, type FocusEvent, type KeyboardEvent, type PointerEvent } from 'react';
 import type { Card } from '../types/card';
 
 // A mouse hover follows the cursor; a touch long-press (zoom) shows the card large and centred.
@@ -13,15 +13,25 @@ const TOUCH_QUIET_MS = 1000;
 // The click that follows a zoomed press arrives right after the release; swallow it for this long.
 const CLICK_WINDOW_MS = 300;
 let lastTouchAt = -Infinity;
+// Whether the last input was the keyboard: focus that arrives from a key press (even one moved by the
+// app after a pick) shows the card preview; focus from a mouse or touch press does not.
+let keyboardMode = false;
+if (typeof document !== 'undefined') {
+  document.addEventListener('keydown', () => (keyboardMode = true), true);
+  document.addEventListener('pointerdown', () => (keyboardMode = false), true);
+}
 
 type Props = {
   card: Card;
   onPick?: () => void;
   onHover?: (payload: HoverPayload | null) => void;
   size?: 'lg' | 'sm';
+  // The accessible name of a pickable tile when the plain card facts are not enough
+  // (e.g. a tile that removes the card from the deck). Defaults to name + rarity.
+  label?: string;
 };
 
-export function CardTile({ card, onPick, onHover, size = 'lg' }: Props) {
+export function CardTile({ card, onPick, onHover, size = 'lg', label }: Props) {
   const Tag = onPick ? 'button' : 'div';
   const holdTimer = useRef<number | undefined>(undefined);
   const clickTimer = useRef<number | undefined>(undefined);
@@ -89,8 +99,27 @@ export function CardTile({ card, onPick, onHover, size = 'lg' }: Props) {
     if (showing.current) show(null);
   };
 
+  // Keyboard focus shows the same preview a mouse hover does (Escape dismisses it).
+  const onFocus = (e: FocusEvent<HTMLElement>) => {
+    if (!keyboardMode) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    show({ card, position: { x: r.right - r.width / 3, y: r.top + r.height / 3 } });
+  };
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && showing.current) {
+      e.stopPropagation();
+      show(null);
+    }
+  };
+
+  const facts = `${card.name}, ${card.draftRarity}${card.isMegaEx ? ' Mega-EX' : card.isEx ? ' EX' : ''}`;
   const handlers = onHover
     ? {
+        onFocus,
+        onBlur: () => {
+          if (showing.current) show(null);
+        },
+        onKeyDown,
         onPointerEnter: trackHover,
         onPointerMove: movePress,
         onPointerLeave: (e: PointerEvent) => (e.pointerType === 'mouse' ? show(null) : endPress()),
@@ -115,6 +144,7 @@ export function CardTile({ card, onPick, onHover, size = 'lg' }: Props) {
       data-type={card.cardType}
       onClick={click}
       {...handlers}
+      aria-label={onPick ? (label ?? facts) : undefined}
       title={`${card.name} · ${card.draftRarity}${card.isMegaEx ? ' Mega-EX' : card.isEx ? ' EX' : ''} · ${card.id}`}
       style={{
         all: 'unset',
@@ -128,7 +158,7 @@ export function CardTile({ card, onPick, onHover, size = 'lg' }: Props) {
     >
       <img
         src={card.imageThumb}
-        alt={card.name}
+        alt={onPick || size === 'sm' ? card.name : ''}
         loading="lazy"
         draggable={false}
         className="card-img"

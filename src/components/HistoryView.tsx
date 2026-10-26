@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import { announce } from '../announce';
 import { TypeTally } from '../battle/energy';
 import type { Card, EnergyType } from '../types/card';
 import type { CardPool } from '../data';
@@ -24,6 +25,7 @@ export function HistoryView({ history, run, pool, onClose, onUpdate, onDelete }:
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [hover, setHover] = useState<HoverState>(null);
   const handleHover = (p: HoverPayload | null) => setHover(p);
+  const titleRef = useRef<HTMLHeadingElement>(null);
 
   const idToCard = useMemo(() => {
     const m = new Map<string, Card>();
@@ -60,7 +62,7 @@ export function HistoryView({ history, run, pool, onClose, onUpdate, onDelete }:
       <div key={entry.id} className="panel history-entry">
         <div className="history-entry-head">
           <div style={{ fontSize: 'var(--fs-sm)' }}>
-            <div style={{ fontWeight: 'var(--fw-bold)' }}>{formatDate(entry.completedAt)}</div>
+            <h2 id={`entry-${entry.id}`} style={{ margin: 0, fontSize: 'inherit', fontWeight: 'var(--fw-bold)' }}>{formatDate(entry.completedAt)}</h2>
             <div className="muted-xs" style={{ marginTop: 2 }}>
               {total} cards · <TypeTally entries={sortedTally} />
               {' '}·{' '}
@@ -71,13 +73,22 @@ export function HistoryView({ history, run, pool, onClose, onUpdate, onDelete }:
             </div>
           </div>
           <div className="history-actions">
-            <button onClick={() => setExpandedId(expanded ? null : entry.id)}>
+            <button
+              aria-expanded={expanded}
+              aria-describedby={`entry-${entry.id}`}
+              onClick={() => setExpandedId(expanded ? null : entry.id)}
+            >
               {expanded ? 'Collapse' : 'View'}
             </button>
             <button
               onClick={() => {
-                if (window.confirm('Delete this draft from history?')) onDelete(entry.id);
+                if (!window.confirm('Delete this draft from history?')) return;
+                onDelete(entry.id);
+                // The row (and the button that had focus) is gone: say so and keep focus on the page.
+                announce('Draft deleted from history.');
+                titleRef.current?.focus();
               }}
+              aria-describedby={`entry-${entry.id}`}
               className="btn-quiet"
             >
               Delete
@@ -120,6 +131,7 @@ export function HistoryView({ history, run, pool, onClose, onUpdate, onDelete }:
 
             <textarea
               placeholder="Notes on how this deck fared…"
+              aria-label="Notes on how this deck fared"
               value={entry.notes}
               onChange={(e) => onUpdate(entry.id, { notes: e.target.value })}
               rows={3}
@@ -142,7 +154,7 @@ export function HistoryView({ history, run, pool, onClose, onUpdate, onDelete }:
   return (
     <main className="page page-narrow">
       <header className="screen-header screen-header-static">
-        <h1 className="screen-title">Draft history</h1>
+        <h1 className="screen-title" ref={titleRef} tabIndex={-1}>Draft history</h1>
         <button onClick={onClose}>Back</button>
       </header>
 

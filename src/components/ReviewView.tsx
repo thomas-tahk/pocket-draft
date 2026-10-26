@@ -80,7 +80,8 @@ export function ReviewView({ pool, deck, run, onPlay, children, onNewDraft, onHo
         {total} cards · <TypeTally entries={sortedTally} />
       </div>
 
-      <div className="deck-grid">
+      <h2 className="sr-only">Your deck</h2>
+      <div className="deck-grid" role="group" aria-label="Your deck">
         {deckCards.flatMap(({ card, count }) =>
           Array.from({ length: count }).map((_, i) => (
             <CardTile key={`${card.id}-${i}`} card={card} size="lg" onHover={handleHover} />
