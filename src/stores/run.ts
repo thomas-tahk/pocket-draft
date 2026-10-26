@@ -16,6 +16,7 @@ export type RunBattle = {
   seed: number;
   yourDeck: string[];
   botDeck: string[];
+  energy?: string[]; // your deck's Energy Zone types; absent in older records (the default applies)
   actions: Move[];
   endedAt: string; // ISO string
 };
@@ -31,6 +32,7 @@ export type LogStep = Move | BotStep;
 export type InProgressBattle = {
   seed: number;
   yourDeck: string[];
+  energy?: string[];
   log: LogStep[];
   leftAt: string | null; // ISO time the player left to the run screen; null while playing
   closedAt?: string | null; // ISO time the page was hidden or closed mid-battle, without Leave battle
@@ -47,14 +49,15 @@ export function leaveMsLeft(battle: InProgressBattle, now: number): number | nul
 
 export type Run = {
   deck: Record<string, number>; // the finalized deck, cardId → count
+  energy?: string[]; // its chosen Energy Zone types, sent to every battle of the run
   battles: RunBattle[];
   status: RunStatus;
   historyId?: string; // the history entry made when this deck was finalized
   inProgress?: InProgressBattle;
 };
 
-export function newRun(deck: Record<string, number>): Run {
-  return { deck: { ...deck }, battles: [], status: 'active' };
+export function newRun(deck: Record<string, number>, energy?: string[]): Run {
+  return { deck: { ...deck }, ...(energy?.length ? { energy: [...energy] } : {}), battles: [], status: 'active' };
 }
 
 // A tie counts toward neither wins nor losses.

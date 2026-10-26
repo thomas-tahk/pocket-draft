@@ -75,6 +75,7 @@ export function App() {
     shopFinalized,
     deck,
     deckFinalized,
+    energy,
     history,
     run,
     start,
@@ -84,6 +85,7 @@ export function App() {
     finalizeShop,
     addToDeck,
     removeFromDeck,
+    setEnergy,
     finalizeDeck,
     autoDraft,
     updateHistoryEntry,
@@ -154,6 +156,7 @@ export function App() {
     return (
       <BattleScreen
         deck={drafted}
+        energy={run?.energy}
         practice={practicing}
         resume={resuming ?? undefined}
         onExit={() => {
@@ -261,6 +264,8 @@ export function App() {
         fullPool={pool.fullCards}
         working={pool.working}
         deck={deck}
+        energy={energy ?? []}
+        onEnergy={setEnergy}
         onAdd={addToDeck}
         onRemove={removeFromDeck}
         onFinalize={finalizeDeck}

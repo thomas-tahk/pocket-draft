@@ -178,3 +178,14 @@
 .run-summary-actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
 .run-tally { margin: 0; }
 .run-summary-share { margin-top: 8px; }
+
+/* Deckbuild: the Energy Zone type picker. Chips are 44px tall tap targets. */
+.zone-picker { margin: 8px 0 4px; padding: 10px 12px; border: 1px solid #8884; border-radius: 8px; }
+.zone-picker-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.zone-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 44px; min-width: 44px; padding: 0 12px;
+  border: 2px solid #8886; border-radius: 22px; font-size: 14px;
+}
+.zone-chip[aria-pressed='true'], .zone-chip[aria-pressed='true']:hover:not(:disabled) { border-color: #4c8; background: #4c82; font-weight: 600; }
+.zone-chip:focus-visible { outline: 3px solid #4c8; outline-offset: 2px; }

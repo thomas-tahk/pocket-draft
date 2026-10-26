@@ -9,6 +9,7 @@ type State = {
   status: 'idle' | 'loading' | 'ready';
   error: string | null;
   deck: string[] | null; // the deck this game was started from, for restart
+  energy: string[] | null; // that deck's chosen Energy Zone types (null: the default)
   seed: number | null; // the seed of the game on show
   log: LogStep[]; // every step applied to it, for resuming (#117)
   botStuck: boolean; // last bot attempt made no progress — stop auto-driving it
@@ -16,7 +17,7 @@ type State = {
 
 type Actions = {
   init: () => Promise<void>;
-  startGame: (deck: string[], seed?: number) => Promise<void>;
+  startGame: (deck: string[], seed?: number, energy?: string[]) => Promise<void>;
   resumeGame: (saved: InProgressBattle) => Promise<void>;
   restart: (seed?: number) => Promise<void>;
   dispatch: (move: Move) => Promise<void>;
@@ -42,6 +43,7 @@ export const useGameStore = create<State & Actions>((set, get) => ({
   status: 'idle',
   error: null,
   deck: null,
+  energy: null,
   seed: null,
   log: [],
   botStuck: false,
@@ -57,13 +59,13 @@ export const useGameStore = create<State & Actions>((set, get) => ({
     }
   },
 
-  startGame: async (deck, seed = freshSeed()) => {
-    set({ status: 'loading', error: null, deck, view: null });
+  startGame: async (deck, seed = freshSeed(), energy) => {
+    set({ status: 'loading', error: null, deck, energy: energy ?? null, view: null });
     return serially(async () => {
       // Inside the job: a bot step queued for the old game can no longer append to this log.
       set({ seed, log: [] });
       try {
-        const view = await newGame({ deck, seed });
+        const view = await newGame({ deck, seed, energy });
         set({ view, status: 'ready', botStuck: false });
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
@@ -73,7 +75,7 @@ export const useGameStore = create<State & Actions>((set, get) => ({
   },
 
   resumeGame: async (saved) => {
-    set({ status: 'loading', error: null, deck: saved.yourDeck, view: null });
+    set({ status: 'loading', error: null, deck: saved.yourDeck, energy: saved.energy ?? null, view: null });
     return serially(async () => {
       set({ seed: saved.seed, log: saved.log });
       try {
@@ -89,8 +91,8 @@ export const useGameStore = create<State & Actions>((set, get) => ({
     set({ status: 'loading', error: null });
     return serially(async () => {
       try {
-        const deck = get().deck;
-        const view = await newGame({ deck: deck ?? undefined, seed });
+        const { deck, energy } = get();
+        const view = await newGame({ deck: deck ?? undefined, seed, energy: energy ?? undefined });
         set({ view, status: 'ready', botStuck: false, seed, log: [] });
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);

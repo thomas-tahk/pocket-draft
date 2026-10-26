@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { AbandonDraft } from './AbandonDraft';
-import { TypeTally } from '../battle/energy';
+import { EnergyIcon, TypeTally } from '../battle/energy';
+import { defaultZoneTypes, MAX_ZONE_TYPES, ZONE_FALLBACK, ZONE_TYPES } from '../game/energy';
 import type { Card, EnergyType } from '../types/card';
 import { DECK_SIZE } from '../stores/draftStore';
 import {
@@ -21,9 +22,11 @@ type Props = {
   fullPool: Card[];
   working: ReadonlySet<string>; // ids the engine can play; only these are offered
   deck: Record<string, number>;
+  energy: string[]; // the player's Energy Zone choice; [] until they touch it
+  onEnergy: (types: string[]) => void;
   onAdd: (cardId: string) => void;
   onRemove: (cardId: string) => void;
-  onFinalize: () => void;
+  onFinalize: (energy: string[]) => void;
   onCancel: () => void;
 };
 
@@ -41,6 +44,8 @@ export function DeckbuildView({
   fullPool,
   working,
   deck,
+  energy,
+  onEnergy,
   onAdd,
   onRemove,
   onFinalize,
@@ -96,6 +101,21 @@ export function DeckbuildView({
   const sortedTally = (Object.entries(tally) as [EnergyType, number][]).sort(
     (a, b) => b[1] - a[1],
   );
+
+  // Until the player picks, the zone defaults to the deck's Pokémon types.
+  const defaultEnergy = useMemo(() => {
+    const flat: Card[] = [];
+    for (const { card, count } of deckCards) for (let i = 0; i < count; i++) flat.push(card);
+    return defaultZoneTypes(flat);
+  }, [deckCards]);
+  const zone = energy.length > 0 ? energy : defaultEnergy;
+  const toggleZone = (t: string) => {
+    if (zone.includes(t)) {
+      if (zone.length > 1) onEnergy(zone.filter((z) => z !== t));
+    } else if (zone.length < MAX_ZONE_TYPES) {
+      onEnergy([...zone, t]);
+    }
+  };
 
   const shopCountById = useMemo(() => {
     const m = new Map<string, number>();
@@ -193,7 +213,7 @@ export function DeckbuildView({
               )}
             </div>
             <button
-              onClick={onFinalize}
+              onClick={() => onFinalize(zone)}
               disabled={finalizeBlocker !== ''}
               title={finalizeBlocker}
             >
@@ -207,6 +227,43 @@ export function DeckbuildView({
           unlock their under-evolutions (all functional variants) for free. Trainers come only from
           your draft and the shop.
         </p>
+
+        <div className="zone-picker" role="group" data-testid="energy-picker" aria-labelledby="zone-title">
+          <h2 id="zone-title" style={{ fontSize: 14, margin: 0 }}>
+            {zone.length > 0 ? `Energy Zone (${zone.length} / ${MAX_ZONE_TYPES})` : `Energy Zone: ${ZONE_FALLBACK} only`}
+          </h2>
+          <p style={{ fontSize: 12, opacity: 0.7, margin: '2px 0 8px' }}>
+            Your Energy Zone makes only these types, in every battle of this run. Choose 1 to {MAX_ZONE_TYPES}.
+            {energy.length === 0 && zone.length > 0 ? ' Starting from the energy your deck’s attacks need.' : ''}
+            {zone.length === 0 ? ' None of your attacks need a typed energy, so it makes Colorless unless you choose.' : ''}
+          </p>
+          {zone.length >= MAX_ZONE_TYPES && (
+            <p data-testid="energy-cap-hint" style={{ fontSize: 12, margin: '0 0 8px' }}>
+              Up to 3: deselect one to change.
+            </p>
+          )}
+          <div className="zone-picker-row" role="group" aria-label="Energy Zone types">
+            {ZONE_TYPES.map((t) => {
+              const on = zone.includes(t);
+              const blocked = !on && zone.length >= MAX_ZONE_TYPES;
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  className="zone-chip"
+                  aria-pressed={on}
+                  disabled={blocked}
+                  aria-label={t}
+                  data-type={t}
+                  onClick={() => toggleZone(t)}
+                >
+                  <EnergyIcon type={t} size={22} testId="zone-chip-icon" />
+                  {t}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         {SOURCE_ORDER.map(renderSection)}
       </main>

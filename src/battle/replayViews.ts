@@ -25,7 +25,7 @@ export function inQueue<T>(job: () => Promise<T>): Promise<T> {
   return run;
 }
 
-type Start = { you: string[]; bot?: string[]; seed: number };
+type Start = { you: string[]; bot?: string[]; seed: number; energy?: string[] };
 
 // Start the game and apply each step in order, keeping the view after each one.
 // The same rebuild serves a finished replay, a resumed battle and a timed-out one.
@@ -62,7 +62,7 @@ async function rebuild(battle: RunBattle, signal: AbortSignal): Promise<GameView
 }
 
 async function replayOnServer(battle: RunBattle, signal: AbortSignal): Promise<GameView[]> {
-  const views = await applySteps({ you: battle.yourDeck, bot: battle.botDeck, seed: battle.seed }, battle.actions, signal);
+  const views = await applySteps({ you: battle.yourDeck, bot: battle.botDeck, seed: battle.seed, energy: battle.energy }, battle.actions, signal);
   const last = views[views.length - 1];
   if (last.phase !== 'over' || last.outcome !== battle.result) throw new Error('replay does not end where the battle did');
   return views.map(readOnly);

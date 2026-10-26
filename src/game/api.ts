@@ -19,10 +19,10 @@ export async function asJson<T>(res: Response): Promise<T> {
   return (await res.json()) as T;
 }
 
-export function newGame(opts: { deck?: string[]; seed?: number } = {}): Promise<GameView> {
-  const { deck, seed } = opts;
+export function newGame(opts: { deck?: string[]; seed?: number; energy?: string[] } = {}): Promise<GameView> {
+  const { deck, seed, energy } = opts;
   const body = deck
-    ? JSON.stringify({ you: deck, seed })
+    ? JSON.stringify({ you: deck, seed, energy: energy?.length ? energy : undefined })
     : seed !== undefined
       ? JSON.stringify({ seed })
       : undefined;
