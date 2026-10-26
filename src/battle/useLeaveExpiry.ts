@@ -16,11 +16,14 @@ export function useLeaveExpiry(onExpired: () => void) {
     const expire = async () => {
       if (expiring.current) return;
       expiring.current = true;
-      const battle = await timedOutBattle(saved, new Date());
+      const unclaimed = () => {
+        const now = useDraftStore.getState().run?.inProgress;
+        return now?.seed === saved.seed && now.leftAt === saved.leftAt && now.closedAt === saved.closedAt;
+      };
+      const battle = await timedOutBattle(saved, new Date(), unclaimed);
       expiring.current = false;
-      // Returned to the battle while it was being finished: it is not lost after all.
-      const now = useDraftStore.getState().run?.inProgress;
-      if (now?.seed !== saved.seed || now.leftAt !== saved.leftAt || now.closedAt !== saved.closedAt) return;
+      // Returned to the battle (or a resume claimed it) before the rebuild started or while it ran: not lost after all.
+      if (!battle || !unclaimed()) return;
       recordBattle(battle);
       onExpired();
     };
