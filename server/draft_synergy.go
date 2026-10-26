@@ -217,23 +217,3 @@ func textNames(text, cardName string) bool {
 	}
 	return false
 }
-
-// containsWord reports whether text contains word not preceded or followed by
-// a letter. Every occurrence is checked.
-func containsWord(text, word string) bool {
-	for from := 0; from <= len(text); {
-		i := strings.Index(text[from:], word)
-		if i < 0 {
-			return false
-		}
-		start := from + i
-		end := start + len(word)
-		before, _ := utf8.DecodeLastRuneInString(text[:start])
-		after, _ := utf8.DecodeRuneInString(text[end:])
-		if (start == 0 || !unicode.IsLetter(before)) && (end == len(text) || !unicode.IsLetter(after)) {
-			return true
-		}
-		from = start + 1
-	}
-	return false
-}

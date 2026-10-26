@@ -2,7 +2,7 @@
 
 ## Overview
 
-An Arena-style draft format for Pokemon TCG Pocket. Each session is self-contained — no pre-existing card collection required. Any card in the game is draftable on equal footing. Basic universals are freely available without spending picks.
+An Arena-style draft format for Pokemon TCG Pocket. Each session is self-contained — no pre-existing card collection required. Any card in the game is draftable on equal footing. There are no free Trainers: every card comes from a pick or the shop (lower evolutions of drafted Pokémon excepted).
 
 Inspired by the **SWUCUBE** cube draft format (see `swucube-rules.md`) — originally published on YouTube by SWUCUBE — and Hearthstone/MTG Arena draft modes. The 1-of-5 pick mechanic mirrors the Wonder Pick feature in Pokemon TCG Pocket.
 
@@ -34,8 +34,15 @@ Inspired by the **SWUCUBE** cube draft format (see `swucube-rules.md`) — origi
 
 ### Type weighting (packs 2–20)
 - After each pick, the player's drafted energy type(s) are tracked.
-- Subsequent packs are **modestly weighted** toward the player's detected primary type(s). This is a nudge, not a lock — off-type cards still appear.
+- Subsequent packs lean toward the player's types, visibly after 2–3 picks of one type (owner, 2026-10-25). A type's Pokémon and the Trainers/Items that support that type both get the lean. Raised odds, never a lock: off-type cards still appear.
 - **Colorless Pokemon are always eligible** regardless of detected direction and are weighted as compatible with any type profile. This ensures archetypes like Dragonite (dual energy) and colorless-featured attackers remain naturally draftable.
+
+### Offers that fit (owner, 2026-10-25)
+- A niche Trainer and the Pokémon it supports raise each other's odds, whichever is picked first. Archetype support cards rise with their archetype. Raised odds, never guarantees.
+- Eevee ex is draftable, and picking any Eeveelution raises its odds.
+
+### A pick is secured
+- Once a card is picked, it never appears in a later offer (matched by name). One pick already allows up to 2 copies at deckbuild.
 
 ### Card pool
 - All functionally distinct cards in Pokemon TCG Pocket are eligible.
@@ -83,6 +90,9 @@ After the shop, players build their final **20-card deck** from:
 
 ### Copy limits
 Pokemon TCG Pocket's standard deck-construction rule applies: **maximum 2 copies of any card**, matched by card name. There is no separate restriction on EX or Mega-EX cards — they follow the same 2-copy cap as everything else. Cosmetic art variants of the same card do not stack beyond 2 (they're filtered out of the draft pool anyway).
+
+### Energy Zone (owner, 2026-10-25)
+The player chooses the deck's Energy Zone types (1 to 3) at deckbuild. The default is the energy the deck's attacks need (most-needed first), the same rule the engine uses when none is chosen. The choice holds for every battle of the run.
 
 ### No free Trainers
 There are no free universal Trainers. Trainers (Pokeball and Professor's Research included) come only from draft picks and the shop. Lower evolutions of a drafted Pokemon stay free at deckbuild. A ruleset with a few open cards may come later (`docs/backlog.md`).
