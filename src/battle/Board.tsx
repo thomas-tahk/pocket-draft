@@ -58,7 +58,7 @@ function ActiveSpot({ mon, fx, toolFx, spot = 'active' }: { mon: PlayerView['act
 }
 
 function StadiumSpot({ card, fx }: { card: CardView | null; fx: string }) {
-  return <div className="bt-spot bt-stadium" {...useSpot('stadium')}>{card && <div data-fx={fx} style={{ position: 'relative' }}><CardFace card={card} width={66} /></div>}</div>;
+  return <div className="bt-spot bt-stadium" {...useSpot('stadium')}>{card && <div data-zoom={card.id} data-fx={fx} style={{ position: 'relative' }}><CardFace card={card} width={66} /></div>}</div>;
 }
 
 function HandCard({ card, index, fx }: { card: CardView; index: number; fx: string }) {
