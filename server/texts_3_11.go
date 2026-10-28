@@ -16,14 +16,14 @@ import (
 var ancientIDs = idSet("B3a-003", "B3b-035", "B3a-026", "B3a-083", "B3a-091", "B3a-054", "B3a-034",
 	"B3a-036", "B3a-084", "B3a-092", "B3a-055", "B3a-079", "B3a-047", "B3a-109", "B3a-035", "B3a-025",
 	"B3a-004", "B3a-053",
-	// B4b (Deluxe Pack: Mega) reprints, text identical to the B3a printings above.
-	"B4b-120", "B4b-136", "B4b-152", "B4b-333", "B4b-429")
+	// B4b "Deluxe Pack: Mega" reprints of the printings above.
+	"B4b-136", "B4b-429", "B4b-120", "B4b-152", "B4b-333")
 
 var futureIDs = idSet("B3a-029", "B3a-077", "B3b-020", "B3a-013", "B3a-081", "B3a-089", "B3a-030",
 	"B3a-017", "B3a-046", "B3a-028", "B3a-005", "B3a-018", "B3a-051", "B3a-027", "B3a-108",
 	"B3a-019", "B3a-082", "B3a-090",
-	// B4b (Deluxe Pack: Mega) reprints, text identical to the B3a printings above.
-	"B4b-077", "B4b-102", "B4b-103", "B4b-303", "B4b-428")
+	// B4b "Deluxe Pack: Mega" reprints of the printings above.
+	"B4b-103", "B4b-428", "B4b-077", "B4b-102", "B4b-303")
 
 func idSet(ids ...string) map[string]bool {
 	out := make(map[string]bool, len(ids))
