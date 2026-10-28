@@ -1,9 +1,6 @@
 package main
 
 import (
-	"slices"
-	"strings"
-
 	"github.com/thomas-tahk/pocket-draft/engine"
 )
 
@@ -18,16 +15,12 @@ func init() {
 	}
 }
 
-var ancientPokemon = []string{"Koraidon", "Great Tusk", "Scream Tail", "Brute Bonnet", "Flutter Mane",
-	"Slither Wing", "Sandy Shocks", "Roaring Moon", "Walking Wake", "Gouging Fire", "Raging Bolt"}
+// isAncient and isFuture: a card counts only if the card itself says Ancient /
+// Future (owner 2026-10-28, decision 3), i.e. its printing is in ancientIDs /
+// futureIDs (texts_3_11.go). The B2a Koraidon and Miraidon are not.
+func isAncient(c engine.Card) bool { return ancientIDs[c.ID] }
 
-func baseName(c engine.Card) string { return strings.TrimSuffix(c.Name, " ex") }
-
-func isAncient(c engine.Card) bool { return slices.Contains(ancientPokemon, baseName(c)) }
-
-func isFuture(c engine.Card) bool {
-	return baseName(c) == "Miraidon" || strings.HasPrefix(c.Name, "Iron ")
-}
+func isFuture(c engine.Card) bool { return futureIDs[c.ID] }
 
 func anyPokemon(engine.Card) bool { return true }
 

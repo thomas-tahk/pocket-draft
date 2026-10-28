@@ -41,6 +41,7 @@ type synergy struct {
 	nicheOfTrainers map[int]bool // niche groups of picked Trainers (rule 4)
 	nicheOfPokemon  map[int]bool // niche groups of picked Pokémon (rule 4)
 	eeveelution     bool         // an Eeveelution is picked (draft_eevee.go)
+	eeveeEx         bool         // Eevee ex is picked (draft_eevee.go)
 }
 
 // pokemonBaseName is a Pokémon's name without a trailing " ex", the form a
@@ -102,6 +103,7 @@ func newSynergy(picks []draftCard) synergy {
 	}
 	for _, p := range picks {
 		s.eeveelution = s.eeveelution || isEeveelution(p)
+		s.eeveeEx = s.eeveeEx || p.Name == eeveeEx
 		for _, typ := range namedTypes(p) {
 			s.textTypes[typ] = true
 		}

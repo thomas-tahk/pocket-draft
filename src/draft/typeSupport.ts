@@ -2,35 +2,22 @@ import type { EnergyType } from '../types/card';
 
 // Type support for draft offers: which Trainers/Items help one type's Pokémon,
 // so leaning a type raises their odds too (owner, 2026-10-25, point 3).
-// Mirrored by server/draft_type_support.go; edit both together.
 //
-// Most Trainers are found by their text: it names a type ("Water Pokémon",
-// "[W]", ...), see supportedTypes in weights.ts. This file holds only what the
-// text cannot say, hand-made from public/data/cards.json. It is NOT the niche
-// Trainer <-> Pokémon table (#126): that one pairs a Trainer with the specific
-// Pokémon it names; this one only says which type a Trainer favours.
+// The card text decides (owner 2026-10-28, decision 2): a Trainer supports the
+// types its text names plus the card types of the Pokémon its text names. Go
+// works that out (server/draft_type_support.go, the source of truth) and writes
+// it into public/data/draft-pool.json as `supportTypes`; the SPA registers it
+// with setSupportTypes in weights.ts. This file holds only the fallback for text
+// that names neither, and the exclusions; Go's TestTypeSupportTSTableMatchesGo
+// keeps both equal to server/draft_type_support.go.
+//
+// It is NOT the niche Trainer <-> Pokémon table (#126): that one pairs a Trainer
+// with specific Pokémon; this one only says which type it favours.
 
-// A Trainer's exact name -> the types it helps, for Trainers whose text names
-// Pokémon (not a type). The comment lists the Pokémon the text names; the type
-// is their card type in cards.json, judged by hand.
+// A Trainer's exact name -> the types it helps, for Trainers whose text names no
+// type and no typed Pokémon. Hand-made.
 export const TYPE_SUPPORT_TABLE: Record<string, EnergyType[]> = {
-  Blaine: ['Fire'], // Ninetales, Rapidash, Magmar
-  Koga: ['Darkness'], // Muk, Weezing
-  Marlon: ['Water', 'Psychic'], // Carracosta (Water), Jellicent (Psychic)
-  Lana: ['Water'], // Araquanid
-  Hala: ['Fighting'], // Hariyama, Crabominable
-  Nemona: ['Lightning'], // Pawmot
-  Clemont: ['Lightning'], // Magneton, Heliolisk
-  "Clemont's Backpack": ['Lightning'], // Magneton, Heliolisk
-  Sophocles: ['Lightning'], // Alolan Golem, Vikavolt, Togedemaru
-  Jasmine: ['Metal'], // Steelix, Skarmory ex
-  Iris: ['Dragon'], // Haxorus
-  Drayden: ['Dragon'], // Draco Meteor attack
-  Piers: ['Darkness'], // Galarian Obstagoon
-  'Team Galactic Grunt': ['Darkness'], // Stunky, Croagunk (Glameow is Colorless)
-  Mallow: ['Grass', 'Psychic'], // Tsareena (Grass), Shiinotic (Psychic)
-  Acerola: ['Psychic'], // Mimikyu, Palossand
-  'Budding Expeditioner': ['Psychic'], // Mew ex
+  Drayden: ['Dragon'], // names the Draco Meteor attack, not a Pokémon
 };
 
 // Trainers whose text names a type but works against it, so the text rule must

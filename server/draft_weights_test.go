@@ -37,8 +37,11 @@ func TestWeightOf(t *testing.T) {
 	if w := weightOf(colorless, tally, synergy{}); w != 1 {
 		t.Errorf("weightOf(Colorless) = %v, want 1", w)
 	}
-	// weight = 1 + coef × picks of that type; coef is 2.
-	if w := weightOf(fire, tally, synergy{}); w != 11 {
-		t.Errorf("weightOf(Fire, 5 Fire picks) = %v, want 11", w)
+	// weight = 1 + coef × picks of that type, picks capped at 4; coef is 2.
+	if w := weightOf(fire, typeTally{"Fire": 3}, synergy{}); w != 7 {
+		t.Errorf("weightOf(Fire, 3 Fire picks) = %v, want 7", w)
+	}
+	if w := weightOf(fire, tally, synergy{}); w != 9 {
+		t.Errorf("weightOf(Fire, 5 Fire picks) = %v, want 9 (capped at 4 picks)", w)
 	}
 }

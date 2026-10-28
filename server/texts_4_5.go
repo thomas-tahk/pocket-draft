@@ -100,7 +100,7 @@ var abilityTexts45 = map[string]engine.Ability{
 	"Attacks used by your [F] Pokémon do +20 damage to your opponent's Active Pokémon.": passive(engine.HookDamageDealt, 20,
 		yourPokemon(typeIs(engine.Fighting))),
 	"Attacks used by your Future Pokémon cost 1 less [C] Energy.": passive(engine.HookColorlessCost, -1,
-		yourPokemon(func(c engine.Card) bool { return futureIDs[c.ID] })),
+		yourPokemon(isFuture)),
 	"If this Pokémon's remaining HP is 50 or less, attacks used by this Pokémon do +60 damage to your opponent's Active Pokémon.": passive(engine.HookDamageDealt, 60,
 		func(c engine.PassiveCheck) bool { return itself(c) && c.Target.Card.HP-c.Target.Damage <= 50 }),
 	"As long as this Pokémon is on your Bench, attacks used by your Pokémon that evolve from Poliwhirl do +40 damage to your opponent's Active Pokémon.": passive(engine.HookDamageDealt, 40,

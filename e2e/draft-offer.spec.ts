@@ -3,7 +3,15 @@ import { readFileSync } from 'node:fs';
 import { idOf } from './helpers/draft';
 import { generateOffer } from '../src/draft/offer';
 import { indexByTier } from '../src/draft/tiers';
-import { buildSynergy, weightOf, SYNERGY_MULT, TYPE_SUPPORT_COEF, TYPE_WEIGHT_COEF } from '../src/draft/weights';
+import {
+  buildSynergy,
+  setSupportTypes,
+  weightOf,
+  SYNERGY_MULT,
+  TYPE_LEAN_CAP,
+  TYPE_SUPPORT_COEF,
+  TYPE_WEIGHT_COEF,
+} from '../src/draft/weights';
 import type { Card } from '../src/types/card';
 
 // The TS offer generator (what the SPA's manual draft uses), over 20 seeded
@@ -172,15 +180,41 @@ test('Trainers naming the picked type are offered measurably more often', () => 
 });
 
 // Type lean (#125). Mirrors server/draft_type_lean_test.go.
-test('type support Trainers lean with the picks, by text or by the table; opposing ones do not', () => {
+test('type support Trainers lean with the picks, by text, by Go’s answer or by the table; opposing ones do not', () => {
+  // Marlon's text names Pokémon, not a type: only Go (which looks the Pokémon up
+  // in cards.json) can say Water / Psychic, through draft-pool.json.
   const marlon = trainer('Marlon', 'Heal 70 damage from 1 of your Carracosta or Jellicent.');
-  expect(weightOf(marlon, { Water: 3 }, buildSynergy([]))).toBe(1 + TYPE_SUPPORT_COEF * 3);
-  expect(weightOf(marlon, { Fire: 3 }, buildSynergy([]))).toBe(1);
+  setSupportTypes(null);
+  expect(weightOf(marlon, { Water: 3 }, buildSynergy([]))).toBe(1);
+  setSupportTypes({ Marlon: ['Psychic', 'Water'] });
+  try {
+    expect(weightOf(marlon, { Water: 3 }, buildSynergy([]))).toBe(1 + TYPE_SUPPORT_COEF * 3);
+    expect(weightOf(marlon, { Fire: 3 }, buildSynergy([]))).toBe(1);
+  } finally {
+    setSupportTypes(null);
+  }
+  // The table is the fallback for text naming neither a type nor a Pokémon.
+  const drayden = trainer('Drayden', 'During this turn, 1 of your opponent’s Pokémon is chosen 1 more time for the Draco Meteor attack.');
+  expect(weightOf(drayden, { Dragon: 3 }, buildSynergy([]))).toBe(1 + TYPE_SUPPORT_COEF * 3);
   const bottle = trainer('Squirt Bottle', "Discard a [R] Energy from your opponent's Active Pokémon.");
   expect(weightOf(bottle, { Fire: 3 }, buildSynergy([]))).toBe(1);
   const misty = trainer('Misty', 'Choose 1 of your [W] Pokémon.');
   expect(weightOf(misty, { Water: 3 }, buildSynergy([]))).toBe(1 + TYPE_SUPPORT_COEF * 3);
   expect(weightOf(mon('Squirtle', 'Water'), { Water: 3 }, buildSynergy([]))).toBe(1 + TYPE_WEIGHT_COEF * 3);
+});
+
+// Mirrors server/draft_type_lean_test.go's TestTypeLeanIsCapped.
+test('the type lean keeps its strength at 2-3 picks and stops growing at the cap', () => {
+  const squirtle = mon('Squirtle', 'Water');
+  const misty = trainer('Misty', 'Choose 1 of your [W] Pokémon.');
+  for (const c of [squirtle, misty]) {
+    const w = (n: number) => weightOf(c, { Water: n }, buildSynergy([]));
+    expect(w(2)).toBe(5);
+    expect(w(3)).toBe(7);
+    expect(w(TYPE_LEAN_CAP)).toBe(1 + 2 * TYPE_LEAN_CAP);
+    expect(w(19)).toBe(w(TYPE_LEAN_CAP));
+  }
+  expect(TYPE_LEAN_CAP).toBe(4);
 });
 
 test('3 Water picks lean Water Pokémon but do not force them', () => {
@@ -293,4 +327,29 @@ test('Alolan Marowak is not Marowak, Eevee Bag names no Eevee ex, and " ex" read
   const sada = buildSynergy([trainer('Professor Sada', 'x')]);
   expect(weightOf(mon('Raging Bolt', 'Dragon'), {}, sada)).toBe(SYNERGY_MULT);
   expect(weightOf(mon('Raging Bolt', 'Dragon'), {}, turo)).toBe(1);
+});
+
+// Owner 2026-10-28, decision 3. Mirrors server/draft_niche_test.go.
+test('Ancient / Future only when the card says so: not the B2a Koraidon or Miraidon', () => {
+  const turo = buildSynergy([trainer('Professor Turo', 'x')]);
+  const sada = buildSynergy([trainer('Professor Sada', 'x')]);
+  expect(weightOf(mon('Koraidon', 'Fighting'), {}, sada)).toBe(1);
+  expect(weightOf(mon('Miraidon', 'Lightning'), {}, turo)).toBe(1);
+  expect(weightOf(mon('Koraidon ex', 'Fighting'), {}, sada)).toBe(SYNERGY_MULT);
+  expect(weightOf(mon('Miraidon ex', 'Lightning'), {}, turo)).toBe(SYNERGY_MULT);
+  expect(weightOf(mon('Flutter Mane ex', 'Psychic'), {}, sada)).toBe(SYNERGY_MULT);
+  expect(weightOf(trainer('Professor Sada', 'x'), {}, buildSynergy([mon('Koraidon', 'Fighting')]))).toBe(1);
+});
+
+// Owner 2026-10-28, decision 4. Mirrors server/draft_eevee_test.go.
+test('Eevee ex and the Eeveelutions raise each other, both ways, never stacked', () => {
+  const eevee = mon('Eevee ex', 'Colorless');
+  const vaporeon = withEvolvesFrom(mon('Vaporeon', 'Water'), 'Eevee');
+  const bag = trainer('Eevee Bag', 'Heal each Pokémon that evolves from Eevee.');
+  const w = (c: Card, ...picks: Card[]) => weightOf(c, {}, buildSynergy(picks));
+  expect(w(eevee, vaporeon)).toBe(3);
+  expect(w(vaporeon, eevee)).toBe(3);
+  expect(w(mon('Vaporeon', 'Water'), eevee)).toBe(1); // no evolvesFrom
+  expect(w(mon('Snorlax', 'Colorless'), eevee)).toBe(1);
+  expect(w(vaporeon, eevee, bag)).toBe(SYNERGY_MULT); // one multiplication
 });

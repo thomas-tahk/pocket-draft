@@ -211,6 +211,40 @@ func TestNicheTableNamesExistInCards(t *testing.T) {
 	}
 }
 
+// Ancient / Future only if the card says so (owner 2026-10-28, decision 3):
+// the B2a Koraidon and Miraidon carry no tag, so neither Professor raises them,
+// in the draft or in battle; the tagged B3a printings still count.
+func TestAncientAndFutureOnlyWhenTheCardSaysSo(t *testing.T) {
+	useRealCards(t)
+	sada := newSynergy([]draftCard{trainerText("Professor Sada", "x")})
+	turo := newSynergy([]draftCard{trainerText("Professor Turo", "x")})
+	for _, tc := range []struct {
+		id     string
+		syn    synergy
+		tagged bool
+	}{
+		{"B2a-063", sada, false}, // Koraidon
+		{"B2a-045", turo, false}, // Miraidon
+		{"B3a-047", sada, true},  // Roaring Moon
+		{"B3a-027", turo, true},  // Iron Valiant
+		{"B3a-036", sada, true},  // Koraidon ex
+		{"B3a-019", turo, true},  // Miraidon ex
+	} {
+		c := rawDraftCard(t, tc.id)
+		want := 1.0
+		if tc.tagged {
+			want = synergyMult
+		}
+		if w := weightOf(c, typeTally{}, tc.syn); w != want {
+			t.Errorf("%s %s after its Professor = %v, want %v", tc.id, c.Name, w, want)
+		}
+		ec := realCard(t, tc.id)
+		if got := isAncient(ec) || isFuture(ec); got != tc.tagged {
+			t.Errorf("%s %s: engine says Ancient/Future = %v, want %v", tc.id, c.Name, got, tc.tagged)
+		}
+	}
+}
+
 // Kiawe names "Alolan Marowak". It raises that card and not the Fighting
 // Marowak, and picking Marowak does not raise Kiawe.
 func TestKiaweNamesAlolanMarowakNotMarowak(t *testing.T) {
@@ -320,16 +354,6 @@ func TestNicheTSTableMatchesTheEngine(t *testing.T) {
 	if len(blocks) != len(nicheGroups) {
 		t.Fatalf("TS has %d groups, Go has %d", len(blocks), len(nicheGroups))
 	}
-	// Every Pokémon the engine's rule calls Future, by name before " ex".
-	var future []string
-	seen := map[string]bool{}
-	for _, rc := range rawByID {
-		n := pokemonBaseName(rc.Name)
-		if rc.CardType != "Trainer" && isFuture(engine.Card{Name: rc.Name}) && !seen[n] {
-			seen[n] = true
-			future = append(future, n)
-		}
-	}
 	for i, g := range nicheGroups {
 		end := len(body)
 		if i+1 < len(blocks) {
@@ -339,13 +363,42 @@ func TestNicheTSTableMatchesTheEngine(t *testing.T) {
 		if label := body[blocks[i][2]:blocks[i][3]]; label != g.label {
 			t.Fatalf("group %d: TS %q, Go %q", i, label, g.label)
 		}
-		want := g.pokemon
-		if g.fits != nil {
-			want = future
-		}
-		for field, w := range map[string][]string{"trainers": g.trainers, "pokemon": want, "evolvesFrom": g.evolvesFrom} {
+		for field, w := range map[string][]string{"trainers": g.trainers, "pokemon": g.pokemon, "evolvesFrom": g.evolvesFrom} {
 			if got := names(block, field); !slices.Equal(got, sortedCopy(w)) {
 				t.Errorf("%s %s: TS %v, Go %v", g.label, field, got, sortedCopy(w))
+			}
+		}
+	}
+}
+
+// The Ancient / Future groups are exactly the names of the engine's tagged
+// printings (ancientIDs / futureIDs), and every printing of each name is
+// tagged, so matching by name is matching by printing.
+func TestNicheAncientFutureAreTheEnginesPrintings(t *testing.T) {
+	useRealCards(t)
+	for label, fits := range map[string]func(engine.Card) bool{"Ancient": isAncient, "Future": isFuture} {
+		gi := slices.IndexFunc(nicheGroups, func(g nicheGroup) bool { return g.label == label })
+		group := nicheGroups[gi]
+		tagged := map[string]bool{}
+		for id, rc := range rawByID {
+			if rc.CardType != "Trainer" && fits(engine.Card{ID: id, Name: rc.Name}) {
+				tagged[rc.Name] = true
+			}
+		}
+		var want []string
+		for n := range tagged {
+			want = append(want, n)
+		}
+		if got, w := sortedCopy(group.pokemon), sortedCopy(want); !slices.Equal(got, w) {
+			t.Errorf("%s group %v, engine's printings %v", label, got, w)
+		}
+		for id, rc := range rawByID {
+			if rc.CardType == "Trainer" {
+				continue
+			}
+			inGroup := slices.Contains(nicheGroupsOf(draftCard{rawCard: rc}), gi)
+			if tag := fits(engine.Card{ID: id, Name: rc.Name}); inGroup != tag {
+				t.Errorf("%s %s: in the %s group = %v, card tagged = %v", id, rc.Name, label, inGroup, tag)
 			}
 		}
 	}

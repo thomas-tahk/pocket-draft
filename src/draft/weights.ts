@@ -1,7 +1,7 @@
 import type { Card, EnergyType } from '../types/card';
 import { nicheGroupsOf, pokemonBaseName } from './nicheSupport';
 import { NOT_TYPE_SUPPORT, TYPE_SUPPORT_TABLE } from './typeSupport';
-import { eeveeBoost, isEeveelution } from './eeveeBoost';
+import { EEVEE_EX, eeveeBoost, isEeveelution } from './eeveeBoost';
 
 export type TypeTally = Partial<Record<EnergyType, number>>;
 
@@ -16,6 +16,15 @@ export const TYPE_WEIGHT_COEF = 2;
 // (picks of the most-picked type it supports), flat 1 if it supports none.
 // Mirrored by typeSupportCoef in server/draft_weights.go.
 export const TYPE_SUPPORT_COEF = 2;
+
+// Picks of one type past this many add no more lean, for Pokémon or Trainers,
+// so off-type cards never become near-impossible over a mono-type draft (owner
+// 2026-10-28, decision 1). The lean at 2-3 picks is unchanged; the weight tops
+// out at 1 + 2 × 4 = 9. Measured odds are in server/draft_type_lean_test.go
+// (TestTypeLeanIsCapped). Mirrored by typeLeanCap in server/draft_weights.go.
+export const TYPE_LEAN_CAP = 4;
+
+const leanCount = (n: number) => Math.min(n, TYPE_LEAN_CAP);
 
 export function tallyTypes(picks: Card[]): TypeTally {
   const t: TypeTally = {};
@@ -79,17 +88,32 @@ function namedTypes(card: Card): EnergyType[] {
   return types;
 }
 
-// Types a Trainer/Item supports: those its text names (a Trainer has no type of
-// its own, so the own-type trap cannot apply) plus TYPE_SUPPORT_TABLE, minus
-// NOT_TYPE_SUPPORT. Pokémon support nothing. Mirrored by supportTypes in
-// server/draft_weights.go. Cached per card id.
+// Types a Trainer/Item supports, by Trainer name, as the Go engine worked them
+// out from the card text (server/draft_type_support.go): the types the text
+// names plus the card types of the Pokémon it names, else the fallback table.
+// Loaded from public/data/draft-pool.json by src/data/index.ts.
+let registeredSupport: Readonly<Record<string, EnergyType[]>> | null = null;
 const supportTypesCache = new Map<string, EnergyType[]>();
 
+// Registers Go's support types (null clears them).
+export function setSupportTypes(byName: Readonly<Record<string, EnergyType[]>> | null): void {
+  registeredSupport = byName;
+  supportTypesCache.clear();
+}
+
+// Types a Trainer/Item supports; Pokémon and NOT_TYPE_SUPPORT support nothing.
+// A Trainer Go registered gets Go's answer. Any other (a card outside the pool
+// file, or nothing registered) gets the part TS can read itself: the types its
+// text names (a Trainer has no type of its own, so the own-type trap cannot
+// apply), else TYPE_SUPPORT_TABLE. Mirrored by supportTypes in
+// server/draft_type_support.go. Cached per card id.
 export function supportedTypes(card: Card): EnergyType[] {
-  if (card.cardType !== 'Trainer' || NOT_TYPE_SUPPORT.has(card.name ?? '')) return [];
+  const name = card.name ?? '';
+  if (card.cardType !== 'Trainer' || NOT_TYPE_SUPPORT.has(name)) return [];
   let types = supportTypesCache.get(card.id);
   if (!types) {
-    types = [...new Set([...namedTypes(card), ...(TYPE_SUPPORT_TABLE[card.name ?? ''] ?? [])])];
+    const named = namedTypes(card);
+    types = registeredSupport?.[name] ?? (named.length > 0 ? named : (TYPE_SUPPORT_TABLE[name] ?? []));
     supportTypesCache.set(card.id, types);
   }
   return types;
@@ -103,6 +127,7 @@ export type Synergy = {
   nicheOfTrainers: Set<number>; // niche groups of picked Trainers (rule 4)
   nicheOfPokemon: Set<number>; // niche groups of picked Pokémon (rule 4)
   eeveelution?: boolean; // an Eeveelution is picked (eeveeBoost.ts)
+  eeveeEx?: boolean; // Eevee ex is picked (eeveeBoost.ts)
 };
 
 export const NO_SYNERGY: Synergy = {
@@ -141,6 +166,7 @@ export function buildSynergy(picks: Card[]): Synergy {
     nicheOfTrainers,
     nicheOfPokemon,
     eeveelution: picks.some(isEeveelution),
+    eeveeEx: picks.some((p) => p.name === EEVEE_EX),
   };
 }
 
@@ -188,17 +214,17 @@ function matchesSynergy(card: Card, s: Synergy): boolean {
 
 // Sampling weight for one candidate given the running tally.
 // Colorless Pokémon: flat 1 (always equally eligible per rules.md).
-// Other Pokémon: 1 + TYPE_WEIGHT_COEF × picks of their type.
-// Trainers: 1 + TYPE_SUPPORT_COEF × picks of the most-picked type they support.
+// Other Pokémon: 1 + TYPE_WEIGHT_COEF × picks of their type, capped at TYPE_LEAN_CAP.
+// Trainers: 1 + TYPE_SUPPORT_COEF × picks of the most-picked type they support, capped.
 // A synergy match then multiplies the result once.
 export function weightOf(card: Card, tally: TypeTally, synergy: Synergy = NO_SYNERGY): number {
   let base = 1;
   if (card.cardType === 'Trainer') {
     const most = Math.max(0, ...supportedTypes(card).map((t) => tally[t] ?? 0));
-    base = 1 + TYPE_SUPPORT_COEF * most;
+    base = 1 + TYPE_SUPPORT_COEF * leanCount(most);
   } else if (card.cardType !== 'Colorless') {
-    base = 1 + TYPE_WEIGHT_COEF * (tally[card.cardType] ?? 0);
+    base = 1 + TYPE_WEIGHT_COEF * leanCount(tally[card.cardType] ?? 0);
   }
   const matched = matchesSynergy(card, synergy);
-  return (matched ? base * SYNERGY_MULT : base) * eeveeBoost(card, !!synergy.eeveelution, matched);
+  return (matched ? base * SYNERGY_MULT : base) * eeveeBoost(card, synergy, matched);
 }
