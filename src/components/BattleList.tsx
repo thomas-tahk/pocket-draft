@@ -5,7 +5,7 @@ export function BattleList({ run, onReplay }: { run: Run; onReplay: (index: numb
   return (
     <ol className="run-battles" data-testid="run-battles">
       {run.battles.map((b, i) => (
-        <li key={b.seed} className="run-battle">
+        <li key={b.seed} className="run-battle" data-result={b.result}>
           <span id={`battle-${i}`}>Battle {i + 1}: <strong>{RESULT_LABEL[b.result]}</strong></span>
           <button className="run-btn" aria-describedby={`battle-${i}`} onClick={() => onReplay(i)}>Replay</button>
         </li>

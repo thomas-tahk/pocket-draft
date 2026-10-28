@@ -15,7 +15,7 @@ type Props = {
 export function RunSummary({ pool, run, onDraftAgain, onHome, onReplay }: Props) {
   const { wins, losses } = runScore(run);
   return (
-    <main className="run-summary" aria-label="Run summary">
+    <main className="run-summary" aria-label="Run summary" data-status={run.status}>
       <h1 data-testid="run-status" className="run-status">{STATUS_LABEL[run.status]}</h1>
       <p data-testid="run-record" className="run-record">{runLine(run)} ({run.status})</p>
       <p className="run-tally">{wins} {wins === 1 ? 'win' : 'wins'}, {losses} {losses === 1 ? 'loss' : 'losses'}</p>

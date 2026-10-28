@@ -71,6 +71,12 @@ export function DraftView({ packIndex, offer, picks, onPick, onCancel }: Props) 
             </div>
             <AbandonDraft loses="all picks so far" onAbandon={onCancel} />
           </div>
+          {/* The same count as "Pack n / 20", drawn as segments; filled up to the pack on screen. */}
+          <div className="pack-progress" aria-hidden="true">
+            {Array.from({ length: TOTAL_PACKS }, (_, i) => (
+              <i key={i} className={i <= packIndex ? 'on' : undefined} />
+            ))}
+          </div>
         </header>
 
         <section
