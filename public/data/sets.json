@@ -1,5 +1,11 @@
 [
   {
+    "id": "B4b",
+    "name": "Deluxe Pack: Mega",
+    "packs": [],
+    "cardCount": 429
+  },
+  {
     "id": "B4a",
     "name": "Team Rocket's Ambition",
     "packs": [],
@@ -72,7 +78,7 @@
       "Promo",
       "Wonder Pick"
     ],
-    "cardCount": 94
+    "cardCount": 103
   },
   {
     "id": "A4b",
