@@ -273,3 +273,24 @@ type-lean cap work in progress will move these numbers, so re-run after it lands
   estimate, not a design.
 - The tutor regex is broad: it includes "look at the top" cards that only look.
   They are listed separately in the table.
+
+---
+
+## Re-measured after the type-lean cap (m4-draft-runs, 2026-10-28)
+
+Same test, same seeds, after the cap (weight 1 + 2 × min(picks, 4)) and the
+text-decided type support merged:
+
+| measure | before | after |
+|---|---|---|
+| (a) bot: picks with ≥1 copy in the deck, mean (min–max) | 51.8% (40–60%) | 51.8% (40–60%) |
+| (a) Auto-draft: same | 51.8% (40–60%) | 51.9% (40–60%) |
+| (a) what-if 1 copy per pick: picks in deck, mean | 80.2% | 80.2% |
+| (a) bot decks holding a Stage 2 | 3.0% | 2.8% |
+| (d) drafts offering Rare Candy at least once (bot) | about 4% | 3.2% |
+| (e) bot: Trainer share of offers, early / mid / late | 19.4 / 14.8 / 12.3% | 19.8 / 16.0 / 14.9% |
+| (e) type-support share of offered Trainers, early / mid / late | 25 / 38 / 44% | 27 / 39 / 42% |
+| (e) Trainer share of final decks (bot) | 19.9% | 20.0% |
+
+The cap and the wider text-decided support moved late-draft Trainer offers up a
+little; nothing else changed in a way that matters for (a)–(e).
