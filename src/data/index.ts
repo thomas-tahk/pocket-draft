@@ -27,6 +27,7 @@ export async function loadCardPool(): Promise<CardPool> {
     loadSets(),
     loadDraftPoolFilter(),
   ]);
+  if (!poolFilter.supportTypes) console.warn('draft-pool.json has no supportTypes; Trainer type support falls back to the types their text names');
   setSupportTypes(poolFilter.supportTypes ?? null);
   const draftableCards = keepWorkingText(toDraftablePool(allCards), poolFilter);
   const fullCards = toFullCardPool(allCards);

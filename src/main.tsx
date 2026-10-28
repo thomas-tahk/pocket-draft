@@ -9,7 +9,7 @@ import './index.css';
 import './screens.css';
 import './look.css';
 
-// Before the first paint, so a saved Light / Dark choice never flashes the other theme.
+// index.html's inline script sets it before the first paint; this is the backstop.
 applyTheme(readTheme());
 
 const root = createRoot(document.getElementById('root')!);

@@ -33,11 +33,11 @@ test('the Energy Zone picker reaches every battle: only Water or Fire show', asy
   // Owner 2026-10-28 (item 6): a short label, no extra lines. Empty deck: one short line.
   const picker = page.getByTestId('energy-picker');
   await expect(page.getByText('Deck: 0 / 20')).toBeVisible();
-  await expect(picker.getByRole('heading', { name: 'Choose up to 3 energies to use', exact: true })).toBeVisible();
-  await expect(picker.locator('p')).toHaveCount(1);
-  await expect(picker.locator('p')).toHaveText('No typed energy needed yet: Colorless only.');
+  await expect(picker.getByRole('heading', { name: /^Choose up to 3 energies to use/ })).toBeVisible();
+  await expect(picker.locator('p')).toHaveCount(0);
+  await expect(picker.getByTestId('energy-count')).toHaveText('0/3');
 
-  // Fill the deck first so the default (from the deck's Pokémon types) is on show.
+  // Fill the deck first so the default (from the deck's attack costs) is on show.
   const drafted = page.locator('section', { has: page.getByRole('heading', { name: /^Your draft/ }) });
   const plus = drafted.getByRole('button', { name: '+' });
   for (let i = 0; i < (await plus.count()); i++) {
@@ -66,7 +66,7 @@ test('the Energy Zone picker reaches every battle: only Water or Fire show', asy
 
   await choose(page, ['Water', 'Fire']);
   await expect(picker.locator('button[aria-pressed="true"]')).toHaveCount(2);
-  await expect(picker.getByRole('heading', { name: 'Choose up to 3 energies to use', exact: true })).toBeVisible();
+  await expect(picker.getByRole('heading', { name: /^Choose up to 3 energies to use/ })).toBeVisible();
   await expect(picker.getByTestId('energy-count')).toHaveText('2/3');
 
   await picker.scrollIntoViewIfNeeded();

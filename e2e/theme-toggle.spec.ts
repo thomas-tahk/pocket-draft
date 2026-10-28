@@ -86,3 +86,21 @@ test('a page whose storage is blocked still opens, on Auto, and the toggle still
   await option(page, 'Dark').click();
   expect(await pageColour(page)).toBe(DARK_PAGE);
 });
+
+test('a saved choice is set by index.html before any app script runs', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.addInitScript(() => localStorage.setItem('pocket-draft-theme', 'dark'));
+  await page.route('**/src/main.tsx*', (r) => r.abort()); // no app code at all
+  await page.goto('/');
+  expect(await themeAttr(page)).toBe('dark');
+});
+
+test('the holo sheen is off under reduced motion', async ({ page }) => {
+  const sheen = () =>
+    page.evaluate(() => getComputedStyle(document.querySelector('.home-primary')!, '::after').display);
+  await page.emulateMedia({ reducedMotion: 'no-preference' }); // the suite runs reduced by default
+  await home(page);
+  expect(await sheen()).not.toBe('none');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect.poll(sheen).toBe('none');
+});

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { announce } from '../announce';
 import { AbandonDraft } from './AbandonDraft';
 import { EnergyIcon, TypeTally } from '../battle/energy';
-import { defaultZoneTypes, MAX_ZONE_TYPES, ZONE_FALLBACK, ZONE_TYPES } from '../game/energy';
+import { defaultZoneTypes, MAX_ZONE_TYPES, ZONE_TYPES } from '../game/energy';
 import type { Card, EnergyType } from '../types/card';
 import { DECK_SIZE } from '../stores/draftStore';
 import {
@@ -237,15 +237,10 @@ export function DeckbuildView({
         <div className="zone-picker" role="group" data-testid="energy-picker" aria-labelledby="zone-title">
           <h2 id="zone-title" className="section-title" style={{ color: 'var(--color-text)', margin: '0 0 8px' }}>
             Choose up to {MAX_ZONE_TYPES} energies to use{' '}
-            <span data-testid="energy-count" className="muted-xs" aria-hidden="true">
+            <span data-testid="energy-count" className="muted-xs">
               {zone.length}/{MAX_ZONE_TYPES}
             </span>
           </h2>
-          {zone.length === 0 && (
-            <p className="muted-xs" style={{ margin: '0 0 8px' }}>
-              No typed energy needed yet: {ZONE_FALLBACK} only.
-            </p>
-          )}
           <div className="zone-picker-row" role="group" aria-label="Energy Zone types">
             {ZONE_TYPES.map((t) => {
               const on = zone.includes(t);

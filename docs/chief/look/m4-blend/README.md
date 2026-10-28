@@ -24,8 +24,8 @@ node docs/chief/look/m4-blend/contrast.cjs --md     # the table below
 
 The light pass drives the real app (20 picks, skip shop, build, one conceded battle, quit) and keeps
 localStorage at each screen; the dark pass seeds those copies. Card art can't load in the cloud
-sandbox, so every card is the same placeholder face. Screenshots use reduced motion, so the holo
-sheen shows as its still glint.
+sandbox, so every card is the same placeholder face. Screenshots run with motion on and the holo
+sheen frozen mid-sweep.
 
 ## What each direction gave
 
@@ -38,7 +38,7 @@ sheen shows as its still glint.
   chips and card frames. No sunburst, no italic caps, no hard offset shadows.
 - **B · Holo Night (shine + dark):** a diagonal foil sheen on every card tile, the main button and a
   won run's title plate; stronger on a hovered, focused or selected (bought / in deck) card. It sweeps
-  once every 6 s; with `prefers-reduced-motion: reduce` it is a still glint. The dark theme is B's
+  once every 6 s; with `prefers-reduced-motion: reduce` it is off. The dark theme is B's
   indigo night with C's structure.
 
 ## Theme

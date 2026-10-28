@@ -205,7 +205,7 @@ export function App() {
   if (replayed) return screen('replay', <ReplayView battle={replayed} onExit={closeReplay} />);
 
   if (error) return screen('error', <main role="alert" style={{ padding: 24 }}>Error: {error}</main>);
-  if (!pool) return <main role="status" style={{ padding: 24 }}>Loading card data…</main>;
+  if (!pool) return screen('loading', <main role="status" style={{ padding: 24 }}>Loading card data…</main>);
 
   if (sharedDeck) {
     return screen('shared', (

@@ -493,14 +493,14 @@ body {
   35%, 100% { background-position: 100% 0; }
 }
 
-/* Reduced motion: the sheen holds still as a fixed diagonal glint; the main button does not move. */
+/* Reduced motion: the sheen is off (owner, 2026-10-28); the main button does not move. */
 @media (prefers-reduced-motion: reduce) {
   .look :is(.tile-lg, .tile-sm)::after,
   .look :is(.btn-primary, .run-btn-primary, .home-primary)::after,
   .look .run-summary[data-status='won'] h1.run-status::after {
     animation: none;
-    background-position: 40% 0;
     transition: none;
+    display: none;
   }
   .look :is(.btn-primary, .run-btn-primary, .home-primary) { transition: none; }
   .look :is(.btn-primary, .run-btn-primary, .home-primary):active:not(:disabled) { transform: none; }

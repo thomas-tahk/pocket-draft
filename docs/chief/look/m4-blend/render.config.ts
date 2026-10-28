@@ -15,7 +15,7 @@ export default defineConfig({
   testDir: here,
   testMatch: ['render.spec.ts'],
   outputDir: path.join(root, 'test-results/m4-blend'),
-  // Screenshots are taken with reduced motion, so the holo sheen is the still glint (deterministic).
+  // render.spec.ts turns motion on and freezes the holo sheen mid-sweep, so shots are deterministic.
   use: { ...base.use, viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 },
   webServer: servers.map((s) => ({ ...s, cwd: root })),
 });

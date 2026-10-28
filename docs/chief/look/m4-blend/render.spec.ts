@@ -40,6 +40,8 @@ const settled = (page: Page) =>
 async function shot(page: Page, name: string, theme: Theme) {
   await page.evaluate(() => window.scrollTo(0, 0));
   await settled(page);
+  // The sheen is off under reduced motion, so shots run with motion on and every sheen frozen mid-sweep.
+  await page.addStyleTag({ content: '.look *::after { animation-play-state: paused !important; animation-delay: -1.1s !important; }' });
   await page.waitForTimeout(300);
   await page.screenshot({ path: path.join(OUT, `${name}-${theme}-390.png`) });
 }
@@ -57,7 +59,7 @@ test('every non-battle screen, light then dark', async ({ page }) => {
   const snap: Record<string, string> = {};
 
   // ---- light: drive the app ----
-  await page.emulateMedia({ colorScheme: 'light' });
+  await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'no-preference' });
   await page.goto('/');
   await expect(page.getByRole('button', { name: 'Start draft' })).toBeVisible();
   await shot(page, 'home', 'light');
@@ -117,7 +119,7 @@ test('every non-battle screen, light then dark', async ({ page }) => {
   await summaryWon('light');
 
   // ---- dark: the same states, seeded ----
-  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'no-preference' });
   await page.evaluate(() => localStorage.clear());
   await page.goto('/');
   await expect(page.getByRole('button', { name: 'Start draft' })).toBeVisible();
