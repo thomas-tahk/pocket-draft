@@ -1,49 +1,30 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { TypeTally } from '../battle/energy';
 import type { Card, EnergyType } from '../types/card';
 import type { CardPool } from '../data';
 import { tallyTypes } from '../draft/weights';
-import { encodeDeck } from '../share/deckCode';
+import { runLine, type Run } from '../stores/run';
+import { DeckShare } from './DeckShare';
 import { CardTile, type HoverPayload } from './CardTile';
 import { CardPreview, type HoverState } from './CardPreview';
 
 type Props = {
   pool: CardPool;
   deck: Record<string, number>;
-  onPlay: () => void;
+  run: Run | null;
+  onPlay?: () => void;
+  children?: ReactNode; // the run panel, shown above the deck
   onNewDraft: () => void;
   onHome: () => void;
 };
 
-function download(filename: string, content: string) {
-  const blob = new Blob([content], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-export function ReviewView({ pool, deck, onPlay, onNewDraft, onHome }: Props) {
+export function ReviewView({ pool, deck, run, onPlay, children, onNewDraft, onHome }: Props) {
   const [hover, setHover] = useState<HoverState>(null);
-  const [copied, setCopied] = useState<string | null>(null);
   const handleHover = (p: HoverPayload | null) => setHover(p);
-
-  const deckCode = useMemo(() => encodeDeck(deck), [deck]);
-  const shareLink = `${location.origin}${location.pathname}?deck=${encodeURIComponent(deckCode)}`;
-
-  const copy = (text: string, label: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(label);
-      setTimeout(() => setCopied((c) => (c === label ? null : c)), 1500);
-    });
-  };
 
   const idToCard = useMemo(() => {
     const m = new Map<string, Card>();
     for (const c of pool.fullCards) m.set(c.id, c);
-    for (const c of pool.universals) m.set(c.id, c);
     return m;
   }, [pool]);
 
@@ -74,69 +55,36 @@ export function ReviewView({ pool, deck, onPlay, onNewDraft, onHome }: Props) {
     .sort((a, b) => b[1] - a[1]);
   const total = deckCards.reduce((s, { count }) => s + count, 0);
 
-  const exportPayload = {
-    version: 'v0.4',
-    timestamp: new Date().toISOString(),
-    deck: deckCards.map(({ card, count }) => ({ id: card.id, name: card.name, count })),
-  };
-
   return (
-    <main style={{ padding: '0 24px 24px', maxWidth: 1100, margin: '0 auto' }}>
-      <header
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'baseline',
-          padding: '16px 0',
-          marginBottom: 8,
-          position: 'sticky',
-          top: 0,
-          background: 'var(--surface)',
-          zIndex: 5,
-          borderBottom: '1px solid #8882',
-          gap: 12,
-          flexWrap: 'wrap',
-        }}
-      >
-        <h1 style={{ fontSize: 20, margin: 0 }}>Deck finalized</h1>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={onPlay} style={{ fontWeight: 600 }}>▶ Play deck</button>
-          <button onClick={() => copy(deckCode, 'code')}>
-            {copied === 'code' ? 'Copied!' : 'Copy code'}
-          </button>
-          <button onClick={() => copy(shareLink, 'link')}>
-            {copied === 'link' ? 'Copied!' : 'Copy link'}
-          </button>
-          <button
-            onClick={() =>
-              download(`pocket-draft-${Date.now()}.json`, JSON.stringify(exportPayload, null, 2))
-            }
-          >
-            Export JSON
-          </button>
+    <main className="page">
+      <header className="screen-header">
+        <h1 className="screen-title">Deck finalized</h1>
+        {run && (
+          <span data-testid="run-record" className="record-chip">
+            {runLine(run)} ({run.status})
+          </span>
+        )}
+        <div className="review-actions">
+          {onPlay && <button className="btn-primary" onClick={onPlay}>▶ Play deck</button>}
+          <DeckShare deck={deck} pool={pool} />
           <button onClick={onNewDraft}>Start new draft</button>
-          <button onClick={onHome} style={{ fontSize: 12 }}>
+          <button onClick={onHome}>
             Home
           </button>
         </div>
       </header>
 
-      <div style={{ fontSize: 13, opacity: 0.75, marginBottom: 16 }}>
+      {children}
+
+      <div className="muted-sm" style={{ marginBottom: 16 }}>
         {total} cards · <TypeTally entries={sortedTally} />
       </div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, 180px)',
-          justifyContent: 'start',
-          gap: 12,
-          alignItems: 'start',
-        }}
-      >
+      <h2 className="sr-only">Your deck</h2>
+      <div className="deck-grid" role="group" aria-label="Your deck">
         {deckCards.flatMap(({ card, count }) =>
           Array.from({ length: count }).map((_, i) => (
-            <CardTile key={`${card.id}-${i}`} card={card} size="lg" onHover={handleHover} />
+            <CardTile key={`${card.id}-${i}`} card={card} size="lg" focusable onHover={handleHover} />
           )),
         )}
       </div>

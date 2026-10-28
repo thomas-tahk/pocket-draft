@@ -2,7 +2,7 @@
 
 ## Overview
 
-An Arena-style draft format for Pokemon TCG Pocket. Each session is self-contained — no pre-existing card collection required. Any card in the game is draftable on equal footing. Basic universals are freely available without spending picks.
+An Arena-style draft format for Pokemon TCG Pocket. Each session is self-contained — no pre-existing card collection required. Any card in the game is draftable on equal footing. There are no free Trainers: every card comes from a pick or the shop (lower evolutions of drafted Pokémon excepted).
 
 Inspired by the **SWUCUBE** cube draft format (see `swucube-rules.md`) — originally published on YouTube by SWUCUBE — and Hearthstone/MTG Arena draft modes. The 1-of-5 pick mechanic mirrors the Wonder Pick feature in Pokemon TCG Pocket.
 
@@ -11,9 +11,9 @@ Inspired by the **SWUCUBE** cube draft format (see `swucube-rules.md`) — origi
 ## Session Structure
 
 ```
-1. Draft Phase       (16 rounds of pick 1-of-5)
-2. Shop Phase        (spend flat tickets on staples + undrafted picks)
-3. Deckbuilding      (finalize 20-card deck, slot in free universals, cut)
+1. Draft Phase       (20 rounds of pick 1-of-5)
+2. Shop Phase        (spend flat tickets on staples + same-type ex cards)
+3. Deckbuilding      (finalize 20-card deck, cut)
 4. Run               (play games until win/loss threshold)
 ```
 
@@ -23,7 +23,7 @@ Inspired by the **SWUCUBE** cube draft format (see `swucube-rules.md`) — origi
 
 ### Pick structure
 - Each round, the player is offered **5 cards** and selects **1**.
-- This repeats **16 times** (4×4 — homage to cube-draft sensibility).
+- This repeats **20 times**.
 - Mirrors the 5-card pack structure and Wonder Pick mechanic from the actual game.
 - The draft is **solitary and asynchronous** — each player drafts independently with no timer and no dependency on any other player. Players may leave and return mid-draft at any point. Matchmaking happens after both players have completed their drafts.
 
@@ -32,10 +32,21 @@ Inspired by the **SWUCUBE** cube draft format (see `swucube-rules.md`) — origi
 - The player may pick it (establishing a build-around and energy direction) or pass on it (knowingly opting into a less directed draft).
 - This is a soft anchor — nothing is forced.
 
-### Type weighting (packs 2–16)
+### Type weighting (packs 2–20)
 - After each pick, the player's drafted energy type(s) are tracked.
-- Subsequent packs are **modestly weighted** toward the player's detected primary type(s). This is a nudge, not a lock — off-type cards still appear.
+- Subsequent packs lean toward the player's types, visibly after 2–3 picks of one type (owner, 2026-10-25). A type's Pokémon and the Trainers/Items that support that type both get the lean. Raised odds, never a lock: off-type cards still appear.
+- The lean is capped (owner, 2026-10-28): it stops growing after 4 picks of one type, so off-type cards (e.g. Dragon Pokémon) never become near-impossible over a mono-type draft. Weight = 1 + 2 × min(picks of that type, 4).
+- A Trainer/Item supports a type when its card text says so (owner, 2026-10-28): the types it names ("Water Pokémon", [W]) plus the card types of the Pokémon it names (Cynthia's "Garchomp or Togekiss" → Dragon, Fighting, Psychic). A short hand list covers only text that names neither (Drayden's "Draco Meteor"); a Trainer that works against a type it names (Squirt Bottle) supports nothing.
 - **Colorless Pokemon are always eligible** regardless of detected direction and are weighted as compatible with any type profile. This ensures archetypes like Dragonite (dual energy) and colorless-featured attackers remain naturally draftable.
+
+### Offers that fit (owner, 2026-10-25)
+- A niche Trainer and the Pokémon it supports raise each other's odds, whichever is picked first. Archetype support cards rise with their archetype. Raised odds, never guarantees.
+- Ancient / Future support (Professor Sada, Professor Turo, the Booster Energy Capsules) counts a Pokémon only if the card itself says Ancient / Future (owner, 2026-10-28): the B3a/B3b Paradox printings, not the B2a Koraidon or Miraidon. The same holds in battle.
+- Eevee ex is draftable. Eevee ex and the Eeveelutions raise each other's odds, both directions (owner, 2026-10-28): picking any Eeveelution raises Eevee ex, picking Eevee ex raises every Eeveelution. Never stacked with another fit.
+  - In battle, by the card text, Alolan Muk's Power of Alchemy ("Basic Pokémon in play have no Abilities") switches off Eevee ex's Veevee ’volve while Muk is in play, on either side (owner, 2026-10-28).
+
+### A pick is secured
+- Once a card is picked, it never appears in a later offer (matched by name). One pick already allows up to 2 copies at deckbuild.
 
 ### Card pool
 - All functionally distinct cards in Pokemon TCG Pocket are eligible.
@@ -59,16 +70,16 @@ After the draft, players spend a flat allotment of **4 tickets** (starting value
 Each ticket buys **one deck copy** of a chosen card. Spend two tickets on the same card to lock in 2 deck slots, or spread them across up to 4 different cards. Per-card cap is the global 2-copy-by-name limit (max 2 tickets on any one card). Tickets can't be saved or carried over.
 
 ### Staple shelf
-- A fixed list of ~10–12 essential Trainer cards always available (e.g. Cyrus, Sabrina, Repel, Copycat).
+- A fixed list of 12 essential Trainer cards (`src/shop/staples.ts`: Cyrus, Sabrina, Repel, Copycat, Giovanni, Pokémon Communication, Erika, Mars, Iono, Cynthia, Pokémon Center Lady, Lillie).
 - Ensures no player is bricked without key Supporters due to bad draft luck.
-- Same contents for every player every session.
+- Same contents for every player every session, minus any you already drafted.
 
-### Undrafted shelf
-- 1 card selected from each of the 16 packs (the 4 unchosen cards per pack), scored and filtered by:
-  - Synergy with the player's drafted cards
-  - Rarity weighting
-- Results in up to **16 candidates** from the undrafted pool.
-- Total shop pool: ~26–28 cards.
+### Same-type ex shelf
+- Every ex / Mega ex Pokémon of a type you drafted Pokémon of (Colorless doesn't count), one printing per name.
+- Names you already drafted are left out: you already hold up to 2 copies of them.
+- Pokémon-specific Trainers (e.g. Blaine for Ninetales / Rapidash / Magmar) are not on the shelf yet.
+
+Source of truth: `src/shop/inventory.ts`. (This replaces the earlier "undrafted shelf" idea of one card from each pack's unchosen four.)
 
 ### Shop purpose
 The shop is for **patching holes and minor upgrades only** — not redesigning the deck. The ticket cap enforces this. Target outcomes: ensuring access to at least 1–2 Supporters, filling a missing item slot, or adding a Pokemon that completes a line.
@@ -78,20 +89,17 @@ The shop is for **patching holes and minor upgrades only** — not redesigning t
 ## 3. Deckbuilding
 
 After the shop, players build their final **20-card deck** from:
-- Their 16 drafted cards
+- Their 20 drafted cards
 - Any cards acquired from the shop
 
 ### Copy limits
 Pokemon TCG Pocket's standard deck-construction rule applies: **maximum 2 copies of any card**, matched by card name. There is no separate restriction on EX or Mega-EX cards — they follow the same 2-copy cap as everything else. Cosmetic art variants of the same card do not stack beyond 2 (they're filtered out of the draft pool anyway).
 
-### Free universals
-The following cards are freely available in any quantity during deckbuilding and do not require a draft pick or ticket (subject to the 2-copy cap above):
-- **Pokeball**
-- **Professor's Research**
+### Energy Zone (owner, 2026-10-25)
+The player chooses the deck's Energy Zone types (1 to 3) at deckbuild. The default is the energy the deck's attacks need (most-needed first), the same rule the engine uses when none is chosen. The choice holds for every battle of the run.
 
-These count toward the 20-card deck limit and replace drafted/shopped cards as the player sees fit.
-
-> Note: Whether additional free cards (X Speed, Potion, Red Card) are included is TBD through playtesting. A seasonal-rotation model for the free-universal set is captured in `docs/backlog.md`.
+### No free Trainers
+There are no free universal Trainers. Trainers (Pokeball and Professor's Research included) come only from draft picks and the shop. Lower evolutions of a drafted Pokemon stay free at deckbuild. A ruleset with a few open cards may come later (`docs/backlog.md`).
 
 ### Cut
 If the player has more than 20 cards after shop purchases, they cut down to exactly 20 during this phase.
@@ -102,14 +110,14 @@ If the player has more than 20 cards after shop purchases, they cut down to exac
 
 Players play games with their drafted deck until a win/loss threshold is reached.
 
-- **Starting threshold (to be tested):** 7 wins or 3 losses
+- **Threshold:** 5 wins or 2 losses (owner, 2026-10-24)
 - Specific numbers subject to adjustment based on playtesting.
 
 ---
 
 ## Matchmaking
 
-- Open matchmaking for v1.
+- Open matchmaking for v1: queue against a real player; after 2 minutes with no match, fall back to a bot playing another player's drafted deck, clearly marked as a bot (owner, 2026-10-24).
 - MMR-based skill matching is a future consideration.
 
 ---
@@ -117,6 +125,5 @@ Players play games with their drafted deck until a win/loss threshold is reached
 ## Future / Deferred
 
 - **Conquest format:** Players build 3 distinct decks and must win at least 1 game with each (see `swucube-rules.md`). Deferred — potential tournament mode after Arena is implemented.
-- **Additional free universals:** X Speed, Potion, Red Card — whether these are free TBD.
 - **Ticket count:** Starting at 4, to be tuned through playtesting.
-- **Win/loss threshold:** Starting at 7W/3L, to be tuned through playtesting.
+- **Win/loss threshold:** 5W/2L, to be tuned through playtesting.

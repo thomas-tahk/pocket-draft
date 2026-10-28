@@ -24,14 +24,6 @@ type draftCard struct {
 // glossy treatments; every base-art card has a functional duplicate elsewhere.
 var excludedDraftSets = map[string]bool{"A4b": true}
 
-// freeUniversalNames mirrors loader.ts's FREE_UNIVERSAL_NAMES: always available
-// at deckbuild, never offered in the draft itself. Deckbuild/shop are deferred
-// past this slice, so these never reach the bot's deck via draftBotDeck either.
-var freeUniversalNames = map[string]bool{
-	"Poké Ball":            true,
-	"Professor's Research": true,
-}
-
 // isDraftCandidate mirrors loader.ts's isDraftCandidate.
 func isDraftCandidate(rc rawCard) bool {
 	if excludedDraftSets[rc.SetID] {
@@ -41,9 +33,6 @@ func isDraftCandidate(rc rawCard) bool {
 		return false
 	}
 	if rc.Rarity == "" {
-		return false
-	}
-	if rc.CardType == "Trainer" && freeUniversalNames[rc.Name] {
 		return false
 	}
 	return true

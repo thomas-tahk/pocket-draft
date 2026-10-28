@@ -1,0 +1,507 @@
+/* M4 blended look (#131) for every screen outside battle. Loaded after index.css and screens.css
+   and scoped to `.look` (App.tsx puts it on the root of every screen but the battle board and its
+   replay), so the board keeps the legacy look. Every value is a --look-* token from tokens.css.
+
+   Surfaces set their own text, label, focus and button colours as custom properties, and children
+   inherit them: the blue page (white text), the header band (white text, gold focus), and panels
+   (ink text). A panel inside the band (a confirm) gets panel colours again. */
+
+body {
+  background: var(--look-page-bg);
+  background-color: var(--look-page);
+}
+
+/* ---------- surfaces ---------- */
+
+.look {
+  --color-text: var(--look-on-page);
+  --color-text-muted: var(--look-on-page-muted);
+  --color-focus: var(--look-focus-page);
+  --look-label: var(--look-on-page);
+  --b-bg: var(--look-btn);
+  --b-fg: var(--look-on-btn);
+  --b-bd: var(--look-outline);
+  --b-hover: var(--look-btn-hover);
+  --b-press: var(--look-btn-press);
+  min-height: 100vh;
+  font-family: var(--look-font);
+  font-weight: var(--look-fw-body);
+  color: var(--color-text);
+}
+
+.look :is(.screen-header, .home-band) {
+  --color-text: var(--look-on-band);
+  --color-text-muted: var(--look-on-band);
+  --color-focus: var(--look-focus-band);
+  --look-label: var(--look-on-band);
+  --b-bg: var(--look-band-btn);
+  --b-fg: var(--look-on-band);
+  --b-bd: rgba(255, 255, 255, 0.85);
+  --b-hover: rgba(0, 0, 0, 0.4);
+  --b-press: rgba(0, 0, 0, 0.5);
+  color: var(--color-text);
+}
+
+.look :is(.panel, .run-panel, .home-panel, .run-summary, .zone-picker, .screen-aside, .run-confirm, .is-picked, .record-chip, .card-preview) {
+  --color-text: var(--look-ink);
+  --color-text-muted: var(--look-ink-muted);
+  --color-focus: var(--look-focus-panel);
+  --color-surface: var(--look-panel);
+  --color-surface-2: var(--look-panel-2);
+  --color-danger-text: var(--look-loss-text);
+  --color-success-text: var(--look-win-text);
+  --look-label: var(--look-accent);
+  --b-bg: var(--look-btn);
+  --b-fg: var(--look-on-btn);
+  --b-bd: var(--look-outline);
+  --b-hover: var(--look-btn-hover);
+  --b-press: var(--look-btn-press);
+  color: var(--color-text);
+}
+
+.look :is(.panel, .run-panel, .home-panel, .run-summary, .zone-picker) {
+  background: var(--look-panel);
+  border: var(--look-outline-w) solid var(--look-outline);
+  border-radius: var(--look-radius-panel);
+  box-shadow: var(--look-shadow-panel);
+}
+
+/* ---------- type ---------- */
+
+.look :is(h1, h2, h3) {
+  color: var(--color-text);
+  font-weight: var(--look-fw-display);
+  letter-spacing: -0.02em;
+}
+.look .screen-title {
+  font-size: var(--look-fs-title);
+  letter-spacing: var(--look-track-title);
+  line-height: 1.05;
+}
+/* C's letter-spaced caps labels. */
+.look :is(.section-title, .aside-title, .run-sub, .run-status) {
+  font-size: var(--look-fs-label);
+  font-weight: var(--look-fw-display);
+  letter-spacing: var(--look-track-label);
+  text-transform: uppercase;
+  color: var(--look-label);
+}
+.look .section-title { margin: 0 0 var(--space-3); }
+.look .zone-picker .section-title { letter-spacing: var(--look-track-label); }
+.look .muted { color: var(--color-text-muted); font-weight: var(--look-fw-strong); }
+.look :is(.muted-sm, .muted-xs) { color: var(--color-text-muted); font-weight: var(--look-fw-body); }
+.look .muted-sm { font-size: 14px; }
+
+/* ---------- buttons ---------- */
+
+.look button {
+  border: var(--look-outline-w-btn) solid var(--b-bd);
+  border-radius: var(--look-radius-btn);
+  background: var(--b-bg);
+  color: var(--b-fg);
+  font-weight: var(--look-fw-strong);
+  font-size: var(--look-fs-body);
+  letter-spacing: -0.01em;
+}
+.look button:hover:not(:disabled) { background: var(--b-hover); }
+.look button:active:not(:disabled) { background: var(--b-press); }
+
+/* The gold "3D" main button (C) with an ink outline (A) and a holo sweep (B). */
+.look :is(.btn-primary, .run-btn-primary, .home-primary) {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  border: var(--look-outline-w) solid #1a1030;
+  border-radius: 16px;
+  background: var(--look-gold);
+  color: var(--look-on-gold);
+  font-weight: var(--look-fw-display);
+  box-shadow: 0 5px 0 var(--look-gold-base), 0 10px 18px rgba(0, 0, 0, 0.28);
+  margin-bottom: 5px;
+  transition: transform 80ms ease-out, box-shadow 80ms ease-out;
+}
+.look :is(.btn-primary, .run-btn-primary, .home-primary):hover:not(:disabled) { background: var(--look-gold-hover); }
+.look :is(.btn-primary, .run-btn-primary, .home-primary):active:not(:disabled) {
+  background: var(--look-gold);
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 var(--look-gold-base), 0 4px 8px rgba(0, 0, 0, 0.25);
+}
+.look :is(.run-btn-primary, .home-primary) {
+  min-height: 60px;
+  font-size: var(--look-fs-main);
+  letter-spacing: -0.01em;
+}
+.look :is(.btn-primary, .run-btn-primary, .home-primary)::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--look-sheen) 0 0 / 300% 100% no-repeat;
+  mix-blend-mode: var(--look-sheen-blend);
+  opacity: var(--look-sheen-hot);
+  animation: look-sheen var(--look-sheen-period) linear infinite;
+}
+.look :is(.btn-primary, .run-btn-primary, .home-primary):disabled::after { display: none; }
+
+.look :is(.btn-danger, .run-btn-danger) {
+  background: var(--look-danger);
+  border-color: #1a1030;
+  color: var(--look-on-danger);
+}
+.look :is(.btn-danger, .run-btn-danger):hover:not(:disabled) { background: var(--color-danger-strong); }
+
+/* Quit run: a soft red button (C). */
+.look .run-btn-quit {
+  background: var(--look-danger-soft);
+  border-color: var(--look-on-danger-soft);
+  color: var(--look-on-danger-soft);
+}
+.look .run-btn-quit:hover:not(:disabled) { background: var(--look-danger-soft); filter: brightness(0.96); }
+
+.look .btn-quiet {
+  border-color: var(--color-text-muted);
+  color: var(--color-text-muted);
+  font-size: var(--fs-sm);
+  font-weight: var(--look-fw-strong);
+}
+.look .btn-step { font-size: 22px; font-weight: var(--look-fw-display); }
+
+.look :is(input[type='number'], textarea) {
+  border: var(--look-outline-w-btn) solid var(--look-outline);
+  border-radius: var(--radius-md);
+  background: var(--look-panel);
+  color: var(--look-ink);
+  font-weight: var(--look-fw-body);
+}
+
+/* ---------- header band (C) ---------- */
+
+.look .screen-main,
+.look .page { --bleed: var(--space-5); }
+
+.look .screen-header {
+  margin: 0 calc(-1 * var(--bleed)) var(--space-4);
+  padding: var(--space-5) var(--bleed) 38px;
+  top: 0;
+  border-radius: 0;
+  background: var(--look-band);
+  box-shadow: none;
+  clip-path: var(--look-band-slant);
+  row-gap: var(--space-3);
+}
+.look .screen-header .muted { color: var(--look-on-band); font-size: 17px; }
+.look .screen-header .muted-sm { color: var(--look-on-band); }
+
+.look .record-chip {
+  background: var(--look-panel);
+  color: var(--look-ink);
+  border: var(--look-outline-w-btn) solid var(--look-outline);
+  font-weight: var(--look-fw-display);
+}
+
+/* The draft's pack count as 20 segments (C). */
+.look .pack-progress { display: flex; gap: 3px; flex-basis: 100%; }
+.look .pack-progress i { flex: 1; height: 9px; border-radius: 3px; background: var(--look-progress-off); }
+.look .pack-progress i.on { background: var(--look-progress-on); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25); }
+.pack-progress { display: none; } /* outside the look (never drawn there before) */
+
+/* ---------- side panel (draft, shop, deckbuild) ---------- */
+
+.look .screen-aside {
+  background: var(--look-panel);
+  border-left: var(--look-outline-w) solid var(--look-outline);
+}
+
+@media (max-width: 700px) {
+  .look .screen-main,
+  .look .page { --bleed: var(--gutter); }
+  .look .screen-header { padding: 20px var(--bleed) 34px; }
+  /* Header actions share one row under the title; the run-screen rule that stretches .run-btn does not apply here. */
+  .look .screen-header-actions { flex: 1 1 100%; justify-content: space-between; }
+  .look .screen-header .run-btn { width: auto; }
+  .look .screen-aside {
+    margin: 0 var(--gutter) var(--gutter);
+    border: var(--look-outline-w) solid var(--look-outline);
+    border-radius: var(--look-radius-panel);
+    box-shadow: var(--look-shadow-panel);
+  }
+}
+
+/* ---------- cards: ink outline, type-colour frame, holo sheen ---------- */
+
+.look .card-img {
+  border-width: 3px;
+  border-radius: var(--look-radius-card);
+  box-shadow: 0 0 0 2px var(--look-outline), var(--look-shadow-card);
+}
+.look .tile-sm .card-img {
+  border-width: 2px;
+  border-radius: 8px;
+  box-shadow: 0 0 0 1.5px var(--look-outline), 0 3px 8px rgba(0, 0, 0, 0.25);
+}
+.look :is(button.tile-lg, button.tile-sm):hover > .card-img,
+.look :is(button.tile-lg, button.tile-sm, div.tile-lg, div.tile-sm):focus-visible > .card-img {
+  box-shadow: 0 0 0 2px var(--look-outline), var(--look-shadow-card-hot);
+}
+.look .card-cap {
+  color: var(--color-text);
+  font-size: var(--fs-sm);
+  font-weight: var(--look-fw-strong);
+}
+
+/* The tile resets itself with an inline `all: unset`; the sheen needs it positioned. The sheen covers
+   the card face only (a 5:7 box from the top), never the caption under it. */
+.look :is(.tile-lg, .tile-sm) { position: relative !important; }
+.look :is(.tile-lg, .tile-sm)::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  aspect-ratio: 5 / 7;
+  border-radius: var(--look-radius-card);
+  pointer-events: none;
+  background: var(--look-sheen) 0 0 / 300% 100% no-repeat;
+  mix-blend-mode: var(--look-sheen-blend);
+  opacity: var(--look-sheen-rest);
+  animation: look-sheen var(--look-sheen-period) linear infinite;
+  transition: opacity var(--motion-fast) ease-out;
+}
+.look .tile-sm::after { border-radius: 8px; }
+/* Staggered, so a row of cards glints one after another rather than in step. */
+.look :nth-child(3n + 2) > :is(.tile-lg, .tile-sm)::after,
+.look :is(.tile-lg, .tile-sm):nth-child(3n + 2)::after { animation-delay: -2s; }
+.look :nth-child(3n + 3) > :is(.tile-lg, .tile-sm)::after,
+.look :is(.tile-lg, .tile-sm):nth-child(3n + 3)::after { animation-delay: -4s; }
+.look :is(button.tile-lg, button.tile-sm):hover::after,
+.look :is(.tile-lg, .tile-sm):focus-visible::after,
+.look .is-picked :is(.tile-lg, .tile-sm)::after { opacity: var(--look-sheen-hot); }
+
+/* A card in the deck or bought: a white cell with a gold ring. */
+.look .is-picked {
+  background: var(--look-panel);
+  outline: var(--look-outline-w) solid var(--look-progress-on);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 calc(var(--look-outline-w) + 4px) var(--look-outline);
+  border-radius: var(--radius-md);
+}
+.look .step-row { font-weight: var(--look-fw-strong); }
+
+.look .card-preview,
+.look .card-zoom img {
+  border: var(--look-outline-w) solid var(--look-outline);
+  border-radius: var(--look-radius-card);
+}
+
+/* ---------- Energy Zone picker (deckbuild) ---------- */
+
+.look .zone-picker { padding: var(--space-3) var(--space-4); margin-bottom: var(--space-3); }
+.look .zone-chip {
+  border: var(--look-outline-w-btn) solid var(--look-outline);
+  border-radius: var(--radius-pill);
+  background: var(--look-btn);
+  color: var(--look-on-btn);
+  font-size: 14px;
+}
+.look .zone-chip[aria-pressed='true'],
+.look .zone-chip[aria-pressed='true']:hover:not(:disabled) {
+  border-color: #1a1030;
+  background: var(--look-gold);
+  color: var(--look-on-gold);
+  font-weight: var(--look-fw-display);
+}
+.look .zone-chip[aria-pressed='true']::after { color: var(--look-on-gold); }
+
+/* ---------- Home ---------- */
+
+.look .home {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 0 0 var(--space-5);
+  background: none;
+  border-radius: 0;
+  box-shadow: none;
+  gap: 0;
+}
+.look .home-band {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--gutter) 44px;
+  background: var(--look-band);
+  clip-path: var(--look-band-slant);
+  text-align: left;
+}
+.look .home h1 {
+  margin: 0;
+  padding: 0;
+  background: none;
+  border-radius: 0;
+  color: var(--look-on-band);
+  font-size: 44px;
+  line-height: 1;
+  letter-spacing: var(--look-track-title);
+}
+.look .home-panel {
+  margin: var(--space-2) var(--gutter) 0;
+  padding: var(--space-5) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: stretch;
+}
+.look .home-note { color: var(--color-text-muted); font-size: 15px; font-weight: var(--look-fw-body); }
+.look .home .home-link {
+  background: none;
+  border: none;
+  color: var(--look-accent);
+  font-size: 15px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.look .home .home-link:hover:not(:disabled) { background: var(--look-panel-2); }
+@media (min-width: 560px) {
+  .look .home { padding-top: var(--space-5); }
+  .look .home-band { border-radius: var(--look-radius-panel) var(--look-radius-panel) 0 0; }
+}
+
+/* The theme toggle: a labelled segmented control. Gold marks the chosen option, so it reads on any surface. */
+.theme-toggle { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-2); }
+.theme-toggle-label {
+  font-size: var(--fs-xs);
+  font-weight: var(--look-fw-display);
+  letter-spacing: var(--look-track-label);
+  text-transform: uppercase;
+}
+.theme-toggle-options {
+  display: inline-flex;
+  border: var(--look-outline-w-btn) solid currentColor;
+  border-radius: var(--radius-pill);
+  padding: 2px;
+  gap: 2px;
+}
+.look .theme-toggle button {
+  min-width: 52px;
+  padding: 0 var(--space-3);
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: inherit;
+  font-size: var(--fs-sm);
+  font-weight: var(--look-fw-strong);
+}
+.look .theme-toggle button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.16); }
+.look .theme-toggle button[aria-pressed='true'],
+.look .theme-toggle button[aria-pressed='true']:hover:not(:disabled) {
+  background: var(--look-gold);
+  color: var(--look-on-gold);
+  font-weight: var(--look-fw-display);
+}
+
+/* ---------- run screen (C) ---------- */
+
+.look .run-panel { padding: var(--space-4) var(--space-4) var(--space-5); gap: var(--space-3); }
+.look .run-title { font-size: var(--look-fs-h2); letter-spacing: var(--look-track-title); }
+.look .run-record { font-size: 17px; font-weight: var(--look-fw-strong); }
+.look .run-sub { margin-top: var(--space-2); }
+.look .run-marks-label { font-size: var(--look-fs-label); font-weight: var(--look-fw-strong); }
+.look .run-marks-row { gap: var(--space-2); }
+.look .run-mark {
+  width: 32px;
+  height: 32px;
+  border: var(--look-outline-w-btn) solid var(--look-mark-empty-border);
+  background: var(--look-mark-empty);
+  font-weight: var(--look-fw-display);
+}
+.look .run-mark-loss { border-radius: 8px; }
+.look .run-mark.filled { color: #fff; border-color: var(--look-outline); }
+.look .run-mark-win.filled { background: var(--look-win); }
+.look .run-mark-loss.filled { background: var(--look-loss); }
+.look .run-next { width: 100%; }
+.look .run-opponent { font-weight: var(--look-fw-strong); }
+.look .run-battles { max-width: none; gap: var(--space-2); }
+.look .run-battle {
+  background: var(--look-panel-2);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
+  font-weight: var(--look-fw-body);
+}
+.look .run-battle[data-result='loss'] strong { color: var(--look-loss-text); font-weight: var(--look-fw-display); }
+.look .run-battle[data-result='win'] strong { color: var(--look-win-text); font-weight: var(--look-fw-display); }
+.look .run-battle[data-result='tie'] strong { color: var(--color-text-muted); font-weight: var(--look-fw-display); }
+
+.look .run-confirm {
+  background: var(--look-panel);
+  border: var(--look-outline-w) solid var(--look-danger);
+  border-radius: 16px;
+  font-weight: var(--look-fw-strong);
+}
+.look .screen-header .run-confirm { box-shadow: var(--look-shadow-panel); }
+
+/* ---------- end of run ---------- */
+
+.look .run-summary { padding: var(--space-5) var(--space-4); margin-top: var(--space-5); }
+.look .run-summary h1.run-status {
+  margin: 0 0 var(--space-2);
+  font-size: var(--look-fs-title);
+  letter-spacing: var(--look-track-title);
+  text-transform: none;
+  color: var(--color-text);
+}
+.look .run-summary .run-record { margin-bottom: var(--space-1); }
+.look .run-tally { font-weight: var(--look-fw-strong); color: var(--color-text-muted); }
+/* A won run is the big highlight: a gold title plate with the holo sweep. */
+.look .run-summary[data-status='won'] h1.run-status {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  display: inline-block;
+  padding: var(--space-2) var(--space-4);
+  border: var(--look-outline-w) solid #1a1030;
+  border-radius: 16px;
+  background: var(--look-gold);
+  color: var(--look-on-gold);
+  box-shadow: 0 5px 0 var(--look-gold-base);
+}
+.look .run-summary[data-status='won'] h1.run-status::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--look-sheen) 0 0 / 300% 100% no-repeat;
+  mix-blend-mode: var(--look-sheen-blend);
+  opacity: var(--look-sheen-hot);
+  animation: look-sheen var(--look-sheen-period) linear infinite;
+}
+.look .run-summary[data-status='lost'] h1.run-status { color: var(--look-loss-text); }
+
+/* ---------- past runs ---------- */
+
+.look .history-entry { padding: var(--space-3) var(--space-4); margin-bottom: var(--space-3); }
+.look .history-entry h2 { font-weight: var(--look-fw-display) !important; font-size: 16px !important; }
+.look .count-w { color: var(--look-win-text); font-weight: var(--look-fw-display); }
+.look .count-l { color: var(--look-loss-text); font-weight: var(--look-fw-display); }
+
+/* ---------- motion ---------- */
+
+/* The sheen sweeps across in the first third of each period, then rests off the card. */
+@keyframes look-sheen {
+  0% { background-position: 0 0; }
+  35%, 100% { background-position: 100% 0; }
+}
+
+/* Reduced motion: the sheen is off (owner, 2026-10-28); the main button does not move. */
+@media (prefers-reduced-motion: reduce) {
+  .look :is(.tile-lg, .tile-sm)::after,
+  .look :is(.btn-primary, .run-btn-primary, .home-primary)::after,
+  .look .run-summary[data-status='won'] h1.run-status::after {
+    animation: none;
+    transition: none;
+    display: none;
+  }
+  .look :is(.btn-primary, .run-btn-primary, .home-primary) { transition: none; }
+  .look :is(.btn-primary, .run-btn-primary, .home-primary):active:not(:disabled) { transform: none; }
+}

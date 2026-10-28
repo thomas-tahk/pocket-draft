@@ -1,0 +1,11 @@
+/* Replay is read-only: nothing on the board takes a tap; only the replay bar does. */
+.rp-root .bt-zone { pointer-events: none; }
+.rp-root .bt-endturn { display: none; }
+.rp-top { position: absolute; z-index: 40; top: calc(var(--u) * 8); left: calc(var(--u) * 84); display: flex; align-items: center; }
+.rp-count { background: var(--color-surface); color: var(--color-text); font-weight: var(--fw-bold); font-size: calc(var(--u) * 13); padding: 4px 10px; border-radius: var(--radius-md); }
+.rp-bar { position: absolute; z-index: 40; top: calc(var(--u) * 392); left: 50%; transform: translateX(-50%); display: flex; gap: calc(var(--u) * 8); }
+.rp-btn { min-width: 44px; min-height: 44px; padding: 0 12px; border: 3px solid var(--color-navy-deep); border-radius: var(--radius-pill); background: var(--color-highlight); color: var(--color-navy-deep); font-weight: var(--fw-heavy); font-size: 16px; cursor: pointer; }
+.rp-btn:disabled { background: var(--color-border); color: var(--color-text-muted); cursor: default; }
+.rp-btn:focus-visible { outline: 3px solid #fff; outline-offset: 2px; box-shadow: 0 0 0 6px var(--color-navy-deep); }
+.rp-caption { position: absolute; z-index: 40; left: calc(var(--u) * 80); right: calc(var(--u) * 80); top: calc(var(--u) * 56); margin: 0; text-align: center; background: var(--color-navy-deep); color: #fff; font-size: calc(var(--u) * 12); line-height: 1.25; padding: 4px 8px; border-radius: var(--radius-sm); pointer-events: none; }
+.rp-msg { color: #fff; padding: 24px; display: flex; gap: 12px; align-items: center; }

@@ -36,3 +36,9 @@ downloads itself on first build. Do not "fix" the `go.mod`.
 The live site runs the Go engine as WebAssembly (`public/pd.wasm`). Any change to
 Go sources under `engine/` or `server/` must be followed by `npm run build:wasm`
 and the rebuilt binary committed — CI fails the PR otherwise.
+
+### Battle board traps
+
+Every card face drawn on the board must be holdable to zoom: give its wrapper
+`data-zoom={card.id}` and make `zoomCardAt` (`src/battle/useZoom.ts`) find it.
+The Stadium shipped without it in M4 and the owner caught it.

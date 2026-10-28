@@ -1,6 +1,5 @@
 import type { Card, RawCard, SetInfo } from '../types/card';
 import {
-  getFreeUniversals,
   keepWorkingText,
   loadDraftPoolFilter,
   loadRawCards,
@@ -9,12 +8,12 @@ import {
   toFullCardPool,
 } from './loader';
 import { buildPackComposition, type PackComposition, type PackId } from './packs';
+import { setSupportTypes } from '../draft/weights';
 
 export type CardPool = {
   allCards: RawCard[];
   draftableCards: Card[]; // pool from which packs are drawn (final-evos only)
   fullCards: Card[]; // includes under-evolutions; used at deckbuild
-  universals: Card[]; // free universal Trainers (Poké Ball, Professor's Research)
   // Ids of the cards the engine can play. Shop and deckbuild offer only these,
   // so every deck is 20 working cards (owner 2026-10-19 (1)).
   working: ReadonlySet<string>;
@@ -28,12 +27,13 @@ export async function loadCardPool(): Promise<CardPool> {
     loadSets(),
     loadDraftPoolFilter(),
   ]);
+  if (!poolFilter.supportTypes) console.warn('draft-pool.json has no supportTypes; Trainer type support falls back to the types their text names');
+  setSupportTypes(poolFilter.supportTypes ?? null);
   const draftableCards = keepWorkingText(toDraftablePool(allCards), poolFilter);
   const fullCards = toFullCardPool(allCards);
-  const universals = getFreeUniversals(allCards);
   const working = new Set(poolFilter.working);
   const packs = buildPackComposition(draftableCards, sets);
-  return { allCards, draftableCards, fullCards, universals, working, sets, packs };
+  return { allCards, draftableCards, fullCards, working, sets, packs };
 }
 
 export type { PackComposition, PackId } from './packs';

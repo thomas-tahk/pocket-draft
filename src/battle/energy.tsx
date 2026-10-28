@@ -5,11 +5,10 @@ import { ENERGY_PATH } from './energyGlyphs';
 // Energy symbols (M3-1): the official TCG symbol per type (energyGlyphs.ts),
 // white on the type's colored disc.
 
-export const ENERGY_COLOR: Record<string, string> = {
-  Grass: '#3a9d3f', Fire: '#e2481f', Water: '#1f86de', Lightning: '#e8b800',
-  Psychic: '#9a4fc6', Fighting: '#b8611f', Darkness: '#2c3646', Metal: '#7f8d9b',
-  Dragon: '#a88a1c', Colorless: '#9da3ad',
-};
+// The colours live in src/tokens.css (--type-*).
+export const ENERGY_COLOR: Record<string, string> = Object.fromEntries(
+  ['Grass', 'Fire', 'Water', 'Lightning', 'Psychic', 'Fighting', 'Darkness', 'Metal', 'Dragon', 'Colorless'].map((t) => [t, `var(--type-${t.toLowerCase()})`]),
+);
 
 // The printed [X] letters in card text, and the type each one means.
 const LETTER_TYPE: Record<string, string> = {
@@ -18,7 +17,7 @@ const LETTER_TYPE: Record<string, string> = {
 };
 
 export function EnergyIcon({ type, size = 14, spent = false, testId = 'energy-icon' }: { type: string; size?: number; spent?: boolean; testId?: string }) {
-  const style = { '--s': size, background: ENERGY_COLOR[type] ?? '#b9bcc8' } as CSSProperties;
+  const style = { '--s': size, background: ENERGY_COLOR[type] ?? 'var(--type-spent)' } as CSSProperties;
   return (
     <span className="bt-energy" style={style} data-testid={testId} data-type={type} data-spent={spent} title={spent ? 'used' : type} aria-label={spent ? 'energy used' : `${type} energy`}>
       {!spent && <svg viewBox="0 0 24 24" aria-hidden="true" fill="#fff"><path d={ENERGY_PATH[type]} /></svg>}

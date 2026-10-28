@@ -1,8 +1,16 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { Announcer } from './components/Announcer';
 import { bootWasmEngine } from './game/wasmBoot';
+import { applyTheme, readTheme } from './theme';
+import './tokens.css';
 import './index.css';
+import './screens.css';
+import './look.css';
+
+// index.html's inline script sets it before the first paint; this is the backstop.
+applyTheme(readTheme());
 
 const root = createRoot(document.getElementById('root')!);
 
@@ -10,6 +18,7 @@ function render() {
   root.render(
     <StrictMode>
       <App />
+      <Announcer />
     </StrictMode>,
   );
 }

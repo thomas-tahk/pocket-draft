@@ -8,7 +8,7 @@ const isNewGame = (req: Request) => req.url().endsWith('/api/new') && req.method
 test('Auto-draft lands on review and plays its 20', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Auto-draft (test)' }).click();
-  const play = page.getByRole('button', { name: '▶ Play deck' });
+  const play = page.getByRole('button', { name: 'Next battle' });
   await expect(play).toBeVisible();
 
   const [req] = await Promise.all([page.waitForRequest(isNewGame), play.click()]);

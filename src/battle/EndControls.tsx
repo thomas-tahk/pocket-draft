@@ -30,13 +30,16 @@ export function endTurnWarning(view: GameView): string | null {
   return `You can still ${what}. End your turn?`;
 }
 
-export function GameMenu({ onConcede }: { onConcede: () => void }) {
+export function GameMenu({ onConcede, onLeave }: { onConcede: () => void; onLeave?: () => void }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="bt-menu">
       <button className="bt-menu-button" aria-label="Menu" data-testid="menu" onClick={() => setOpen(!open)}>☰</button>
       {open && (
-        <button className="bt-btn bt-menu-item" data-testid="menu-concede" onClick={() => { setOpen(false); onConcede(); }}>Concede</button>
+        <>
+          <button className="bt-btn bt-menu-item" data-testid="menu-concede" onClick={() => { setOpen(false); onConcede(); }}>Concede</button>
+          {onLeave && <button className="bt-btn bt-menu-item" data-testid="menu-leave" onClick={() => { setOpen(false); onLeave(); }}>Leave battle</button>}
+        </>
       )}
     </div>
   );
@@ -45,7 +48,7 @@ export function GameMenu({ onConcede }: { onConcede: () => void }) {
 const RESULT = { win: 'Win', loss: 'Loss', tie: 'Tie', '': '' } as const;
 const REASON = { points: '3 points', no_pokemon: 'No Pokémon left', concede: 'Concede', turn_cap: 'Turn cap', '': '' } as const;
 
-export function EndScreen({ view, onRematch, onBack }: { view: GameView; onRematch: () => void; onBack: () => void }) {
+export function EndScreen({ view, canRematch, onRematch, onBack }: { view: GameView; canRematch: boolean; onRematch: () => void; onBack: () => void }) {
   const [you, opp] = view.players;
   return (
     <div className="bt-overlay" data-testid="end-screen">
@@ -55,7 +58,7 @@ export function EndScreen({ view, onRematch, onBack }: { view: GameView; onRemat
         <p data-testid="end-score">You {you.points} – {opp.points} Opponent</p>
         <div className="bt-dialog-buttons">
           <button className="bt-btn" onClick={onBack}>Back</button>
-          <button className="bt-btn bt-btn-main" onClick={onRematch}>Rematch</button>
+          {canRematch && <button className="bt-btn bt-btn-main" onClick={onRematch}>Rematch</button>}
         </div>
       </div>
     </div>

@@ -352,8 +352,8 @@ const idOf = (title: string) => title.split(' · ').pop() ?? '';
 // (same draft as draft-to-battle.spec.ts).
 async function draftAndBuild(page: Page) {
   const names = new Set<string>();
-  for (let pack = 1; pack <= 16; pack++) {
-    await expect(page.getByText(`Pack ${pack} / 16`)).toBeVisible();
+  for (let pack = 1; pack <= 20; pack++) {
+    await expect(page.getByText(`Pack ${pack} / 20`)).toBeVisible();
     const offer = page.locator('main button[title]');
     await expect(offer).toHaveCount(5);
     const ids = (await offer.evaluateAll((els) => els.map((e) => e.getAttribute('title') ?? ''))).map(idOf);
@@ -377,7 +377,7 @@ test('a whole game by gestures only, from a finished draft', async ({ page, requ
   await page.goto('/');
   await page.getByRole('button', { name: 'Start draft' }).click();
   await draftAndBuild(page);
-  await page.getByRole('button', { name: /Play deck/ }).click();
+  await page.getByRole('button', { name: /Next battle/ }).click();
   await expect(page.getByTestId('battle-board')).toBeVisible();
   const ctx: Ctx = { page, api: request, label: 'draft', step: 'open' };
   await playToEnd(ctx);

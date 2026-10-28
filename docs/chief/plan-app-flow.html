@@ -1,0 +1,100 @@
+<title>Pocket Draft Run Plan</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; milestones as stacked bands, issues as a numbered build sequence */
+:root{
+  --bg:#f3f6fb; --surface:#ffffff; --fg:#14213a; --muted:#4d5b75; --line:#d3dbe8;
+  --accent:#1f5fd6; --win:#1d8a4a; --loss:#c23a2b;
+  --display:"Nunito",ui-rounded,system-ui,sans-serif; --body:"Source Sans 3",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1626;--surface:#17223a;--fg:#e8eefa;--muted:#a6b3cc;--line:#2c3a57;--accent:#6ea2ff;--win:#4cc985;--loss:#ff7a6b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1626;--surface:#17223a;--fg:#e8eefa;--muted:#a6b3cc;--line:#2c3a57;--accent:#6ea2ff;--win:#4cc985;--loss:#ff7a6b;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:16px/1.55 var(--body)}
+main{max-width:760px;margin:0 auto;padding-block:32px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:28px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.2}
+h1{font-size:1.9rem;font-weight:800} h2{font-size:1.3rem;font-weight:800} h3{font-size:1.02rem;font-weight:800}
+p{margin:0} .muted{color:var(--muted)}
+.gate{background:var(--surface);border:2px solid var(--accent);border-radius:12px;padding:16px 18px;display:grid;gap:6px}
+.label{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.pips{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.pip{width:14px;height:14px;border-radius:50%;border:2px solid var(--win)} .pip.l{border-color:var(--loss)}
+section{display:grid;gap:12px}
+ol.issues{list-style:none;margin:0;padding:0;display:grid;gap:10px;counter-reset:i}
+ol.issues li{counter-increment:i;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px 12px 48px;position:relative;display:grid;gap:4px;min-width:0}
+ol.issues li::before{content:counter(i);position:absolute;left:14px;top:12px;font:800 1rem var(--display);color:var(--accent)}
+.check{font-size:.92rem;color:var(--muted)} .check b{color:var(--fg);font-weight:600}
+.after{font-size:.85rem;color:var(--muted)}
+.ms{display:grid;gap:8px} .ms div{border-left:4px solid var(--line);padding:4px 0 4px 12px;display:grid;gap:2px}
+.ms div.now{border-left-color:var(--accent)}
+ul{margin:0;padding-left:20px;display:grid;gap:4px}
+</style>
+<main>
+  <header style="display:grid;gap:8px">
+    <span class="label">Plan for approval · 24 Oct 2026</span>
+    <h1>Draft runs, start to finish</h1>
+    <p class="muted">What gets built next and how I'll know it works. One approval covers all of it. After that the agents build it and I bring you the finished result.</p>
+  </header>
+
+  <div class="gate">
+    <span class="label">Done when</span>
+    <p>On my phone I open the app, tap Draft, draft and build a deck, then play battles from the run screen until I hit 5 wins or 2 losses. Each battle's result and replay shows on that screen, and it looks and moves like Pocket. I can abandon the draft, leave a battle, or quit the run at any point.</p>
+    <div class="pips" aria-label="a run: five wins or two losses"><span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span><span style="width:10px"></span><span class="pip l"></span><span class="pip l"></span></div>
+  </div>
+
+  <section>
+    <h2>What gets built (8 pieces, in build order)</h2>
+    <ol class="issues">
+      <li><h3>The app keeps score of a run</h3>
+        <p>A run is your deck plus its battles. Each battle's result is recorded when it ends, and the run ends on its own at 5 wins or 2 losses. Each battle's game record is saved too, so it can be replayed.</p>
+        <p class="check"><b>Check:</b> a browser test concedes a battle against the bot, and the run shows 0–1.</p></li>
+      <li><h3>Opening screen</h3>
+        <p>Draft (or Continue run, if one is going) is the big button. Practice and Past runs are small. Ranked and Custom don't appear. Auto-draft (test) stays as a small link.</p>
+        <p class="check"><b>Check:</b> a browser test opens the app with and without a run in progress, and the right button shows.</p></li>
+      <li><h3>Run screen</h3>
+        <p>Your home base between battles. It shows your record as 5 win marks and 2 loss marks, your deck, a Next battle button that clearly says the opponent is a bot, each past battle with its result and a Replay link, and Quit run.</p>
+        <p class="check"><b>Check:</b> a browser test plays two battles and sees both on the run screen, in order.</p>
+        <p class="after">After 1</p></li>
+      <li><h3>Leaving and quitting</h3>
+        <p>You can abandon a draft during picks, the shop or deckbuild, after confirming on screen. You can leave a battle: the run screen then counts down 90 seconds to get back, and after that the battle is a loss. This still works if you closed the tab. Quit run ends the run early and records it as quit.</p>
+        <p class="check"><b>Check:</b> browser tests with a fake clock. Leave and return at 60 s and the game resumes. Leave for 91 s and it's a loss. Reload during a battle and get back in.</p>
+        <p class="after">After 1 and 3</p></li>
+      <li><h3>End of run</h3>
+        <p>At 5 wins or 2 losses, a summary screen shows the result, every battle and Draft again. The run lands in Past runs with its record filled in automatically. Older runs where you typed the wins and losses yourself stay editable.</p>
+        <p class="check"><b>Check:</b> a browser test plays a run to 2 losses and sees the summary and the Past runs entry.</p>
+        <p class="after">After 1 and 3</p></li>
+      <li><h3>Replay</h3>
+        <p>Replay opens a finished battle and steps through it move by move, with back, forward and play, on the same board. You can watch it but not change it. Branching into "what if" play comes later.</p>
+        <p class="check"><b>Check:</b> a browser test replays a finished battle to its last move, and the board matches how the game ended.</p>
+        <p class="after">After 1</p></li>
+      <li><h3>Pocket look</h3>
+        <p>One shared look across the opening screen, draft, shop, deckbuild, run screen and end screen: Pocket-style colours, type, card frames and buttons. The battle board joins it, and screens move from one to the next with short transitions. Reduced motion turns the transitions off.</p>
+        <p class="check"><b>Check:</b> screenshots of every screen at phone size (390 px) and desktop size (1440 px), which I review, plus a browser test that reduced motion skips the transitions. You judge the look when you play it.</p>
+        <p class="after">After 2–5</p></li>
+      <li><h3>Accessibility pass</h3>
+        <p>The bar you set: everything works by keyboard, focus is visible, colour is never the only signal, touch targets are 44 px, and motion can be reduced. Menus and screens also work with a screen reader.</p>
+        <p class="check"><b>Check:</b> a browser test drives a whole run by keyboard only, plus a check that every button is at least 44 px.</p>
+        <p class="after">Last</p></li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>What comes after</h2>
+    <div class="ms">
+      <div class="now"><h3>Draft runs, start to finish</h3><p class="muted">This page. Building now, once you approve.</p></div>
+      <div><h3>Real opponents</h3><p class="muted">A queue that matches you with a real player. After 2 minutes with no match, you play a bot that uses another player's drafted deck, always marked as a bot. This needs a game server online, which the site doesn't have today. Research recommends one always-on Fly.io server at about $3.69 a month, using the Go server we already have and no new libraries. That's your approval when we get there.</p></div>
+      <div><h3>Remaining card effects</h3><p class="muted">The 16 open card-text and icon pieces already filed (coin flips, conditions, the rest of the attack texts, the damage preview). They keep their place in the queue.</p></div>
+      <div><h3>Constructed format, with Practice</h3><p class="muted">Parked. Practice vs bot belongs here eventually. Your roguelike idea is parked too.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Calls I made, so you can overrule them</h2>
+    <ul>
+      <li>Runs and replays are saved in your browser only, so they're private and free. Saving them to an account comes with the real-opponents work.</li>
+      <li>Leaving a battle against the bot uses the same 90-second rule as a real match, so it behaves the same once real opponents exist.</li>
+      <li>Older history entries keep their hand-typed wins and losses. New runs count them automatically.</li>
+      <li>Your hover-zoom complaint (hovering a card while drafting opens a big zoom over the offers) gets fixed in the Pocket look piece.</li>
+    </ul>
+  </section>
+</main>

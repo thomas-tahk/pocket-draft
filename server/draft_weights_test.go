@@ -31,15 +31,17 @@ func TestWeightOf(t *testing.T) {
 	colorless := draftCard{rawCard: rawCard{CardType: "Colorless"}}
 	fire := draftCard{rawCard: rawCard{CardType: "Fire"}}
 
-	if w := weightOf(trainer, tally); w != 1 {
+	if w := weightOf(trainer, tally, synergy{}); w != 1 {
 		t.Errorf("weightOf(Trainer) = %v, want 1", w)
 	}
-	if w := weightOf(colorless, tally); w != 1 {
+	if w := weightOf(colorless, tally, synergy{}); w != 1 {
 		t.Errorf("weightOf(Colorless) = %v, want 1", w)
 	}
-	// TYPE_WEIGHT_COEF is 0 (a dead no-op term, ported as-is) so even a heavy
-	// tally must not move the weight off 1.
-	if w := weightOf(fire, tally); w != 1 {
-		t.Errorf("weightOf(Fire, heavy tally) = %v, want 1 (TYPE_WEIGHT_COEF=0)", w)
+	// weight = 1 + coef × picks of that type, picks capped at 4; coef is 2.
+	if w := weightOf(fire, typeTally{"Fire": 3}, synergy{}); w != 7 {
+		t.Errorf("weightOf(Fire, 3 Fire picks) = %v, want 7", w)
+	}
+	if w := weightOf(fire, tally, synergy{}); w != 9 {
+		t.Errorf("weightOf(Fire, 5 Fire picks) = %v, want 9 (capped at 4 picks)", w)
 	}
 }

@@ -1,0 +1,75 @@
+- #113 · added from owner feedback 2026-10-24 (phone: too tall, left-skewed margins) · measured 228 px column, 162 px right gap, 1562 px page
+- plan · m4-app-flow branches off draft-rework (unmerged PR #112) · merge order: #112 first
+- #113 · phone = ≤700 px; offers 2-wide; drafted list below offers (not collapsible); header not sticky on phone · long-press (350 ms) = zoom on touch, hover only for mouse
+- #114 · ties (both hit 3 points / both out of Pokémon / turn cap) are recorded as "tie": count toward neither 5W nor 2L, run continues · DECISION for owner (alt: tie = loss)
+- #114 · client picks the seed (≤2^53, JSON-safe); game record exposed only after game over (no mid-game info leak)
+- #114 · rematch after a battle counts as the next battle of the run
+- #115 · any action that starts over (new draft, Auto-draft, Home/reset) archives the current run first: active → quit, saved on its deck's History entry (`run` field) · nothing is silently wiped; end-of-run screen reads it from there
+- #115 · (superseded by #117: Home first on reload, except a battle in progress (→ battle) or a leave countdown (→ run screen)) Home is always the first screen on reload, finished runs included · Practice never records into the run
+- #115 · confirm copy "This ends your current run (W–L)." / "End run and draft" / "Keep run" · DECISION for owner (wording)
+- #115 · Auto-draft (test) creates no History entry, so leaving an auto-draft run drops it instead of archiving · it's a test shortcut; revisit if Auto-draft stays player-facing
+- #116 · mid-run "Start new draft"/"Home" confirm: "This quits your run at W–L." / "Quit run and leave" / "Keep playing" · DECISION for owner (wording); confirm renders in the run panel, not beside the header buttons
+- #116 · Rematch hidden once the run is over; while active, Rematch = next battle of the run
+- #118 · summary replaces the whole deck-review screen once a run is not active (RunView renders RunSummary); no deck shown on it · keeps one clear next step
+- #118 · summary copy invented: "Run won / Run lost / Run quit", "N wins, N losses", "No battles were played.", "Draft again", "Home" · wording for owner
+- #118 · a quit run with 0 battles still shows the summary · same screen for every ended run
+- #118 · Past runs rows with a `run` show W/L from runScore plus "Run won/lost/quit" label; expanded view shows "Record W–L, from the run." instead of inputs; notes stay editable · only W/L is read-only per the issue
+- #118 · heading stays "Draft history" (existing test pins it) though the button says Past runs · not renaming
+- #118 · done check seeds a finalized deck + history entry via localStorage, since Auto-draft makes no history entry · so the run can archive to Past runs
+- #119 · replay caption wording (placeholder, DECISION for owner): "Battle start", "You Attacked · <card>" (History's labels, You/Opponent), end lines "You win 3–1" / "You lose 1–3" / "Tie 3–3" / "You conceded — Opponent wins" / "Opponent conceded — You win"
+- #119 · Play advances one step every 700 ms; Play at the last step restarts from step 0 · DECISION for owner (pace)
+- #119 · placement: Exit + Back / Play / Forward sit in the gap between the two Actives, "Step n / N" top-left beside the History button, caption under the opponent's points row (overlaps the top of the opponent's hand) · DECISION for owner (layout)
+- #119 · no card zoom or card sheets in replay (board taps are off); stepping redraws instantly, no slide animation
+- #119 · error copy "This replay no longer matches its battle." for any record that fails to rebuild to its recorded result; a ?replay index with no battle goes to the run screen
+- #117 · copy "Leave battle" (in-battle menu, under Concede; no confirm, since returning within 90 s costs nothing) · issue named the label; confirm skipped because it is reversible
+- #117 · copy on the run screen: "You left your battle. It counts as a loss in N s." + "Return to battle" · wording invented; DECISION for owner
+- #117 · copy "Abandon draft" button (was "Cancel draft") and on-screen confirm "Abandon this draft? You will lose all picks so far." (or "all picks and purchases" / "all picks and deck choices") with "Abandon draft" / "Cancel" · issue says abandon and Cancel keeps the draft; wording invented
+- #117 · copy "This battle could not be resumed." + "Start a new battle" when a saved battle no longer rebuilds (e.g. the engine changed) · needed an error state with a way out; starting over drops the saved battle without a loss
+- #117 · the client cannot see the bot's moves or deck mid-game (the server hides the record until game over), so the saved log is the app's own calls in order: each move the player made, and "bot" for each bot step. The bot is deterministic, so replaying them from the seed rebuilds the same game · no Go change allowed; bot deck is not saved, it comes from the seed
+- #117 · game-store calls to the server (new game, move, bot step) now run one at a time · two in flight (React StrictMode starts a game twice in dev) could be applied in a different order than the log, and a rebuild then diverged (seen in about half of runs)
+- #117 · a timed-out battle is finished as a Concede appended to the log, and the game's own record (full actions, bot deck) is stored, so the loss replays; if the rebuild fails, the loss is still recorded with an empty action list and its replay shows the mismatch error · issue said "actions so far"; a replay needs a finished game
+- #117 · the 90 s clock is wall time from the saved leftAt; the loss is recorded by an app-level timer (works from any screen) and on load when the time already passed · tab closed counts the same as tab open
+- #117 · returning to the battle clears the countdown at once, so it cannot expire while the game is rebuilding; Quit run, abandon, or a new draft drops a saved battle without recording it
+- #117 · reload mid-battle goes straight back into the battle (skips Home); reload during the countdown opens the run screen with the countdown · otherwise the owner lands on Home with a battle pending
+- #117 · practice battles: "Leave battle" just exits, no save, no countdown · per the issue brief
+- #118 · Past runs reads the live run for the entry whose id matches run.historyId (no copy kept in history until archived) · one source of truth, no per-battle writes
+- #118 · summary keeps Copy code / Copy link / Export JSON (shared DeckShare component, same handlers as the review screen) · finished runs must not lose features
+- #117 · Home first on reload, except a battle in progress (→ battle) or a leave countdown (→ run screen) · supersedes the #115 line above
+- #117 · closed-tab rule: hiding or closing the page mid-battle (pagehide, or the tab going hidden, since iOS often skips pagehide) stamps closedAt, separate from the menu's leftAt. Back or reloaded within 90 s: straight into the battle. Past 90 s: the battle is a loss, recorded on return · so closing the tab cannot keep a battle alive forever; no countdown is shown for this
+- #117 · copy "Try again" added before "Start a new battle" on the could-not-resume screen
+- #117 · each saved bot step carries the action count after it; a rebuild that disagrees counts as could-not-resume · catches a bot that changed between versions
+- #124 · "picked" matches by exact card name across printings; "Snorlax" and "Snorlax ex" stay separate cards · same rule as the 2-copy cap
+- #124 · bot deckbuild now keeps the bot's pick order instead of cheapest line first · with every pick single, cheapest-first filled bot decks with Basics (decks holding an evolution fell from 90 to 29 of 100)
+- #125 · lean = 1 + 2 × picks of the type (was 1 ×), for that type's Pokémon and for Trainers that support it; no cap (8 picks → weight 17) · after 3 Water picks Water Pokémon go 14% → 49% of slots, other types keep ~27%
+- #125 · a Trainer "supports" a type if its text names it ("Water Pokémon", "[W]", "Water Energy") or it is in the hand table: Blaine Fire · Koga Darkness · Marlon Water+Psychic · Lana Water · Hala Fighting · Nemona, Clemont, Clemont's Backpack, Sophocles Lightning · Jasmine Metal · Iris, Drayden Dragon · Piers, Team Galactic Grunt Darkness · Mallow Grass+Psychic · Acerola, Budding Expeditioner Psychic · Squirt Bottle excluded (it hurts Fire)
+- #125 · multi-type Trainers (Hau, Cynthia, Barry, Cheren, Whitney, Gladion) left out of the table · they span several types
+- #125 · Stadiums that boost a type for both players (Arena of Antiquity, Peculiar Plaza) count as that type's support
+- #125 · picking a Trainer adds nothing to the type tally · the lean follows Pokémon picks only
+- #128 · Eevee ex's "Veevee ’volve" works for a Stage 1 played from hand only; deck-evolve effects (Rare Candy, Quick-Grow Extract, Wallace…) still need the name "Eevee" · the card says "if you play it from your hand onto this Pokémon"
+- #128 · an effect that removes Abilities (Alolan Muk) also stops Eevee ex taking an Eeveelution · it is an Ability
+- #128 · Eevee ex offers ×3 once any Pokémon that evolves from Eevee is picked (not stacked with other boosts); an Eeveelution still grants plain Eevee free at deckbuild, never Eevee ex
+- #126 · a picked Trainer whose text names a Pokémon raises that Pokémon ×3, and the reverse; never stacked with other boosts; "Alolan/Galarian/Hisuian/Paldean/Team Rocket's X" doesn't name plain X; "evolves from X" doesn't name X; text naming only "X ex" matches only the ex card · owner point 2, both directions
+- #126 · hand groups (Trainer ↔ Pokémon only, never Pokémon ↔ Pokémon): each Fossil ↔ its own line's final Pokémon · Eevee Bag ↔ Pokémon that evolve from Eevee (not Eevee ex) · Ancient Booster Energy Capsule + Professor Sada ↔ Ancient Pokémon · Future Booster Energy Capsule + Professor Turo ↔ Future Pokémon · Lusamine, Beast Wall, Beastite ↔ Ultra Beasts; Ancient/Future/Ultra Beast membership comes from the engine's own lists
+- #126 · Koraidon and Miraidon count as Ancient / Future by name, including the older B2a printings that the engine's Professor Sada / Iron Valiant effects exclude · open: does Pocket print them as Ancient/Future?
+- #127 · Energy Zone picker sits in a bordered box between deckbuild's intro and the card sections: heading "Energy Zone (n / 3)", line "Your Energy Zone makes only these types, in every battle of this run. Choose 1 to 3.", note "Starting from the energy your deck's attacks need." until touched; 8 pill chips (Grass…Metal; no Colorless or Dragon zone energy exists); can't deselect the last; at 3, others disable with "Up to 3: deselect one to change."
+- #127 · default = the engine's DefaultEnergyTypes (typed attack costs, most-needed first, max 3) · owner 2026-10-18: "default to energy requirements of pokemon in deck"
+- #127 · a deck with no typed attack cost shows "Energy Zone: Colorless only" and sends nothing (engine falls back to Colorless) · the choice is locked once the deck is finalized; a type picked by hand doesn't follow later deck edits
+- #120 · Pocket look: light UI, tokens in src/tokens.css (one place to retune) · teal #0a7ea4 primary (Pocket's brighter cyan fails 4.5:1 with white text) · white pill secondary buttons with teal border · 12–16 px rounded panels, soft shadows · ui-rounded system font, no web font · card frames bordered in the card's type colour · screenshots in docs/chief/look/
+- #120 · dark mode kept: a dark navy token set under prefers-color-scheme: dark · removing it would be removing a feature
+- #120 · screens fade in over 160 ms (opacity only); reduced motion: none · wins/losses marks now green/red (shape and label still carry meaning)
+- #120 · draft hover preview docks in the side panel (desktop, > 700 px) so it never covers the offers; narrower mouse windows keep the cursor-follow preview; touch keeps long-press
+- #127 · with an empty deck the Energy picker reads "Energy Zone: Colorless only" until a Pokémon is added · cosmetic, owner's call
+- #121 · screen readers hear rarity as words ("Pikachu, 2 diamonds, EX"; ☆ "stars", ♕ "crown") · sr-only wording
+- #121 · keyboard focus on a card (or its +/−) opens its large preview; on a phone it sits above or below the card, whichever has room, never over it; Escape hides it until focus moves to another card
+- #121 · focus goes to the screen's heading on every screen change and to the first card of the next pack after a pick; confirms focus the safe button and close on Escape
+- #121 · the battle's own end screen (Back, Rematch, History: 34–43 px) is left as board scope, not made 44 px · "board later" in the issue
+- M4 review 1 · type lean capped at 4 picks of one type (weight tops out at 9) · keeps 2-3-pick strength; other-typed Pokémon stay ~28-31% of slots over a 19-pick mono-Water draft (uncapped: 12.8%); chosen by the builder, numbers in server/draft_weights.go
+- M4 review 2 · a named Pokémon's types are the union over all its printings in cards.json (Acerola gains Fighting from Palossand's Fighting printings, Team Galactic Grunt gains Fighting from the B3 Croagunk) · "the card types of the Pokémon its text names"; any printing may be in the deck
+- M4 review 3 · Koraidon ex and Miraidon ex (B3a) stay Ancient / Future; only the B2a Koraidon and Miraidon drop out · the engine's tagged-printing list (server/texts_3_11.go) has them; cards.json carries no tag and the card images could not be checked from here · open: does the B3a Koraidon ex / Miraidon ex print the tag?
+- M4 review 3 · battle follows the same rule: the Booster Energy Capsules now read the tagged-printing list, so a B2a Koraidon / Miraidon no longer gets +40 HP / +20 damage · one rule for draft and battle
+- 2026-10-28 · type lean cap = 4 picks (weight tops out at 9); off-type share stays ≥ ~88% of its 3-pick value · owner: "keep the strength, add a cap"
+- 2026-10-28 · Koraidon ex / Miraidon ex (B3a) still count as Ancient / Future: they are in the engine's tagged-printing list; only the B2a printings are out · owner: "counts only if the card says so"
+- 2026-10-28 · theme toggle: Auto / Light / Dark on Home's header, saved in localStorage; Auto follows the phone · owner: "follow the phone setting plus a manual toggle"
+- 2026-10-28 · reduced motion turns the holo sheen off entirely (not a still glint) · owner: "off under reduced motion"
+- 2026-10-28 · Energy Zone picker with no typed attack cost shows only the heading and 0/3 (the old empty-deck line is cut) · owner: "cut the extra lines"
+- 2026-10-28 · next-milestone draft issues #132–#136 filed in the existing M5 ("Every card works"), as the owner said to check it first and add there

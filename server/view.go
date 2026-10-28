@@ -104,6 +104,33 @@ type gameView struct {
 	FirstPlayer int      `json:"firstPlayer"`
 	// Stadium is the Stadium card in play, or null.
 	Stadium *cardView `json:"stadium"`
+	// Record is everything needed to replay this game exactly (ADR-0005).
+	Record recordView `json:"record"`
+}
+
+// recordView is a game's replayable record: POST /api/new with {seed, you, bot}
+// and then POST /api/move for each action, in order, reproduces it. You is empty
+// when the game was dealt a drafted or preset deck rather than a requested one.
+// Seed is a JSON number, so it is exact only below 2^53: the app picks its own.
+type recordView struct {
+	Seed    uint64    `json:"seed"`
+	You     []string  `json:"you"`
+	Bot     []string  `json:"bot"`
+	Actions []moveReq `json:"actions"`
+}
+
+// Only a finished game has a record in the view: mid-game it would carry the
+// opponent's secret setup picks and deck.
+func toRecordView(g *engine.Game) recordView {
+	if g.S.Phase != engine.PhaseOver {
+		return recordView{You: []string{}, Bot: []string{}, Actions: []moveReq{}}
+	}
+	return recordView{
+		Seed:    g.Seed,
+		You:     append([]string{}, gameDecks.you...),
+		Bot:     append([]string{}, gameDecks.bot...),
+		Actions: toMoveReqs(g.Events),
+	}
 }
 
 type flipView struct {
@@ -409,6 +436,7 @@ func toGameView(g *engine.Game, viewer int) gameView {
 		OpeningFlip: flipView{Flipper: s.OpeningFlip.Flipper, Heads: s.OpeningFlip.Heads},
 		FirstPlayer: s.FirstPlayer,
 		Stadium:     optCardView(s.Stadium),
+		Record:      toRecordView(g),
 	}
 	hidePromotion(g, viewer, &v)
 	return v
@@ -445,6 +473,9 @@ func toActionViews(g *engine.Game, viewer int) []actionView {
 	out := make([]actionView, 0, len(g.Actions))
 	for _, a := range g.Actions {
 		v := actionView{Player: a.Player, Kind: string(a.Kind), Target: spotView{a.Target.Player, a.Target.Pos}, Result: a.Result, Flips: toCoinViews(a.Flips), Damage: a.Damage}
+		if v.Result == nil {
+			v.Result = []string{}
+		}
 		if a.Card.ID != "" {
 			c := toCardView(a.Card)
 			v.Card = &c

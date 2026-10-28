@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { AbandonDraft } from './AbandonDraft';
 import { TypeTally } from '../battle/energy';
 import type { Card, EnergyType } from '../types/card';
 import { TOTAL_PACKS } from '../stores/draftStore';
@@ -15,9 +16,39 @@ type Props = {
   onCancel: () => void;
 };
 
+// A new pack ignores a touch tap for this long after it appears: a double-tap's second tap (or a slow
+// finger lifting) would otherwise land on the new pack's tile at the same spot. Keyboard and mouse are exempt.
+export const PACK_SETTLE_MS = 350;
+
 export function DraftView({ packIndex, offer, picks, onPick, onCancel }: Props) {
   const [hover, setHover] = useState<HoverState>(null);
+  // When this pack appeared, and the last kind of input ('touch' | 'pen' | 'mouse' | 'key').
+  const shownAt = useRef(-Infinity); // the pack that opens the screen is not guarded, only the ones a pick brings
+  const lastInput = useRef('mouse');
+  const handlePick = (card: Card) => {
+    const touch = lastInput.current === 'touch' || lastInput.current === 'pen';
+    if (touch && performance.now() - shownAt.current < PACK_SETTLE_MS) return;
+    onPick(card);
+  };
   const handleHover = (p: HoverPayload | null) => setHover(p);
+  // A new pack replaces the tiles; drop any preview or zoom left from the old ones.
+  const packKey = offer.map((c) => c.id).join();
+  const firstPack = useRef(packKey);
+  useEffect(() => {
+    if (firstPack.current !== packKey) shownAt.current = performance.now();
+    setHover(null);
+  }, [packKey]);
+  // After a pick the tile that had focus is gone: keep the keyboard on the new pack.
+  const packRef = useRef<HTMLElement>(null);
+  const openingPack = useRef(packKey);
+  useEffect(() => {
+    if (openingPack.current === packKey) return; // the pack that opened the screen: the heading has focus
+    // A frame later, so it lands after development's double effect run on the new tiles (which clears a preview).
+    const frame = requestAnimationFrame(() => {
+      packRef.current?.querySelector<HTMLElement>('.offer-grid button')?.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [packKey]);
 
   const tally = tallyTypes(picks);
   const sortedTally = (Object.entries(tally) as [EnergyType, number][]).sort(
@@ -25,25 +56,12 @@ export function DraftView({ packIndex, offer, picks, onPick, onCancel }: Props) 
   );
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <main style={{ flex: 1, padding: '0 24px 24px' }}>
-        <header
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'baseline',
-            padding: '16px 0',
-            marginBottom: 8,
-            position: 'sticky',
-            top: 0,
-            background: 'var(--surface)',
-            zIndex: 5,
-            borderBottom: '1px solid #8882',
-          }}
-        >
-          <h1 style={{ fontSize: 20, margin: 0 }}>Pocket Draft</h1>
-          <div style={{ display: 'flex', gap: 16, alignItems: 'baseline', flexWrap: 'wrap' }}>
-            <div style={{ fontSize: 14, opacity: 0.75 }}>
+    <div className="screen">
+      <main className="screen-main">
+        <header className="screen-header">
+          <h1 className="screen-title">Pocket Draft</h1>
+          <div className="screen-header-actions">
+            <div className="muted">
               Pack {packIndex + 1} / {TOTAL_PACKS}
               {sortedTally.length > 0 && (
                 <span style={{ marginLeft: 16 }}>
@@ -51,55 +69,39 @@ export function DraftView({ packIndex, offer, picks, onPick, onCancel }: Props) 
                 </span>
               )}
             </div>
-            <button
-              onClick={() => {
-                if (window.confirm('Cancel this draft? You will lose all picks so far.')) {
-                  onCancel();
-                }
-              }}
-              style={{ fontSize: 12 }}
-            >
-              Cancel draft
-            </button>
+            <AbandonDraft loses="all picks so far" onAbandon={onCancel} />
+          </div>
+          {/* The same count as "Pack n / 20", drawn as segments; filled up to the pack on screen. */}
+          <div className="pack-progress" aria-hidden="true">
+            {Array.from({ length: TOTAL_PACKS }, (_, i) => (
+              <i key={i} className={i <= packIndex ? 'on' : undefined} />
+            ))}
           </div>
         </header>
 
-        <section style={{ marginTop: 16 }}>
-          <OfferRow offer={offer} onPick={onPick} onHover={handleHover} />
+        <section
+          ref={packRef}
+          style={{ marginTop: 16 }}
+          onPointerDownCapture={(e) => (lastInput.current = e.pointerType)}
+          onKeyDownCapture={() => (lastInput.current = 'key')}
+        >
+          <h2 className="sr-only">Choose a card</h2>
+          <OfferRow packIndex={packIndex} offer={offer} onPick={handlePick} onHover={handleHover} />
         </section>
       </main>
 
-      <aside
-        style={{
-          width: 300,
-          borderLeft: '1px solid #8884',
-          padding: 16,
-          height: '100vh',
-          overflowY: 'auto',
-          position: 'sticky',
-          top: 0,
-          boxSizing: 'border-box',
-        }}
-      >
-        <div style={{ fontSize: 12, opacity: 0.6, marginBottom: 8 }}>
+      <aside className="screen-aside" aria-labelledby="drafted-title">
+        <h2 id="drafted-title" className="aside-title">
           Drafted ({picks.length})
-        </div>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 84px)',
-            justifyContent: 'center',
-            gap: 4,
-            alignItems: 'start',
-          }}
-        >
+        </h2>
+        <div className="tile-grid-sm" role="group" aria-labelledby="drafted-title">
           {picks.map((c, i) => (
             <CardTile key={`${c.id}-${i}`} card={c} size="sm" onHover={handleHover} />
           ))}
         </div>
       </aside>
 
-      <CardPreview hover={hover} />
+      <CardPreview hover={hover} dock />
     </div>
   );
 }

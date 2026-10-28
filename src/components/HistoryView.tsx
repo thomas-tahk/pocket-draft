@@ -1,14 +1,17 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import { announce } from '../announce';
 import { TypeTally } from '../battle/energy';
 import type { Card, EnergyType } from '../types/card';
 import type { CardPool } from '../data';
 import type { DraftHistoryEntry } from '../stores/draftStore';
 import { tallyTypes } from '../draft/weights';
+import { runScore, STATUS_LABEL, type Run } from '../stores/run';
 import { CardTile, type HoverPayload } from './CardTile';
 import { CardPreview, type HoverState } from './CardPreview';
 
 type Props = {
   history: DraftHistoryEntry[];
+  run: Run | null; // the live run: its entry shows it before it is archived
   pool: CardPool;
   onClose: () => void;
   onUpdate: (
@@ -18,15 +21,15 @@ type Props = {
   onDelete: (id: string) => void;
 };
 
-export function HistoryView({ history, pool, onClose, onUpdate, onDelete }: Props) {
+export function HistoryView({ history, run, pool, onClose, onUpdate, onDelete }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [hover, setHover] = useState<HoverState>(null);
   const handleHover = (p: HoverPayload | null) => setHover(p);
+  const titleRef = useRef<HTMLHeadingElement>(null);
 
   const idToCard = useMemo(() => {
     const m = new Map<string, Card>();
     for (const c of pool.fullCards) m.set(c.id, c);
-    for (const c of pool.universals) m.set(c.id, c);
     return m;
   }, [pool]);
 
@@ -51,45 +54,42 @@ export function HistoryView({ history, pool, onClose, onUpdate, onDelete }: Prop
     const total = deckCards.reduce((s, { count }) => s + count, 0);
 
     const expanded = expandedId === entry.id;
+    // A played run fills its own record; older entries keep the typed one.
+    const played = entry.run ?? (run?.historyId === entry.id ? run : undefined);
+    const record = played ? runScore(played) : { wins: entry.wins, losses: entry.losses };
 
     return (
-      <div
-        key={entry.id}
-        style={{
-          border: '1px solid #8884',
-          borderRadius: 8,
-          padding: 12,
-          marginBottom: 8,
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: 8,
-            flexWrap: 'wrap',
-          }}
-        >
-          <div style={{ fontSize: 13 }}>
-            <div style={{ fontWeight: 600 }}>{formatDate(entry.completedAt)}</div>
-            <div style={{ opacity: 0.75, fontSize: 12, marginTop: 2 }}>
+      <div key={entry.id} className="panel history-entry">
+        <div className="history-entry-head">
+          <div style={{ fontSize: 'var(--fs-sm)' }}>
+            <h2 id={`entry-${entry.id}`} style={{ margin: 0, fontSize: 'inherit', fontWeight: 'var(--fw-bold)' }}>{formatDate(entry.completedAt)}</h2>
+            <div className="muted-xs" style={{ marginTop: 2 }}>
               {total} cards · <TypeTally entries={sortedTally} />
               {' '}·{' '}
-              <span style={{ color: '#4c8' }}>{entry.wins}W</span>
+              <span className="count-w">{record.wins}W</span>
               {' / '}
-              <span style={{ color: '#c66' }}>{entry.losses}L</span>
+              <span className="count-l">{record.losses}L</span>
+              {played && <> · <span data-testid="history-run-status">{STATUS_LABEL[played.status]}</span></>}
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button onClick={() => setExpandedId(expanded ? null : entry.id)}>
+          <div className="history-actions">
+            <button
+              aria-expanded={expanded}
+              aria-describedby={`entry-${entry.id}`}
+              onClick={() => setExpandedId(expanded ? null : entry.id)}
+            >
               {expanded ? 'Collapse' : 'View'}
             </button>
             <button
               onClick={() => {
-                if (window.confirm('Delete this draft from history?')) onDelete(entry.id);
+                if (!window.confirm('Delete this draft from history?')) return;
+                onDelete(entry.id);
+                // The row (and the button that had focus) is gone: say so and keep focus on the page.
+                announce('Draft deleted from history.');
+                titleRef.current?.focus();
               }}
-              style={{ fontSize: 11, opacity: 0.7 }}
+              aria-describedby={`entry-${entry.id}`}
+              className="btn-quiet"
             >
               Delete
             </button>
@@ -98,55 +98,50 @@ export function HistoryView({ history, pool, onClose, onUpdate, onDelete }: Prop
 
         {expanded && (
           <div style={{ marginTop: 12 }}>
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 8 }}>
-              <label style={{ fontSize: 12 }}>
-                Wins:{' '}
-                <input
-                  type="number"
-                  min={0}
-                  value={entry.wins}
-                  onChange={(e) => onUpdate(entry.id, { wins: Math.max(0, Number(e.target.value)) })}
-                  style={{ width: 50 }}
-                />
-              </label>
-              <label style={{ fontSize: 12 }}>
-                Losses:{' '}
-                <input
-                  type="number"
-                  min={0}
-                  value={entry.losses}
-                  onChange={(e) =>
-                    onUpdate(entry.id, { losses: Math.max(0, Number(e.target.value)) })
-                  }
-                  style={{ width: 50 }}
-                />
-              </label>
-            </div>
+            {played ? (
+              <p className="muted-xs" style={{ margin: '0 0 8px' }}>
+                Record {record.wins}–{record.losses}, from the run.
+              </p>
+            ) : (
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 8 }}>
+                <label className="muted-xs">
+                  Wins:{' '}
+                  <input
+                    type="number"
+                    min={0}
+                    value={entry.wins}
+                    onChange={(e) => onUpdate(entry.id, { wins: Math.max(0, Number(e.target.value)) })}
+                    style={{ width: 50 }}
+                  />
+                </label>
+                <label className="muted-xs">
+                  Losses:{' '}
+                  <input
+                    type="number"
+                    min={0}
+                    value={entry.losses}
+                    onChange={(e) =>
+                      onUpdate(entry.id, { losses: Math.max(0, Number(e.target.value)) })
+                    }
+                    style={{ width: 50 }}
+                  />
+                </label>
+              </div>
+            )}
 
             <textarea
               placeholder="Notes on how this deck fared…"
+              aria-label="Notes on how this deck fared"
               value={entry.notes}
               onChange={(e) => onUpdate(entry.id, { notes: e.target.value })}
               rows={3}
-              style={{
-                width: '100%',
-                boxSizing: 'border-box',
-                fontSize: 12,
-                fontFamily: 'inherit',
-                marginBottom: 12,
-              }}
+              className="history-notes"
             />
 
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))',
-                gap: 4,
-              }}
-            >
+            <div className="history-grid">
               {deckCards.flatMap(({ card, count }) =>
                 Array.from({ length: count }).map((_, i) => (
-                  <CardTile key={`${card.id}-${i}`} card={card} size="sm" onHover={handleHover} />
+                  <CardTile key={`${card.id}-${i}`} card={card} size="sm" focusable onHover={handleHover} />
                 )),
               )}
             </div>
@@ -157,21 +152,14 @@ export function HistoryView({ history, pool, onClose, onUpdate, onDelete }: Prop
   };
 
   return (
-    <main style={{ padding: '16px 24px', maxWidth: 900, margin: '0 auto' }}>
-      <header
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'baseline',
-          marginBottom: 16,
-        }}
-      >
-        <h1 style={{ fontSize: 20, margin: 0 }}>Draft history</h1>
+    <main className="page page-narrow">
+      <header className="screen-header screen-header-static">
+        <h1 className="screen-title" ref={titleRef} tabIndex={-1}>Draft history</h1>
         <button onClick={onClose}>Back</button>
       </header>
 
       {history.length === 0 ? (
-        <p style={{ opacity: 0.6, fontSize: 14 }}>No completed drafts yet.</p>
+        <p className="muted">No completed drafts yet.</p>
       ) : (
         history.map(renderEntry)
       )}

@@ -1,0 +1,278 @@
+/* Layout shared by the draft, shop and deckbuild screens: main column + side panel on a
+   desktop, one centred column with the panel below on a phone. */
+
+.screen {
+  display: flex;
+  min-height: 100vh;
+}
+
+.screen-main {
+  flex: 1;
+  min-width: 0;
+  padding: 0 var(--space-5) var(--space-5);
+  box-sizing: border-box;
+}
+
+.screen-main.wide {
+  max-width: 1300px;
+}
+
+.screen-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  margin: var(--space-3) 0 var(--space-2);
+  position: sticky;
+  top: var(--space-2);
+  background: var(--gradient-header);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  z-index: 20;
+}
+
+.screen-header-static { position: static; }
+
+.screen-header-actions {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.screen-aside {
+  width: var(--aside-w, 300px);
+  border-left: 1px solid var(--color-border);
+  padding: var(--space-4);
+  height: 100vh;
+  overflow-y: auto;
+  position: sticky;
+  top: 0;
+  box-sizing: border-box;
+  background: var(--color-surface);
+  z-index: 10;
+}
+
+/* Cards: width comes from --tile-w so the inline `all: unset` on the tile cannot beat it. */
+.tile-lg { --tile-w: 180px; }
+.tile-sm { --tile-w: 84px; }
+
+.offer-grid {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.shelf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 180px);
+  justify-content: start;
+  gap: 12px;
+  align-items: start;
+}
+
+.shelf-cell {
+  width: 180px;
+  box-sizing: border-box;
+}
+
+.tile-grid-sm {
+  display: grid;
+  grid-template-columns: repeat(3, 84px);
+  justify-content: center;
+  gap: 4px;
+  align-items: start;
+}
+
+/* Long-press zoom on touch: centred, large, until the press ends. */
+.card-zoom {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  z-index: 100;
+  background: rgba(23, 35, 61, 0.45);
+}
+
+.card-zoom img {
+  width: min(300px, 80vw);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Mouse-hover preview. On the draft it is docked over the side panel, so it never covers the
+   offers (#120); elsewhere it follows the cursor. A phone has no hover; long-press zooms. */
+.card-preview {
+  position: fixed;
+  width: 260px;
+  pointer-events: none;
+  z-index: 100;
+  box-shadow: var(--shadow-lg);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--color-surface);
+}
+.card-preview img { width: 100%; display: block; }
+.card-preview-dock { right: var(--space-4); top: 56px; }
+
+/* Card frames: a rounded, softly shadowed image with a border that takes the card's type colour. */
+.card-img {
+  width: 100%;
+  display: block;
+  box-sizing: border-box;
+  border-radius: var(--card-radius);
+  border: var(--card-border);
+  box-shadow: var(--card-shadow);
+  background: var(--color-surface-2);
+}
+[data-type='Grass'] > .card-img { border-color: var(--type-grass); }
+[data-type='Fire'] > .card-img { border-color: var(--type-fire); }
+[data-type='Water'] > .card-img { border-color: var(--type-water); }
+[data-type='Lightning'] > .card-img { border-color: var(--type-lightning); }
+[data-type='Psychic'] > .card-img { border-color: var(--type-psychic); }
+[data-type='Fighting'] > .card-img { border-color: var(--type-fighting); }
+[data-type='Darkness'] > .card-img { border-color: var(--type-darkness); }
+[data-type='Metal'] > .card-img { border-color: var(--type-metal); }
+[data-type='Dragon'] > .card-img { border-color: var(--type-dragon); }
+[data-type='Colorless'] > .card-img { border-color: var(--type-colorless); }
+[data-type='Trainer'] > .card-img { border-color: var(--type-trainer); }
+button.tile-lg:hover > .card-img, button.tile-sm:hover > .card-img { box-shadow: var(--card-shadow-hover); }
+.card-cap { font-size: var(--fs-xs); margin-top: var(--space-1); color: var(--color-text-muted); }
+/* The tile resets itself with an inline all: unset, which also drops the focus ring: put it back. */
+button.tile-lg:focus-visible, button.tile-sm:focus-visible, div.tile-lg:focus-visible, div.tile-sm:focus-visible {
+  outline: 3px solid var(--color-focus) !important;
+  outline-offset: 3px !important;
+  border-radius: var(--radius-md);
+}
+
+/* A card that is in the deck or bought. */
+.is-picked { background: var(--color-primary-soft); outline: 2px solid var(--color-primary); border-radius: var(--radius-md); }
+.is-dim { opacity: 0.5; }
+.shelf-cell { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); padding: var(--space-1); border-radius: var(--radius-md); }
+.shelf-cell.is-picked { outline-offset: 2px; }
+.step-row { display: flex; align-items: center; justify-content: center; gap: var(--space-2); font-size: var(--fs-xs); }
+
+/* Pages without the side panel (review, run, shared deck, history). */
+.page { padding: 0 var(--space-5) var(--space-5); max-width: 1100px; margin: 0 auto; }
+.page-narrow { max-width: 900px; }
+@media (max-width: 700px) { .page { padding: 0 var(--gutter) var(--gutter); } }
+.deck-grid { display: grid; grid-template-columns: repeat(auto-fill, 180px); justify-content: start; gap: var(--space-3); align-items: start; }
+.history-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: var(--space-1); }
+.history-entry { margin-bottom: var(--space-2); }
+.history-entry-head { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.history-actions { display: flex; gap: var(--space-half); }
+.history-notes { width: 100%; box-sizing: border-box; font-size: var(--fs-sm); font-family: inherit; margin-bottom: var(--space-3); }
+.count-w { color: var(--color-success-text); font-weight: var(--fw-bold); }
+.count-l { color: var(--color-danger-text); font-weight: var(--fw-bold); }
+.review-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }
+.record-chip { background: var(--color-surface); border-radius: var(--radius-pill); padding: 2px var(--space-3); font-weight: var(--fw-bold); }
+
+@media (max-width: 700px) {
+  .screen { flex-direction: column; }
+  .screen-main { padding: 0 16px 16px; }
+  .screen-header { position: static; padding: var(--space-3); }
+  .screen-aside {
+    width: auto;
+    height: auto;
+    position: static;
+    border-left: none;
+    border-top: 1px solid var(--color-border);
+    padding: var(--space-4);
+    overflow: visible;
+  }
+  /* Only inside the three screens; History, Review and Shared keep their fixed tile sizes. */
+  .screen .tile-lg, .screen .tile-sm { --tile-w: 100%; }
+  .offer-grid,
+  .shelf-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    justify-content: stretch;
+  }
+  .shelf-cell { width: auto; }
+  .tile-grid-sm {
+    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+    justify-content: stretch;
+  }
+}
+
+/* Opening screen (HomeView): one panel, one column, 16px gutters on a phone. */
+.home {
+  width: calc(100% - 2 * var(--gutter));
+  max-width: 480px;
+  box-sizing: border-box;
+  margin: var(--space-5) auto;
+  padding: var(--space-5) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: stretch;
+  text-align: center;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+.home h1 {
+  margin: 0;
+  font-size: var(--fs-hero);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--gradient-header);
+  color: var(--color-primary-strong);
+}
+.home button { min-height: var(--tap-min); font-size: 16px; padding: var(--space-2) var(--space-4); }
+.home .home-primary { min-height: 64px; font-size: var(--fs-xl); }
+.home-secondary { display: flex; flex-direction: column; gap: var(--space-2); }
+.home-note { color: var(--color-text-muted); font-size: 14px; margin: 0; }
+.home .home-link { background: none; border: none; text-decoration: underline; cursor: pointer; font-size: 14px; color: var(--color-primary-strong); }
+.home button:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
+
+/* Run screen (#116). Shapes carry the meaning: round = win, square = loss, filled = earned. */
+.run-panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: var(--space-4); margin-bottom: var(--space-4); display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.run-title, .run-sub { margin: 0; font-size: var(--fs-lg); }
+.run-sub { font-size: var(--fs-md); }
+.run-record, .run-status, .run-ties, .run-empty, .run-opponent { margin: 0; }
+.run-status { font-weight: var(--fw-heavy); }
+.run-marks-wrap { display: flex; gap: var(--space-5); flex-wrap: wrap; }
+.run-marks { display: flex; flex-direction: column; gap: var(--space-1); }
+.run-marks-label { font-size: var(--fs-sm); font-weight: var(--fw-bold); }
+.run-marks-row { display: flex; gap: var(--space-half); }
+.run-mark { width: 28px; height: 28px; box-sizing: border-box; border: 2px solid var(--color-text); background: var(--color-surface); display: inline-flex; align-items: center; justify-content: center; font-size: var(--fs-sm); font-weight: var(--fw-heavy); }
+.run-mark-win { border-radius: 50%; }
+.run-mark-loss { border-radius: 4px; }
+.run-mark.filled { color: var(--color-on-primary); }
+.run-mark-win.filled { background: var(--color-success); border-color: var(--color-success); }
+.run-mark-loss.filled { background: var(--color-danger); border-color: var(--color-danger); }
+.run-next { display: flex; flex-direction: column; gap: var(--space-half); }
+.run-battles { list-style: none; margin: 0; padding: 0; width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: var(--space-half); }
+.run-battle { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); border-bottom: 1px solid var(--color-border); padding-bottom: var(--space-half); }
+.run-btn { min-height: var(--tap-min); min-width: var(--tap-min); padding: 0 var(--space-4); font-size: var(--fs-md); cursor: pointer; }
+.run-btn:disabled { cursor: not-allowed; opacity: 0.5; }
+.run-btn-primary { font-weight: var(--fw-heavy); }
+.run-confirm { border: 2px solid var(--color-danger-text); background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-3); display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }
+.run-confirm p { margin: 0; flex-basis: 100%; }
+@media (max-width: 700px) {
+  .run-panel { align-items: stretch; }
+  .run-btn { width: 100%; }
+  .run-battle .run-btn { width: auto; }
+}
+.run-summary { max-width: 560px; margin: var(--space-5) auto; padding: var(--space-5) var(--space-4); background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); width: calc(100% - 2 * var(--gutter)); box-sizing: border-box; }
+.run-summary-actions { display: flex; gap: var(--space-2); margin-top: var(--space-4); flex-wrap: wrap; }
+.run-tally { margin: 0; }
+.run-summary-share { margin-top: var(--space-2); }
+
+/* Deckbuild: the Energy Zone type picker. Chips are 44px tall tap targets. */
+.zone-picker { margin: var(--space-2) 0 var(--space-1); padding: 10px var(--space-3); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
+.zone-picker-row { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.zone-chip {
+  display: inline-flex; align-items: center; gap: var(--space-half);
+  min-height: var(--tap-min); min-width: var(--tap-min); padding: 0 var(--space-3);
+  border: 2px solid var(--color-border-strong); border-radius: var(--radius-pill); font-size: 14px;
+  color: var(--color-text);
+}
+.zone-chip[aria-pressed='true'], .zone-chip[aria-pressed='true']:hover:not(:disabled) { border-color: var(--color-primary); background: var(--color-primary-soft); font-weight: var(--fw-heavy); }
+.zone-chip[aria-pressed='true']::after { content: '✓'; color: var(--color-primary-strong); font-weight: var(--fw-heavy); }
