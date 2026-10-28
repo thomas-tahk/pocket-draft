@@ -41,8 +41,8 @@ func TestAllItemsAndSupportersLoad(t *testing.T) {
 			t.Errorf("%s (%s) kind = %v, want %v", rc.ID, rc.Name, c.Kind, kind)
 		}
 	}
-	if n != 263 {
-		t.Errorf("found %d Items and Supporters, want 263", n)
+	if n != 309 {
+		t.Errorf("found %d Items and Supporters, want 309", n)
 	}
 }
 
