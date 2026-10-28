@@ -2,7 +2,7 @@ import { test, expect, type Page, type Request } from '@playwright/test';
 import { draftTwenty } from './helpers/draft';
 
 // #127: at deckbuild the player picks the deck's Energy Zone types (1 to 3, starting
-// from the deck's Pokémon types). The pick goes to /api/new with the deck, and the
+// from the energy the deck's attacks cost; engine DefaultEnergyTypes). The pick goes to /api/new with the deck, and the
 // battle's Energy Zone then shows only those types.
 
 const isNewGame = (req: Request) => req.url().endsWith('/api/new') && req.method() === 'POST';
@@ -30,22 +30,44 @@ test('the Energy Zone picker reaches every battle: only Water or Fire show', asy
   await page.getByRole('button', { name: 'Skip shop' }).click();
   await expect(page.getByRole('heading', { name: 'Deckbuilding' })).toBeVisible();
 
+  // Owner 2026-10-28 (item 6): a short label, no extra lines. Empty deck: one short line.
+  const picker = page.getByTestId('energy-picker');
+  await expect(page.getByText('Deck: 0 / 20')).toBeVisible();
+  await expect(picker.getByRole('heading', { name: 'Choose up to 3 energies to use', exact: true })).toBeVisible();
+  await expect(picker.locator('p')).toHaveCount(1);
+  await expect(picker.locator('p')).toHaveText('No typed energy needed yet: Colorless only.');
+
   // Fill the deck first so the default (from the deck's Pokémon types) is on show.
   const drafted = page.locator('section', { has: page.getByRole('heading', { name: /^Your draft/ }) });
   const plus = drafted.getByRole('button', { name: '+' });
   for (let i = 0; i < (await plus.count()); i++) {
     for (let c = 0; c < 2 && (await plus.nth(i).isEnabled()); c++) await plus.nth(i).click();
   }
-  const picker = page.getByTestId('energy-picker');
   await expect(picker).toBeVisible();
+  // Filled: just the label, its n/3 badge and the chips. The old explanatory lines are gone.
+  await expect(picker.locator('p')).toHaveCount(0);
+  for (const old of ['makes only these types', 'Starting from the energy', 'deselect one to change', 'Energy Zone (']) {
+    await expect(picker).not.toContainText(old);
+  }
   const pressedCount = await picker.locator('button[aria-pressed="true"]').count();
   expect(pressedCount).toBeGreaterThanOrEqual(1);
   expect(pressedCount).toBeLessThanOrEqual(3);
   for (const b of await picker.getByRole('button').all()) expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  // The pre-pressed chips are the attack-cost default (defaultZoneTypes, which energy-default.spec ties to the engine).
+  const expected = await page.evaluate(async () => {
+    const { defaultZoneTypes } = await import('/src/game/energy.ts');
+    const deck = JSON.parse(localStorage.getItem('pocket-draft-v0.4')!).state.deck as Record<string, number>;
+    const all = (await (await fetch('/data/cards.json')).json()) as { id: string }[];
+    const index = new Map(all.map((c) => [c.id, c]));
+    return defaultZoneTypes(Object.entries(deck).flatMap(([id, n]) => Array(n).fill(index.get(id))) as never);
+  });
+  const shown = await picker.locator('button[aria-pressed="true"]').evaluateAll((bs) => bs.map((b) => b.getAttribute('data-type')));
+  expect([...shown].sort()).toEqual([...expected].sort());
 
   await choose(page, ['Water', 'Fire']);
   await expect(picker.locator('button[aria-pressed="true"]')).toHaveCount(2);
-  await expect(picker).toContainText('Energy Zone (2 / 3)');
+  await expect(picker.getByRole('heading', { name: 'Choose up to 3 energies to use', exact: true })).toBeVisible();
+  await expect(picker.getByTestId('energy-count')).toHaveText('2/3');
 
   await picker.scrollIntoViewIfNeeded();
   await page.screenshot({ path: 'test-results/energy-picker-390x844.png' });

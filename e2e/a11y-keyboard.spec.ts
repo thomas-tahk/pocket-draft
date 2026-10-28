@@ -177,13 +177,13 @@ test('a whole run by keyboard: draft, shop, deckbuild, Energy Zone, battle, summ
     await press(page, chip, 'Space', { back: true });
   }
   expect(await pressedCount()).toBe(3);
-  await expect(picker).toContainText('Energy Zone (3 / 3)');
+  await expect(picker.getByTestId('energy-count')).toHaveText('3/3');
   await expect(announcer(page)).toContainText('Up to 3: deselect one to change.');
   // Unpress one (not the last): keyboard can undo.
   const on = picker.locator('button[aria-pressed="true"]').first();
   await press(page, on, 'Enter', { back: true });
   expect(await pressedCount()).toBe(2);
-  await expect(picker).toContainText('Energy Zone (2 / 3)');
+  await expect(picker.getByTestId('energy-count')).toHaveText('2/3');
 
   // ---- finalize ----
   await press(page, page.getByRole('button', { name: 'Finalize deck' }), 'Enter', { back: true });

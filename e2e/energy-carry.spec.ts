@@ -29,7 +29,7 @@ async function concede(page: Page) {
   await expect(page.getByTestId('end-screen')).toBeVisible();
 }
 
-test('the chosen types reach the rematch and the replay rebuild; 3 chosen shows the cap hint', async ({ page }) => {
+test('the chosen types reach the rematch and the replay rebuild; 3 chosen disables the rest', async ({ page }) => {
   test.setTimeout(150_000);
   await page.goto('/');
   await page.getByRole('button', { name: 'Start draft' }).click();
@@ -45,7 +45,9 @@ test('the chosen types reach the rematch and the replay rebuild; 3 chosen shows 
   await choose(page, want);
   const picker = page.getByTestId('energy-picker');
   await expect(picker.locator('button[aria-pressed="true"]')).toHaveCount(3);
-  await expect(page.getByTestId('energy-cap-hint')).toHaveText('Up to 3: deselect one to change.');
+  await expect(picker.getByTestId('energy-count')).toHaveText('3/3');
+  // Owner 2026-10-28 (item 6): no visible cap line any more; the disabled chips say it.
+  await expect(page.getByTestId('energy-cap-hint')).toHaveCount(0);
   await expect(picker.locator('button:disabled')).toHaveCount(5);
   await page.getByRole('button', { name: 'Finalize deck' }).click();
 
