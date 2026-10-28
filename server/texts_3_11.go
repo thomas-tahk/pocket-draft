@@ -10,7 +10,9 @@ import (
 // engine ops that play it (engine/texts_3_11.go).
 
 // ancientIDs and futureIDs are the Ancient and Future Pokémon printings
-// (Paradox Pokémon from B3a on). The scrape carries no such tag.
+// (Paradox Pokémon from B3a on). The scrape carries no such tag. They are the
+// one list: isAncient / isFuture (texts_3_13.go) read them for every card text
+// and the draft's niche groups are checked against them.
 var ancientIDs = idSet("B3a-003", "B3b-035", "B3a-026", "B3a-083", "B3a-091", "B3a-054", "B3a-034",
 	"B3a-036", "B3a-084", "B3a-092", "B3a-055", "B3a-079", "B3a-047", "B3a-109", "B3a-035", "B3a-025",
 	"B3a-004", "B3a-053")
@@ -69,9 +71,9 @@ var texts311 = map[string][]engine.EffectOp{
 	"Heal 30 damage from 1 of your Pokémon, and it recovers from all Special Conditions.": { // Pokémon Center Lady
 		engine.Heal{Amount: 30, Cures: allConditions}},
 	"Attach 3 different types of Energy from your discard pile to your Ancient Pokémon in any way you like.": { // Professor Sada
-		engine.AttachChosenFromDiscard{N: 3, Type: engine.NoEnergy, Distinct: true, Fits: func(c engine.Card) bool { return ancientIDs[c.ID] }}},
+		engine.AttachChosenFromDiscard{N: 3, Type: engine.NoEnergy, Distinct: true, Fits: isAncient}},
 	"Shuffle 1 of your Future Pokémon in play into your deck.": { // Professor Turo
-		engine.ShuffleIntoDeck{Fits: func(c engine.Card) bool { return futureIDs[c.ID] }}},
+		engine.ShuffleIntoDeck{Fits: isFuture}},
 	"You can use this card only if your Pokémon in the Active Spot has the Psychic attack.Choose 1 of your opponent's Benched Pokémon and move a random Energy from it to your opponent's Active Pokémon.": { // Psychic
 		engine.NeedActiveAttack{Attack: "Psychic"}, engine.MoveOppEnergyToActive{}},
 	"Look at the top 4 cards of your deck. Put all Pokémon you find there that have the Puppy Pile attack into your hand. Shuffle the other cards back into your deck.": { // Puppy-Loving Girl

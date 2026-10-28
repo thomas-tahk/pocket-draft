@@ -2115,5 +2115,172 @@
     "P-B-090",
     "P-B-093",
     "P-B-094"
-  ]
+  ],
+  "supportTypes": {
+    "Acerola": [
+      "Fighting",
+      "Psychic"
+    ],
+    "Adaman": [
+      "Metal"
+    ],
+    "Arena of Antiquity": [
+      "Fighting"
+    ],
+    "Barry": [
+      "Grass"
+    ],
+    "Blaine": [
+      "Fire"
+    ],
+    "Brock": [
+      "Fighting"
+    ],
+    "Budding Expeditioner": [
+      "Psychic"
+    ],
+    "Clemont": [
+      "Lightning",
+      "Metal"
+    ],
+    "Clemont's Backpack": [
+      "Lightning",
+      "Metal"
+    ],
+    "Cynthia": [
+      "Dragon",
+      "Fighting",
+      "Psychic"
+    ],
+    "Dark Pendant": [
+      "Darkness"
+    ],
+    "Deceptive Needle": [
+      "Darkness"
+    ],
+    "Diantha": [
+      "Psychic"
+    ],
+    "Electric Generator": [
+      "Lightning"
+    ],
+    "Electrical Cord": [
+      "Lightning"
+    ],
+    "Elemental Switch": [
+      "Fire",
+      "Lightning",
+      "Water"
+    ],
+    "Erika": [
+      "Grass"
+    ],
+    "Fantina": [
+      "Psychic"
+    ],
+    "Fisher": [
+      "Water"
+    ],
+    "Fishing Net": [
+      "Water"
+    ],
+    "Flame Patch": [
+      "Fire"
+    ],
+    "Fragrant Forest": [
+      "Grass"
+    ],
+    "Hala": [
+      "Fighting",
+      "Water"
+    ],
+    "Hau": [
+      "Fire",
+      "Grass",
+      "Water"
+    ],
+    "Inflatable Boat": [
+      "Water"
+    ],
+    "Irida": [
+      "Water"
+    ],
+    "Iris": [
+      "Dragon"
+    ],
+    "Jasmine": [
+      "Metal"
+    ],
+    "Kiawe": [
+      "Dragon",
+      "Fire"
+    ],
+    "Koga": [
+      "Darkness"
+    ],
+    "Korrina": [
+      "Fighting"
+    ],
+    "Lana": [
+      "Water"
+    ],
+    "Leaf Cape": [
+      "Grass"
+    ],
+    "Lt. Surge": [
+      "Lightning"
+    ],
+    "Mallow": [
+      "Grass",
+      "Psychic"
+    ],
+    "Marlon": [
+      "Psychic",
+      "Water"
+    ],
+    "Metal Core Barrier": [
+      "Metal"
+    ],
+    "Misty": [
+      "Water"
+    ],
+    "Mythical Slab": [
+      "Psychic"
+    ],
+    "Nemona": [
+      "Lightning"
+    ],
+    "Parasol Lady": [
+      "Water"
+    ],
+    "Peculiar Plaza": [
+      "Psychic"
+    ],
+    "Piers": [
+      "Darkness"
+    ],
+    "Quick-Grow Extract": [
+      "Grass"
+    ],
+    "Soothing Shore": [
+      "Water"
+    ],
+    "Sophocles": [
+      "Lightning",
+      "Metal"
+    ],
+    "Steel Apron": [
+      "Metal"
+    ],
+    "Team Galactic Grunt": [
+      "Darkness",
+      "Fighting"
+    ],
+    "Volkner": [
+      "Lightning"
+    ],
+    "Wallace": [
+      "Water"
+    ]
+  }
 }

@@ -35,11 +35,15 @@ Inspired by the **SWUCUBE** cube draft format (see `swucube-rules.md`) — origi
 ### Type weighting (packs 2–20)
 - After each pick, the player's drafted energy type(s) are tracked.
 - Subsequent packs lean toward the player's types, visibly after 2–3 picks of one type (owner, 2026-10-25). A type's Pokémon and the Trainers/Items that support that type both get the lean. Raised odds, never a lock: off-type cards still appear.
+- The lean is capped (owner, 2026-10-28): it stops growing after 4 picks of one type, so off-type cards (e.g. Dragon Pokémon) never become near-impossible over a mono-type draft. Weight = 1 + 2 × min(picks of that type, 4).
+- A Trainer/Item supports a type when its card text says so (owner, 2026-10-28): the types it names ("Water Pokémon", [W]) plus the card types of the Pokémon it names (Cynthia's "Garchomp or Togekiss" → Dragon, Fighting, Psychic). A short hand list covers only text that names neither (Drayden's "Draco Meteor"); a Trainer that works against a type it names (Squirt Bottle) supports nothing.
 - **Colorless Pokemon are always eligible** regardless of detected direction and are weighted as compatible with any type profile. This ensures archetypes like Dragonite (dual energy) and colorless-featured attackers remain naturally draftable.
 
 ### Offers that fit (owner, 2026-10-25)
 - A niche Trainer and the Pokémon it supports raise each other's odds, whichever is picked first. Archetype support cards rise with their archetype. Raised odds, never guarantees.
-- Eevee ex is draftable, and picking any Eeveelution raises its odds.
+- Ancient / Future support (Professor Sada, Professor Turo, the Booster Energy Capsules) counts a Pokémon only if the card itself says Ancient / Future (owner, 2026-10-28): the B3a/B3b Paradox printings, not the B2a Koraidon or Miraidon. The same holds in battle.
+- Eevee ex is draftable. Eevee ex and the Eeveelutions raise each other's odds, both directions (owner, 2026-10-28): picking any Eeveelution raises Eevee ex, picking Eevee ex raises every Eeveelution. Never stacked with another fit.
+  - In battle, by the card text, Alolan Muk's Power of Alchemy ("Basic Pokémon in play have no Abilities") switches off Eevee ex's Veevee ’volve while Muk is in play, on either side (owner, 2026-10-28).
 
 ### A pick is secured
 - Once a card is picked, it never appears in a later offer (matched by name). One pick already allows up to 2 copies at deckbuild.

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"maps"
 	"os"
 	"slices"
 	"strings"
@@ -148,7 +149,8 @@ func TestDraftPoolFileMatchesTheEngine(t *testing.T) {
 	if err := json.Unmarshal(b, &got); err != nil {
 		t.Fatal(err)
 	}
-	if got.OnlyWorkingText != want.OnlyWorkingText || !slices.Equal(got.IDs, want.IDs) || !slices.Equal(got.Working, want.Working) {
+	if got.OnlyWorkingText != want.OnlyWorkingText || !slices.Equal(got.IDs, want.IDs) || !slices.Equal(got.Working, want.Working) ||
+		!maps.EqualFunc(got.SupportTypes, want.SupportTypes, slices.Equal[[]string]) {
 		t.Fatalf("%s is stale (regenerate with PD_WRITE_DRAFT_POOL=1 go test -run TestDraftPoolFile)", draftPoolFile)
 	}
 }

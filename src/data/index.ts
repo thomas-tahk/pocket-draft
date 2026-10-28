@@ -8,6 +8,7 @@ import {
   toFullCardPool,
 } from './loader';
 import { buildPackComposition, type PackComposition, type PackId } from './packs';
+import { setSupportTypes } from '../draft/weights';
 
 export type CardPool = {
   allCards: RawCard[];
@@ -26,6 +27,7 @@ export async function loadCardPool(): Promise<CardPool> {
     loadSets(),
     loadDraftPoolFilter(),
   ]);
+  setSupportTypes(poolFilter.supportTypes ?? null);
   const draftableCards = keepWorkingText(toDraftablePool(allCards), poolFilter);
   const fullCards = toFullCardPool(allCards);
   const working = new Set(poolFilter.working);

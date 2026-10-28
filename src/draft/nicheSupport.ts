@@ -10,9 +10,10 @@ import type { Card } from '../types/card';
 // what the text cannot say. Hand-made from public/data/cards.json; the owner
 // has not reviewed the groups, so they are guesses.
 //
-// Names are exact, without " ex": a Pokémon matches by its name minus a trailing
-// " ex" (the same stripping rule 1 applies to picked names), so "Aerodactyl"
-// covers "Aerodactyl ex" but never a longer name. Pokémon not in today's draft
+// Names are exact. A Pokémon matches an entry equal to its name or to its name
+// minus a trailing " ex" (the same stripping rule 1 applies to picked names), so
+// "Aerodactyl" covers "Aerodactyl ex" but never a longer name, and an entry
+// "Koraidon ex" covers only the ex card, never "Koraidon". Pokémon not in today's draft
 // pool are listed too: the pool grows as card text lands, and an entry with no
 // card in the pool does nothing. Eevee ex is not listed (#128).
 
@@ -22,7 +23,7 @@ import type { Card } from '../types/card';
 export type NicheGroup = {
   label: string;
   trainers: string[]; // exact Trainer names
-  pokemon?: string[]; // Pokémon names without " ex"
+  pokemon?: string[]; // Pokémon names, with or without " ex" (see above)
   evolvesFrom?: string[]; // any Pokémon whose card says it evolves from one of these
 };
 
@@ -42,25 +43,28 @@ export const NICHE_GROUPS: NicheGroup[] = [
   // Eevee Bag's text says "Eevee"; the Pokémon it helps are the ones that evolve
   // from it (Eevee ex itself is #128's).
   { label: 'Eeveelutions', trainers: ['Eevee Bag'], evolvesFrom: ['Eevee'] },
-  // Ancient / Future / Ultra Beast: the printed tag is not in cards.json, so the
-  // members are the real-TCG ones, by hand.
+  // Ancient / Future: a card counts only if the card itself says so (owner
+  // 2026-10-28, decision 3). The printed tag is not in cards.json, so the members
+  // are the names of the engine's tagged printings (ancientIDs / futureIDs in
+  // server/texts_3_11.go), exact: 'Koraidon ex' (B3a) is Ancient, the B2a
+  // 'Koraidon' is not. Go's TestNicheTSTableMatchesTheEngine keeps them equal.
   {
     label: 'Ancient',
     trainers: ['Ancient Booster Energy Capsule', 'Professor Sada'],
     pokemon: [
-      'Great Tusk', 'Scream Tail', 'Brute Bonnet', 'Flutter Mane', 'Slither Wing',
-      'Sandy Shocks', 'Roaring Moon', 'Walking Wake', 'Gouging Fire', 'Raging Bolt', 'Koraidon',
+      'Brute Bonnet', 'Flutter Mane', 'Flutter Mane ex', 'Gouging Fire', 'Great Tusk', 'Koraidon ex',
+      'Raging Bolt', 'Roaring Moon', 'Sandy Shocks', 'Scream Tail', 'Slither Wing', 'Walking Wake',
     ],
   },
   {
     label: 'Future',
     trainers: ['Future Booster Energy Capsule', 'Professor Turo'],
     pokemon: [
-      'Iron Treads', 'Iron Bundle', 'Iron Hands', 'Iron Jugulis', 'Iron Moth',
-      'Iron Thorns', 'Iron Valiant', 'Iron Leaves', 'Iron Crown', 'Iron Boulder',
-      'Miraidon',
+      'Iron Boulder', 'Iron Bundle', 'Iron Bundle ex', 'Iron Crown', 'Iron Hands', 'Iron Jugulis',
+      'Iron Leaves', 'Iron Moth', 'Iron Thorns', 'Iron Treads', 'Iron Valiant', 'Miraidon ex',
     ],
   },
+  // Ultra Beast: hand-made, kept equal to the engine's list (server/texts_3_12.go).
   {
     label: 'Ultra Beast',
     trainers: ['Lusamine', 'Beast Wall', 'Beastite'],
@@ -89,12 +93,17 @@ NICHE_GROUPS.forEach((g, i) => {
 // A Pokémon's name without a trailing " ex": the form a Trainer's text uses.
 export const pokemonBaseName = (name: string): string => name.replace(/ ex$/, '');
 
-// The niche groups a card is in: a Trainer by exact name, a Pokémon by name
-// minus " ex" or by what it evolves from. Mirrored by nicheGroupsOf in Go.
+// The niche groups a card is in: a Trainer by exact name, a Pokémon by its name,
+// its name minus " ex", or what it evolves from; each group at most once.
+// Mirrored by nicheGroupsOf in Go.
 export function nicheGroupsOf(card: Card): number[] {
-  if (card.cardType === 'Trainer') return byTrainer.get(card.name ?? '') ?? [];
+  const name = card.name ?? '';
+  if (card.cardType === 'Trainer') return byTrainer.get(name) ?? [];
   return [
-    ...(byPokemon.get(pokemonBaseName(card.name ?? '')) ?? []),
-    ...(card.evolvesFrom ? (byEvolvesFrom.get(card.evolvesFrom) ?? []) : []),
+    ...new Set([
+      ...(byPokemon.get(name) ?? []),
+      ...(byPokemon.get(pokemonBaseName(name)) ?? []),
+      ...(card.evolvesFrom ? (byEvolvesFrom.get(card.evolvesFrom) ?? []) : []),
+    ]),
   ];
 }

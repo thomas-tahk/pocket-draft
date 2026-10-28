@@ -124,6 +124,44 @@ func TestThreeWaterPicksLeanPokemonAndSupport(t *testing.T) {
 	}
 }
 
+// The lean is capped (owner 2026-10-28, decision 1): it keeps its strength at
+// 2-3 picks, then stops growing, so a mono-type draft never squeezes the other
+// types out. Measured on the real pool: other-typed Pokémon are 28.5% of slots
+// after 3 Water picks; uncapped they fall to 12.8% after 19, capped they stay
+// near 30%.
+func TestTypeLeanIsCapped(t *testing.T) {
+	squirtle := pokemon("Squirtle", "Water")
+	misty := trainerText("Misty", "Choose 1 of your [W] Pokémon.")
+	for _, c := range []draftCard{squirtle, misty} {
+		w := func(n int) float64 { return weightOf(c, typeTally{"Water": n}, synergy{}) }
+		if w(2) != 5 || w(3) != 7 {
+			t.Errorf("%s after 2 / 3 Water picks = %v / %v, want 5 / 7 (the lean's strength is unchanged)", c.Name, w(2), w(3))
+		}
+		if w(19) != w(4) || w(4) < w(3) {
+			t.Errorf("%s after 3 / 4 / 19 Water picks = %v / %v / %v, want it to stop growing at the cap", c.Name, w(3), w(4), w(19))
+		}
+	}
+
+	// A full 20-pick mono-Water draft: other-typed Pokémon keep at least half
+	// the share of offer slots they had after 3 Water picks.
+	useRealCards(t)
+	pool := toDraftablePool()
+	byTier := indexByTier(pool)
+	water := pickTypeCards(pool, "Water", 19)
+	if len(water) != 19 {
+		t.Fatalf("need 19 Water picks, got %d", len(water))
+	}
+	after3 := countOffers(byTier, water[:3], nil)
+	after19 := countOffers(byTier, water, nil)
+	share3 := float64(after3.otherTyped) / float64(after3.slots)
+	share19 := float64(after19.otherTyped) / float64(after19.slots)
+	t.Logf("other-typed Pokémon: %.1f%% of slots after 3 Water picks, %.1f%% after 19 (Dragon %d / %d slots)",
+		100*share3, 100*share19, after3.otherTypeBy["Dragon"], after19.otherTypeBy["Dragon"])
+	if share19 < share3/2 {
+		t.Errorf("other-typed Pokémon fell from %.1f%% to %.1f%% of slots over a mono-Water draft, want >= half", 100*share3, 100*share19)
+	}
+}
+
 // What "clearly" means: the lean must at least this many times the baseline.
 const (
 	leanMinPokemonRatio = 3.0
@@ -147,8 +185,10 @@ func TestOpposingTrainerGetsNoLean(t *testing.T) {
 	}
 }
 
-// A table Trainer (text names Pokémon, not a type) leans like a text-named one.
-func TestTableTrainerLeansWithItsType(t *testing.T) {
+// A Trainer whose text names Pokémon (not a type) leans with those Pokémon's
+// types, read from cards.json (owner 2026-10-28, decision 2).
+func TestTrainerNamingPokemonLeansWithTheirTypes(t *testing.T) {
+	useRealCards(t)
 	marlon := trainerText("Marlon", "Heal 70 damage from 1 of your Carracosta or Jellicent.")
 	if w := weightOf(marlon, typeTally{"Water": 3}, synergy{}); w != 1+typeSupportCoef*3 {
 		t.Errorf("Marlon after 3 Water picks = %v, want %v", w, 1+typeSupportCoef*3)

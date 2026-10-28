@@ -1,4 +1,4 @@
-import type { Card, RawCard, SetInfo } from '../types/card';
+import type { Card, EnergyType, RawCard, SetInfo } from '../types/card';
 import { enrich, isCosmeticVariant } from './rarity';
 import { functionalDedupe } from './signature';
 
@@ -90,8 +90,16 @@ export function toDraftablePool(raw: RawCard[]): Card[] {
 // offers only cards whose text the engine already plays. The Go server decides
 // which (server/draft_text_filter.go) and writes the answer to draft-pool.json.
 // `working` is every card the engine can play; deckbuild offers only those, so
-// every deck is 20 working cards (owner 2026-10-19 (1)).
-export type DraftPoolFilter = { onlyWorkingText: boolean; ids: string[]; working: string[] };
+// every deck is 20 working cards (owner 2026-10-19 (1)). `supportTypes` is the
+// types each pool Trainer supports, by name, as Go read them from the card text
+// (server/draft_type_support.go); src/data/index.ts registers them with the
+// draft weights.
+export type DraftPoolFilter = {
+  onlyWorkingText: boolean;
+  ids: string[];
+  working: string[];
+  supportTypes?: Record<string, EnergyType[]>;
+};
 
 export async function loadDraftPoolFilter(): Promise<DraftPoolFilter> {
   return fetchJson<DraftPoolFilter>(DRAFT_POOL_URL);
