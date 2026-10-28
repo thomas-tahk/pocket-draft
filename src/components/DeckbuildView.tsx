@@ -103,7 +103,8 @@ export function DeckbuildView({
     (a, b) => b[1] - a[1],
   );
 
-  // Until the player picks, the zone defaults to the deck's Pokémon types.
+  // Until the player picks, the zone defaults to the energy the deck's attacks cost
+  // (engine DefaultEnergyTypes, mirrored by defaultZoneTypes).
   const defaultEnergy = useMemo(() => {
     const flat: Card[] = [];
     for (const { card, count } of deckCards) for (let i = 0; i < count; i++) flat.push(card);
@@ -234,17 +235,15 @@ export function DeckbuildView({
         </p>
 
         <div className="zone-picker" role="group" data-testid="energy-picker" aria-labelledby="zone-title">
-          <h2 id="zone-title" className="section-title" style={{ color: 'var(--color-text)', margin: 0 }}>
-            {zone.length > 0 ? `Energy Zone (${zone.length} / ${MAX_ZONE_TYPES})` : `Energy Zone: ${ZONE_FALLBACK} only`}
+          <h2 id="zone-title" className="section-title" style={{ color: 'var(--color-text)', margin: '0 0 8px' }}>
+            Choose up to {MAX_ZONE_TYPES} energies to use{' '}
+            <span data-testid="energy-count" className="muted-xs" aria-hidden="true">
+              {zone.length}/{MAX_ZONE_TYPES}
+            </span>
           </h2>
-          <p className="muted-xs" style={{ margin: '2px 0 8px' }}>
-            Your Energy Zone makes only these types, in every battle of this run. Choose 1 to {MAX_ZONE_TYPES}.
-            {energy.length === 0 && zone.length > 0 ? ' Starting from the energy your deck’s attacks need.' : ''}
-            {zone.length === 0 ? ' None of your attacks need a typed energy, so it makes Colorless unless you choose.' : ''}
-          </p>
-          {zone.length >= MAX_ZONE_TYPES && (
-            <p data-testid="energy-cap-hint" className="muted-xs" style={{ margin: '0 0 8px' }}>
-              Up to 3: deselect one to change.
+          {zone.length === 0 && (
+            <p className="muted-xs" style={{ margin: '0 0 8px' }}>
+              No typed energy needed yet: {ZONE_FALLBACK} only.
             </p>
           )}
           <div className="zone-picker-row" role="group" aria-label="Energy Zone types">
