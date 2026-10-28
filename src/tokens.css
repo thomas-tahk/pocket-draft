@@ -1,7 +1,9 @@
-/* Design tokens: the whole Pokémon TCG Pocket-style look is set here and nowhere else (#120).
-   Every screen (home, draft, shop, deckbuild, review, run, summary, history) and the chrome of
-   the battle board (buttons, panels, banners, fonts) reads these custom properties, so the look
-   is retuned by editing this one block. The values are the designer's first guess: the owner's call. */
+/* Design tokens: the whole look is set here and nowhere else (#120, #131).
+   Two sets live in this file:
+   1. The legacy Pocket-style set (--color-*, --radius-*, --shadow-*, --fs-*, --type-*). The battle
+      board's chrome reads it, so its values must stay as they are: the board is not restyled.
+   2. The M4 blended look (--look-*), read by look.css for every screen outside battle.
+   Each set has a light and a dark value; dark follows the phone unless the Home toggle overrides it. */
 
 :root {
   color-scheme: light dark;
@@ -102,11 +104,96 @@
   --type-spent: #b9bcc8;
 }
 
-/* The same tokens for a dark system setting: dark navy surfaces, light text. Pairs checked at 4.5:1 or better:
-   text on surface, muted on surface, white on primary fill, primary-strong (the text colour of secondary
-   buttons) on surface, danger/success text on surface. */
+/* ─────────────── M4 blended look (#131): every screen outside battle ───────────────
+   C (Type Colour) structure: a blue page, a slanted header band, white 22px panels with deep soft
+   shadows, a gold "3D" main button. A (Pack Burst) readability: 900-weight tight titles, 2–3px ink
+   outlines. B (Holo Night) shine: a diagonal holo sheen on cards and highlights; the dark set is
+   B's indigo night. Components read these through look.css, which scopes them to `.look`
+   (the screen root of every non-battle screen), so the battle board keeps the legacy set above.
+   Pairs are checked by docs/chief/look/m4-blend/contrast.cjs (see that folder's README). */
+:root {
+  /* Type. */
+  --look-font: var(--font-ui);
+  --look-fw-display: 900;
+  --look-fw-strong: 800;
+  --look-fw-body: 600;
+  --look-fs-title: 34px;      /* screen titles in the header band */
+  --look-fs-h2: 24px;         /* panel titles ("Your run") */
+  --look-fs-main: 21px;       /* the gold main button */
+  --look-fs-body: 16px;
+  --look-fs-label: 13px;      /* letter-spaced caps section labels */
+  --look-track-title: -0.03em;
+  --look-track-label: 0.12em;
+
+  /* Page and header band. */
+  --look-page: #0b63c9;
+  --look-page-bg: linear-gradient(180deg, #0b63c9 0%, #0a5cbd 100%);
+  --look-on-page: #ffffff;
+  --look-on-page-muted: #e3eeff;
+  --look-band: linear-gradient(135deg, #003c99 0%, #0057c2 100%);
+  --look-on-band: #ffffff;
+  --look-band-slant: polygon(0 0, 100% 0, 100% calc(100% - 16px), 0 100%);
+  --look-band-shadow: 0 10px 24px rgba(0, 24, 72, 0.35);
+  --look-band-btn: rgba(0, 20, 60, 0.28);
+
+  /* Panels. */
+  --look-panel: #ffffff;
+  --look-panel-2: #eef3fc;    /* rows inside a panel (battles list) */
+  --look-ink: #0d1a33;
+  --look-ink-muted: #3d4c6b;
+  --look-accent: #0047a3;     /* section labels, secondary button text */
+  --look-outline: #1a1030;    /* A's ink outline */
+  --look-outline-w: 3px;      /* panels, cards */
+  --look-outline-w-btn: 2px;  /* buttons, chips */
+  --look-radius-panel: 22px;
+  --look-radius-btn: 14px;
+  --look-radius-card: 12px;
+  --look-shadow-panel: 0 14px 32px rgba(0, 30, 80, 0.38);
+  --look-shadow-card: 0 8px 18px rgba(0, 30, 80, 0.35);
+  --look-shadow-card-hot: 0 12px 26px rgba(0, 30, 80, 0.45);
+
+  /* Buttons. */
+  --look-btn: #ffffff;
+  --look-btn-hover: #dfeaff;
+  --look-btn-press: #c8dcff;
+  --look-on-btn: #0047a3;
+  --look-gold: linear-gradient(180deg, #ffd23f 0%, #ffa800 100%);
+  --look-gold-hover: linear-gradient(180deg, #ffdc5c 0%, #ffb319 100%);
+  --look-gold-base: #b86e00;  /* the 5px "3D" base the main button presses into */
+  --look-on-gold: #2a1600;
+  --look-danger-soft: #ffe5e5;
+  --look-on-danger-soft: #b0101a;
+  --look-danger: #d61f2b;
+  --look-on-danger: #ffffff;
+
+  /* Results and run marks (shape carries the meaning; colour backs it up). */
+  --look-win: #0b7d3b;
+  --look-loss: #d61f2b;
+  --look-win-text: #0e7a3c;
+  --look-loss-text: #c4141c;
+  --look-mark-empty: #eef3fb;
+  --look-mark-empty-border: #8a9bbd;
+  --look-progress-off: rgba(255, 255, 255, 0.3);
+  --look-progress-on: #ffd23f;
+
+  /* Focus ring, per surface (page / band / panel). */
+  --look-focus-page: #ffffff;
+  --look-focus-band: #ffd23f;
+  --look-focus-panel: #1a1030;
+
+  /* B's holo sheen: a diagonal foil band swept across cards and highlights. */
+  --look-sheen: linear-gradient(115deg, transparent 32%, rgba(255, 255, 255, 0.6) 44%, rgba(140, 255, 255, 0.38) 50%, rgba(255, 140, 240, 0.3) 56%, transparent 68%);
+  --look-sheen-blend: screen;
+  --look-sheen-rest: 0.3;     /* opacity on a card at rest */
+  --look-sheen-hot: 0.85;     /* hovered / focused / selected card, main button, run won */
+  --look-sheen-period: 6s;
+}
+
+/* The same tokens in the dark theme. Dark is never forced: it follows the phone setting
+   (prefers-color-scheme) unless the toggle on Home sets data-theme="light" or "dark" on <html>.
+   The rules are written twice (system setting, then the manual override) because CSS has no mixin. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --color-bg: #0f1730;
     --color-bg-top: #17294c;
     --color-surface: #1a2440;
@@ -133,5 +220,105 @@
 
     --type-darkness: #56668a;
     --type-trainer: #8a9bc0;
+
+    /* Blended look, dark: B's indigo night with C's structure. */
+    --look-page: #140b3d;
+    --look-page-bg: radial-gradient(120% 60% at 50% 0%, #3a1d8f 0%, #140b3d 55%, #090620 100%) fixed, #090620;
+    --look-on-page: #f3f0ff;
+    --look-on-page-muted: #c9bff5;
+    --look-band: linear-gradient(135deg, #2b1680 0%, #5326c4 100%);
+    --look-on-band: #ffffff;
+    --look-band-shadow: 0 10px 28px rgba(0, 0, 0, 0.55), 0 0 22px rgba(123, 92, 255, 0.35);
+    --look-band-btn: rgba(0, 0, 0, 0.3);
+    --look-panel: #1c1452;
+    --look-panel-2: #251a5e;
+    --look-ink: #f3f0ff;
+    --look-ink-muted: #c9bff5;
+    --look-accent: #b9a8ff;
+    --look-outline: #8f7bff;
+    --look-shadow-panel: 0 14px 34px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    --look-shadow-card: 0 8px 18px rgba(0, 0, 0, 0.55);
+    --look-shadow-card-hot: 0 0 18px rgba(123, 92, 255, 0.7), 0 12px 26px rgba(0, 0, 0, 0.6);
+    --look-btn: #2a1f6e;
+    --look-btn-hover: #382a8c;
+    --look-btn-press: #45349f;
+    --look-on-btn: #ffffff;
+    --look-gold-base: #8a5200;
+    --look-danger-soft: #3d0f2e;
+    --look-on-danger-soft: #ffb3c5;
+    --look-win-text: #5ff0a0;
+    --look-loss-text: #ff8fab;
+    --look-mark-empty: #251a5e;
+    --look-mark-empty-border: #8f7bff;
+    --look-progress-off: rgba(255, 255, 255, 0.18);
+    --look-focus-page: #ffd23f;
+    --look-focus-band: #ffd23f;
+    --look-focus-panel: #ffd23f;
+    --look-sheen-rest: 0.4;
   }
 }
+:root[data-theme='dark'] {
+  --color-bg: #0f1730;
+  --color-bg-top: #17294c;
+  --color-surface: #1a2440;
+  --color-surface-2: #212c4c;
+  --color-text: #eaf0ff;
+  --color-text-muted: #aab7d6;
+  --color-border: #33415f;
+  --color-border-strong: #6b7aa0;
+
+  --color-primary-strong: #5cc8e8;
+  --color-primary-soft: #16384d;
+  --color-primary-press: #1f4e66;
+  --color-focus: #8fb0ff;
+
+  --color-danger-text: #ff9a92;
+  --color-success-text: #6fd68a;
+  --color-p0: #7db4ff;
+  --color-p1: #ff8f8f;
+
+  --gradient-header: linear-gradient(135deg, #1b3a5a 0%, #26305c 100%);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6);
+
+  --type-darkness: #56668a;
+  --type-trainer: #8a9bc0;
+
+  /* Blended look, dark: B's indigo night with C's structure. */
+  --look-page: #140b3d;
+  --look-page-bg: radial-gradient(120% 60% at 50% 0%, #3a1d8f 0%, #140b3d 55%, #090620 100%) fixed, #090620;
+  --look-on-page: #f3f0ff;
+  --look-on-page-muted: #c9bff5;
+  --look-band: linear-gradient(135deg, #2b1680 0%, #5326c4 100%);
+  --look-on-band: #ffffff;
+  --look-band-shadow: 0 10px 28px rgba(0, 0, 0, 0.55), 0 0 22px rgba(123, 92, 255, 0.35);
+  --look-band-btn: rgba(0, 0, 0, 0.3);
+  --look-panel: #1c1452;
+  --look-panel-2: #251a5e;
+  --look-ink: #f3f0ff;
+  --look-ink-muted: #c9bff5;
+  --look-accent: #b9a8ff;
+  --look-outline: #8f7bff;
+  --look-shadow-panel: 0 14px 34px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  --look-shadow-card: 0 8px 18px rgba(0, 0, 0, 0.55);
+  --look-shadow-card-hot: 0 0 18px rgba(123, 92, 255, 0.7), 0 12px 26px rgba(0, 0, 0, 0.6);
+  --look-btn: #2a1f6e;
+  --look-btn-hover: #382a8c;
+  --look-btn-press: #45349f;
+  --look-on-btn: #ffffff;
+  --look-gold-base: #8a5200;
+  --look-danger-soft: #3d0f2e;
+  --look-on-danger-soft: #ffb3c5;
+  --look-win-text: #5ff0a0;
+  --look-loss-text: #ff8fab;
+  --look-mark-empty: #251a5e;
+  --look-mark-empty-border: #8f7bff;
+  --look-progress-off: rgba(255, 255, 255, 0.18);
+  --look-focus-page: #ffd23f;
+  --look-focus-band: #ffd23f;
+  --look-focus-panel: #ffd23f;
+  --look-sheen-rest: 0.4;
+}
+:root[data-theme='light'] { color-scheme: light; }
+:root[data-theme='dark'] { color-scheme: dark; }

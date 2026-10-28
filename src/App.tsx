@@ -58,7 +58,9 @@ function ScreenRoot({ name, children }: { name: string; children: ReactNode }) {
     h.tabIndex = -1;
     h.focus({ preventScroll: true });
   }, [name]);
-  return <div ref={ref} className="screen-fade" data-screen={name}>{children}</div>;
+  // Every screen but the battle board and its replay wears the blended look (look.css, #131).
+  const look = name !== 'battle' && name !== 'replay';
+  return <div ref={ref} className={look ? 'screen-fade look' : 'screen-fade'} data-screen={name}>{children}</div>;
 }
 const screen = (name: string, el: ReactNode) => <ScreenRoot key={name} name={name}>{el}</ScreenRoot>;
 

@@ -84,7 +84,7 @@ export function RunView({ pool, deck, run, onNextBattle, onReturn, onReplay, onQ
         )}
 
         {!confirmingQuit && (
-          <button id="quit-run-open" className="run-btn" onClick={() => setConfirmingQuit(true)}>Quit run</button>
+          <button id="quit-run-open" className="run-btn run-btn-quit" onClick={() => setConfirmingQuit(true)}>Quit run</button>
         )}
         {confirmingQuit && (
           <Confirm label="Quit run" returnId="quit-run-open" onCancel={() => setConfirmingQuit(false)}>

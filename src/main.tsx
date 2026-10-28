@@ -3,9 +3,14 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { Announcer } from './components/Announcer';
 import { bootWasmEngine } from './game/wasmBoot';
+import { applyTheme, readTheme } from './theme';
 import './tokens.css';
 import './index.css';
 import './screens.css';
+import './look.css';
+
+// Before the first paint, so a saved Light / Dark choice never flashes the other theme.
+applyTheme(readTheme());
 
 const root = createRoot(document.getElementById('root')!);
 
