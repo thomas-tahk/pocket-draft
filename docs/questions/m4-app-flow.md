@@ -67,3 +67,9 @@
 - M4 review 2 · a named Pokémon's types are the union over all its printings in cards.json (Acerola gains Fighting from Palossand's Fighting printings, Team Galactic Grunt gains Fighting from the B3 Croagunk) · "the card types of the Pokémon its text names"; any printing may be in the deck
 - M4 review 3 · Koraidon ex and Miraidon ex (B3a) stay Ancient / Future; only the B2a Koraidon and Miraidon drop out · the engine's tagged-printing list (server/texts_3_11.go) has them; cards.json carries no tag and the card images could not be checked from here · open: does the B3a Koraidon ex / Miraidon ex print the tag?
 - M4 review 3 · battle follows the same rule: the Booster Energy Capsules now read the tagged-printing list, so a B2a Koraidon / Miraidon no longer gets +40 HP / +20 damage · one rule for draft and battle
+- 2026-10-28 · type lean cap = 4 picks (weight tops out at 9); off-type share stays ≥ ~88% of its 3-pick value · owner: "keep the strength, add a cap"
+- 2026-10-28 · Koraidon ex / Miraidon ex (B3a) still count as Ancient / Future: they are in the engine's tagged-printing list; only the B2a printings are out · owner: "counts only if the card says so"
+- 2026-10-28 · theme toggle: Auto / Light / Dark on Home's header, saved in localStorage; Auto follows the phone · owner: "follow the phone setting plus a manual toggle"
+- 2026-10-28 · reduced motion turns the holo sheen off entirely (not a still glint) · owner: "off under reduced motion"
+- 2026-10-28 · Energy Zone picker with no typed attack cost shows only the heading and 0/3 (the old empty-deck line is cut) · owner: "cut the extra lines"
+- 2026-10-28 · next-milestone draft issues #132–#136 filed in the existing M5 ("Every card works"), as the owner said to check it first and add there
