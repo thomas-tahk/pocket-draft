@@ -46,29 +46,29 @@ async function evolveAt(api: APIRequestContext, v: View, target = 0): Promise<Vi
   return v;
 }
 
-// Plays on, evolving each turn, until a Greninja is your Active and the bot's
-// Active survives, on the first seed that gets there.
+// Greninja ex as the Active and a second Greninja ex on the Bench (so a Benched Pokémon with a
+// usable Ability is among the ones to switch in), plus a third Pokémon so the board asks which.
 async function toGreninjaExActive(api: APIRequestContext) {
-  for (let seed = 1; seed < 60; seed++) {
+  for (let seed = 1; seed < 200; seed++) {
     const start = await post(api, '/api/new', { seed, you: DECK, bot: BOT });
-    const froakie = start.players[0].hand.find((c) => c.id === FROAKIE);
-    if (!froakie) continue;
-    await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: froakie.id });
-    const mates = start.players[0].hand.filter((c) => c.id === BENCHER);
-    if (mates.length < 2) continue;
-    await post(api, '/api/move', { type: 'SetupBench', player: 0, cardId: mates[0].id, slot: 0 });
-    await post(api, '/api/move', { type: 'SetupBench', player: 0, cardId: mates[1].id, slot: 1 });
+    const hand = start.players[0].hand;
+    const froakies = hand.filter((c) => c.id === FROAKIE);
+    const mate = hand.find((c) => c.stage === 'Basic' && c.id !== FROAKIE);
+    if (froakies.length < 2 || !mate) continue;
+    await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: froakies[0].id });
+    await post(api, '/api/move', { type: 'SetupBench', player: 0, cardId: froakies[1].id, slot: 0 });
+    await post(api, '/api/move', { type: 'SetupBench', player: 0, cardId: mate.id, slot: 1 });
     await post(api, '/api/move', { type: 'SetupReady', player: 0 });
     for (let i = 0; i < 6 && (await post(api, '/api/bot')).phase === 'setup'; i++);
     let v = await runBotUntilYourTurn(api);
-    for (let turn = 0; turn < 6 && v.phase === 'main' && v.players[0].active; turn++) {
-      v = await evolveAt(api, v);
-      if (v.players[0].active?.card.id === GRENINJA) return;
+    for (let turn = 0; turn < 10 && v.phase === 'main' && v.players[0].active; turn++) {
+      v = await evolveAt(api, await evolveAt(api, v, 0), 1);
+      if (v.players[0].active?.card.id === GRENINJA && v.players[0].bench[0]?.card.id === GRENINJA) return;
       await post(api, '/api/move', { type: 'EndTurn', player: 0 });
       v = await runBotUntilYourTurn(api);
     }
   }
-  throw new Error('no seed gets a Greninja into the Active Spot');
+  throw new Error('no seed gets two Greninja ex into play');
 }
 
 // Greninja ex on the Bench behind a Water Active, a second Benched Pokémon beside it.
@@ -119,11 +119,12 @@ for (const [name, size] of [['phone', { width: 375, height: 700 }], ['desktop', 
     await ability.click();
 
     // Two Benched Pokémon: the board asks which one to switch in.
-    const lit = page.getByTestId('my-bench').locator('[data-lit="true"][data-pickable="true"]').first();
+    // Switch in the Benched Greninja ex: it has a usable Ability of its own.
+    const lit = page.getByTestId('my-bench').locator('[data-slot="left"] [data-lit="true"][data-pickable="true"]');
     await expect(lit).toBeVisible();
     await tap(page, lit);
 
-    // The card is gone and Greninja ex is on the Bench; the game goes on.
+    // No card is left open and both Greninja ex are in play; the game goes on.
     await expect(sheet).toHaveCount(0);
     await expect(page.getByTestId('my-bench').locator('[data-zoom="B1-073"]')).toHaveCount(1);
     await page.screenshot({ path: `test-results/shifting-stream-${name}.png` });
