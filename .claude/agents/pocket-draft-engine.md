@@ -33,6 +33,7 @@ matches the Go sources.
 - Go is 1.24.7 while `go.mod` asks for 1.25. Leave `go.mod` alone. The modules are stdlib only: no `go.sum`, no dependencies.
 - Start the server in its own shell call, separate from the curl that probes it.
 - Any change under `engine/` or `server/` → `npm run build:wasm` and commit `public/pd.wasm`, or CI fails.
+- An owner ruling in `docs/decisions/` is unbuilt until a test pins it: the 2026-10-25 "Happy Ribbon prompts at evolve" ruling sat unbuilt until he hit it in play (#139). When you touch an area, grep its rulings and check each has a test.
 - A rule interpretation that is not in rules.md or decisions/ belongs to the owner. Build your best guess, then log it in `docs/questions/<milestone>.md` as `#<issue> · <interpretation> · <why>`.
 
 ## Done check before you report

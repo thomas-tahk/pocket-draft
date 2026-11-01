@@ -42,3 +42,6 @@ and the rebuilt binary committed — CI fails the PR otherwise.
 Every card face drawn on the board must be holdable to zoom: give its wrapper
 `data-zoom={card.id}` and make `zoomCardAt` (`src/battle/useZoom.ts`) find it.
 The Stadium shipped without it in M4 and the owner caught it.
+
+A choice overlay lights board slots that keep their own tap handlers: a tap on a lit
+slot must only make the choice, never also open that slot's card (#140, owner caught it).
