@@ -121,13 +121,6 @@ export function ShopView({
           </h2>
           {renderShelf(inventory.staples)}
         </section>
-
-        <section style={{ marginTop: 24 }}>
-          <h2 className="section-title">
-            Same-type EX / Mega-EX ({inventory.alts.length})
-          </h2>
-          {renderShelf(inventory.alts)}
-        </section>
       </main>
 
       <aside className="screen-aside" aria-label="Your cards" style={{ ['--aside-w' as string]: '260px' }}>
