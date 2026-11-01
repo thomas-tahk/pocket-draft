@@ -73,3 +73,5 @@
 - 2026-10-28 · reduced motion turns the holo sheen off entirely (not a still glint) · owner: "off under reduced motion"
 - 2026-10-28 · Energy Zone picker with no typed attack cost shows only the heading and 0/3 (the old empty-deck line is cut) · owner: "cut the extra lines"
 - 2026-10-28 · next-milestone draft issues #132–#136 filed in the existing M5 ("Every card works"), as the owner said to check it first and add there
+- #139 · after a hand evolve, "when you play this Pokémon from your hand to evolve" Abilities raise a yes/no prompt ("Use X?" / "Not now"); No leaves the Ability button usable for the rest of the turn, and a targeted one (Yes) leaves aiming to the button · owner decided the prompt on 2026-10-25; keeping the button after No and for targets is my guess
+- #139 · Rare Candy counts as "play this Pokémon from your hand to evolve", so it raises the same on-evolve yes/no; evolves from the deck stay excluded · reviewer call, owner to confirm; a targeted Yes asks which Pokémon (names with Active/Bench spot)

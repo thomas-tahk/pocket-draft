@@ -26,6 +26,7 @@ type Ability struct {
 	Where       AbilitySpot             // where it may be used from
 	EvolvesAs   string                  // "can evolve into any Pokémon that evolves from <name>": also takes evolutions of that name (Eevee ex)
 	When        func(AbilityCheck) bool // nil means always
+	OnEvolve    bool                    // "when you play this Pokémon from your hand to evolve": the engine asks to use it right after the evolve
 
 	// Triggered parts, run by the engine instead of a player's move (4.4):
 	AtCheckup    []EffectOp     // at the end of a turn's Checkup, if Where and When hold
@@ -176,4 +177,49 @@ func (g *Game) applyUseAbility(e UseAbility) {
 		op.Apply(ctx)
 	}
 	g.resolveAction()
+}
+
+// offerOnEvolve asks the player, right after a hand evolve, whether to use the
+// evolved Pokémon's on-evolve Ability (#139). Yes runs an untargeted Ability at
+// once; a targeted one asks which Pokémon. "Not now" leaves the button.
+func (g *Game) offerOnEvolve(p, pos int) {
+	a := g.abilityOf(g.holder(p, pos))
+	if a == nil || !a.OnEvolve {
+		return
+	}
+	var uses []UseAbility
+	for _, u := range listUseAbility(g, p) {
+		if u.Pos == pos && g.checkUseAbility(u) == nil {
+			uses = append(uses, u)
+		}
+	}
+	if len(uses) == 0 {
+		return
+	}
+	g.showChoice(p, "Use "+a.Name+"?", []string{"Use " + a.Name, "Not now"}, func(g *Game, i int) {
+		if i != 0 {
+			return
+		}
+		if len(uses) == 1 {
+			g.applyUseAbility(uses[0])
+			return
+		}
+		g.askChoice(p, "Choose a Pokémon", g.useLabels(uses), func(g *Game, j int) { g.applyUseAbility(uses[j]) })
+	})
+}
+
+// useLabels names the Pokémon each use is aimed at.
+func (g *Game) useLabels(uses []UseAbility) []string {
+	out := make([]string, len(uses))
+	for i, u := range uses {
+		who, where := "Your ", "Active"
+		if u.Target.Player != u.Player {
+			who = "Opponent's "
+		}
+		if u.Target.Pos > 0 {
+			where = fmt.Sprintf("Bench %d", u.Target.Pos)
+		}
+		out[i] = who + g.holder(u.Target.Player, u.Target.Pos).Card.Name + " (" + where + ")"
+	}
+	return out
 }
