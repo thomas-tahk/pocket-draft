@@ -7,7 +7,7 @@ import { InPlayCard } from './InPlayCard';
 import { CardBack, CardFace, EmptySlot, EnergyIcon, PointPips } from './pieces';
 import { TurnBanner } from './TurnBanner';
 import { ReadyButton } from './Setup';
-import { usableCards } from './usable';
+import { offersPlay, usableCards } from './usable';
 import { CardZoom, PlayLayer } from './PlayLayer';
 import { PlayContext, usePlay, useHolding, type Spot } from './usePlay';
 import { stadiumKey, viewKeys, type SideKeys } from './motion';
@@ -198,7 +198,7 @@ export function Board({ view, instant = false, onEndTurn, onReady = () => {}, ch
   const [you, opp] = view.players;
   const yourTurn = view.phase === 'main' && view.active === 0 && !view.pending;
   // Nothing to play but End Turn (Concede doesn't count): End Turn glows like any playable target.
-  const onlyEndTurn = yourTurn && you.legalMoves.every((m) => m.type === 'EndTurn' || m.type === 'Concede');
+  const onlyEndTurn = yourTurn && !offersPlay(you.legalMoves);
   const boardRef = useRef<HTMLDivElement>(null);
   const { holding, flash, zoom, zoomOpened, onPointerDown } = usePlay(view);
   const activeCard = useActiveCard(view);

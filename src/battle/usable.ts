@@ -16,3 +16,11 @@ export function usableCards(moves: Move[]): Usable {
   }
   return out;
 }
+
+// True when the board offers some play: a usable card, or an energy attach.
+// EndTurn, Concede and moves with no control on the board (DiscardFossil,
+// UseStadium) are not plays, so they never stop End Turn from glowing.
+export function offersPlay(moves: Move[]): boolean {
+  const u = usableCards(moves);
+  return u.hand.size > 0 || u.active || u.bench.size > 0 || moves.some((m) => m.type === 'AttachEnergy');
+}
