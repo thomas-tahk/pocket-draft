@@ -193,6 +193,12 @@
   to { box-shadow: 0 0 calc(var(--u) * 14) calc(var(--u) * 6) rgba(255, 200, 0, 1); }
 }
 
+/* End Turn keeps its pill shape when it glows; reduced motion gets a steady glow (End Turn only; the card pulse is unchanged). */
+.bt-endturn.bt-usable { border-radius: calc(var(--u) * 18); }
+@media (prefers-reduced-motion: reduce) {
+  .bt-endturn.bt-usable { animation: none; box-shadow: 0 0 calc(var(--u) * 10) calc(var(--u) * 4) rgba(255, 200, 0, 0.9); }
+}
+
 /* ---- choice overlay (F8, F13) ---- */
 .bt-dim { position: absolute; inset: 0; z-index: 20; background: rgba(10, 14, 30, 0.62); }
 .bt-lit { position: relative; z-index: 30; border-radius: calc(var(--u) * 5); }

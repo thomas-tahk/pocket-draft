@@ -197,6 +197,8 @@ type BoardProps = { view: GameView; instant?: boolean; onEndTurn: () => void; on
 export function Board({ view, instant = false, onEndTurn, onReady = () => {}, choice = null, children }: BoardProps) {
   const [you, opp] = view.players;
   const yourTurn = view.phase === 'main' && view.active === 0 && !view.pending;
+  // Nothing to play but End Turn (Concede doesn't count): End Turn glows like any playable target.
+  const onlyEndTurn = yourTurn && you.legalMoves.every((m) => m.type === 'EndTurn' || m.type === 'Concede');
   const boardRef = useRef<HTMLDivElement>(null);
   const { holding, flash, zoom, zoomOpened, onPointerDown } = usePlay(view);
   const activeCard = useActiveCard(view);
@@ -217,7 +219,7 @@ export function Board({ view, instant = false, onEndTurn, onReady = () => {}, ch
       <Zone id="end-turn" place={{ top: 400, right: 10 }}>
         {view.phase === 'setup'
           ? <ReadyButton view={view} onReady={onReady} />
-          : <button className="bt-endturn" disabled={!yourTurn} onClick={onEndTurn}>End Turn</button>}
+          : <button className={onlyEndTurn ? 'bt-endturn bt-usable' : 'bt-endturn'} disabled={!yourTurn} onClick={onEndTurn}>End Turn</button>}
       </Zone>
       <YourSide p={you} keys={keys[0]} choice={shownChoice} onTapActive={onTapActive} onTapBench={onTapBench} />
       </PlayContext.Provider>
