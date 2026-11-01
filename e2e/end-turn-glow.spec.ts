@@ -15,11 +15,7 @@ async function post(api: APIRequestContext, url: string, data?: object) {
 }
 
 async function toYourSecondTurn(api: APIRequestContext) {
-  const start = await post(api, '/api/new', { seed: 7, bot: BOT, preset: 'fire' });
-  const basics = start.players[0].hand.filter((c: { stage: string }) => c.stage === 'Basic');
-  await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: basics[0].id });
-  await post(api, '/api/move', { type: 'SetupReady', player: 0 });
-  for (let i = 0; i < 6 && (await post(api, '/api/bot')).phase === 'setup'; i++);
+  await toFirstMainTurn(api, { seed: 7, bot: BOT, preset: 'fire' });
   await post(api, '/api/move', { type: 'EndTurn', player: 0 });
   for (let i = 0; i < 40; i++) {
     const v = await post(api, '/api/bot');
@@ -27,8 +23,18 @@ async function toYourSecondTurn(api: APIRequestContext) {
   }
 }
 
-async function openWithLegalMoves(page: Page, moves: Move[]) {
-  await page.route('**/api/state', async (route) => {
+// Setup through the API, ending on the first main turn (you go first on these seeds).
+async function toFirstMainTurn(api: APIRequestContext, game: object) {
+  const start = await post(api, '/api/new', game);
+  if (!start.players) throw new Error('new game failed: ' + JSON.stringify(start));
+  const basics = start.players[0].hand.filter((c: { stage: string }) => c.stage === 'Basic');
+  await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: basics[0].id });
+  await post(api, '/api/move', { type: 'SetupReady', player: 0 });
+  for (let i = 0; i < 6 && (await post(api, '/api/bot')).phase === 'setup'; i++);
+}
+
+async function openWithLegalMoves(page: Page, moves?: Move[]) {
+  if (moves) await page.route('**/api/state', async (route) => {
     const res = await route.fetch();
     const view = await res.json();
     view.players[0].legalMoves = moves;
@@ -45,11 +51,48 @@ test('End Turn glows when it is the only legal play', async ({ page, request }) 
   await openWithLegalMoves(page, [{ type: 'EndTurn', player: 0 }, { type: 'Concede', player: 0 }]);
   const button = page.getByRole('button', { name: 'End Turn' });
   await expect(button).toHaveClass(/bt-usable/);
-  await page.screenshot({ path: 'docs/chief/look/m4-fixes/end-turn-glow.png' });
+  if (process.env.END_TURN_SHOT) await page.screenshot({ path: process.env.END_TURN_SHOT });
 });
 
 test('End Turn does not glow while another play exists', async ({ page, request }) => {
   await toYourSecondTurn(request);
   await openWithLegalMoves(page, [{ type: 'EndTurn', player: 0 }, { type: 'Concede', player: 0 }, { type: 'Retreat', player: 0 }]);
   await expect(page.getByRole('button', { name: 'End Turn' })).not.toHaveClass(/bt-usable/);
+});
+
+// Play every Basic and Trainer legal until the board offers nothing else: the
+// bench fills and any Fossil lands on it, leaving only moves with no control.
+async function playOutHand(api: APIRequestContext) {
+  for (let i = 0; i < 30; i++) {
+    const view = await (await api.get('/api/state')).json();
+    const moves: Move[] = view.players[0].legalMoves;
+    const play = moves.find((m) => m.type === 'PlayTrainer') ?? moves.find((m) => m.type === 'PlayBasic');
+    if (!play) return;
+    await post(api, '/api/move', play);
+  }
+}
+
+const legalTypes = async (api: APIRequestContext) => {
+  const view = await (await api.get('/api/state')).json();
+  return view.players[0].legalMoves.map((m: Move) => m.type).sort();
+};
+
+// No rewrite: a real game whose only legal moves are End Turn and Concede.
+test('real game with only End Turn and Concede legal: End Turn glows', async ({ page, request }) => {
+  await toFirstMainTurn(request, { seed: 1, preset: 'fire', bot: BOT });
+  await playOutHand(request);
+  expect(await legalTypes(request)).toEqual(['Concede', 'EndTurn']);
+  await openWithLegalMoves(page);
+  await expect(page.getByRole('button', { name: 'End Turn' })).toHaveClass(/bt-usable/);
+});
+
+// Fossils in hand: DiscardFossil is legal every turn but has no control on the board.
+const FOSSIL_DECK = ['A1-211', 'A1-202', 'A4-092', 'A3-044', 'B2b-012', 'A1-216', 'A1-217', 'A2-144', 'A2-145', 'B1-216'].flatMap((id) => [id, id]);
+
+test('real game with a Fossil on the board (DiscardFossil legal): End Turn glows', async ({ page, request }) => {
+  await toFirstMainTurn(request, { seed: 1, you: FOSSIL_DECK, bot: FOSSIL_DECK });
+  await playOutHand(request);
+  expect(await legalTypes(request)).toEqual(['Concede', 'DiscardFossil', 'DiscardFossil', 'EndTurn']);
+  await openWithLegalMoves(page);
+  await expect(page.getByRole('button', { name: 'End Turn' })).toHaveClass(/bt-usable/);
 });
