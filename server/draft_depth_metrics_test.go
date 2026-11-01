@@ -390,7 +390,7 @@ func sortedKeys[V any](m map[string]V) []string {
 }
 
 // staplesShelf mirrors src/shop/staples.ts (there is no Go twin of the shop).
-var staplesShelf = []string{"A2-150", "A1-225", "A3a-064", "B1-225", "A1-223", "A2-146", "A1-219", "A2-155", "B2a-089", "A2-152", "A2b-070", "A3-155"}
+var staplesShelf = []string{"A2-150", "A1-225", "A3a-064", "B1-225", "A1-223", "A2-146", "A1-219", "A2-155", "B2a-089", "A2-152", "A2b-070", "A3-155", "A3-144"}
 
 var searchText = regexp.MustCompile(`(?i)from your deck into your hand|search your deck|from your deck onto your bench|look at the top`)
 
@@ -444,7 +444,6 @@ func metricsShop(t *testing.T, pool []draftCard) {
 	}
 	t.Logf("Trainer names: cards.json %d, working %d, draft pool %d, shop staples (playable) %d (of them not in the draft pool: %d), reachable draft ∪ shop %d",
 		len(allTrainer), len(workingTrainer), len(poolTrainers), len(shopName), shopOnly, len(reach))
-	t.Logf("same-type ex shelf: Pokémon only (ex / Mega ex of a drafted type); it never offers a Trainer")
 
 	// Rare Candy and search / tutor Trainers.
 	want := map[string]bool{"Rare Candy": true, "Poké Ball": true, "Pokémon Communication": true, "Clemont": true, "Team Galactic Grunt": true}
