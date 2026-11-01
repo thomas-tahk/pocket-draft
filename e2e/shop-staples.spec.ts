@@ -22,6 +22,6 @@ for (const [w, h] of [[390, 844], [1440, 900]]) {
     await expect(page.locator('main .shelf-cell')).not.toHaveCount(0);
     // Every shelf card is a Trainer: none carries an ex marker.
     await expect(page.locator('main .shelf-cell [title*=" EX "], main .shelf-cell [title*="Mega-EX"]')).toHaveCount(0);
-    await page.screenshot({ path: `${OUT}/shop-${w}.png`, fullPage: true });
+    if (process.env.SHOP_SHOT) await page.screenshot({ path: `${OUT}/shop-${w}.png`, fullPage: true });
   });
 }
