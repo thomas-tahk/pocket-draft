@@ -187,15 +187,17 @@ func TestShiftingStreamSwitchesAWaterActive(t *testing.T) {
 	}
 }
 
-func TestShiftingStreamIsOncePerTurnAndNeedsAWaterActive(t *testing.T) {
+func TestShiftingStreamIsOncePerTurn(t *testing.T) {
 	g, p, _ := abilityGame45(t, "B1-073") // Greninja ex (Water)
-	onBoard(t, g, p, 1, "A4b-069")
+	onBoard(t, g, p, 1, "A1-087")         // Froakie (Water): the new Active is Water, so only "once" can refuse the second use
 	useAbility(t, g, p, 0, engine.Spot{Player: p, Pos: 1})
-	abilityRefused(t, g, p, 1, engine.Spot{Player: p, Pos: 1}) // second use this turn
+	abilityRefused(t, g, p, 1, engine.Spot{Player: p, Pos: 1}) // Greninja ex is now on the Bench, slot 1
+}
 
-	g, p, _ = abilityGame45(t, "A1-211") // a non-Water Active
-	onBoard(t, g, p, 1, "B1-073")
-	abilityRefused(t, g, p, 1, engine.Spot{Player: p, Pos: 0})
+func TestShiftingStreamNeedsAWaterActive(t *testing.T) {
+	g, p, _ := abilityGame45(t, "A1-211") // Snorlax (Colorless) Active
+	onBoard(t, g, p, 1, "B1-073")         // Greninja ex on the Bench
+	abilityRefused(t, g, p, 1, engine.Spot{Player: p, Pos: 1})
 }
 
 func TestWatchOverHealsTheActive(t *testing.T) {
