@@ -2,8 +2,9 @@ import { test, expect, type APIRequestContext, type Page } from '@playwright/tes
 
 // Owner: "End Turn doesn't glow when there's no other legal action to play".
 // With only End Turn (and Concede) legal, End Turn glows like any playable
-// target; with any other legal play it doesn't. The server's legal moves are
-// rewritten on the way to the page so both cases are exact.
+// target; with any other legal play it doesn't. In the first two tests the
+// server's legal moves are rewritten on the way to the page so both cases are
+// exact; the real-game tests below use the engine's own legal moves.
 
 const BOT = ['A1-211', 'A1-202', 'B4-015', 'B4-112', 'A3-044', 'A2-112', 'A1-150', 'B4-036', 'P-A-001', 'A4b-373'].flatMap((id) => [id, id]);
 type Move = { type: string; player?: number; cardId?: string };
@@ -93,6 +94,42 @@ test('real game with a Fossil on the board (DiscardFossil legal): End Turn glows
   await toFirstMainTurn(request, { seed: 1, you: FOSSIL_DECK, bot: FOSSIL_DECK });
   await playOutHand(request);
   expect(await legalTypes(request)).toEqual(['Concede', 'DiscardFossil', 'DiscardFossil', 'EndTurn']);
+  await openWithLegalMoves(page);
+  await expect(page.getByRole('button', { name: 'End Turn' })).toHaveClass(/bt-usable/);
+});
+
+// Area Zero in play: UseStadium carries a cardId but the board has no control for it.
+const AREA_ZERO_DECK = ['A1-211', 'A1-202', 'A1-150', 'A3-044', 'A1-044', 'B3a-074', 'A2-112', 'B4-112', 'B4-036', 'A1-048'].flatMap((id) => [id, id]);
+
+// Plays like a player until the only real moves are UseStadium ones; returns the turn.
+async function playUntilOnlyStadiumUse(api: APIRequestContext): Promise<number> {
+  await post(api, '/api/new', { seed: 1, bot: BOT, you: AREA_ZERO_DECK });
+  for (let i = 0; i < 500; i++) {
+    const v = await (await api.get('/api/state')).json();
+    const moves: Move[] = v.players[0].legalMoves;
+    const mine = v.phase === 'main' && v.active === 0 && !v.pending;
+    if (v.phase === 'setup') { await setupStep(api, moves); continue; }
+    if (v.pending?.player === 0) { await post(api, '/api/move', moves[0]); continue; }
+    if (!mine) { await post(api, '/api/bot'); continue; }
+    const real = moves.filter((m) => m.type !== 'EndTurn' && m.type !== 'Concede');
+    if (real.length && real.every((m) => m.type === 'UseStadium' && m.cardId)) return v.turn;
+    const pick = real.find((m) => m.type === 'PlayTrainer') ?? real.find((m) => m.type === 'PlayBasic')
+      ?? real.find((m) => m.type === 'AttachEnergy' && (m as { target?: number }).target !== 0);
+    await post(api, '/api/move', pick ?? { type: 'EndTurn', player: 0 });
+  }
+  throw new Error('never reached a stadium-only board');
+}
+
+async function setupStep(api: APIRequestContext, moves: Move[]) {
+  const active = moves.find((m) => m.type === 'SetupActive');
+  if (active) await post(api, '/api/move', active);
+  else if (moves.some((m) => m.type === 'SetupReady')) await post(api, '/api/move', { type: 'SetupReady', player: 0 });
+  else await post(api, '/api/bot');
+}
+
+test('real game where only UseStadium (with a cardId) is left: End Turn glows', async ({ page, request }) => {
+  await playUntilOnlyStadiumUse(request);
+  expect(new Set(await legalTypes(request))).toEqual(new Set(['Concede', 'EndTurn', 'UseStadium']));
   await openWithLegalMoves(page);
   await expect(page.getByRole('button', { name: 'End Turn' })).toHaveClass(/bt-usable/);
 });
