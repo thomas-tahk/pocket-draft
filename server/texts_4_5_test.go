@@ -187,6 +187,17 @@ func TestShiftingStreamSwitchesAWaterActive(t *testing.T) {
 	}
 }
 
+func TestShiftingStreamIsOncePerTurnAndNeedsAWaterActive(t *testing.T) {
+	g, p, _ := abilityGame45(t, "B1-073") // Greninja ex (Water)
+	onBoard(t, g, p, 1, "A4b-069")
+	useAbility(t, g, p, 0, engine.Spot{Player: p, Pos: 1})
+	abilityRefused(t, g, p, 1, engine.Spot{Player: p, Pos: 1}) // second use this turn
+
+	g, p, _ = abilityGame45(t, "A1-211") // a non-Water Active
+	onBoard(t, g, p, 1, "B1-073")
+	abilityRefused(t, g, p, 1, engine.Spot{Player: p, Pos: 0})
+}
+
 func TestWatchOverHealsTheActive(t *testing.T) {
 	g, p, mon := abilityGame45(t, "B1-121") // Indeedee ex
 	mon.Damage = 50
