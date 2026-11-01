@@ -23,4 +23,11 @@ test.describe('shop shelves', () => {
     const names = buildShopInventory([byName('Rare Candy')], pool).staples.map((c) => c.name);
     expect(names).not.toContain('Rare Candy');
   });
+
+  test('no Pokemon is offered for any draft', () => {
+    const picks = pokemon.filter((c) => c.isEx).slice(0, 10);
+    const inv = buildShopInventory(picks, pool);
+    expect(Object.keys(inv)).toEqual(['staples']);
+    expect(inv.staples.every((c) => c.cardType === 'Trainer')).toBe(true);
+  });
 });
