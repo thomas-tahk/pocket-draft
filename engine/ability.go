@@ -26,6 +26,7 @@ type Ability struct {
 	Where       AbilitySpot             // where it may be used from
 	EvolvesAs   string                  // "can evolve into any Pokémon that evolves from <name>": also takes evolutions of that name (Eevee ex)
 	When        func(AbilityCheck) bool // nil means always
+	OnEvolve    bool                    // "when you play this Pokémon from your hand to evolve": the engine asks to use it right after the evolve
 
 	// Triggered parts, run by the engine instead of a player's move (4.4):
 	AtCheckup    []EffectOp     // at the end of a turn's Checkup, if Where and When hold
@@ -176,4 +177,28 @@ func (g *Game) applyUseAbility(e UseAbility) {
 		op.Apply(ctx)
 	}
 	g.resolveAction()
+}
+
+// offerOnEvolve asks the player, right after a hand evolve, whether to use the
+// evolved Pokémon's on-evolve Ability (#139). Yes runs an untargeted Ability at
+// once; a targeted one stays a button to aim. Not now leaves the button too.
+func (g *Game) offerOnEvolve(p, pos int) {
+	a := g.abilityOf(g.holder(p, pos))
+	if a == nil || !a.OnEvolve {
+		return
+	}
+	var uses []UseAbility
+	for _, u := range listUseAbility(g, p) {
+		if u.Pos == pos && g.checkUseAbility(u) == nil {
+			uses = append(uses, u)
+		}
+	}
+	if len(uses) == 0 {
+		return
+	}
+	g.showChoice(p, "Use "+a.Name+"?", []string{"Use " + a.Name, "Not now"}, func(g *Game, i int) {
+		if i == 0 && len(uses) == 1 {
+			g.applyUseAbility(uses[0])
+		}
+	})
 }

@@ -33,6 +33,9 @@ func evolveFrom(t *testing.T, g *engine.Game, p int, pre, evo string) {
 	put(g, p, 0, realCard(t, pre))
 	g.S.Players[p].Hand = []engine.Card{realCard(t, evo)}
 	mustSubmit(t, g, engine.Evolve{Player: p, HandCardID: evo, Target: 0})
+	if g.S.Pending != nil && g.S.Pending.Kind == engine.PromptChoose { // the on-evolve yes/no (#139): "Not now" leaves the button
+		mustSubmit(t, g, engine.ChooseOption{Player: p, Index: 1})
+	}
 }
 
 // --- always-on ---
