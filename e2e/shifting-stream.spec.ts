@@ -127,10 +127,10 @@ for (const [name, size] of [['phone', { width: 375, height: 700 }], ['desktop', 
     await expect(sheet).toHaveCount(0);
     await expect(page.getByTestId('my-bench').locator('[data-zoom="B1-073"]')).toHaveCount(1);
     await page.screenshot({ path: `test-results/shifting-stream-${name}.png` });
-    const end = page.getByRole('button', { name: 'End Turn' });
+    const end = page.getByTestId('end-turn').getByRole('button', { name: 'End Turn' });
     await expect(end).toBeEnabled();
     await end.click();
-    await expect(end).toBeDisabled();
+    await expect(page.getByTestId('confirm-ok')).toBeVisible(); // "end turn?" confirm: the board answers
   });
 }
 
@@ -154,5 +154,5 @@ test('Shifting Stream from a Benched Greninja ex: choosing it again does not reo
   await expect(page.getByTestId('active-card').locator('[data-zoom="B1-073"]')).toHaveCount(1);
   await expect(sheet).toHaveCount(0);
   await page.screenshot({ path: 'test-results/shifting-stream-bench.png' });
-  await expect(page.getByRole('button', { name: 'End Turn' })).toBeEnabled();
+  await expect(page.getByTestId('end-turn').getByRole('button', { name: 'End Turn' })).toBeEnabled();
 });
