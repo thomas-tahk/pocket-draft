@@ -181,7 +181,7 @@ func (g *Game) applyUseAbility(e UseAbility) {
 
 // offerOnEvolve asks the player, right after a hand evolve, whether to use the
 // evolved Pokémon's on-evolve Ability (#139). Yes runs an untargeted Ability at
-// once; a targeted one stays a button to aim. Not now leaves the button too.
+// once; a targeted one asks which Pokémon. "Not now" leaves the button.
 func (g *Game) offerOnEvolve(p, pos int) {
 	a := g.abilityOf(g.holder(p, pos))
 	if a == nil || !a.OnEvolve {
@@ -197,8 +197,29 @@ func (g *Game) offerOnEvolve(p, pos int) {
 		return
 	}
 	g.showChoice(p, "Use "+a.Name+"?", []string{"Use " + a.Name, "Not now"}, func(g *Game, i int) {
-		if i == 0 && len(uses) == 1 {
-			g.applyUseAbility(uses[0])
+		if i != 0 {
+			return
 		}
+		if len(uses) == 1 {
+			g.applyUseAbility(uses[0])
+			return
+		}
+		g.askChoice(p, "Choose a Pokémon", g.useLabels(uses), func(g *Game, j int) { g.applyUseAbility(uses[j]) })
 	})
+}
+
+// useLabels names the Pokémon each use is aimed at.
+func (g *Game) useLabels(uses []UseAbility) []string {
+	out := make([]string, len(uses))
+	for i, u := range uses {
+		who, where := "Your ", "Active"
+		if u.Target.Player != u.Player {
+			who = "Opponent's "
+		}
+		if u.Target.Pos > 0 {
+			where = fmt.Sprintf("Bench %d", u.Target.Pos)
+		}
+		out[i] = who + g.holder(u.Target.Player, u.Target.Pos).Card.Name + " (" + where + ")"
+	}
+	return out
 }
