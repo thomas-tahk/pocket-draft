@@ -14,12 +14,17 @@ async function post(api: APIRequestContext, url: string, data?: object) {
   return body.state ?? body;
 }
 
-async function toYourFirstTurn(api: APIRequestContext) {
+async function toYourSecondTurn(api: APIRequestContext) {
   const start = await post(api, '/api/new', { seed: 7, bot: BOT, preset: 'fire' });
   const basics = start.players[0].hand.filter((c: { stage: string }) => c.stage === 'Basic');
   await post(api, '/api/move', { type: 'SetupActive', player: 0, cardId: basics[0].id });
   await post(api, '/api/move', { type: 'SetupReady', player: 0 });
   for (let i = 0; i < 6 && (await post(api, '/api/bot')).phase === 'setup'; i++);
+  await post(api, '/api/move', { type: 'EndTurn', player: 0 });
+  for (let i = 0; i < 40; i++) {
+    const v = await post(api, '/api/bot');
+    if (v.phase !== 'main' || (v.pending ? v.pending.player : v.active) === 0) return;
+  }
 }
 
 async function openWithLegalMoves(page: Page, moves: Move[]) {
@@ -36,7 +41,7 @@ async function openWithLegalMoves(page: Page, moves: Move[]) {
 }
 
 test('End Turn glows when it is the only legal play', async ({ page, request }) => {
-  await toYourFirstTurn(request);
+  await toYourSecondTurn(request);
   await openWithLegalMoves(page, [{ type: 'EndTurn', player: 0 }, { type: 'Concede', player: 0 }]);
   const button = page.getByRole('button', { name: 'End Turn' });
   await expect(button).toHaveClass(/bt-usable/);
@@ -44,7 +49,7 @@ test('End Turn glows when it is the only legal play', async ({ page, request }) 
 });
 
 test('End Turn does not glow while another play exists', async ({ page, request }) => {
-  await toYourFirstTurn(request);
+  await toYourSecondTurn(request);
   await openWithLegalMoves(page, [{ type: 'EndTurn', player: 0 }, { type: 'Concede', player: 0 }, { type: 'Retreat', player: 0 }]);
   await expect(page.getByRole('button', { name: 'End Turn' })).not.toHaveClass(/bt-usable/);
 });
