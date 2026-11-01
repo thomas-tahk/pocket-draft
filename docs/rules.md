@@ -12,7 +12,7 @@ Inspired by the **SWUCUBE** cube draft format (see `swucube-rules.md`) — origi
 
 ```
 1. Draft Phase       (20 rounds of pick 1-of-5)
-2. Shop Phase        (spend flat tickets on staples + same-type ex cards)
+2. Shop Phase        (spend flat tickets on staples (Trainers only))
 3. Deckbuilding      (finalize 20-card deck, cut)
 4. Run               (play games until win/loss threshold)
 ```
@@ -74,15 +74,14 @@ Each ticket buys **one deck copy** of a chosen card. Spend two tickets on the sa
 - Ensures no player is bricked without key Supporters due to bad draft luck.
 - Same contents for every player every session, minus any you already drafted.
 
-### Same-type ex shelf
-- Every ex / Mega ex Pokémon of a type you drafted Pokémon of (Colorless doesn't count), one printing per name.
-- Names you already drafted are left out: you already hold up to 2 copies of them.
+### Trainers only
+- The shop sells Trainers only. No Pokémon of any kind is on offer (owner decision, #138).
 - Pokémon-specific Trainers (e.g. Blaine for Ninetales / Rapidash / Magmar) are not on the shelf yet.
 
 Source of truth: `src/shop/inventory.ts`. (This replaces the earlier "undrafted shelf" idea of one card from each pack's unchosen four.)
 
 ### Shop purpose
-The shop is for **patching holes and minor upgrades only** — not redesigning the deck. The ticket cap enforces this. Target outcomes: ensuring access to at least 1–2 Supporters, filling a missing item slot, or adding a Pokemon that completes a line.
+The shop is for **patching holes and minor upgrades only** — not redesigning the deck. The ticket cap enforces this. Target outcomes: ensuring access to at least 1–2 Supporters, filling a missing item slot.
 
 ---
 
