@@ -70,7 +70,7 @@ After the draft, players spend a flat allotment of **4 tickets** (starting value
 Each ticket buys **one deck copy** of a chosen card. Spend two tickets on the same card to lock in 2 deck slots, or spread them across up to 4 different cards. Per-card cap is the global 2-copy-by-name limit (max 2 tickets on any one card). Tickets can't be saved or carried over.
 
 ### Staple shelf
-- A fixed list of 12 essential Trainer cards (`src/shop/staples.ts`: Cyrus, Sabrina, Repel, Copycat, Giovanni, Pokémon Communication, Erika, Mars, Iono, Cynthia, Pokémon Center Lady, Lillie).
+- A fixed list of 13 essential Trainer cards (`src/shop/staples.ts`: Cyrus, Sabrina, Repel, Copycat, Giovanni, Pokémon Communication, Erika, Mars, Iono, Cynthia, Pokémon Center Lady, Lillie, Rare Candy).
 - Ensures no player is bricked without key Supporters due to bad draft luck.
 - Same contents for every player every session, minus any you already drafted.
 
