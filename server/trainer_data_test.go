@@ -41,8 +41,9 @@ func TestAllItemsAndSupportersLoad(t *testing.T) {
 			t.Errorf("%s (%s) kind = %v, want %v", rc.ID, rc.Name, c.Kind, kind)
 		}
 	}
-	if n != 309 {
-		t.Errorf("found %d Items and Supporters, want 309", n)
+	// A floor, not an exact count: the monthly refresh adds cards.
+	if n < 309 {
+		t.Errorf("found %d Items and Supporters, want at least 309", n)
 	}
 }
 
