@@ -1,6 +1,6 @@
 name: reply-trigger
 
-# The owner's comment on any issue or PR starts a Claude cloud run.
+# The owner's reply on a needs-you issue or PR starts a Claude cloud run.
 # Claude's native GitHub triggers have no comment event, so this bridges to the
 # routine's API trigger. No AI runs here: one curl and one comment.
 #
@@ -21,8 +21,12 @@ permissions:
 
 jobs:
   fire:
-    # Only the owner's comments, and not Claude's own (they also post as the owner).
-    if: github.event.comment.user.login == github.repository_owner && github.event.comment.performed_via_github_app.slug != 'claude'
+    # Only the owner's replies on items waiting on them, and not Claude's own
+    # comments (they also post as the owner).
+    if: >-
+      github.event.comment.user.login == github.repository_owner &&
+      contains(github.event.issue.labels.*.name, 'needs-you') &&
+      github.event.comment.performed_via_github_app.slug != 'claude'
     runs-on: ubuntu-latest
     steps:
       - name: Fire the routine and report back on the thread
