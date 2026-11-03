@@ -50,6 +50,11 @@ jobs:
         working-directory: server
         run: PD_WRITE_DRAFT_POOL=1 go test -run TestDraftPoolFile .
 
+      # This workflow's push doesn't trigger CI, so a bad refresh must fail here.
+      - name: Test the refreshed data
+        working-directory: server
+        run: go test ./...
+
       - name: Commit refreshed data if changed
         run: |
           git config user.name  "github-actions[bot]"
