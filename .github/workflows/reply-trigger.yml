@@ -21,13 +21,8 @@ permissions:
 
 jobs:
   fire:
-    # Public repo: only the owner may start a run. Cloud runs also comment as the
-    # owner, so skip their app-stamped comments and report blocks to avoid a loop.
-    if: >-
-      github.event.comment.user.login == github.repository_owner &&
-      github.event.comment.performed_via_github_app.slug != 'claude' &&
-      !startsWith(github.event.comment.body, '> ## ') &&
-      !startsWith(github.event.comment.body, '## ')
+    # Only the owner's comments, and not Claude's own (they also post as the owner).
+    if: github.event.comment.user.login == github.repository_owner && github.event.comment.performed_via_github_app.slug != 'claude'
     runs-on: ubuntu-latest
     steps:
       - name: Fire the routine and report back on the thread
