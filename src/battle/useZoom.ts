@@ -10,13 +10,15 @@ export const DRAG_START_PX = 8;
 
 type Press = { card: CardView; x: number; y: number };
 
-// The card under the pointer: a hand card (data-pick) or a card in play (data-zoom).
+// The card under the pointer: a hand card (data-pick), or a card in play or the
+// Stadium (data-zoom).
 export function zoomCardAt(el: Element | null, view: GameView): CardView | null {
   const [you, opp] = view.players;
   const pick = el?.closest('[data-pick^="hand:"]')?.getAttribute('data-pick');
   if (pick) return you.hand[Number(pick.slice(5))] ?? null;
   const id = el?.closest('[data-zoom]')?.getAttribute('data-zoom');
   if (!id) return null;
+  if (view.stadium?.id === id) return view.stadium;
   const inPlay = [you, opp].flatMap((p) => [p.active, ...p.bench]);
   return inPlay.find((m) => m?.card.id === id)?.card ?? null;
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/thomas-tahk/pocket-draft/engine"
@@ -33,6 +34,9 @@ func evolveFrom(t *testing.T, g *engine.Game, p int, pre, evo string) {
 	put(g, p, 0, realCard(t, pre))
 	g.S.Players[p].Hand = []engine.Card{realCard(t, evo)}
 	mustSubmit(t, g, engine.Evolve{Player: p, HandCardID: evo, Target: 0})
+	if pr := g.S.Pending; pr != nil && pr.Kind == engine.PromptChoose && strings.HasPrefix(pr.Title, "Use ") { // the on-evolve yes/no (#139): "Not now" leaves the button
+		mustSubmit(t, g, engine.ChooseOption{Player: p, Index: 1})
+	}
 }
 
 // --- always-on ---

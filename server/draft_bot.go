@@ -10,7 +10,7 @@ import (
 // totalDraftPacks mirrors draftStore.ts's TOTAL_PACKS; draftDeckSize mirrors
 // its DECK_SIZE (also the fixed 20 deckFromIDs requires).
 const (
-	totalDraftPacks = 16
+	totalDraftPacks = 20
 	draftDeckSize   = 20
 )
 
@@ -22,10 +22,10 @@ func newDraftRng(seed uint64) *rand.Rand {
 	return rand.New(rand.NewPCG(seed, seed^0x9e3779b97f4a7c15))
 }
 
-// draftBotDeck runs the actual pick-1-of-5×16 draft over the same draftable
+// draftBotDeck runs the actual pick-1-of-5×20 draft over the same draftable
 // pool and tier-weighted offer algorithm the client's draft uses
 // (src/stores/draftStore.ts, src/draft/offer.ts), choosing with botPick in place
-// of a human tap. It then builds a legal 20-card deck from the 16 picks plus
+// of a human tap. It then builds a legal 20-card deck from the 20 picks plus
 // their free under-evolutions (botDeckIDs) and hands the result to deckFromIDs
 // for the same legality/engine-modeling a human's finalized deck gets.
 func draftBotDeck(seed uint64) ([]engine.Card, error) {
@@ -36,7 +36,7 @@ func draftBotDeck(seed uint64) ([]engine.Card, error) {
 	return deckFromIDs(ids)
 }
 
-// draftBotIDs is draftBotDeck's draft as card ids: the 16 picks and the 20-card
+// draftBotIDs is draftBotDeck's draft as card ids: the 20 picks and the 20-card
 // deck built from them.
 func draftBotIDs(seed uint64) (picks, deck []string, err error) {
 	pool := toDraftablePool()
@@ -61,7 +61,7 @@ func draftBotIDs(seed uint64) (picks, deck []string, err error) {
 	return picks, botDeckIDs(drafted, byName), nil
 }
 
-// topUpToDeckSize expands 16 draft picks into a legal 20-card id list by
+// topUpToDeckSize expands 20 draft picks into a legal 20-card id list by
 // upping drafted picks to their 2-copy-by-name cap, rarest tier (tier 1) first,
 // until the deck reaches size. Never exceeds the cap, even if the draft
 // happened to pick the same card more than twice.

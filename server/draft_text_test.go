@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"maps"
 	"os"
 	"slices"
 	"strings"
@@ -50,7 +51,7 @@ func TestDraftPoolOffersOnlyCardsWhoseTextWorks(t *testing.T) {
 	}
 }
 
-// draftIDs plays a 16-pack draft, choosing from each offer with choose, and
+// draftIDs plays a 20-pack draft, choosing from each offer with choose, and
 // tops the picks up to 20 ids exactly as the bot's draft does.
 func draftIDs(t *testing.T, seed uint64, choose func([]draftCard) draftCard) []string {
 	t.Helper()
@@ -148,14 +149,15 @@ func TestDraftPoolFileMatchesTheEngine(t *testing.T) {
 	if err := json.Unmarshal(b, &got); err != nil {
 		t.Fatal(err)
 	}
-	if got.OnlyWorkingText != want.OnlyWorkingText || !slices.Equal(got.IDs, want.IDs) || !slices.Equal(got.Working, want.Working) {
+	if got.OnlyWorkingText != want.OnlyWorkingText || !slices.Equal(got.IDs, want.IDs) || !slices.Equal(got.Working, want.Working) ||
+		!maps.EqualFunc(got.SupportTypes, want.SupportTypes, slices.Equal[[]string]) {
 		t.Fatalf("%s is stale (regenerate with PD_WRITE_DRAFT_POOL=1 go test -run TestDraftPoolFile)", draftPoolFile)
 	}
 }
 
 // Deckbuild offers only cards the engine can play (owner 2026-10-19 (1)). The
 // SPA reads that set from the pool file's working list, which must be every
-// card whose text works (under-evolutions and universals included) and
+// card whose text works (under-evolutions included) and
 // nothing else.
 func TestDraftPoolFileListsEveryWorkingCard(t *testing.T) {
 	useRealCards(t)

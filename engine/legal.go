@@ -388,7 +388,7 @@ func (g *Game) checkEvolve(e Evolve) error {
 	if mon == nil {
 		return errors.New("invalid evolution target")
 	}
-	if mon.Card.Name != ev.EvolvesFrom {
+	if mon.Card.Name != ev.EvolvesFrom && !g.evolvesAs(g.holder(e.Player, e.Target), ev.EvolvesFrom) {
 		return fmt.Errorf("%s does not evolve from %s", ev.Name, mon.Card.Name)
 	}
 	if g.hasHook(HookEvolveEarly, g.holder(e.Player, e.Target), nil) {
@@ -402,6 +402,17 @@ func (g *Game) checkEvolve(e Evolve) error {
 		return errors.New("a Pokémon cannot evolve the turn it was played")
 	}
 	return nil
+}
+
+// evolvesAs reports whether h's Ability lets it take evolutions of the Pokémon
+// named name, though that isn't its own name (Eevee ex, "Veevee ’volve"). An
+// Ability that is turned off does nothing.
+func (g *Game) evolvesAs(h Holder, name string) bool {
+	a := h.Card.Ability
+	if a == nil || a.EvolvesAs == "" || a.EvolvesAs != name {
+		return false
+	}
+	return !g.noAbilitiesIn(g.allPassiveSources(), h)
 }
 
 var errFirstTurnEvolve = errors.New("no Pokémon may evolve on the first turn")

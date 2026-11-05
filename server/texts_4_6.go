@@ -89,12 +89,12 @@ var texts46 = map[string]engine.Ability{
 		AtCheckup: []engine.EffectOp{engine.AttachZoneToSelf{Type: engine.Lightning}}},
 
 	// --- once during your turn, when you play this Pokémon to evolve it ---
-	"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may look at the top 4 cards of your deck and put all Item cards you find there into your hand. Shuffle the other cards back into your deck.": once(engine.AnySpot, evolvedNow, engine.TopCardsToHand{N: 4, Fits: isItem}),
-	"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may draw 2 cards.":                                                                                                                           once(engine.AnySpot, evolvedNow, engine.DrawCards{N: 2}),
-	"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may move a random Energy from your opponent's Active Pokémon to this Pokémon.":                                                               once(engine.AnySpot, evolvedNow, engine.MoveFoeEnergyHere{}),
-	"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may make your opponent's Active Pokémon Poisoned and Burned.": once(engine.AnySpot, evolvedNow,
+	"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may look at the top 4 cards of your deck and put all Item cards you find there into your hand. Shuffle the other cards back into your deck.": onEvolve(engine.TopCardsToHand{N: 4, Fits: isItem}),
+	"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may draw 2 cards.":                                                                                                                           onEvolve(engine.DrawCards{N: 2}),
+	"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may move a random Energy from your opponent's Active Pokémon to this Pokémon.":                                                               onEvolve(engine.MoveFoeEnergyHere{}),
+	"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may make your opponent's Active Pokémon Poisoned and Burned.": onEvolve(
 		engine.ApplyStatus{Status: engine.Poison}, engine.ApplyStatus{Status: engine.Burn}),
-	"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may prevent all damage from—and effects of—attacks from your opponent's Pokémon done to this Pokémon until the end of your opponent's next turn.": once(engine.AnySpot, evolvedNow, engine.ShieldSelfNextTurn{}),
+	"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may prevent all damage from—and effects of—attacks from your opponent's Pokémon done to this Pokémon until the end of your opponent's next turn.": onEvolve(engine.ShieldSelfNextTurn{}),
 
 	// --- once during your turn ---
 	"Once during your turn, you may flip a coin. If heads, switch in 1 of your opponent's Benched Pokémon to the Active Spot.":                                                                         once(engine.AnySpot, nil, engine.FlipGust{}),

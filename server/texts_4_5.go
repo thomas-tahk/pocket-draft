@@ -66,10 +66,10 @@ var abilityTexts45 = map[string]engine.Ability{
 	"Once during your turn, you may look at the top card of your deck.":                                                                                                once(engine.AnySpot, nil, engine.LookAtTop{N: 1}),
 
 	// --- when you evolve it (4.4's evolvedNow) ---
-	"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may do 30 damage to your opponent's Active Pokémon.":                                                                                    once(engine.AnySpot, evolvedNow, engine.DamageOpp{N: 30}),
-	"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may heal 60 damage from 1 of your [W] Pokémon.":                                                                                         once(engine.AnySpot, evolvedNow, engine.HealOne{Amount: 60, Which: engine.OfType(engine.Water)}),
-	"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may have your opponent shuffle their hand into their deck. For each remaining point that your opponent needs to win, they draw a card.": once(engine.AnySpot, evolvedNow, engine.OppRedrawPointsLeft{}),
-	"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed.":                                                            once(engine.AnySpot, evolvedNow, engine.OnHeads{Op: engine.ApplyStatus{Status: engine.Paralyzed}}),
+	"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may do 30 damage to your opponent's Active Pokémon.":                                                                                    onEvolve(engine.DamageOpp{N: 30}),
+	"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may heal 60 damage from 1 of your [W] Pokémon.":                                                                                         onEvolve(engine.HealOne{Amount: 60, Which: engine.OfType(engine.Water)}),
+	"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may have your opponent shuffle their hand into their deck. For each remaining point that your opponent needs to win, they draw a card.": onEvolve(engine.OppRedrawPointsLeft{}),
+	"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed.":                                                            onEvolve(engine.OnHeads{Op: engine.ApplyStatus{Status: engine.Paralyzed}}),
 
 	// --- when you put it onto your Bench from your hand (benchedNow) ---
 	"Once during your turn, when you put this Pokémon from your hand onto your Bench, you may switch it with your Active Pokémon. If you do, move all of your Energy in play to this Pokémon.": once(engine.BenchSpot, benchedNow, engine.SwitchInTakeAllEnergy{}),
@@ -100,7 +100,7 @@ var abilityTexts45 = map[string]engine.Ability{
 	"Attacks used by your [F] Pokémon do +20 damage to your opponent's Active Pokémon.": passive(engine.HookDamageDealt, 20,
 		yourPokemon(typeIs(engine.Fighting))),
 	"Attacks used by your Future Pokémon cost 1 less [C] Energy.": passive(engine.HookColorlessCost, -1,
-		yourPokemon(func(c engine.Card) bool { return futureIDs[c.ID] })),
+		yourPokemon(isFuture)),
 	"If this Pokémon's remaining HP is 50 or less, attacks used by this Pokémon do +60 damage to your opponent's Active Pokémon.": passive(engine.HookDamageDealt, 60,
 		func(c engine.PassiveCheck) bool { return itself(c) && c.Target.Card.HP-c.Target.Damage <= 50 }),
 	"As long as this Pokémon is on your Bench, attacks used by your Pokémon that evolve from Poliwhirl do +40 damage to your opponent's Active Pokémon.": passive(engine.HookDamageDealt, 40,

@@ -39,11 +39,27 @@ jobs:
             exit 1
           fi
 
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: server/go.mod
+          # No external dependencies, so no go.sum to cache from (see ci.yml).
+          cache: false
+
+      # draft-pool.json is generated from cards.json, so it must move with it.
+      - name: Regenerate the draft pool
+        working-directory: server
+        run: PD_WRITE_DRAFT_POOL=1 go test -run TestDraftPoolFile .
+
+      # This workflow's push doesn't trigger CI, so a bad refresh must fail here.
+      - name: Test the refreshed data
+        working-directory: server
+        run: go test ./...
+
       - name: Commit refreshed data if changed
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/data/cards.json public/data/sets.json
+          git add public/data/cards.json public/data/sets.json public/data/draft-pool.json
           if git diff --cached --quiet; then
             echo "No card data changes."
           else

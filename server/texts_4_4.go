@@ -83,6 +83,14 @@ func evolvedNow(c engine.AbilityCheck) bool {
 	return c.Self.PlacedTurn == c.Game.S.Turn && c.Self.Card.Stage != engine.Basic
 }
 
+// onEvolve is an Ability usable once, on the turn the Pokémon evolved from
+// your hand; the engine asks yes/no right after the evolve (#139).
+func onEvolve(ops ...engine.EffectOp) engine.Ability {
+	a := once(engine.AnySpot, evolvedNow, ops...)
+	a.OnEvolve = true
+	return a
+}
+
 func foeAsleep(c engine.AbilityCheck) bool {
 	foe := c.Game.S.Players[1-c.Self.Player].Active
 	return foe != nil && foe.Has(engine.Asleep)
@@ -150,11 +158,11 @@ var texts44 = map[string]engine.Ability{
 	"As often as you like during your turn, you may choose 1 of your Pokémon that has damage on it, and move all of its damage to this Pokémon.": {Use: []engine.EffectOp{engine.MoveAllDamageHere{}}},
 
 	// --- once during your turn, when you play this Pokémon to evolve ---
-	"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may take a [R] Energy from your Energy Zone and attach it to your Active [R] Pokémon.": once(engine.AnySpot, evolvedNow, engine.AttachZoneToActive{Type: engine.Fire}),
-	"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may discard a random Energy from your opponent's Active Pokémon.":                      once(engine.AnySpot, evolvedNow, engine.DiscardOppEnergy{Type: engine.NoEnergy}),
-	"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may put a Supporter card from your discard pile into your hand.":                       once(engine.AnySpot, evolvedNow, engine.RandomFromDiscard{Match: ofKind(engine.KindSupporter)}),
-	"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may do 20 damage to your opponent's Active Pokémon.":                                   once(engine.AnySpot, evolvedNow, engine.DamageOpp{N: 20}),
-	"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may put 2 random Pokémon Tool cards from your discard pile into your hand.":            once(engine.AnySpot, evolvedNow, engine.RandomsFromDiscard{N: 2, Match: ofKind(engine.KindTool)}),
+	"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may take a [R] Energy from your Energy Zone and attach it to your Active [R] Pokémon.": onEvolve(engine.AttachZoneToActive{Type: engine.Fire}),
+	"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may discard a random Energy from your opponent's Active Pokémon.":                      onEvolve(engine.DiscardOppEnergy{Type: engine.NoEnergy}),
+	"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may put a Supporter card from your discard pile into your hand.":                       onEvolve(engine.RandomFromDiscard{Match: ofKind(engine.KindSupporter)}),
+	"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may do 20 damage to your opponent's Active Pokémon.":                                   onEvolve(engine.DamageOpp{N: 20}),
+	"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may put 2 random Pokémon Tool cards from your discard pile into your hand.":            onEvolve(engine.RandomsFromDiscard{N: 2, Match: ofKind(engine.KindTool)}),
 
 	// --- run by the engine ---
 	"At the end of your opponent's turn, if this Pokémon is in the Active Spot, put a random card from your deck that evolves from this Pokémon onto this Pokémon to evolve it.": {Where: engine.ActiveSpot, CheckupOf: engine.OppCheckup, AtCheckup: []engine.EffectOp{engine.EvolveRandomFromDeck{}}},

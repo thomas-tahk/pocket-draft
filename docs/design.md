@@ -8,7 +8,7 @@ An online tool for conducting/simulating a drafting format for Pokemon TCG Pocke
 
 ### Phase 1 — Draft Tool
 - **Arena-style format:** players draft a single deck by repeatedly picking 1 card from a set of offered options
-- No pre-existing collection required — any card in the game is draftable; basic universals (Pokeball, Prof's Research, etc.) are always freely available without drafting
+- No pre-existing collection required — any card in the game is draftable; there are no free universal Trainers
 - Solitary, asynchronous draft — each player picks at their own pace, no timer, no inter-player dependency
 - Matchmaking happens post-draft (after both players complete their picks)
 - After drafting, each player builds one 20-card deck and plays a run (win/loss threshold TBD)
@@ -84,7 +84,7 @@ pocket-draft/
 Applied by `src/data/loader.ts`:
 - Drop cosmetic variants (☆/☆☆/☆☆☆/♕)
 - Drop the entire `A4b` set (reprint-only "Deluxe Pack: ex" — every base-art card has a functional duplicate)
-- Drop the 5 free-universal trainers (Potion, X Speed, Red Card, Poké Ball, Professor's Research) — they're available freely at deckbuild
+- Poké Ball and Professor's Research are ordinary draftable Trainers — no free universals since the 2026-10 rework
 - For Promo cards, infer draft rarity from `exKind` (EX/Mega-EX → ◊◊◊◊, regular → ◊)
 - Dedupe the `pa-064` / `pa-065` Rayquaza ex pair (same functional signature) — keep lowest id
 - No general functional dedup: multi-pack cards (e.g. A1 Eevee in three packs) are kept as separate entries for pack-composition tables

@@ -259,6 +259,7 @@ func (g *Game) applyEvolve(e Evolve) {
 	mon := targetMon(pl, e.Target)
 	pl.Hand = removeAt(pl.Hand, hidx)
 	g.evolveMon(e.Player, mon, ev)
+	g.offerOnEvolve(e.Player, e.Target)
 }
 
 // evolveMon puts evolution card ev onto player p's mon.

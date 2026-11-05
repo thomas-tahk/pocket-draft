@@ -88,3 +88,16 @@ func TestValidateEnergyTypes(t *testing.T) {
 		}
 	}
 }
+
+// #127: the deckbuild picker's default (src/game/energy.ts defaultZoneTypes) mirrors this;
+// e2e/energy-default.spec.ts checks the two agree on real cards. Same deck as there:
+// two Druddigon (Fire, Water, Colorless) plus Psychic attackers. A Dragon's off-type
+// costs count, so Fire and Water are not lost to Psychic.
+func TestDefaultEnergyTypesDruddigonWithPsychic(t *testing.T) {
+	dragon := Card{ID: "A1a-056", Name: "Druddigon", Type: Dragon, HP: 100}
+	psychic := Card{ID: "PSY", Name: "Psy", Type: Psychic, HP: 60}
+	deck := append(deckOf(withCost(dragon, "A1a-056", Fire, Water, Colorless), 2), deckOf(withCost(psychic, "PSY", Psychic), 2)...)
+	if got, want := DefaultEnergyTypes(deck), []Energy{Fire, Water, Psychic}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %v, want %v", got, want)
+	}
+}
