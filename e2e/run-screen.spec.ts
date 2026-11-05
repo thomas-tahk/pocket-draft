@@ -53,17 +53,24 @@ test('Quit run asks on-screen, then ends the run as quit', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Quit run' })).toHaveCount(0);
 });
 
-for (const opener of ['Start new draft', 'Home']) {
+for (const opener of ['Start new draft']) {
   test(`${opener} mid-run asks on-screen; cancel keeps the run active`, async ({ page }) => {
     await start(page);
     await page.getByRole('button', { name: new RegExp(opener) }).first().click();
     await expect(page.getByTestId('leave-confirm')).toContainText('This quits your run at 0–0.');
-    if (opener === 'Home') await page.screenshot({ path: 'test-results/run-leave-confirm-390.png', fullPage: true });
     await page.getByTestId('leave-cancel').click();
     await expect(page.getByTestId('leave-confirm')).toHaveCount(0);
     await expect(page.getByTestId('run-status')).toHaveText('In progress');
   });
 }
+
+test('Home mid-run does not quit: Continue run returns to it', async ({ page }) => {
+  await start(page);
+  await page.getByRole('button', { name: 'Home', exact: true }).click();
+  await expect(page.getByTestId('leave-confirm')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Continue run' }).click();
+  await expect(page.getByTestId('run-status')).toHaveText('In progress');
+});
 
 test('confirming leave quits the run, then leaves', async ({ page }) => {
   await start(page);

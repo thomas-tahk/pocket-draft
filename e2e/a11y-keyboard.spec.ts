@@ -208,13 +208,13 @@ test('a whole run by keyboard: draft, shop, deckbuild, Energy Zone, battle, summ
   await expect(announcer(page)).toContainText('Battle 1: Loss. Run: 0–1');
   await expect(page.getByTestId('run-battles').locator('li')).toHaveCount(1);
 
-  // Leave confirm: Home asks first; Escape keeps the run and focus returns to Home.
-  await press(page, page.getByRole('button', { name: 'Home', exact: true }), 'Enter', { back: true });
+  // Leave confirm: Start new draft asks first; Escape keeps the run and focus returns to Home.
+  await press(page, page.getByRole('button', { name: 'Start new draft' }), 'Enter', { back: true });
   const leave = page.getByTestId('leave-confirm');
   await expect(leave.getByRole('button', { name: 'Keep playing' })).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(leave).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Home', exact: true })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Start new draft' })).toBeFocused();
 
   // Second battle, second loss: the run ends on the summary.
   await press(page, page.getByRole('button', { name: 'Next battle' }), 'Enter');

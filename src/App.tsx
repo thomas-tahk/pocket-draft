@@ -322,7 +322,7 @@ export function App() {
       onReplay={setReplaying}
       onQuit={quitRun}
       onNewDraft={() => start(pool.draftableCards)}
-      onHome={reset}
+      onHome={() => setHomeOpen(true)}
     />
   ));
 }

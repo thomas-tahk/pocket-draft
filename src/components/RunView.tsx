@@ -52,11 +52,11 @@ export function RunView({ pool, deck, run, onNextBattle, onReturn, onReplay, onQ
   if (!run) return <ReviewView pool={pool} deck={deck} run={run} onNewDraft={onNewDraft} onHome={onHome} />;
   if (run.status !== 'active') return <RunSummary pool={pool} run={run} onDraftAgain={onNewDraft} onHome={onHome} onReplay={onReplay} />;
   const { wins, losses, ties } = runScore(run);
-  // Leaving mid-run quits it first, so no button ends a run silently.
+  // Starting a new draft mid-run quits it first, so no button ends a run silently. Home just leaves the run open.
   const guard = (leave: () => void) => () => setLeaving(() => leave);
 
   return (
-    <ReviewView pool={pool} deck={deck} run={null} onNewDraft={guard(onNewDraft)} onHome={guard(onHome)}>
+    <ReviewView pool={pool} deck={deck} run={null} onNewDraft={guard(onNewDraft)} onHome={onHome}>
       <section className="run-panel" aria-label="Run">
         <h2 className="run-title">Your run</h2>
         <p data-testid="run-record" className="run-record">{runLine(run)} ({run.status})</p>
