@@ -125,9 +125,9 @@ func TestToEngineCardMarksMegaEX(t *testing.T) {
 	}
 }
 
-func TestDeckFromIDsRejectsACardTheEngineCannotPlay(t *testing.T) {
+func TestDeckFromIDsKeepsACardTheEngineCannotPlayAsAPlaceholder(t *testing.T) {
 	// Arrange: 18 playable Basics plus cards whose text the engine can't play
-	// yet (owner 2026-10-19 (1): every deck is 20 working cards).
+	// yet (owner 2026-11-08, issue #18: they stay in as do-nothing placeholders).
 	rawByID = map[string]rawCard{}
 	ids := make([]string, 0, 20)
 	for i := 0; i < 10; i++ {
@@ -141,14 +141,19 @@ func TestDeckFromIDsRejectsACardTheEngineCannotPlay(t *testing.T) {
 	rawByID["TR"] = rawCard{ID: "TR", Name: "Unwritten Trainer", CardType: "Trainer", TrainerKind: "Item",
 		TrainerText: "Something the engine can't do."}
 
-	// Act + Assert: the playable 20 plays as 20; swapping in either unplayable
-	// card is an error rather than a shorter deck.
-	if deck, err := deckFromIDs(ids); err != nil || len(deck) != 20 {
-		t.Fatalf("playable deck: got %d cards, err %v; want 20, nil", len(deck), err)
-	}
+	// Act + Assert: swapping in either unplayable card still gives 20 cards,
+	// the swapped one a placeholder that keeps the real id.
 	for _, bad := range []string{"AB", "TR"} {
-		if deck, err := deckFromIDs(append(ids[:19:19], bad)); err == nil {
-			t.Errorf("deck with %s: got %d cards and no error, want an error", bad, len(deck))
+		deck, err := deckFromIDs(append(ids[:19:19], bad))
+		if err != nil || len(deck) != 20 {
+			t.Fatalf("deck with %s: got %d cards, err %v; want 20, nil", bad, len(deck), err)
+		}
+		last := deck[19]
+		if !last.Placeholder || last.ID != bad || last.Name != placeholderName || !last.TextBuilt() {
+			t.Errorf("%s: got %+v, want a built placeholder keeping its id", bad, last)
+		}
+		if cardImage(last) != "" {
+			t.Errorf("%s: placeholder shows art %q", bad, cardImage(last))
 		}
 	}
 }

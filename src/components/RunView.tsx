@@ -56,7 +56,7 @@ export function RunView({ pool, deck, run, onNextBattle, onReturn, onReplay, onQ
   const guard = (leave: () => void) => () => setLeaving(() => leave);
 
   return (
-    <ReviewView pool={pool} deck={deck} run={null} onNewDraft={guard(onNewDraft)} onHome={onHome}>
+    <ReviewView pool={pool} deck={deck} run={null} energy={run.energy} onNewDraft={guard(onNewDraft)} onHome={onHome}>
       <section className="run-panel" aria-label="Run">
         <h2 className="run-title">Your run</h2>
         <p data-testid="run-record" className="run-record">{runLine(run)} ({run.status})</p>

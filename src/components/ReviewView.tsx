@@ -13,12 +13,13 @@ type Props = {
   deck: Record<string, number>;
   run: Run | null;
   onPlay?: () => void;
+  energy?: string[]; // the deck's Energy Zone choice, for the share QR
   children?: ReactNode; // the run panel, shown above the deck
   onNewDraft: () => void;
   onHome: () => void;
 };
 
-export function ReviewView({ pool, deck, run, onPlay, children, onNewDraft, onHome }: Props) {
+export function ReviewView({ pool, deck, run, onPlay, energy, children, onNewDraft, onHome }: Props) {
   const [hover, setHover] = useState<HoverState>(null);
   const handleHover = (p: HoverPayload | null) => setHover(p);
 
@@ -66,7 +67,7 @@ export function ReviewView({ pool, deck, run, onPlay, children, onNewDraft, onHo
         )}
         <div className="review-actions">
           {onPlay && <button className="btn-primary" onClick={onPlay}>▶ Play deck</button>}
-          <DeckShare deck={deck} pool={pool} />
+          <DeckShare deck={deck} pool={pool} energy={energy} />
           <button onClick={onNewDraft}>Start new draft</button>
           <button onClick={onHome}>
             Home

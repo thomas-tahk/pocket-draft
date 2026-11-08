@@ -30,7 +30,7 @@ export function RunSummary({ pool, run, onDraftAgain, onHome, onReplay }: Props)
         <button className="run-btn" onClick={onHome}>Home</button>
       </div>
       <div className="run-summary-actions run-summary-share">
-        <DeckShare deck={run.deck} pool={pool} />
+        <DeckShare deck={run.deck} pool={pool} energy={run.energy} />
       </div>
     </main>
   );

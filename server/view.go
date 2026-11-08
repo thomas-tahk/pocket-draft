@@ -35,6 +35,7 @@ type cardView struct {
 	Weakness    string       `json:"weakness,omitempty"`
 	Attacks     []attackView `json:"attacks"`
 	Ability     *abilityView `json:"ability,omitempty"`
+	Placeholder bool         `json:"placeholder,omitempty"` // stands in for a card the engine can't play
 }
 
 type inPlayView struct {
@@ -283,7 +284,7 @@ func toCardView(c engine.Card) cardView {
 	return cardView{
 		ID:          c.ID,
 		Name:        c.Name,
-		Image:       cardImages[c.ID],
+		Image:       cardImage(c),
 		Kind:        kindNames[c.Kind],
 		Stage:       cardStage(c),
 		HP:          c.HP,
@@ -294,7 +295,16 @@ func toCardView(c engine.Card) cardView {
 		Weakness:    energyLabel(c.Weakness),
 		Attacks:     atks,
 		Ability:     abilityViewOf(c),
+		Placeholder: c.Placeholder,
 	}
+}
+
+// cardImage is the card's art; a placeholder has none (original art only).
+func cardImage(c engine.Card) string {
+	if c.Placeholder {
+		return ""
+	}
+	return cardImages[c.ID]
 }
 
 // abilityViewOf is the Ability the card plays, with its printed text from the

@@ -229,7 +229,7 @@ test('a whole run by keyboard: draft, shop, deckbuild, Energy Zone, battle, summ
   await tabTo(page, page.getByRole('button', { name: 'Replay' }).first());
   await tabTo(page, page.getByRole('button', { name: 'Draft again' }));
   await tabTo(page, page.getByRole('button', { name: 'Home', exact: true }));
-  await tabTo(page, page.getByRole('button', { name: 'Copy code' }));
+  await tabTo(page, page.getByRole('button', { name: 'Deck QR' }));
 
   // ---- the bar, over everything focused above ----
   expect(seen.length).toBeGreaterThan(100);

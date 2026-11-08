@@ -41,9 +41,11 @@ test('two concessions end the run on a summary; Draft again keeps it in Past run
   await expect(rows).toHaveCount(2);
   await expect(rows.nth(0)).toContainText('Battle 1: Loss');
   await expect(rows.nth(1)).toContainText('Battle 2: Loss');
-  for (const name of ['Copy code', 'Copy link', 'Export JSON']) {
+  for (const name of ['Deck QR', 'Copy list']) {
     await expect(page.getByRole('button', { name })).toBeVisible();
   }
+  await page.getByRole('button', { name: 'Deck QR' }).click();
+  await expect(page.getByTestId('deck-qr').getByRole('img', { name: 'Deck QR code' })).toBeVisible();
   await page.screenshot({ path: 'test-results/end-of-run-summary.png', fullPage: true });
 
   await rows.nth(0).getByRole('button', { name: 'Replay' }).click();
