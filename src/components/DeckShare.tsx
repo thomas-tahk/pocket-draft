@@ -62,6 +62,7 @@ export function DeckShare({ deck, pool, energy }: { deck: Record<string, number>
             <>
               <img src={qr.src} width={280} height={280} alt="Deck QR code" style={{ background: '#fff' }} />
               <p className="muted-sm">In Pocket: Decks → Scan Code.</p>
+              <button onClick={() => setShowQr(false)}>Hide QR</button>
             </>
           )}
         </div>

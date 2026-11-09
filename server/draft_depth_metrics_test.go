@@ -390,7 +390,7 @@ func sortedKeys[V any](m map[string]V) []string {
 }
 
 // staplesShelf mirrors src/shop/staples.ts (there is no Go twin of the shop).
-var staplesShelf = []string{"A2-150", "A1-225", "A3a-064", "B1-225", "A1-223", "A2-146", "A1-219", "A2-155", "B2a-089", "A2-152", "A2b-070", "A3-155", "A3-144"}
+var staplesShelf = []string{"A2-150", "A1-225", "A3a-064", "B1-225", "A1-223", "A2-146", "A2-155", "B2a-089", "A2b-070", "A3-155", "A3-144", "A2b-111", "P-A-007", "A2-148", "B3-147", "A3-151"}
 
 var searchText = regexp.MustCompile(`(?i)from your deck into your hand|search your deck|from your deck onto your bench|look at the top`)
 
