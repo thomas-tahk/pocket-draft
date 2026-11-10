@@ -48,9 +48,10 @@ export function useActiveCard(view: GameView) {
     void dispatch(m);
   };
   const openAt = (at: number) => { setPos(at); setMode('card'); };
-  const open = () => { if (yourTurn) openAt(0); };
-  // A Benched Pokémon opens only when it has an Ability to use.
-  const openBench = (slot: number) => { if (yourTurn && abilityMoves(you.legalMoves, slot + 1).length) openAt(slot + 1); };
+  const open = () => { if (yourTurn && shown === 'closed') openAt(0); };
+  // A Benched Pokémon opens only when it has an Ability to use, and not while
+  // choosing a Pokémon: that tap is the choice, not a request to open the card (#140).
+  const openBench = (slot: number) => { if (yourTurn && shown === 'closed' && abilityMoves(you.legalMoves, slot + 1).length) openAt(slot + 1); };
   // One way to use it goes straight through; several ask which Pokémon.
   const useAbility = (m: Move) => (abilityMoves(you.legalMoves, pos).length > 1 ? setMode('aim') : pick(m));
   const sheet: Sheet | null = shown === 'card' && mon

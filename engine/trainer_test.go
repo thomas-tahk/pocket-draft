@@ -103,3 +103,27 @@ func mustSubmit(t *testing.T, g *Game, ev Event) {
 		t.Fatalf("submit %#v: %v", ev, err)
 	}
 }
+
+// A placeholder (an unmodelled card, issue #18) can be played; it is discarded
+// and nothing else changes.
+func TestPlaceholderPlaysAndDoesNothing(t *testing.T) {
+	ph := Card{ID: "PH", Name: "Splash!", Kind: KindItem, Trainer: []EffectOp{}, Placeholder: true}
+	g, p := mainPhaseWith(t, ph)
+	handBefore := len(g.S.Players[p].Hand)
+	deckBefore := len(g.S.Players[p].Deck)
+	play := PlayTrainer{Player: p, CardID: "PH", Target: NoSpot}
+
+	if !isLegal(g, p, play) {
+		t.Fatal("placeholder not playable")
+	}
+	if err := g.Submit(play); err != nil {
+		t.Fatalf("play placeholder: %v", err)
+	}
+	pl := g.S.Players[p]
+	if len(pl.Hand) != handBefore-1 || len(pl.Deck) != deckBefore {
+		t.Errorf("hand %d->%d deck %d->%d, want hand-1 and deck unchanged", handBefore, len(pl.Hand), deckBefore, len(pl.Deck))
+	}
+	if d := pl.Discard; len(d) != 1 || d[0].ID != "PH" {
+		t.Errorf("discard = %v, want the placeholder", d)
+	}
+}

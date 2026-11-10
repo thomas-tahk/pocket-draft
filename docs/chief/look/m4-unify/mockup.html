@@ -1,0 +1,102 @@
+<!doctype html>
+<!-- Throwaway mockup (#131 round 2): one look from landing page to battle to replay.
+     Open as mockup.html?dir=board|cream|night&screen=home|draft|run|battle|replay. render.cjs screenshots it.
+     All three share the battle board's shapes: navy corner tabs, pill buttons, thin borders, one soft shadow.
+     Only colour and mood differ. Card art can't load in the cloud, so cards are stand-ins. -->
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>M4 unified look</title>
+<style>
+*{box-sizing:border-box;margin:0}
+body{font-family:ui-rounded,'SF Pro Rounded',Nunito,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+/* --- direction tokens --- */
+body.board{--top:#e6e3fb;--mid:#d5d6f6;--bot:#9fbdf0;--bot2:#7ea6ec;--tab:#2b3a67;--tabtxt:#fff;--panel:rgba(255,255,255,.62);--pb:#fff;--ink:#1c2340;--mut:#44507a;--acc:#19b6e6;--accfill:linear-gradient(#52d3f5,#19b6e6);--acctxt:#04283a;--slot:rgba(255,255,255,.2);--sheen:1}
+body.cream{--top:#f6f7ff;--mid:#f0f1fb;--bot:#e8ecfa;--bot2:#dfe6fa;--tab:#2b3a67;--tabtxt:#fff;--panel:#fff;--pb:#d3d8ee;--ink:#1c2340;--mut:#4d5a80;--acc:#19b6e6;--accfill:#19b6e6;--acctxt:#03222f;--slot:rgba(43,58,103,.06);--sheen:0}
+body.night{--top:#1b1a4d;--mid:#232a6e;--bot:#2a3f95;--bot2:#2f4fb0;--tab:#0d1030;--tabtxt:#fff;--panel:rgba(14,16,52,.62);--pb:#5a68c8;--ink:#f1f2ff;--mut:#b9c0f2;--acc:#3ccbf2;--accfill:linear-gradient(#6fe0fb,#2bb9e6);--acctxt:#03222f;--slot:rgba(255,255,255,.1);--sheen:1}
+.screen{width:390px;height:844px;position:relative;overflow:hidden;color:var(--ink);
+ background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.55) 0 60px,transparent 61px),linear-gradient(var(--top) 0%,var(--mid) 49.6%,var(--bot) 50.4%,var(--bot2) 100%)}
+body.cream .screen{background:linear-gradient(var(--top),var(--bot))}
+body.night .screen{background:radial-gradient(circle at 50% 50%,rgba(140,160,255,.25) 0 60px,transparent 61px),linear-gradient(var(--top) 0%,var(--mid) 49.6%,var(--bot) 50.4%,var(--bot2) 100%)}
+.pad{padding:18px 16px}
+/* corner tab: same as the board's Opponent / You labels */
+.tab{position:absolute;top:0;right:0;background:var(--tab);color:var(--tabtxt);font-weight:800;font-size:17px;padding:11px 20px 11px 22px;border-radius:0 0 0 16px;display:flex;gap:8px;align-items:center}
+.tab.l{right:auto;left:0;border-radius:0 0 16px 0}.tab.b{top:auto;bottom:0}
+.tab.b.l{border-radius:0 16px 0 0}
+.tab i{width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.28);display:inline-block}
+h1{font-size:38px;font-weight:900;letter-spacing:-.02em;line-height:1;color:var(--ink)}
+h2{font-size:15px;font-weight:800;color:var(--mut)}
+.title{margin:54px 0 16px}
+.panel{background:var(--panel);border:2px solid var(--pb);border-radius:22px;padding:16px;box-shadow:0 8px 24px rgba(20,30,80,.14);backdrop-filter:blur(6px)}
+.btn{display:flex;align-items:center;justify-content:center;min-height:50px;border-radius:999px;border:3px solid var(--acc);background:var(--panel);color:var(--ink);font-weight:800;font-size:17px;font-family:inherit;width:100%}
+body.board .btn,body.night .btn{background:#fff;color:#1c2340}
+body.cream .btn{background:#fff}
+body .btn.pri{background:var(--accfill);color:var(--acctxt);border-color:var(--acc);position:relative;overflow:hidden}
+body.night .btn.pri{border-color:#fff}
+.tab{z-index:5}
+.btn.pri::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.55) 45%,transparent 60%);opacity:var(--sheen)}
+.btn.dis{opacity:.55}
+.stack{display:grid;gap:12px}
+.row{display:flex;gap:10px;align-items:center}
+.note{font-size:14px;color:var(--mut);text-align:center;line-height:1.35}
+.link{color:var(--mut);font-weight:800;text-decoration:underline;text-align:center;font-size:15px}
+/* theme switch */
+.seg{display:flex;border:2px solid var(--pb);border-radius:999px;overflow:hidden;font-size:13px;font-weight:800;background:var(--panel);width:max-content}
+.seg span{padding:7px 12px;color:var(--ink)}.seg .on{background:var(--tab);color:#fff}
+/* cards */
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card{aspect-ratio:63/88;border-radius:9px;background:#fbf4d9;border:2px solid #e6d9a2;padding:6px;display:flex;flex-direction:column;gap:5px;box-shadow:0 3px 8px rgba(20,30,80,.25);position:relative;overflow:hidden;color:#1c2340}
+.card .t{display:flex;justify-content:space-between;font-size:11px;font-weight:900}
+.card .a{flex:1;border-radius:5px;background:linear-gradient(135deg,var(--c1),var(--c2))}
+.card .l{height:4px;border-radius:2px;background:rgba(0,0,0,.25)}.card .l.s{width:70%}
+.card.sel{outline:3px solid var(--acc);outline-offset:2px}
+.card::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.5) 50%,transparent 62%);opacity:calc(var(--sheen)*.5)}
+.f{--c1:#e2481f;--c2:#ffc15a}.w{--c1:#1f7fe0;--c2:#7fd6ff}.g{--c1:#3fa63a;--c2:#b6ec6e}.p{--c1:#8e5ac9;--c2:#d8b8ff}
+.pips{display:flex;gap:4px}.pips b{flex:1;height:8px;border-radius:4px;background:rgba(255,255,255,.35);border:1px solid var(--pb)}.pips b.d{background:var(--acc)}
+.cap{font-size:13px;font-weight:800;text-align:center;margin-top:6px}
+.rowitem{display:flex;justify-content:space-between;align-items:center;background:var(--slot);border:2px solid var(--pb);border-radius:16px;padding:12px 14px;font-weight:800}
+.mark{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:14px;font-weight:900}
+.mark.w{background:#2e9e5b}.mark.l{background:#c9453d;border-radius:7px}
+/* board */
+.slot{position:absolute;border:2px solid rgba(255,255,255,.85);background:var(--slot);border-radius:6px}
+.bc{position:absolute;width:var(--w);aspect-ratio:5/7}
+.bc .card{width:100%;height:100%;padding:3px;gap:2px;border-radius:5px;border-width:1px}
+.back{position:absolute;width:var(--w);aspect-ratio:5/7;border-radius:4px;border:2.5px solid #e9b622;background:radial-gradient(circle,#fff 0 18%,#1c2340 19% 24%,transparent 25%),repeating-linear-gradient(135deg,#d32828 0 6px,#b31616 6px 12px)}
+.round{position:absolute;width:40px;height:40px;border-radius:50%;background:#fff;border:2px solid var(--pb);display:grid;place-items:center;font-weight:900;color:#1c2340}
+.bar{position:absolute;left:12px;right:12px;bottom:58px;display:grid;gap:10px}
+.cap-pill{background:var(--tab);color:#fff;border-radius:16px;padding:10px 14px;font-size:14px;font-weight:700;text-align:center}
+.ctl{display:flex;gap:8px;justify-content:center}
+.ctl .btn{min-height:44px;width:auto;flex:1;font-size:15px}
+</style></head><body>
+<div class="screen" id="s"></div>
+<script>
+const q=new URLSearchParams(location.search);const dir=q.get('dir')||'board',scr=q.get('screen')||'home';
+document.body.className=dir;
+const seg='<div class="seg"><span class="on">Auto</span><span>Light</span><span>Dark</span></div>';
+const card=(c,n,hp,cls='')=>`<div class="card ${c} ${cls}"><div class="t"><span>${n}</span><span>${hp}</span></div><div class="a"></div><div class="l"></div><div class="l s"></div></div>`;
+const S={
+home:`<div class="tab">Pocket Draft</div><div class="pad"><div style="display:flex;justify-content:flex-start;margin-top:4px">${seg}</div><div class="title" style="margin-top:56px"><h1>Pocket<br>Draft</h1></div>
+<div class="panel stack"><p class="note">434 draftable cards. Draft, shop, build a 20-card deck, then play a run.</p><div class="btn pri">Start draft</div><div class="btn dis">Practice</div><p class="note">Finish a draft first to practice with your deck.</p><div class="btn">Past runs</div><p class="link">Auto-draft (test)</p></div></div>`,
+draft:`<div class="tab">Pick 7 of 20</div><div class="pad"><div class="title"><h1>Draft</h1></div><div class="pips" style="margin-bottom:14px">${'<b class="d"></b>'.repeat(7)}${'<b></b>'.repeat(13)}</div>
+<div class="panel"><div class="cards">${card('w','Vaporeon','130','sel')}${card('f','Charizard','180')}${card('g','Sylveon','120')}${card('p','Mewtwo','150')}</div><div class="cap" style="margin-top:12px">Tap to inspect, tap again to pick</div></div>
+<div class="stack" style="margin-top:14px"><div class="btn pri">Pick Vaporeon</div><div class="btn">Skip pack</div></div></div>`,
+run:`<div class="tab">Run 3–1</div><div class="pad"><div class="title"><h1>Your run</h1></div>
+<div class="panel stack"><div class="row" style="justify-content:space-between"><h2>Battles</h2><div class="pips" style="width:140px">${'<b class="d"></b>'.repeat(3)}<b></b><b></b></div></div>
+<div class="rowitem"><span>Battle 1 · Water bot</span><span class="mark w">✓</span></div><div class="rowitem"><span>Battle 2 · Fire bot</span><span class="mark w">✓</span></div><div class="rowitem"><span>Battle 3 · Grass bot</span><span class="mark l">✕</span></div>
+<div class="btn pri">Next battle</div><div class="btn">Replay last battle</div><div class="btn" style="border-color:#c9453d;color:#a3302a">Quit run</div></div></div>`,
+battle:`<div class="tab">Opponent <i></i><i></i><i></i></div><div class="tab b l">You <i></i><i></i><i></i></div>
+<div class="back" style="--w:50px;left:104px;top:36px"></div><div class="back" style="--w:50px;left:162px;top:36px"></div>
+${[78,160,242].map(x=>`<div class="bc" style="--w:70px;left:${x}px;top:128px">${card('w','','110')}</div>`).join('')}
+<div class="bc" style="--w:100px;left:145px;top:240px">${card('f','Charizard','150')}</div>
+<div class="bc" style="--w:100px;left:145px;top:442px">${card('w','Vaporeon','110')}</div>
+<div class="btn pri" style="position:absolute;right:10px;top:405px;width:112px;min-height:40px;font-size:15px">End Turn</div>
+${[76,158,240].map(x=>`<div class="slot" style="left:${x}px;top:606px;width:74px;height:103px"></div>`).join('')}
+${[24,60,96,132,168].map((x,i)=>`<div class="bc" style="--w:76px;left:${x+40}px;top:${735+Math.abs(i-2)*6}px;transform:rotate(${(i-2)*7}deg)">${card(['w','f','g','p','w'][i],'','')}</div>`).join('')}
+<div class="round" style="left:12px;top:12px;width:34px;height:34px">☰</div>`,
+replay:`<div class="tab">Replay · Turn 4</div><div class="back" style="--w:50px;left:104px;top:56px"></div>
+${[78,160,242].map(x=>`<div class="bc" style="--w:70px;left:${x}px;top:148px">${card('w','','110')}</div>`).join('')}
+<div class="bc" style="--w:100px;left:145px;top:260px">${card('f','Charizard','90')}</div>
+<div class="bc" style="--w:100px;left:145px;top:462px">${card('w','Vaporeon','110')}</div>
+<div class="tab b l">You <i></i><i></i></div>
+<div class="bar"><div class="cap-pill">Charizard attacks Vaporeon for 60.</div><div class="ctl"><div class="btn">⏮</div><div class="btn pri">Pause</div><div class="btn">⏭</div><div class="btn">1×</div></div></div>`
+};
+document.getElementById('s').innerHTML=S[scr];
+</script></body></html>

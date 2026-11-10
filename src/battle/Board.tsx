@@ -7,7 +7,7 @@ import { InPlayCard } from './InPlayCard';
 import { CardBack, CardFace, EmptySlot, EnergyIcon, PointPips } from './pieces';
 import { TurnBanner } from './TurnBanner';
 import { ReadyButton } from './Setup';
-import { usableCards } from './usable';
+import { offersPlay, usableCards } from './usable';
 import { CardZoom, PlayLayer } from './PlayLayer';
 import { PlayContext, usePlay, useHolding, type Spot } from './usePlay';
 import { stadiumKey, viewKeys, type SideKeys } from './motion';
@@ -58,7 +58,7 @@ function ActiveSpot({ mon, fx, toolFx, spot = 'active' }: { mon: PlayerView['act
 }
 
 function StadiumSpot({ card, fx }: { card: CardView | null; fx: string }) {
-  return <div className="bt-spot bt-stadium" {...useSpot('stadium')}>{card && <div data-fx={fx} style={{ position: 'relative' }}><CardFace card={card} width={66} /></div>}</div>;
+  return <div className="bt-spot bt-stadium" {...useSpot('stadium')}>{card && <div data-zoom={card.id} data-fx={fx} style={{ position: 'relative' }}><CardFace card={card} width={66} /></div>}</div>;
 }
 
 function HandCard({ card, index, fx }: { card: CardView; index: number; fx: string }) {
@@ -197,6 +197,8 @@ type BoardProps = { view: GameView; instant?: boolean; onEndTurn: () => void; on
 export function Board({ view, instant = false, onEndTurn, onReady = () => {}, choice = null, children }: BoardProps) {
   const [you, opp] = view.players;
   const yourTurn = view.phase === 'main' && view.active === 0 && !view.pending;
+  // Nothing to play but End Turn (Concede doesn't count): End Turn glows like any playable target.
+  const onlyEndTurn = yourTurn && !offersPlay(you.legalMoves);
   const boardRef = useRef<HTMLDivElement>(null);
   const { holding, flash, zoom, zoomOpened, onPointerDown } = usePlay(view);
   const activeCard = useActiveCard(view);
@@ -217,7 +219,7 @@ export function Board({ view, instant = false, onEndTurn, onReady = () => {}, ch
       <Zone id="end-turn" place={{ top: 400, right: 10 }}>
         {view.phase === 'setup'
           ? <ReadyButton view={view} onReady={onReady} />
-          : <button className="bt-endturn" disabled={!yourTurn} onClick={onEndTurn}>End Turn</button>}
+          : <button className={onlyEndTurn ? 'bt-endturn bt-usable' : 'bt-endturn'} disabled={!yourTurn} onClick={onEndTurn}>End Turn</button>}
       </Zone>
       <YourSide p={you} keys={keys[0]} choice={shownChoice} onTapActive={onTapActive} onTapBench={onTapBench} />
       </PlayContext.Provider>

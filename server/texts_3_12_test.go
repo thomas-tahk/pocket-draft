@@ -376,6 +376,22 @@ func TestPokedexShownOnlyToItsPlayer(t *testing.T) {
 	}
 }
 
+// An answer that narrates nothing (Pokédex's OK) still sends result as [],
+// never null: clients map over it.
+func TestActionResultIsNeverNull(t *testing.T) {
+	g, p := itemGame(t, "P-A-004")
+	playItem(t, g, p, "P-A-004", engine.NoSpot)
+	choose(t, g, p, 0)
+
+	for _, viewer := range []int{p, 1 - p} {
+		acts := toGameView(g, viewer).Actions
+		last := acts[len(acts)-1]
+		if last.Kind != "choose" || last.Result == nil {
+			t.Errorf("viewer %d: last action %+v, want a choose with result []", viewer, last)
+		}
+	}
+}
+
 func TestPokemonFlute(t *testing.T) {
 	g, p := itemGame(t, "A1a-064")
 	opp := &g.S.Players[1-p]

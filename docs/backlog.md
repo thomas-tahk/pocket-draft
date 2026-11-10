@@ -2,13 +2,11 @@
 
 Ideas captured to revisit later — not active work.
 
-## Seasonal rotation for the free-universal set
+## Seasons
 
-The deckbuild rules currently grant two cards as "free universals" (Pokeball, Professor's Research). Idea raised 2026-05-24: rotate which Trainers fill that slot on a fixed cadence (monthly? matched to new-set drops?) so the meta shifts without being chased through individual card balance.
+A ruleset with a few cards open to everyone may come later (Seasons). Idea raised 2026-05-24: rotate which cards are open on a fixed cadence (monthly? matched to new-set drops?) so the meta shifts without being chased through individual card balance.
 
-**Why now? It isn't.** Needs a calendar/persistence layer the backend doesn't have yet, and the right free-universal set should be informed by what playtest decks routinely brick on — premature before the deckbuild loop is even shippable.
-
-**Tracked from:** rules.md "Whether additional free cards (X Speed, Potion, Red Card) are included is TBD through playtesting."
+**Why now? It isn't.** Needs a calendar/persistence layer the backend doesn't have yet.
 
 ---
 

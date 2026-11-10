@@ -13,7 +13,7 @@ The owner reviews finished milestones, not steps. Spec: `docs/battle-spec.html` 
 
 ## Rules
 - Go modules stay stdlib only. No `go.sum`. Don't touch `go.mod` versions.
-- **Don't commit `public/pd.wasm`.** It is rebuilt once at milestone end.
+- **Rebuild and commit `public/pd.wasm`** (`npm run build:wasm`) after any change under `engine/` or `server/`; CI fails a PR otherwise (see CLAUDE.md).
 - One behaviour per issue. Don't fix neighbouring things; note them in the questions file instead.
 - The spec is the authority. CLAUDE.md lists what belongs to the owner; anything you see players see beyond the spec is the owner's.
 - **Real ambiguity** (the spec doesn't decide it and a wrong guess would make a wrong game): append it to `docs/questions/M<n>.md` as `- [M.N] question — what you did meanwhile`, push that, and move to another unblocked issue. Don't block on it.

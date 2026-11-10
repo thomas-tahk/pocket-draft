@@ -75,12 +75,15 @@ func keepWorkingText(pool []draftCard) []draftCard {
 }
 
 // draftPoolFileJSON is what the SPA reads: the switch, the ids the draft may
-// offer, and every card id whose text works, which limits what deckbuild
-// offers (owner 2026-10-19 (1): every deck is 20 working cards).
+// offer, every card id whose text works, which limits what deckbuild offers
+// (owner 2026-10-19 (1): every deck is 20 working cards), and the types each
+// pool Trainer supports by name (draft_type_support.go), which the SPA's
+// offers lean with.
 type draftPoolFileJSON struct {
-	OnlyWorkingText bool     `json:"onlyWorkingText"`
-	IDs             []string `json:"ids"`
-	Working         []string `json:"working"`
+	OnlyWorkingText bool                `json:"onlyWorkingText"`
+	IDs             []string            `json:"ids"`
+	Working         []string            `json:"working"`
+	SupportTypes    map[string][]string `json:"supportTypes"`
 }
 
 // workingIDs lists, sorted, every loaded card whose text the engine plays.
@@ -101,5 +104,5 @@ func draftPoolFileContents() draftPoolFileJSON {
 	for i, c := range pool {
 		ids[i] = c.ID
 	}
-	return draftPoolFileJSON{OnlyWorkingText: onlyWorkingTextInDraft, IDs: ids, Working: workingIDs()}
+	return draftPoolFileJSON{OnlyWorkingText: onlyWorkingTextInDraft, IDs: ids, Working: workingIDs(), SupportTypes: supportTypesByName(pool)}
 }

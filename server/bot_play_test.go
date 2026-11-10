@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/thomas-tahk/pocket-draft/engine"
@@ -37,11 +38,18 @@ func hasCard(deck []engine.Card, want func(engine.Card) bool) bool {
 	return false
 }
 
+// isPlayableTrainer is a Trainer the bot could play from hand: not a Fossil,
+// which is only ever played as a 40-HP Basic.
+func isPlayableTrainer(c engine.Card) bool {
+	return c.IsTrainer() && !strings.HasPrefix(rawByID[c.ID].TrainerText, "Play this card as if it were a 40-HP Basic")
+}
+
 func isEvolution(c engine.Card) bool { return c.EvolvesFrom != "" }
 
 func TestBotPlaysARealGame(t *testing.T) {
 	useRealCards(t)
-	evolvers, evolved := 0, 0
+	evolvers, evolved, seats, benchedSeats := 0, 0, 0, 0
+	holders, holdersPlayed := 0, 0
 	for seed := uint64(1); seed <= botSeeds; seed++ {
 		botVsBot(t, seed)
 		if game.S.Reason == engine.ReasonTurnCap {
@@ -52,11 +60,15 @@ func TestBotPlaysARealGame(t *testing.T) {
 		decks[1], _ = draftBotDeck(seed + 1_000_000)
 		plays := playsBySeat()
 		for seat, deck := range decks {
-			if !plays[seat].benched {
-				t.Errorf("seed %d seat %d: never benched a Pokémon", seed, seat)
+			seats++
+			if plays[seat].benched {
+				benchedSeats++
 			}
-			if hasCard(game.S.Players[seat].Hand, engine.Card.IsTrainer) && !plays[seat].trainers {
-				t.Errorf("seed %d seat %d: ended holding a Trainer, played none", seed, seat)
+			if hasCard(deck, isPlayableTrainer) {
+				holders++
+				if plays[seat].trainers {
+					holdersPlayed++
+				}
 			}
 			if hasCard(deck, isEvolution) {
 				evolvers++
@@ -65,6 +77,16 @@ func TestBotPlaysARealGame(t *testing.T) {
 				}
 			}
 		}
+	}
+	t.Logf("seats %d, benched %d; Trainer holders %d, played %d; evolvers %d, evolved %d", seats, benchedSeats, holders, holdersPlayed, evolvers, evolved)
+	if benchedSeats != seats {
+		t.Errorf("bot benched a Pokémon in %d of %d seats, want every seat", benchedSeats, seats)
+	}
+	// Most seats hold a non-Fossil Trainer now (#110); a clear majority of
+	// them should play one. The count guard stops the check passing with few
+	// Trainer decks.
+	if holders*2 < seats || holdersPlayed*10 < holders*7 {
+		t.Errorf("bot played a Trainer in %d of %d seats whose deck had one (of %d seats), want 70%% of at least half the seats", holdersPlayed, holders, seats)
 	}
 	if evolved*2 < evolvers {
 		t.Errorf("bot evolved in %d of %d games with an evolution, want at least half", evolved, evolvers)

@@ -326,5 +326,6 @@ func (v RareCandy) Apply(ctx *EffectContext) {
 		ev := pl.Hand[idx[i]]
 		pl.Hand = removeAt(pl.Hand, idx[i])
 		g.evolveMon(p, mon, ev)
+		g.offerOnEvolve(p, ctx.Target.Pos)
 	})
 }

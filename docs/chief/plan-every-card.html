@@ -1,0 +1,85 @@
+<title>Pocket Draft Card Plan</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; milestones as stacked bands, issues as a numbered build sequence */
+:root{
+  --bg:#f3f6fb; --surface:#ffffff; --fg:#14213a; --muted:#4d5b75; --line:#d3dbe8;
+  --accent:#1f5fd6; --win:#1d8a4a; --loss:#c23a2b;
+  --display:"Nunito",ui-rounded,system-ui,sans-serif; --body:"Source Sans 3",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1626;--surface:#17223a;--fg:#e8eefa;--muted:#a6b3cc;--line:#2c3a57;--accent:#6ea2ff;--win:#4cc985;--loss:#ff7a6b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1626;--surface:#17223a;--fg:#e8eefa;--muted:#a6b3cc;--line:#2c3a57;--accent:#6ea2ff;--win:#4cc985;--loss:#ff7a6b;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:16px/1.55 var(--body)}
+main{max-width:760px;margin:0 auto;padding-block:32px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:28px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.2}
+h1{font-size:1.9rem;font-weight:800} h2{font-size:1.3rem;font-weight:800} h3{font-size:1.02rem;font-weight:800}
+p{margin:0} .muted{color:var(--muted)}
+.gate{background:var(--surface);border:2px solid var(--accent);border-radius:12px;padding:16px 18px;display:grid;gap:6px}
+.label{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.pips{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.pip{width:14px;height:14px;border-radius:50%;border:2px solid var(--win)} .pip.l{border-color:var(--loss)}
+section{display:grid;gap:12px}
+ol.issues{list-style:none;margin:0;padding:0;display:grid;gap:10px;counter-reset:i}
+ol.issues li{counter-increment:i;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px 12px 48px;position:relative;display:grid;gap:4px;min-width:0}
+ol.issues li::before{content:counter(i);position:absolute;left:14px;top:12px;font:800 1rem var(--display);color:var(--accent)}
+.check{font-size:.92rem;color:var(--muted)} .check b{color:var(--fg);font-weight:600}
+.after{font-size:.85rem;color:var(--muted)}
+.ms{display:grid;gap:8px} .ms div{border-left:4px solid var(--line);padding:4px 0 4px 12px;display:grid;gap:2px}
+.ms div.now{border-left-color:var(--accent)}
+ul{margin:0;padding-left:20px;display:grid;gap:4px}
+</style>
+<main>
+  <header style="display:grid;gap:8px">
+    <span class="label">Plan for approval · 25 Oct 2026 · M5</span>
+    <h1>Every card works</h1>
+    <p class="muted">Builds after M4, as its own branch and one pull request into main. One approval covers all of it.</p>
+  </header>
+
+  <div class="gate">
+    <span class="label">Done when</span>
+    <p>On my phone I draft from every card in the game, and every card I play does what its text says. Coin flips show in a grid, conditions show as icons on the Pokémon, choices show the cards and pick themselves when there's only one, and an attack shows its damage before I confirm.</p>
+    <p class="muted">Today 1,672 of 3,879 printings work, so the draft only offers 433 cards.</p>
+  </div>
+
+  <section>
+    <h2>What gets built, in build order</h2>
+    <ol class="issues">
+      <li><h3>A Basic played on your side that you didn't play</h3>
+        <p>The bug from your play-test. Reproduce it first, then fix it, so the bot can never act for you.</p>
+        <p class="check"><b>Check:</b> a test that plays turns against the bot and fails if any Pokémon reaches your side without your move. <a href="https://github.com/thomas-tahk/pocket-draft/issues/123">#123</a></p></li>
+      <li><h3>Choices show the cards</h3>
+        <p>Every in-battle choice shows the actual cards, can always be finished, and picks itself when only one option exists.</p>
+        <p class="check"><b>Check:</b> a browser test with a one-option choice (no prompt) and a multi-option one (card images, completes). <a href="https://github.com/thomas-tahk/pocket-draft/issues/122">#122</a></p></li>
+      <li><h3>Coin flips and condition icons on the board</h3>
+        <p>Flips show in a grid 3 wide: you tap the first coin, the rest flip on their own. Poisoned, Burned, Asleep, Paralyzed and Confused show as icons on the Pokémon.</p>
+        <p class="check"><b>Check:</b> browser tests for a 3-flip attack and each condition. <a href="https://github.com/thomas-tahk/pocket-draft/issues/56">#56</a> <a href="https://github.com/thomas-tahk/pocket-draft/issues/57">#57</a></p>
+        <p class="after">Independent of 1–2</p></li>
+      <li><h3>Coin-flip and condition attack texts</h3>
+        <p>Flip for bonus damage, per heads, until tails, flip to fail, and attacks that inflict conditions.</p>
+        <p class="check"><b>Check:</b> one test per wording, on a real card. <a href="https://github.com/thomas-tahk/pocket-draft/issues/58">#58</a> <a href="https://github.com/thomas-tahk/pocket-draft/issues/59">#59</a> <a href="https://github.com/thomas-tahk/pocket-draft/issues/60">#60</a></p>
+        <p class="after">After 3</p></li>
+      <li><h3>The rest of the attack texts</h3>
+        <p>Energy, damage changes, switching and Bench damage, draw / search / heal, can't-attack and can't-retreat locks, and the leftovers, in 8 batches.</p>
+        <p class="check"><b>Check:</b> one test per wording, on a real card. <a href="https://github.com/thomas-tahk/pocket-draft/issues/80">#80</a>–<a href="https://github.com/thomas-tahk/pocket-draft/issues/87">#87</a></p>
+        <p class="after">Alongside 4</p></li>
+      <li><h3>Damage you can see before you commit</h3>
+        <p>Orange badges show when a damage modifier is active, and tapping one lists each source. The enlarged card shows the final damage (after Weakness and modifiers) before you confirm an attack.</p>
+        <p class="check"><b>Check:</b> a browser test where a Stadium boosts an attack: the badge shows and the preview number matches the damage dealt. <a href="https://github.com/thomas-tahk/pocket-draft/issues/68">#68</a> <a href="https://github.com/thomas-tahk/pocket-draft/issues/111">#111</a></p>
+        <p class="after">After 5</p></li>
+      <li><h3>Every card in the draft</h3>
+        <p>A coverage test proves every card text has a working effect. Then the "working cards only" draft filter is deleted, and the draft offers every card.</p>
+        <p class="check"><b>Check:</b> the coverage test passes over all 3,879 printings, and the draft pool equals the full card list. <a href="https://github.com/thomas-tahk/pocket-draft/issues/88">#88</a></p>
+        <p class="after">Last</p></li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Calls I made, so you can overrule them</h2>
+    <ul>
+      <li><b>Cards before real opponents.</b> The M4 plan listed real opponents next. I swapped them: a match against a real player with half the cards missing is a thin game, and real opponents need your approval for the hosting cost (about $3.69 a month). Real opponents become M6.</li>
+      <li><b>Card rules I'm unsure of:</b> built as my best guess from the card text and your earlier answers, and each one listed in the M5 report for you to check.</li>
+      <li><b>Cheaper model for the text batches.</b> The repetitive card-text batches run on the cheapest model; any batch that fails its tests is redone on the normal one.</li>
+    </ul>
+  </section>
+</main>

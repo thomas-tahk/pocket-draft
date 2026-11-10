@@ -61,10 +61,16 @@ func useStadium(g *engine.Game, p int, pick string) error {
 // --- HP ---
 
 func TestAncientBoosterEnergyCapsule(t *testing.T) { // B3a-069
-	g, p, a, _ := duel(t, "B2a-063", cubone) // Koraidon
+	g, p, a, _ := duel(t, "B3a-036", cubone) // Koraidon ex, Ancient
 	tool(t, a, "B3a-069")
-	if got := g.MaxHP(p, 0); got != 160 {
-		t.Errorf("Koraidon HP = %d, want 160", got)
+	if got, want := g.MaxHP(p, 0), a.Card.HP+40; got != want {
+		t.Errorf("Koraidon ex HP = %d, want %d", got, want)
+	}
+	// The B2a Koraidon's card does not say Ancient (owner 2026-10-28, decision 3).
+	k := onBoard(t, g, p, 2, "B2a-063")
+	tool(t, k, "B3a-069")
+	if got := g.MaxHP(p, 2); got != 120 {
+		t.Errorf("B2a Koraidon (not Ancient) HP = %d, want 120", got)
 	}
 	b := onBoard(t, g, p, 1, torkoal)
 	tool(t, b, "B3a-069")
@@ -123,10 +129,15 @@ func TestStartingPlains(t *testing.T) { // B2-154
 // --- damage dealt and taken ---
 
 func TestFutureBoosterEnergyCapsule(t *testing.T) { // B3a-070
-	g, p, a, _ := duel(t, "B2a-045", cubone) // Miraidon
+	g, p, a, _ := duel(t, "B3a-019", cubone) // Miraidon ex, Future
 	tool(t, a, "B3a-070")
 	if got := modifier(g, p, 0, engine.HookDamageDealt); got != 20 {
-		t.Errorf("Miraidon does %+d, want +20", got)
+		t.Errorf("Miraidon ex does %+d, want +20", got)
+	}
+	// The B2a Miraidon's card does not say Future (owner 2026-10-28, decision 3).
+	onBoard(t, g, p, 0, "B2a-045").Tool = a.Tool
+	if got := modifier(g, p, 0, engine.HookDamageDealt); got != 0 {
+		t.Errorf("B2a Miraidon (not Future) does %+d, want 0", got)
 	}
 	tool(t, a, "A2-147")
 	onBoard(t, g, p, 0, torkoal).Tool = a.Tool

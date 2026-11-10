@@ -329,11 +329,21 @@ func buildDeck(list []deckEntry) ([]engine.Card, error) {
 	return deck, nil
 }
 
+// placeholderCard stands in for a drafted card the engine can't model: it stays
+// in the deck and does nothing when played (owner 2026-11-08, issue #18). It
+// keeps the real card's id so deck accounting matches, but none of its art.
+func placeholderCard(rc rawCard) engine.Card {
+	return engine.Card{ID: rc.ID, Name: placeholderName, Kind: engine.KindItem,
+		Trainer: []engine.EffectOp{}, Weakness: engine.NoEnergy, Placeholder: true}
+}
+
+const placeholderName = "Splash!"
+
 // deckFromIDs expands a list of card IDs into engine cards. The input must be a
 // format-legal 20 (at most 2 copies of any card by name, at least one Basic
 // Pokémon) of working cards: a card whose text the engine can't play yet
-// (textWorks) is an error, never silently dropped, so every game is played
-// with all 20 (owner 2026-10-19 (1)). Card access is unrestricted — only the
+// (textWorks) is never dropped: it stays as a do-nothing placeholder card, so
+// every game is played with all 20 (owner 2026-11-08, issue #18). Card access is unrestricted — only the
 // format is checked.
 func deckFromIDs(ids []string) ([]engine.Card, error) {
 	if len(ids) != 20 {
@@ -347,16 +357,13 @@ func deckFromIDs(ids []string) ([]engine.Card, error) {
 		if !ok {
 			return nil, fmt.Errorf("unknown card id %q", id)
 		}
-		if !textWorks(rc) {
-			return nil, fmt.Errorf("%s (%s) can't be played yet", rc.Name, id)
-		}
 		card, err := toEngineCard(rc)
-		if err != nil {
-			return nil, err
+		if err != nil || !textWorks(rc) {
+			card = placeholderCard(rc)
 		}
-		countByName[card.Name]++
-		if countByName[card.Name] > 2 {
-			return nil, fmt.Errorf("at most 2 copies of %q allowed", card.Name)
+		countByName[rc.Name]++
+		if countByName[rc.Name] > 2 {
+			return nil, fmt.Errorf("at most 2 copies of %q allowed", rc.Name)
 		}
 		if card.IsBasicPokemon() {
 			basics++

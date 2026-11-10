@@ -4,8 +4,9 @@ import type { Card } from '../types/card';
 import { generateOffer } from '../draft/offer';
 import { indexByTier } from '../draft/tiers';
 import { COPY_CAP_BY_NAME } from '../draft/expansions';
+import { newRun, quit, withBattle, type InProgressBattle, type Run, type RunBattle } from './run';
 
-export const TOTAL_PACKS = 16;
+export const TOTAL_PACKS = 20;
 export const DECK_SIZE = 20;
 export const SHOP_TICKETS = 4;
 export const HISTORY_CAP = 7;
@@ -15,12 +16,13 @@ export type Phase = 'unstarted' | 'drafting' | 'shop' | 'deckbuild' | 'review';
 export type DraftHistoryEntry = {
   id: string; // ULID-ish: epoch ms + random suffix
   completedAt: string; // ISO string
-  pickIds: string[]; // 16 drafted picks (preserved for reference)
+  pickIds: string[]; // 20 drafted picks (preserved for reference)
   shopPurchasedIds: string[]; // 0..4 shop purchases
   deck: Record<string, number>; // final 20-card deck (cardId → count)
   notes: string;
   wins: number;
   losses: number;
+  run?: Run; // the run played with this deck, saved when it is left
 };
 
 type State = {
@@ -31,7 +33,9 @@ type State = {
   shopFinalized: boolean;
   deck: Record<string, number>; // cardId → count (1 or 2)
   deckFinalized: boolean;
+  energy: string[]; // Energy Zone types picked at deckbuild; [] = not chosen yet (the default shows)
   history: DraftHistoryEntry[];
+  run: Run | null; // starts when the deck is finalized
 };
 
 type Actions = {
@@ -42,14 +46,20 @@ type Actions = {
   finalizeShop: () => void;
   addToDeck: (cardId: string) => void;
   removeFromDeck: (cardId: string) => void;
-  finalizeDeck: () => void;
+  setEnergy: (types: string[]) => void;
+  finalizeDeck: (energy?: string[]) => void;
   autoDraft: (picks: string[], deck: string[]) => void;
+  archiveRun: () => void;
+  recordBattle: (battle: RunBattle) => void;
+  quitRun: () => void;
+  setInProgress: (battle: InProgressBattle | undefined) => void;
   updateHistoryEntry: (id: string, updates: Partial<Pick<DraftHistoryEntry, 'notes' | 'wins' | 'losses'>>) => void;
   deleteHistoryEntry: (id: string) => void;
   reset: () => void;
 };
 
 const activeStateInitial: Omit<State, 'history'> = {
+  run: null,
   pickIds: [],
   offerIds: [],
   packOffers: [],
@@ -57,12 +67,18 @@ const activeStateInitial: Omit<State, 'history'> = {
   shopFinalized: false,
   deck: {},
   deckFinalized: false,
+  energy: [],
 };
 
 const initialState: State = {
   ...activeStateInitial,
   history: [],
 };
+
+function sameDeck(a: Record<string, number>, b: Record<string, number>): boolean {
+  const keys = Object.keys(a);
+  return keys.length === Object.keys(b).length && keys.every((k) => a[k] === b[k]);
+}
 
 function newEntryId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -73,7 +89,24 @@ export const useDraftStore = create<State & Actions>()(
     (set, get) => ({
       ...initialState,
 
+      // Leaving a run never wipes it: an active run is quit, then saved on the
+      // history entry made for its deck (an auto-draft, or an entry that is gone, drops it).
+      archiveRun: () => {
+        const { run, history } = get();
+        if (!run) return;
+        const ended = quit(run);
+        // Old saves have no historyId: fall back to the entry with the same deck.
+        const target = history.find((e) =>
+          ended.historyId ? e.id === ended.historyId : !e.run && sameDeck(e.deck, ended.deck),
+        );
+        set({
+          run: null,
+          history: history.map((e) => (e === target ? { ...e, run: ended } : e)),
+        });
+      },
+
       start: (pool) => {
+        get().archiveRun();
         const byTier = indexByTier(pool);
         const firstOffer = generateOffer(byTier, { isPack1: true, picks: [] });
         const { history } = get();
@@ -82,6 +115,9 @@ export const useDraftStore = create<State & Actions>()(
 
       pick: (cardId, pool) => {
         const { pickIds, offerIds, packOffers } = get();
+        // Only a card of the current pack can be picked: a second click in the same tick, or one that
+        // lands on the next pack, names a card that is no longer on offer.
+        if (!offerIds.includes(cardId)) return;
         const picked = pool.find((c) => c.id === cardId);
         if (!picked) return;
         const newPickIds = [...pickIds, cardId];
@@ -145,8 +181,11 @@ export const useDraftStore = create<State & Actions>()(
         }
       },
 
-      finalizeDeck: () => {
+      setEnergy: (types) => set({ energy: types }),
+
+      finalizeDeck: (chosen) => {
         const { pickIds, shopPurchasedIds, deck, history } = get();
+        const energy = chosen ?? get().energy ?? [];
         const entry: DraftHistoryEntry = {
           id: newEntryId(),
           completedAt: new Date().toISOString(),
@@ -159,16 +198,32 @@ export const useDraftStore = create<State & Actions>()(
         };
         // FIFO cap: newest first, drop oldest beyond HISTORY_CAP.
         const nextHistory = [entry, ...history].slice(0, HISTORY_CAP);
-        set({ deckFinalized: true, history: nextHistory });
+        set({ deckFinalized: true, energy, history: nextHistory, run: { ...newRun(deck, energy), historyId: entry.id } });
       },
 
       // Jumps straight to review with a finished draft, for testing battles.
       // Not saved to history: nobody drafted it.
       autoDraft: (picks, deck) => {
+        get().archiveRun();
         const counts: Record<string, number> = {};
         for (const id of deck) counts[id] = (counts[id] ?? 0) + 1;
         const { history } = get();
-        set({ ...activeStateInitial, history, pickIds: picks, shopFinalized: true, deck: counts, deckFinalized: true });
+        set({ ...activeStateInitial, history, pickIds: picks, shopFinalized: true, deck: counts, deckFinalized: true, run: newRun(counts) });
+      },
+
+      recordBattle: (battle) => {
+        const { run } = get();
+        if (run) set({ run: withBattle(run, battle) });
+      },
+
+      setInProgress: (inProgress) => {
+        const { run } = get();
+        if (run?.status === 'active') set({ run: { ...run, inProgress } });
+      },
+
+      quitRun: () => {
+        const { run } = get();
+        if (run) set({ run: quit(run) });
       },
 
       updateHistoryEntry: (id, updates) => {
@@ -184,13 +239,31 @@ export const useDraftStore = create<State & Actions>()(
       },
 
       reset: () => {
+        get().archiveRun();
         const { history } = get();
         set({ ...activeStateInitial, history });
       },
     }),
-    { name: 'pocket-draft-v0.4' },
+    {
+      name: 'pocket-draft-v0.4',
+      // v2: added the run record; a v1 deck already finalized starts an empty run.
+      // v1: the draft grew from 16 to 20 picks and lost the free universals, so a
+      // saved v0 draft cannot resume. Keep finished history, drop the active draft.
+      version: 2,
+      migrate: (persisted, version) => {
+        if (version >= 2) return persisted as State & Actions;
+        if (version >= 1) return withRun(persisted as State & Actions);
+        const { history = [] } = persisted as Partial<State>;
+        return { ...initialState, history } as State & Actions;
+      },
+    },
   ),
 );
+
+// A v1 save has no run; a finalized deck gets an empty one.
+function withRun(s: State & Actions): State & Actions {
+  return { ...s, run: s.deckFinalized ? newRun(s.deck) : null };
+}
 
 export function derivePhase(
   s: Pick<State, 'pickIds' | 'offerIds' | 'shopFinalized' | 'deckFinalized'>,

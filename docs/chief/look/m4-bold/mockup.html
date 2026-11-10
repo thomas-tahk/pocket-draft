@@ -1,0 +1,181 @@
+<!doctype html>
+<!-- Throwaway mockup for issue #131: three bold directions for the screens outside battle.
+     Same wording and order as the real draft and run screens; only the look changes.
+     Open as mockup.html?dir=burst|holo|type&screen=draft|run. render.cjs screenshots it. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>M4 bold directions</title>
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: ui-rounded, 'SF Pro Rounded', 'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; min-height: 100vh; }
+  .screen { width: 390px; min-height: 844px; padding: 16px; position: relative; overflow: hidden; }
+  .row { display: flex; gap: 10px; align-items: center; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+  .btn { display: flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 18px; font: inherit; cursor: pointer; }
+  .pips { display: flex; gap: 6px; }
+  .pip { width: 30px; height: 30px; display: grid; place-items: center; font-weight: 900; font-size: 14px; }
+  .label { font-size: 13px; font-weight: 800; }
+  /* A stand-in card: type-coloured frame, name, HP, art window, two text lines. */
+  .card { aspect-ratio: 63 / 88; position: relative; padding: 7px; display: flex; flex-direction: column; gap: 5px; }
+  .card .top { display: flex; justify-content: space-between; font-size: 11px; font-weight: 900; }
+  .card .art { flex: 1; border-radius: 6px; }
+  .card .ln { height: 5px; border-radius: 3px; background: rgba(0,0,0,.28); }
+  .card .ln.s { width: 70%; }
+  .cap { text-align: center; margin-top: 6px; font-size: 13px; font-weight: 800; }
+  .t-grass { --tc: #3fa63a; --tc2: #b6ec6e; } .t-colorless { --tc: #8e8e9e; --tc2: #e4e4ec; }
+  .t-trainer { --tc: #6b56c9; --tc2: #c9bdfb; } .t-fire { --tc: #e2481f; --tc2: #ffc15a; }
+  .t-water { --tc: #1f7fe0; --tc2: #7fd6ff; } .t-light { --tc: #e8b800; --tc2: #fff27a; }
+
+  /* ───────── A · PACK BURST: sunburst yellow/orange, thick ink outlines, hard offset shadows ───────── */
+  .burst { --ink: #1a1030; background: repeating-conic-gradient(from 0deg at 50% -10%, #ffcf1f 0 6deg, #ffb300 6deg 12deg); color: var(--ink); }
+  .burst .panel { background: #fff; border: 3px solid var(--ink); border-radius: 18px; box-shadow: 6px 6px 0 var(--ink); padding: 16px; }
+  .burst h1 { font-size: 34px; font-weight: 900; letter-spacing: -.5px; line-height: 1; text-transform: uppercase; font-style: italic; }
+  .burst h2 { font-size: 24px; font-weight: 900; text-transform: uppercase; font-style: italic; }
+  .burst h3 { font-size: 16px; font-weight: 900; text-transform: uppercase; margin-top: 12px; }
+  .burst .sub { font-size: 17px; font-weight: 900; }
+  .burst .btn { border: 3px solid var(--ink); border-radius: 14px; background: #fff; color: var(--ink); font-weight: 900; font-size: 16px; box-shadow: 4px 4px 0 var(--ink); }
+  .burst .btn.primary { background: #e8202a; color: #fff; font-size: 22px; min-height: 60px; text-transform: uppercase; font-style: italic; letter-spacing: .5px; }
+  .burst .btn.danger { background: #1a1030; color: #fff; }
+  .burst .bar { height: 14px; border: 3px solid var(--ink); border-radius: 99px; background: #fff; overflow: hidden; margin-top: 8px; }
+  .burst .bar i { display: block; height: 100%; width: 5%; background: #e8202a; }
+  .burst .card { border: 3px solid var(--ink); border-radius: 12px; background: linear-gradient(160deg, var(--tc2), var(--tc)); box-shadow: 5px 5px 0 var(--ink); }
+  .burst .card .art { background: radial-gradient(circle at 50% 45%, #fff 0 22%, transparent 23%), rgba(255,255,255,.35); border: 2px solid var(--ink); }
+  .burst .card.pickable { transform: rotate(-1.5deg); }
+  .burst .cap { background: #fff; border: 2px solid var(--ink); border-radius: 99px; padding: 2px 8px; display: inline-block; }
+  .burst .capw { text-align: center; }
+  .burst .pip { border: 3px solid var(--ink); border-radius: 50%; background: #fff; }
+  .burst .pip.w { background: #18a84a; color: #fff; }
+  .burst .pip.l { border-radius: 6px; background: #e8202a; color: #fff; }
+  .burst .pip.lo { border-radius: 6px; }
+  .burst .battle { border-top: 3px dashed var(--ink); padding-top: 10px; margin-top: 10px; }
+  .burst .loss { color: #c4141c; font-weight: 900; }
+
+  /* ───────── B · HOLO NIGHT: deep indigo, foil gradients, glowing edges ───────── */
+  .holo { background: radial-gradient(120% 60% at 50% 0%, #3a1d8f 0%, #140b3d 55%, #090620 100%); color: #f3f0ff; }
+  .holo .panel { background: linear-gradient(160deg, rgba(255,255,255,.12), rgba(255,255,255,.04)); border: 1.5px solid rgba(180,160,255,.45); border-radius: 20px; padding: 16px; box-shadow: 0 0 0 1px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.25); }
+  .holo h1 { font-size: 32px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; background: linear-gradient(90deg, #6ff7ff, #ff7af5 50%, #ffe36b); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .holo h2 { font-size: 24px; font-weight: 900; letter-spacing: .5px; text-transform: uppercase; }
+  .holo h3 { font-size: 13px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #b9a8ff; margin-top: 12px; }
+  .holo .sub { font-size: 16px; font-weight: 800; color: #d9d0ff; }
+  .holo .btn { border-radius: 999px; border: 2px solid #8f7bff; background: rgba(143,123,255,.12); color: #fff; font-weight: 800; font-size: 15px; }
+  .holo .btn.primary { border: 0; background: linear-gradient(90deg, #00d4ff, #7b5cff 55%, #ff4fd8); color: #fff; font-size: 20px; font-weight: 900; min-height: 58px; letter-spacing: 1px; text-transform: uppercase; box-shadow: 0 0 24px rgba(123,92,255,.7), inset 0 1px 0 rgba(255,255,255,.5); text-shadow: 0 1px 2px rgba(0,0,0,.45); }
+  .holo .btn.danger { border-color: #ff6b8a; color: #ffd1dc; background: rgba(255,107,138,.12); }
+  .holo .bar { height: 8px; border-radius: 99px; background: rgba(255,255,255,.15); margin-top: 10px; overflow: hidden; }
+  .holo .bar i { display: block; height: 100%; width: 5%; background: linear-gradient(90deg, #00d4ff, #ff4fd8); box-shadow: 0 0 10px #00d4ff; }
+  .holo .card { border-radius: 12px; background: linear-gradient(150deg, var(--tc2), var(--tc) 60%, #1a0f45); border: 2px solid transparent; background-clip: padding-box; box-shadow: 0 0 0 2px rgba(255,255,255,.55), 0 0 18px var(--tc), 0 8px 18px rgba(0,0,0,.55); color: #fff; }
+  .holo .card::after { content: ''; position: absolute; inset: 0; border-radius: 12px; background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.45) 45%, rgba(120,255,255,.25) 50%, transparent 62%); mix-blend-mode: screen; }
+  .holo .card .art { background: radial-gradient(circle at 50% 45%, rgba(255,255,255,.85) 0 20%, transparent 22%), rgba(0,0,0,.22); }
+  .holo .card .ln { background: rgba(255,255,255,.55); }
+  .holo .card .top { text-shadow: 0 1px 2px #000, 0 0 6px rgba(0,0,0,.8); }
+  .holo .cap { color: #fff; }
+  .holo .cap small { color: #ffe36b; }
+  .holo .pip { border-radius: 50%; border: 2px solid rgba(255,255,255,.5); }
+  .holo .pip.w { background: #29e07a; border-color: #9dffc7; box-shadow: 0 0 12px #29e07a; color: #062; }
+  .holo .pip.l { border-radius: 8px; background: #ff3b6b; border-color: #ffb3c5; box-shadow: 0 0 12px #ff3b6b; color: #fff; }
+  .holo .pip.lo { border-radius: 8px; }
+  .holo .battle { border-top: 1px solid rgba(255,255,255,.18); padding-top: 10px; margin-top: 10px; }
+  .holo .loss { color: #ff8fab; font-weight: 900; }
+  .holo .muted { color: #c9bff5; }
+
+  /* ───────── C · TYPE COLOUR: white Pocket-clean cards on full-bleed type-colour blocks ───────── */
+  .type { background: #0b63c9; color: #0d1a33; }
+  .type .hero { margin: -16px -16px 0; padding: 22px 16px 26px; background: linear-gradient(135deg, #0057c2 0%, #0b74d8 100%); color: #fff; clip-path: polygon(0 0, 100% 0, 100% 86%, 0 100%); }
+  .type .panel { background: #fff; border-radius: 22px; padding: 16px; box-shadow: 0 12px 28px rgba(0,30,80,.35); }
+  .type h1 { font-size: 36px; font-weight: 900; letter-spacing: -1px; line-height: 1; }
+  .type h2 { font-size: 26px; font-weight: 900; letter-spacing: -.5px; }
+  .type h3 { font-size: 13px; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; color: #0057c2; margin-top: 12px; }
+  .type .sub { font-size: 17px; font-weight: 800; }
+  .type .btn { border-radius: 14px; border: 0; background: #e8f1ff; color: #0047a3; font-weight: 900; font-size: 15px; }
+  .type .hero .btn { background: rgba(0,20,60,.22); color: #fff; border: 2px solid rgba(255,255,255,.75); }
+  .type .btn.primary { background: linear-gradient(180deg, #ffd23f, #ffa800); color: #2a1600; font-size: 21px; min-height: 60px; border-radius: 16px; box-shadow: 0 5px 0 #c77700, 0 10px 18px rgba(0,0,0,.25); }
+  .type .btn.danger { background: #ffe5e5; color: #b0101a; }
+  .type .seg { display: flex; gap: 3px; margin-top: 10px; }
+  .type .seg i { flex: 1; height: 8px; border-radius: 3px; background: rgba(255,255,255,.3); }
+  .type .seg i.on { background: #ffd23f; }
+  .type .card { border-radius: 12px; background: #fff; border: 4px solid var(--tc); box-shadow: 0 8px 18px rgba(0,30,80,.35); }
+  .type .card .top { margin: -7px -7px 0; padding: 6px 8px; background: var(--tc); color: #fff; border-radius: 6px 6px 0 0; }
+  .type .card .art { background: radial-gradient(circle at 50% 45%, var(--tc) 0 20%, transparent 22%), var(--tc2); }
+  .type .card .ln { background: #c9d3e6; }
+  .type .cap { color: #fff; }
+  .type .pip { border-radius: 50%; background: #eef3fb; border: 2px solid #b8c6e0; }
+  .type .pip.w { background: #12a150; border-color: #12a150; color: #fff; }
+  .type .pip.l { border-radius: 8px; background: #d61f2b; border-color: #d61f2b; color: #fff; }
+  .type .pip.lo { border-radius: 8px; }
+  .type .battle { background: #f3f6fc; border-radius: 12px; padding: 8px 8px 8px 12px; margin-top: 8px; }
+  .type .loss { color: #c4141c; font-weight: 900; }
+  .type .deckrow { color: #fff; font-weight: 800; margin-top: 14px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  const q = new URLSearchParams(location.search);
+  const dir = q.get('dir') || 'burst';
+  const screen = q.get('screen') || 'draft';
+  const offers = [
+    ['Volbeat', '◊', 'grass', 'HP 70'], ['Oranguru', '◊', 'colorless', 'HP 120'],
+    ['Bounded Field', '◊◊', 'trainer', 'STADIUM'], ['Wally', '◊◊', 'trainer', 'SUPPORTER'],
+    ['Charmander', '◊', 'fire', 'HP 60'],
+  ];
+  const card = ([name, , t, hp], i) => `
+    <div class="card t-${t} ${i === 0 ? 'pickable' : ''}">
+      <div class="top"><span>${name}</span><span>${hp}</span></div>
+      <div class="art"></div><div class="ln"></div><div class="ln s"></div>
+    </div>`;
+  const offer = (o, i) => `<div>${card(o, i)}<div class="capw cap">${o[0]} · <small>${o[1]}</small></div></div>`;
+  const progress = dir === 'type'
+    ? `<div class="seg">${Array.from({ length: 20 }, (_, i) => `<i class="${i < 1 ? 'on' : ''}"></i>`).join('')}</div>`
+    : `<div class="bar"><i></i></div>`;
+
+  const draft = dir === 'type' ? `
+    <div class="hero">
+      <h1>Pocket Draft</h1>
+      <div class="row" style="justify-content:space-between;margin-top:10px">
+        <span class="sub">Pack 1 / 20</span>
+        <button class="btn">Abandon draft</button>
+      </div>${progress}
+    </div>
+    <div class="grid">${offers.map(offer).join('')}</div>` : `
+    <div class="panel">
+      <h1>Pocket Draft</h1>
+      <div class="row" style="justify-content:space-between;margin-top:10px">
+        <span class="sub">Pack 1 / 20</span>
+        <button class="btn ${dir === 'holo' ? 'danger' : ''}">Abandon draft</button>
+      </div>${progress}
+    </div>
+    <div class="grid">${offers.map(offer).join('')}</div>`;
+
+  const pips = `
+    <div class="row" style="justify-content:space-between;margin-top:8px;align-items:flex-start">
+      <div><div class="label">Wins 0 of 5</div><div class="pips" style="margin-top:6px">${'<span class="pip"></span>'.repeat(5)}</div></div>
+      <div><div class="label">Losses 1 of 2</div><div class="pips" style="margin-top:6px"><span class="pip l">L</span><span class="pip lo"></span></div></div>
+    </div>`;
+  const runBody = `
+      <h2>Your run</h2>
+      <div class="sub muted" style="margin-top:4px">Run: 0–1 (active)</div>
+      <h3>In progress</h3>${pips}
+      <button class="btn primary" style="width:100%;margin-top:16px">Next battle</button>
+      <div style="margin-top:8px;font-weight:700">🤖 Opponent: practice bot</div>
+      <h3>Battles</h3>
+      <div class="battle row" style="justify-content:space-between"><span>Battle 1: <span class="loss">Loss</span></span><button class="btn">Replay</button></div>
+      <button class="btn danger" style="width:100%;margin-top:14px">Quit run</button>`;
+  const deckBtns = ['Copy code', 'Copy link', 'Export JSON', 'Start new draft', 'Home'].map((b) => `<button class="btn" style="min-height:44px">${b}</button>`).join('');
+  const run = dir === 'type' ? `
+    <div class="hero" style="padding-bottom:34px">
+      <h1>Deck finalized</h1>
+      <div class="row" style="flex-wrap:wrap;margin-top:12px;gap:8px">${deckBtns}</div>
+    </div>
+    <div class="panel" style="margin-top:-6px">${runBody}</div>` : `
+    <div class="panel">
+      <h2>Deck finalized</h2>
+      <div class="row" style="flex-wrap:wrap;margin-top:12px;gap:10px">${deckBtns}</div>
+    </div>
+    <div class="panel" style="margin-top:16px">${runBody}</div>`;
+
+  document.getElementById('root').innerHTML = `<div class="screen ${dir}">${screen === 'run' ? run : draft}</div>`;
+  document.body.className = dir;
+</script>
+</body>
+</html>

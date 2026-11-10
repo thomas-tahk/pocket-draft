@@ -104,6 +104,9 @@ type Card struct {
 	Trainer []EffectOp
 	// Fossil marks an Item played as a Basic with this card's HP (fossil.go).
 	Fossil bool
+	// Placeholder marks a stand-in for a card the engine can't model: an Item
+	// that does nothing when played ("Splash!"). It keeps the deck at 20.
+	Placeholder bool
 }
 
 // CardKind is what sort of card this is: a Pokémon or a Trainer of some kind.

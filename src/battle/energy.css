@@ -8,5 +8,5 @@
   box-shadow: 0 0 0 calc(var(--u, 1px) * 0.6) rgba(0, 0, 0, 0.45);
 }
 .bt-energy svg { width: 70%; height: 70%; display: block; }
-.bt-energy[data-spent='true'] { background: #b9bcc8 !important; border-color: #d7d9e2; }
+.bt-energy[data-spent='true'] { background: var(--type-spent) !important; border-color: var(--color-border); }
 .bt-tally { display: inline-flex; align-items: center; gap: 3px; margin-right: 10px; }

@@ -91,7 +91,12 @@ export type GameView = {
   openingFlip: { flipper: number; heads: boolean }; // the coin flip for first (spec S4)
   firstPlayer: number; // 0 or 1: who goes first
   stadium: CardView | null; // the Stadium in play
+  record: GameRecord; // replayable record; empty until the game is over
 };
+
+// Mirrors server recordView. Filled only once the game is over: POST /api/new with
+// {seed, you, bot}, then POST /api/move for each action in order, replays it.
+export type GameRecord = { seed: number; you: string[]; bot: string[]; actions: Move[] };
 
 // Mirrors server toEvent(): one shape per move type. `player` is always the
 // actor (gameView.active, or pending.player during a prompt).

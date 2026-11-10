@@ -1,7 +1,7 @@
 package main
 
 // Go port of src/data/rarity.ts, reused server-side to draft the bot's deck
-// (issue #9: give the bot a real 16-round draft instead of a fixed preset).
+// (issue #9: give the bot a real 20-round draft instead of a fixed preset).
 // Keep this in lockstep with the TS source — it is the rarity/tier
 // classification the client's draft algorithm is built on.
 

@@ -1,5 +1,8 @@
 import { useMemo, useState } from 'react';
-import { TypeTally } from '../battle/energy';
+import { announce } from '../announce';
+import { AbandonDraft } from './AbandonDraft';
+import { EnergyIcon, TypeTally } from '../battle/energy';
+import { defaultZoneTypes, MAX_ZONE_TYPES, ZONE_TYPES } from '../game/energy';
 import type { Card, EnergyType } from '../types/card';
 import { DECK_SIZE } from '../stores/draftStore';
 import {
@@ -11,19 +14,20 @@ import {
   type CollectionSource,
 } from '../draft/expansions';
 import { tallyTypes } from '../draft/weights';
-import { CardTile, type HoverPayload } from './CardTile';
+import { CardTile, FocusPreview, type HoverPayload } from './CardTile';
 import { CardPreview, type HoverState } from './CardPreview';
 
 type Props = {
   picks: Card[];
   purchases: Card[];
   fullPool: Card[];
-  universals: Card[];
   working: ReadonlySet<string>; // ids the engine can play; only these are offered
   deck: Record<string, number>;
+  energy: string[]; // the player's Energy Zone choice; [] until they touch it
+  onEnergy: (types: string[]) => void;
   onAdd: (cardId: string) => void;
   onRemove: (cardId: string) => void;
-  onFinalize: () => void;
+  onFinalize: (energy: string[]) => void;
   onCancel: () => void;
 };
 
@@ -31,18 +35,18 @@ const SOURCE_LABEL: Record<CollectionSource, string> = {
   drafted: 'Your draft',
   shop: 'Shop purchases',
   'under-evo': 'Free expansions (under-evolutions)',
-  universal: 'Free universals',
 };
 
-const SOURCE_ORDER: CollectionSource[] = ['drafted', 'shop', 'under-evo', 'universal'];
+const SOURCE_ORDER: CollectionSource[] = ['drafted', 'shop', 'under-evo'];
 
 export function DeckbuildView({
   picks,
   purchases,
   fullPool,
-  universals,
   working,
   deck,
+  energy,
+  onEnergy,
   onAdd,
   onRemove,
   onFinalize,
@@ -53,23 +57,21 @@ export function DeckbuildView({
 
   const collection = useMemo(
     () =>
-      buildCollection(picks, purchases, fullPool, universals).filter((e) => working.has(e.card.id)),
-    [picks, purchases, fullPool, universals, working],
+      buildCollection(picks, purchases, fullPool).filter((e) => working.has(e.card.id)),
+    [picks, purchases, fullPool, working],
   );
 
   const idToCard = useMemo(() => {
     const m = new Map<string, Card>();
     for (const c of fullPool) m.set(c.id, c);
-    for (const c of universals) m.set(c.id, c);
     return m;
-  }, [fullPool, universals]);
+  }, [fullPool]);
 
   const grouped = useMemo(() => {
     const g: Record<CollectionSource, CollectionEntry[]> = {
       drafted: [],
       shop: [],
       'under-evo': [],
-      universal: [],
     };
     for (const e of collection) g[e.source].push(e);
     return g;
@@ -101,6 +103,23 @@ export function DeckbuildView({
     (a, b) => b[1] - a[1],
   );
 
+  // Until the player picks, the zone defaults to the energy the deck's attacks cost
+  // (engine DefaultEnergyTypes, mirrored by defaultZoneTypes).
+  const defaultEnergy = useMemo(() => {
+    const flat: Card[] = [];
+    for (const { card, count } of deckCards) for (let i = 0; i < count; i++) flat.push(card);
+    return defaultZoneTypes(flat);
+  }, [deckCards]);
+  const zone = energy.length > 0 ? energy : defaultEnergy;
+  const toggleZone = (t: string) => {
+    if (zone.includes(t)) {
+      if (zone.length > 1) onEnergy(zone.filter((z) => z !== t));
+    } else if (zone.length < MAX_ZONE_TYPES) {
+      onEnergy([...zone, t]);
+      if (zone.length + 1 === MAX_ZONE_TYPES) announce('Up to 3: deselect one to change.');
+    }
+  };
+
   const shopCountById = useMemo(() => {
     const m = new Map<string, number>();
     for (const p of purchases) m.set(p.id, (m.get(p.id) ?? 0) + 1);
@@ -129,42 +148,36 @@ export function DeckbuildView({
     const addDisabled = !canAddEntry(entry);
 
     return (
-      <div
+      <FocusPreview
         key={`${entry.source}-${entry.card.id}`}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 4,
-          padding: 6,
-          borderRadius: 8,
-          background: inDeck > 0 ? '#4c81' : 'transparent',
-          outline: inDeck > 0 ? '2px solid #4c8' : 'none',
-          width: 180,
-          boxSizing: 'border-box',
-        }}
+        card={entry.card}
+        onHover={handleHover}
+        className={`shelf-cell${inDeck > 0 ? ' is-picked' : ''}`}
       >
         <CardTile card={entry.card} size="lg" onHover={handleHover} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
+        <div className="step-row">
           <button
             onClick={() => onRemove(entry.card.id)}
             disabled={inDeck === 0}
-            style={{ minWidth: 28 }}
+            className="btn-step"
+            aria-label={`− Remove ${entry.card.name}`}
           >
             −
           </button>
-          <span style={{ opacity: 0.8 }}>
+          <span className="muted-xs" aria-hidden="true">
             {nameTotal} / {cap}
           </span>
+          <span className="sr-only">{nameTotal} of {cap} copies</span>
           <button
             onClick={() => onAdd(entry.card.id)}
             disabled={addDisabled}
-            style={{ minWidth: 28 }}
+            className="btn-step"
+            aria-label={`+ Add ${entry.card.name}`}
           >
             +
           </button>
         </div>
-      </div>
+      </FocusPreview>
     );
   };
 
@@ -173,18 +186,10 @@ export function DeckbuildView({
     if (entries.length === 0) return null;
     return (
       <section key={source} style={{ marginTop: 16 }}>
-        <h2 style={{ fontSize: 14, opacity: 0.75, margin: '0 0 8px' }}>
+        <h2 className="section-title">
           {SOURCE_LABEL[source]} ({entries.length})
         </h2>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, 180px)',
-            justifyContent: 'start',
-            gap: 8,
-            alignItems: 'start',
-          }}
-        >
+        <div className="shelf-grid">
           {entries.map(renderEntry)}
         </div>
       </section>
@@ -192,28 +197,20 @@ export function DeckbuildView({
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <main style={{ flex: 1, padding: '0 24px 24px', maxWidth: 1300 }}>
-        <header
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'baseline',
-            padding: '16px 0',
-            marginBottom: 8,
-            gap: 12,
-            flexWrap: 'wrap',
-            position: 'sticky',
-            top: 0,
-            background: 'var(--surface)',
-            zIndex: 20,
-            borderBottom: '1px solid #8882',
-          }}
-        >
-          <h1 style={{ fontSize: 20, margin: 0 }}>Deckbuilding</h1>
-          <div style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}>
-            <div style={{ fontSize: 14, opacity: 0.75 }}>
-              Deck: {size} / {DECK_SIZE}
+    <div className="screen">
+      <main className="screen-main wide">
+        <header className="screen-header">
+          <h1 className="screen-title">Deckbuilding</h1>
+          <div className="screen-header-actions">
+            <div className="muted">
+              <span role="status">
+                Deck: {size} / {DECK_SIZE}
+                {finalizeBlocker && (
+                  <small className="muted-sm" style={{ marginLeft: 8 }}>
+                    {finalizeBlocker}
+                  </small>
+                )}
+              </span>
               {sortedTally.length > 0 && (
                 <span style={{ marginLeft: 16 }}>
                   <TypeTally entries={sortedTally} />
@@ -221,67 +218,70 @@ export function DeckbuildView({
               )}
             </div>
             <button
-              onClick={onFinalize}
+              className="btn-primary"
+              onClick={() => onFinalize(zone)}
               disabled={finalizeBlocker !== ''}
               title={finalizeBlocker}
             >
               Finalize deck
             </button>
-            <button
-              onClick={() => {
-                if (window.confirm('Cancel this draft? You will lose all picks and deck choices.')) {
-                  onCancel();
-                }
-              }}
-              style={{ fontSize: 12 }}
-            >
-              Cancel draft
-            </button>
+            <AbandonDraft loses="all picks and deck choices" onAbandon={onCancel} />
           </div>
         </header>
-        <p style={{ fontSize: 13, opacity: 0.6, marginTop: 0 }}>
+        <p className="muted-sm" style={{ marginTop: 0 }}>
           Build a deck of exactly {DECK_SIZE} cards. Max 2 of any card by name. Drafted Pokémon
-          unlock their under-evolutions (all functional variants) for free; the 2 free universals
-          (Poké Ball, Professor's Research) are always available.
+          unlock their under-evolutions (all functional variants) for free. Trainers come only from
+          your draft and the shop.
         </p>
+
+        <div className="zone-picker" role="group" data-testid="energy-picker" aria-labelledby="zone-title">
+          <h2 id="zone-title" className="section-title" style={{ color: 'var(--color-text)', margin: '0 0 8px' }}>
+            Choose up to {MAX_ZONE_TYPES} energies to use{' '}
+            <span data-testid="energy-count" className="muted-xs">
+              {zone.length}/{MAX_ZONE_TYPES}
+            </span>
+          </h2>
+          <div className="zone-picker-row" role="group" aria-label="Energy Zone types">
+            {ZONE_TYPES.map((t) => {
+              const on = zone.includes(t);
+              const blocked = !on && zone.length >= MAX_ZONE_TYPES;
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  className="zone-chip"
+                  aria-pressed={on}
+                  disabled={blocked}
+                  aria-label={t}
+                  data-type={t}
+                  onClick={() => toggleZone(t)}
+                >
+                  <EnergyIcon type={t} size={22} testId="zone-chip-icon" />
+                  {t}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         {SOURCE_ORDER.map(renderSection)}
       </main>
 
-      <aside
-        style={{
-          width: 280,
-          borderLeft: '1px solid #8884',
-          padding: 16,
-          height: '100vh',
-          overflowY: 'auto',
-          position: 'sticky',
-          top: 0,
-          boxSizing: 'border-box',
-          background: 'var(--surface)',
-          zIndex: 10,
-        }}
-      >
-        <div style={{ fontSize: 12, opacity: 0.6, marginBottom: 8 }}>
+      <aside className="screen-aside" aria-labelledby="deck-aside-title" style={{ ['--aside-w' as string]: '280px' }}>
+        <h2 id="deck-aside-title" className="aside-title">
           Deck ({size} / {DECK_SIZE})
-        </div>
+        </h2>
         {deckCards.length === 0 ? (
-          <p style={{ fontSize: 12, opacity: 0.5 }}>No cards yet.</p>
+          <p className="muted-xs">No cards yet.</p>
         ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 84px)',
-              justifyContent: 'center',
-              gap: 4,
-            }}
-          >
+          <div className="tile-grid-sm" role="group" aria-labelledby="deck-aside-title">
             {deckCards.map(({ card, count }) =>
               Array.from({ length: count }).map((_, i) => (
                 <CardTile
                   key={`${card.id}-${i}`}
                   card={card}
                   size="sm"
+                  label={`Remove ${card.name} from deck`}
                   onPick={() => onRemove(card.id)}
                   onHover={handleHover}
                 />

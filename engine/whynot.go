@@ -66,7 +66,7 @@ func (g *Game) whyNoEvolve(p int, cardID string) error {
 	}
 	pl := &g.S.Players[p]
 	for _, t := range targets() {
-		if mon := targetMon(pl, t); mon != nil && mon.Card.Name == ev.EvolvesFrom {
+		if mon := targetMon(pl, t); mon != nil && (mon.Card.Name == ev.EvolvesFrom || g.evolvesAs(g.holder(p, t), ev.EvolvesFrom)) {
 			return g.checkEvolve(Evolve{Player: p, HandCardID: cardID, Target: t})
 		}
 	}
